@@ -4,234 +4,263 @@ Status: Draft for product review. Date: 13 November 2026.
 
 ## Product summary
 
-Weedz helps people responsible for land and biodiversity find likely invasive
-weeds in imagery, review the evidence, and turn findings into a useful plan for
-field verification. It also helps specialists curate reliable reference
-collections so the service can improve across species, places, and viewpoints.
+Weedz helps conservation and biosecurity teams discover invasive plants
+incidentally visible in existing photographs. A photo taken to record a bird,
+insect, animal, or landscape may contain a weed that nobody recorded. Weedz
+surfaces that overlooked evidence for specialist review and useful follow-up.
 
-The first release should deliver one dependable assessment workflow for a pilot
-partner. New Zealand is the proposed first geography, with gorse as a provisional
-target species. The partner, species, area, and supported imagery conditions
-remain product decisions to confirm. This document describes the intended
-product; the existing research prototype does not establish readiness for field use.
+For example, a butterfly observation may show an invasive vine on the fence
+behind it. The product should preserve the butterfly observation and identify
+the vine as a separate candidate finding, with its own evidence and review.
 
-## Problem
+The proposed first release is a bounded retrospective study of historical
+New Zealand imagery. It should establish whether incidental plant discoveries
+are reliable, informative, and worth the effort of reviewing them. The existing
+research prototype does not demonstrate this capability or establish field readiness.
 
-Conservation teams have limited time to inspect large areas and assess imagery.
-Small or unfamiliar infestations can be missed, while uncertain identifications
-and false alarms consume specialist time. Images and observations arrive from
-different sources, dates, viewpoints, and levels of quality. An identification
-that is convincing in one photograph may be difficult to recognise from above.
+## Problem and opportunity
 
-Teams need a practical way to distinguish promising leads from verified findings,
-understand where the evidence is weak, and hand useful information to field staff.
-They also need reviewed examples they can trust and improve without losing the
-original evidence or the reasons behind a correction.
+Existing photographs may contain ecological evidence beyond their original
+subject. Searching only their original species labels leaves that evidence
+undiscovered. Inspecting every photograph manually is expensive, and large
+collections contain repeated views, poor images, and many genuine negatives.
 
-These are working problem hypotheses. Pilot discovery must establish the current
-assessment process, its cost, and the consequences of missed weeds and false alarms.
+Conservation teams need credible leads about overlooked weeds, particularly
+unusual occurrences and evidence of earlier presence. A large number of plausible
+suggestions has little value if it overwhelms reviewers or cannot guide follow-up.
+A photograph's age and approximate location also limit what can be concluded
+about a plant visible in the background.
+
+Weedz should complement existing biodiversity records and weed alert services.
+Its distinct contribution is discovering visual evidence that the original
+record did not identify. A finding absent from a particular reference collection
+is not automatically the first occurrence of that species in the area.
+
+These are product hypotheses. The pilot must establish the yield of useful
+incidental discoveries, the effort required to verify them, and their value to
+people making biosecurity and conservation decisions.
 
 ## Users and their jobs
 
 | User | Job to accomplish | What a good outcome looks like |
 | --- | --- | --- |
-| Land manager or conservation coordinator | Decide where to send limited survey effort | A clear, prioritised set of findings with usable locations and visible uncertainties |
-| Ecologist or weed identification specialist | Verify species and the extent visible in imagery | Enough context to confirm, correct, reject, or defer a finding without losing evidence |
-| Imagery reviewer | Work through an assessment efficiently and consistently | Clear review progress, saved decisions, and an easy way to add missed findings |
-| Collection steward | Maintain trustworthy examples for supported species and conditions | Original evidence, accountable corrections, clear reuse conditions, and visible coverage gaps |
-| Field surveyor | Locate and verify suspected infestations | A concise handoff with imagery, location quality, target species, and the reason for the visit |
+| Biosecurity officer or conservation coordinator | Find useful evidence of overlooked infestations or unexpected occurrences | A small, prioritised set of credible leads with clear evidence and location limits |
+| Ecologist or weed identification specialist | Verify incidental plants, including confusing native or cultivated lookalikes | The original photo, relevant detail, and context needed to confirm, correct, reject, or defer a finding |
+| Imagery reviewer | Work through candidate discoveries efficiently | Clear review progress, saved decisions, and a way to add missed plants and request specialist help |
+| Collection steward | Assemble eligible imagery and reliable reviewed examples | Source history, accountable corrections, reuse eligibility, and visible coverage gaps |
+| Field surveyor | Follow up a credible lead where a visit is useful | A concise evidence package that distinguishes an approximate search area from a verified plant location |
 
-A small pilot team may fill several of these roles. Separate responsibilities
-matter when specialist review is needed or people disagree about a finding.
+A small pilot team may fill several roles. Decisions about identification,
+location usefulness, novelty, and follow-up value may need different expertise.
 
 ## Goals
 
-1. Reduce the total effort required to produce a useful weed assessment, including
-   the time spent checking false alarms and correcting missed findings.
-2. Help teams find infestations they would otherwise miss or discover later.
-3. Make uncertainty, evidence quality, and review status understandable at the
-   point where someone makes a decision.
-4. Produce a handoff that a field team can use to plan and conduct verification.
-5. Build reviewed reference collections that improve coverage of different
-   species, habitats, seasons, image sources, and viewing angles.
-6. Expand support only where the product demonstrates useful performance for the
-   intended users and conditions.
+1. Find invasive plants overlooked in photographs whose original subject or label
+   does not identify the target weed.
+2. Produce verified leads at a review effort the partner can sustain.
+3. Distinguish evidence newly found in a photo from a genuinely new locality or
+   earlier documented presence.
+4. Make uncertainty about identity, image date, location, and current presence
+   understandable when a reviewer or coordinator makes a decision.
+5. Produce evidence packages useful for specialist assessment and field follow-up.
+6. Build reliable reference examples across habitats, seasons, viewpoints, and
+   sources while preserving the original observations and their owners' attribution.
 
 ## Initial release scope
 
-The proposed pilot covers one target species, a defined geographic area, and an
-agreed set of imagery conditions. Its central workflow is assessment, review,
-and field handoff. A manageable reference collection supports that workflow.
-The pilot should include examples from more than one location so a successful
-demonstration at a single site is not mistaken for broad reliability.
+The proposed pilot uses an accessible, eligible historical collection from one
+NZ region and a small weed watchlist selected with local specialists. Nelson/Tasman
+and old man's beard are provisional choices from the research brief. Other
+candidates include Chilean rhubarb, pampas, and wilding conifers; the final list
+must reflect visual identifiability, important lookalikes, and management value.
+Gorse remains a possible target rather than an assumed first priority.
 
-The product should accommodate useful aerial and ground imagery as support
-expands, while making each source's capabilities and limitations clear. A ground
-photo may support species identification without supporting an infestation map.
-An aerial image may support a visible patch boundary without resolving every
-small plant. Users must understand what the product can conclude from their input.
+The initial collection should include photographs taken for other purposes,
+with several independent locations or encounters. Candidate sources include
+wildlife camera imagery, community observations, roadside photographs, and
+landscapes. Existing animal labels and descriptions of frames as "empty" do not
+establish whether weeds are visible. Plants already identified as the original
+subject can be useful reference examples, but do not demonstrate incidental discovery.
 
-The pilot handoff can include existing field evidence supplied with a finding.
-Capturing new survey results within Weedz and feeding them into subsequent
-assessments are later capabilities; the initial release delivers the verification
-worklist and preserves the evidence already available.
+Begin with a bounded collection and a declared review budget. Increase the volume
+only when discovery yield and review effort support doing so. Acquiring new or
+restricted public-agency footage is not a prerequisite for the pilot.
 
 ### Required for the pilot
 
-- Set up an assessment with its target species, area or photo collection, imagery
-  dates where known, and intended use.
-- Understand whether the supplied evidence is suitable for the requested assessment.
-- Inspect likely findings in the original imagery and their surrounding context.
-- Confirm, correct, reject, or leave a finding unresolved; add missed findings.
-- Keep progress, specialist questions, and review decisions understandable.
-- Distinguish proposed findings, image-confirmed findings, and field verification.
-- Share an assessment summary and actionable field-verification list.
-- Curate examples and corrections with their source, reuse conditions, and reasons.
-- See where product support and reference coverage are strong, limited, or unassessed.
+- Define a watchlist, region, historical period, eligible photo collection, and
+  the discovery question the partner wants answered.
+- Retain the original subject, source, relevant dates, attribution, and location limits.
+- Inspect likely secondary plants within the full original photograph and its context.
+- Confirm, correct, reject, or defer an identification; add an overlooked candidate.
+- Distinguish repeated photographic evidence from independent candidate occurrences.
+- Assess identity, location usefulness, historical relevance, and novelty separately.
+- Compare reviewed findings with an agreed reference record collection without
+  treating missing records as proof of novelty or absence.
+- Produce a prioritised evidence package with appropriate follow-up recommendations.
+- Curate accepted and disputed examples with accountable review decisions.
 
 ### Later opportunities
 
-Broader species and regional coverage, more imagery conditions, assessments over
-time, field-result feedback, team coordination at larger scale, and regional
-screening may follow demonstrated pilot value. Video support and live field
-assistance are future opportunities rather than requirements for the first release.
+Ongoing monitoring of newly available photos, additional regions and species,
+vegetation changes over time, related aerial evidence, and field-result feedback
+may follow a successful retrospective study. Potential handoffs to existing weed
+alert services are future opportunities; no direct integration is assumed.
 
 ### Outside the first release
 
-Universal identification of every weed from every image, claims that unreviewed
-land is weed-free, execution of weed treatment, and a general public biodiversity
-platform are outside the initial scope. The product supports assessment and
-verification; the pilot does not include treatment planning or treatment efficacy claims.
+Universal weed identification, exact ground mapping from arbitrary photographs,
+claims that an unreviewed area is weed-free, automatic external alerts or new
+third-party observations, treatment execution, and an open-data advocacy campaign
+are outside the pilot. Aerial patch mapping remains a possible supporting product
+rather than the first release's primary workflow.
 
 ## Core user journeys
 
-### 1. Assess an area or collection
+### 1. Define a discovery study
 
-A coordinator selects the target species and supplies an area or image collection.
-They see the relevant coverage, dates, missing information, and supported uses.
-If some imagery is unsuitable, they can understand why and decide whether to
-replace it, narrow the assessment, or continue with a clearly limited result.
-The assessment has a visible purpose, owner, and review progress.
+A coordinator chooses the watchlist, area, historical period, and photo collection.
+They see the collection's coverage, original subjects, dates, reuse restrictions,
+and location limitations. They agree on what makes a lead useful, how much review
+is affordable, and which existing records will be used for comparison.
 
-### 2. Review likely weeds
+### 2. Inspect incidental plants
 
-A reviewer inspects each proposed finding in context. They can confirm the
-species visible in the image, correct the identification or boundary, reject the
-finding, add an overlooked plant or patch, or request specialist help. They can
-inspect areas without proposed findings to check for misses.
+A reviewer sees the proposed plant in the full photograph, with the relevant
+visual detail highlighted. They can inspect context, consider lookalikes, correct
+an identification, add a missed plant, reject an artefact, or request specialist
+review. The original photo's subject remains separate from the candidate weed.
 
-Progress is saved so work can be resumed. An unresolved identification remains
-visible, with the evidence or expertise needed to resolve it. A change to an
-earlier decision preserves the reason and makes the current decision clear.
+Work can be resumed. Uncertain or inconclusive findings remain explicit rather
+than being forced into a positive or negative decision. Reviewers can also inspect
+photographs without proposed findings to check for missed plants.
 
-### 3. Prepare field verification
+### 3. Establish the value of a finding
 
-The coordinator reviews a summary of confirmed, proposed, rejected, unresolved,
-and unassessed results. They prioritise visits using management importance,
-uncertainty, and location usefulness. The field team receives the target species,
-supporting image, relevant dates, location quality, and the reason for each visit.
-The handoff distinguishes image review from evidence collected on the ground.
+A specialist reviews the identification evidence. A coordinator assesses whether
+its date and location support a useful lead, whether it repeats other evidence,
+and whether it adds information beyond the agreed reference records. A credible
+visual finding outside the expected range remains reviewable.
 
-### 4. Improve a reference collection
+The outcome may be an overlooked plant in a known locality, an earlier photograph
+than the available records, a potentially new locality, or evidence too uncertain
+for follow-up. Each conclusion states what is known and what still needs checking.
 
-A steward selects examples for a supported species and checks identity, image
-usefulness, viewing conditions, and reuse eligibility. A specialist can accept,
-correct, dispute, or exclude an example while preserving the original evidence.
-The steward can see which habitats, growth stages, viewpoints, and locations
-remain poorly represented and organise collection or review work to fill those gaps.
+### 4. Prepare a follow-up package
+
+The team selects leads worth investigating and records why. Each package includes
+original source links, the full photograph and relevant detail where sharing is
+permitted, the candidate species, capture date, location quality, review decisions,
+and the evidence behind any novelty claim. A historical photo does not assert
+that the plant remains present today. Field staff receive a search area and its
+limits rather than unsupported plant coordinates.
+
+### 5. Improve the reference collection
+
+A steward reviews accepted examples, difficult negatives, unresolved cases, and
+repeated encounters. Specialists record corrections and supporting evidence while
+preserving the original photo and observation. The team can identify gaps in
+species, growth stages, habitats, viewing angles, and source collections.
 
 ## Product requirements
 
-All requirements below are proposed pilot requirements. Their acceptance criteria
-describe user-observable outcomes rather than how the product is built.
+All requirements are proposed pilot requirements. Acceptance criteria describe
+user-observable outcomes and do not prescribe implementation.
 
 | ID | Requirement | Acceptance criteria |
 | --- | --- | --- |
-| P01 | Define an assessment | Users can identify the target species, assessment scope, purpose, and responsible person and can distinguish separate assessments |
-| P02 | Explain input suitability | Before relying on results, users can see supported conditions, relevant dates, missing information, and any part of their input that cannot be meaningfully assessed |
-| P03 | Accommodate different evidence | A supported photo or aerial assessment provides an appropriate result; a missing location does not create a fictitious map position, and a photo location is not presented as a patch boundary |
-| P04 | Present reviewable findings | A finding can be inspected alongside the original image and surrounding context, with the proposed identity and known uncertainty understandable |
-| P05 | Support meaningful corrections | Reviewers can change identity, adjust a visible boundary where applicable, reject a finding, add a miss, or defer a decision with a reason |
-| P06 | Preserve uncertainty and coverage | Proposed, image-confirmed, rejected, unresolved, and unassessed results are distinguishable; lack of a finding does not imply verified absence |
-| P07 | Support ongoing review | Users can resume work, see completed and remaining review, identify specialist questions, and understand disagreements and their eventual resolution |
-| P08 | Keep decisions accountable | A reviewed finding retains its source evidence, relevant dates, current decision, reviewer, and the reasons for material changes |
-| P09 | Produce a useful handoff | Users can share or download a summary and finding list usable in the pilot partner's existing mapping and reporting work, with review status and source attribution preserved |
-| P10 | Prioritise field effort | A coordinator can choose which findings need visits and record why; field staff can distinguish suspected and image-reviewed findings from any supplied field verification |
-| P11 | Curate reliable examples | Stewards can distinguish original evidence from accepted corrections, identify unsuitable or disputed examples, and understand which examples are eligible for reuse |
-| P12 | Expose coverage gaps | Users responsible for quality can see collection coverage and demonstrated product support by species, place, viewing conditions, habitat, and season where information is available |
-| P13 | Communicate reliability honestly | Product claims apply to the species and conditions actually assessed; users can see important known limitations before making a decision |
-| P14 | Respect source restrictions | Shared findings and collections preserve required attribution and any restrictions on reuse or precise locations; the product does not reveal more location detail than users are entitled to receive |
-| P15 | Work for the intended reviewers | Core review actions are keyboard-accessible, decisions are not communicated by colour alone, and users can read uncertainty and status without specialist software knowledge |
+| P01 | Define a bounded discovery study | Users can identify the watchlist, region, period, source collection, original-subject selection, review budget, and responsible people |
+| P02 | Establish source suitability | Users can understand coverage, dates, visibility, permitted uses, missing information, and which photographs cannot support the requested conclusions |
+| P03 | Find secondary subjects | A target plant can become a candidate when the photo was labelled with a different subject; the original subject is retained and is not reused as the weed identification |
+| P04 | Present reviewable visual evidence | Reviewers can inspect the candidate's detail and full-photo context, compare important lookalikes, and understand uncertainty |
+| P05 | Keep independent judgments separate | Identity, review status, location usefulness, historical relevance, and novelty can remain independently confirmed, disputed, or unresolved |
+| P06 | Correct findings and find misses | Reviewers can change an identification or visible extent, reject a candidate, add a missed plant, or request specialist assessment with a reason |
+| P07 | Preserve accountable review | Users can resume work, understand disagreements, see the current decision and reviewer, and inspect the reasons for material changes |
+| P08 | Avoid inflated discovery counts | Repeated frames and photos of the same encounter are presented as related evidence rather than automatically counted as independent infestations |
+| P09 | Communicate location and date limits | Capture date is distinguished from upload or discovery date; camera/observation location is distinguished from plant location; uncertain dates and locations remain explicit |
+| P10 | Make novelty claims proportionate | Users can distinguish a new finding in a photograph, a finding absent from the chosen reference records, an earlier available image, and a locality independently verified as new |
+| P11 | Retain unusual but credible leads | Known distributions help reviewers prioritise work but do not automatically exclude visually credible out-of-range candidates |
+| P12 | Produce a useful follow-up package | Permitted evidence, attribution, review state, location/date limits, comparison basis, and the reason for follow-up accompany shared findings |
+| P13 | Curate reliable reference evidence | Stewards can distinguish originals from accepted corrections, disputed or unsuitable examples, and examples eligible for a particular use |
+| P14 | Show assessed and unassessed coverage | Users can see which parts of the study were assessed and reviewed; a missing suggestion or record is not presented as verified weed absence |
+| P15 | Respect source and contributor restrictions | Sharing and reuse preserve attribution, source permissions, and location privacy; no automatic publication of a new observation on someone else's behalf is included |
+| P16 | Make review accessible | Core review actions are keyboard-accessible, status is not communicated by colour alone, and users understand decisions without specialist software knowledge |
 
 ## Product behavior in difficult cases
 
 | Situation | Expected experience |
 | --- | --- |
-| The species is unfamiliar or visually ambiguous | Mark the finding unresolved and explain that more evidence or specialist review is needed |
-| Imagery is too old, unclear, or taken from an unsupported viewpoint | Explain the limitation and identify affected results or areas; allow a narrower assessment where useful |
-| Only part of an area can be assessed | Show the assessed and unassessed coverage separately and carry that distinction into the handoff |
-| A reviewer finds a weed where none was proposed | Let them add the finding and include it in the same review and reporting workflow |
-| Two reviewers disagree | Preserve the disagreement, allow referral to a specialist, and show the decision that currently governs the assessment |
-| Several images show the same encounter | Keep the evidence together so repeated views do not misleadingly appear to be several independent infestations |
-| An image supports identification but not a reliable ground location or boundary | Provide the identification evidence and its limitations without inventing geographic precision |
-| Source rights or location permissions are unclear | Make the restriction visible and keep affected material out of uses that require unresolved permission |
+| The original record is about an animal or labels a frame as empty | Treat the original label as context, not evidence that vegetation is absent |
+| A plant is too small, blurred, obscured, or lacks diagnostic features | Mark identity unresolved and explain what additional evidence is needed |
+| A native or cultivated lookalike is plausible | Keep that alternative visible and refer unresolved cases for appropriate specialist review |
+| The source location is obscured or the plant is distant from the photographer | Preserve the uncertainty and avoid an invented precise plant location |
+| A photograph predates the available occurrence records | Describe it as earlier photographic evidence relative to those records, not proof of introduction date |
+| The weed is outside its recorded range | Keep credible evidence available for specialist review rather than discard it for being unexpected |
+| Many images repeat the same camera view or plant | Group them as related evidence so review effort and discovery counts are not misleading |
+| No comparison records are available | Mark novelty unassessed; do not claim a new locality |
+| A historical finding may no longer be present | Separate historical evidence from current status and make any follow-up need clear |
+| A source or external service is unavailable | Continue with eligible available evidence and show the affected coverage |
 
 ## Success measures
 
-The primary outcome is less total effort to produce an assessment useful for
-field verification, while maintaining an agreed standard for finding important
-infestations. Measure the complete workflow, including review and correction,
-rather than the speed of producing initial suggestions alone.
+The primary outcome is **verified, useful incidental discoveries at a sustainable
+review effort**. The retrospective pilot must establish value beyond finding
+plants already identified in their original records.
 
 | Measure | How it is assessed | Pilot success condition |
 | --- | --- | --- |
-| Time to a planning-ready assessment | Compare total coordinator/reviewer effort with the partner's manual process on comparable work | Lower effort without a worse rate of consequential missed infestations |
-| Infestations found and missed | Compare results with an independently reviewed reference within the declared assessment scope | Meets species- and condition-specific limits agreed before the pilot |
-| False-alarm burden | Count rejected suggestions and the review effort they consume | Fits the partner's agreed review capacity and still reduces total work |
-| Handoff completeness | Inspect findings delivered to field teams for evidence, status, dates, and usable location information where available | Every finding communicates its evidence and known limitations |
-| Review usability | Observe intended reviewers completing setup, review, correction, and handoff | Users complete the core journey without ongoing assistance from the product team |
-| Reference quality and coverage | Independently inspect accepted examples and identify missing conditions | Accepted examples meet the agreed review standard and remaining gaps are visible |
-| Operational usefulness | Follow whether the partner uses findings to select and conduct verification work | The output supports an actual planning decision and a useful field handoff |
+| Useful incidental yield | Count independently reviewed, deduplicated findings whose target was not identified in the original record | Produces leads the partner considers worth investigation, beyond a study consisting only of known target observations |
+| Reviewer effort per useful finding | Include all triage, specialist review, false alarms, and duplicate handling | Fits the partner's agreed review capacity and improves on comparable manual searching |
+| Missed visible targets | Independently review a representative sample, including photos with no proposed findings | Meets watchlist- and condition-specific limits agreed before the pilot |
+| Novel or earlier evidence | Assess findings against the declared reference records, preserving uncertainty about their completeness | Supports defensible claims of added information rather than unsupported first-occurrence claims |
+| False-alarm workload | Measure rejected and inconclusive leads and the time they consume | Does not overwhelm review capacity or erase discovery value |
+| Follow-up usefulness | Have intended users assess whether evidence and location quality support an actual next step | Supports specialist assessment, a meaningful site visit, or a justified historical record update |
+| Evidence and review completeness | Inspect shared leads for source, attribution, dates, uncertainty, and decisions | Every lead communicates the evidence and limits behind its conclusion |
+| Coverage and review usability | Observe intended users completing the study and identify poorly served conditions | Users can complete the core journey and explain which evidence remains unassessed |
 
-Numeric limits for missed infestations, false-alarm workload, turnaround, and
-improvement over the manual process must be agreed with the pilot partner before
-the pilot begins. They depend on the target species, smallest infestation worth
-reporting, imagery conditions, and available review effort. These are unresolved
-launch criteria, not a universal accuracy promise. A pilot is not successful merely
-because it produces more detections or performs well on familiar examples.
+Rare targets may produce many more false alarms than useful leads even when
+individual examples look convincing. Overall photo-classification accuracy alone
+is not a pilot success measure. Report independent encounters and sites alongside
+photo counts so repeated images do not inflate results.
+
+Numeric limits for useful yield, review effort, missed visible targets, turnaround,
+and false-alarm workload must be agreed before the pilot. They depend on species,
+visibility, source coverage, and operational value. These remain open launch
+criteria rather than invented universal performance promises.
 
 ## Pilot and release readiness
 
-1. **Problem validation:** confirm the partner, primary users, target species,
-   current workflow, and decision the product should improve.
-2. **Scope agreement:** define the area, supported imagery conditions, reportable
-   infestations, verification process, review responsibilities, and success limits.
-3. **Assisted pilot:** complete real assessments with users, observe review effort,
-   and record misses, false alarms, confusion, and field usefulness.
-4. **Independent assessment:** establish whether results meet the agreed limits
-   in locations and conditions representative of the intended use.
-5. **Limited release:** make the workflow available for the demonstrated scope,
-   with clear limits, accountable review, and a way to report problems.
+1. **Agree on the question:** confirm the partner, region, watchlist, intended
+   follow-up, reference records, and the value of new or earlier evidence.
+2. **Agree on the study:** choose an accessible eligible historical collection,
+   define independent encounters and review responsibilities, and set success limits.
+3. **Run a bounded retrospective pilot:** inspect candidates and missed examples,
+   adjudicate identity, and assess location, historical relevance, and novelty.
+4. **Assess real value:** measure deduplicated useful findings and complete review
+   effort; separate visual identification from the value of a local occurrence lead.
+5. **Decide whether to expand:** increase sources, volume, species, or monitoring
+   frequency only when the evidence supports a useful repeatable service.
 
-Expansion to another species, geography, or viewing condition requires evidence
-that the product remains useful there. Improvements to a familiar example
-collection do not establish broader readiness.
+The current prototype and labelled species examples are supporting research.
+They do not establish that useful background discoveries can be made in a new
+collection. Access to restricted road-survey footage or a new public-data release
+is not a release dependency.
 
 ## Assumptions and open product decisions
 
-- Which organisation and user own the first planning decision?
-- Is gorse the right initial target, and which region provides a useful pilot?
-- Is the first priority aerial assessment, ground-photo identification, or a
-  combined workflow, and what imagery can the partner already supply?
-- What is the smallest or least visible infestation that matters operationally?
-- How costly are missed infestations compared with wasted verification visits?
-- Who can confirm species identity, resolve disputes, and declare review complete?
-- What turnaround and review effort can the team sustain?
-- What evidence is needed to distinguish image confirmation from field verification?
-- What must a report contain to fit the partner's existing planning and mapping work?
-- What sharing, attribution, and location restrictions apply to pilot evidence?
+- Which team would act on the first incidental discovery, and what would it do?
+- Is Nelson/Tasman the right pilot area, and which weeds are identifiable and valuable there?
+- Which eligible image collection offers enough visible vegetation, dates, and
+  actionable location information for a bounded study?
+- What counts as independent evidence when photographs repeat a camera site or encounter?
+- Which reference records establish the comparison, and how complete are they?
+- What additional evidence is required before claiming a new locality or earlier presence?
+- Who can resolve botanical lookalikes, cultivated-versus-wild context, and disputed findings?
+- How much review effort per useful lead can the partner sustain?
+- Which historical discoveries would still justify present-day follow-up?
+- What uses of source photos and derived evidence are permitted for the pilot and later service?
+- What sharing process would be appropriate for the source community and existing weed services?
 - What commercial or funding arrangement would make repeated use sustainable?
 
-These decisions refine the pilot scope and launch criteria. Model selection,
-data processing, infrastructure, and other implementation choices are outside
-this PRD.
+These decisions refine pilot scope and launch criteria. Model selection, data
+processing, infrastructure, and other implementation choices are outside this PRD.

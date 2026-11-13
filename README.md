@@ -1,10 +1,16 @@
 # Weedz
 
-A reproducible invasive-weed baseline: Leafy Spurge survey crops → model scores →
-spatial evaluation → an offline review map and GeoJSON points.
+Weedz aims to discover invasive plants incidentally visible in existing photos,
+including images originally taken to record animals or landscapes. The first
+product study will test useful discoveries and reviewer effort on a bounded
+historical NZ collection.
+
+The current executable is supporting research: Leafy Spurge survey crops → model
+scores → spatial evaluation → an offline review map and GeoJSON points. It does
+not yet detect background weeds in general photographs.
 
 The [Product Requirements Document](docs/prd.md) defines the intended users,
-assessment workflow, pilot scope, and product success criteria.
+discovery workflow, pilot scope, and product success criteria.
 
 See [Datasets, curation, and detection methods](docs/datasets.md) for the source
 shortlist, the implemented pipeline, and proposed processing paths for each
@@ -100,17 +106,22 @@ sampled points. The map has a coordinate grid rather than an online basemap.
 
 Next steps, in order:
 
-1. Inspect misses and false alarms; compare candidate models on validation only.
-   Repeated test-set inspection turns it into a development set; obtain a new
-   independent holdout before claiming improvements.
-2. Add [MAVSD](https://doi.org/10.6084/m9.figshare.28428707.v1), CC BY 4.0, for
-   pixel segmentation. Keep its multi-angle views of the same scene together.
-3. Label a small, independently reviewed NZ dataset for one target species,
-   provisionally gorse. Use [LINZ imagery](https://github.com/linz/imagery) or
-   permitted drone surveys at the intended deployment resolution. Split by site
-   before tiling; record imagery capture dates, resolution, and attribution.
-4. Use [DOC weed observations](https://doi.org/10.15468/kknfpc) to select survey
-   areas. Historical, approximate occurrence points are not image labels.
+1. Select a bounded, eligible historical NZ photo collection whose original
+   subjects do not identify the target weeds. Consider wildlife cameras,
+   community photos, and roadside imagery; retain encounter groups and dates.
+2. Choose the watchlist and comparison records with local specialists. Review
+   actual incidental plants and genuinely negative examples independently.
+3. Compare direct image analysis with candidate-region identification using
+   existing eligible models. Review false alarms, misses, and uncertain locations.
+4. Measure useful deduplicated discoveries and reviewer effort before scaling.
+   Distinguish earlier photographic evidence from a verified new locality.
+5. Add eligible training, segmentation, or aerial evidence only where the pilot
+   demonstrates a need. Keep the existing baseline as supporting research.
+
+iNaturalist's [terms, section 7](https://www.inaturalist.org/pages/terms), prohibit
+commercial AI training. Selecting CC0/CC BY photos alone does not establish
+permission for that use. Source eligibility for analysis, sharing, and training
+is tracked separately in the [dataset plan](docs/datasets.md).
 
 ## Development
 
