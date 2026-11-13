@@ -3,6 +3,9 @@
 A reproducible invasive-weed baseline: Leafy Spurge survey crops → model scores →
 spatial evaluation → an offline review map and GeoJSON points.
 
+The [Product Requirements Document](docs/prd.md) defines the intended users,
+assessment workflow, pilot scope, and product success criteria.
+
 See [Datasets, curation, and detection methods](docs/datasets.md) for the source
 shortlist, the implemented pipeline, and proposed processing paths for each
 candidate dataset. Only Leafy Spurge crops are currently supported by the CLI.
