@@ -68,6 +68,13 @@ Each run produces:
 | `model.json` | Versioned features, scaler statistics, and linear model weights |
 | `run.json` | Source revision, input checksums, exact partition IDs, threshold, and package versions |
 
+The [recorded CPU baseline](benchmarks/leafy-spurge-cpu.json) uses 700 fitting,
+100 validation, and 100 test observations. At the 90% validation-recall operating
+point, test recall is **82.4%**, precision **63.6%**, and accuracy **67%**
+(majority-class baseline: 51%). It catches 42 of 51 positives, misses 9, and
+raises 24 false alarms. A second offline run reproduced the results exactly.
+This is a starting measurement, not a field-ready detector.
+
 ## Data and limits
 
 Source: Doherty et al., [Leafy Spurge Dataset](https://huggingface.co/datasets/mpg-ranch/leafy_spurge),
