@@ -3,6 +3,7 @@
 import argparse
 import logging
 import math
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -20,6 +21,11 @@ def _recall(value: str) -> float:
 
 
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] in {"dev", "discover"}:
+        from weedz.discovery.cli import main as discovery_main
+
+        discovery_main(sys.argv[1:])
+        return
     parser = argparse.ArgumentParser(description="Leafy Spurge baseline and offline review map")
     parser.add_argument("command", nargs="?", choices=("fetch", "run"), default="run")
     parser.add_argument("--data-dir", type=Path, default=Path("data/leafy-spurge"))
