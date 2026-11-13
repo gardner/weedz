@@ -7,6 +7,9 @@ proposed role, model training, and the runtime detection path.
 
 ## Current research direction
 
+Weedz is an **open-source, non-commercial public-good project**. Dataset choices
+and permitted uses should be assessed for that declared purpose.
+
 The product target is **incidental weed discovery in photos taken for another
 purpose**. The first product experiment is a bounded retrospective NZ collection,
 with expert review of useful discoveries and their cost. Existing labelled weed
@@ -18,21 +21,21 @@ the original subject label; a bird observation or an animal-empty camera frame
 does not supply a background plant label. Detection/annotation work must establish
 that separately. Do not select the entire discovery corpus using target-weed labels.
 
-### Important source-use correction
+### Project purpose and source reuse
 
 iNaturalist's [Terms of Use, section 7](https://www.inaturalist.org/pages/terms)
-explicitly prohibit using its data for commercial AI training. Our earlier
-recommendation to select CC0/CC BY photos did not account for that additional
-restriction and is superseded here. Individual image/metadata licences still
-matter, but they are not sufficient evidence for that training use.
+address commercial AI training. That restriction is not a reason to exclude our
+declared non-commercial research. The earlier commercial-project framing in
+this plan was incorrect and is superseded here.
 
-Record eligibility separately for analysis/inference, display/sharing, and
-training. The training restriction does not itself establish permission for other
-uses. Confirm applicable source terms and the intended purpose before admission;
-do not automatically promote reviewed discovery photos into commercial training
-data. Initial iNaturalist work is an inference/feasibility candidate subject to
-that eligibility check. Existing-model use and commercial training are separate
-activities. No source images beyond the Leafy Spurge crops have been downloaded.
+Assess analysis, non-commercial training, and sharing against the actual source
+conditions. Include CC0, CC BY, and CC BY-NC material where their respective terms
+fit this work, rather than limiting the project to photos permitting commercial
+reuse. iNaturalist [licenses images and observation data separately](https://help.inaturalist.org/en/support/solutions/articles/151000175695).
+Preserve attribution and any applicable non-commercial or share-alike conditions;
+open-source code does not change upstream asset licences. Consider other licence
+types according to the intended use; exclude all-rights-reserved material unless
+permission is established. No source images beyond Leafy Spurge have been downloaded.
 
 ## What works today
 
@@ -82,7 +85,7 @@ conventions when implementing their adapters. Pin the exact release at import.
 | [Leafy Spurge](https://huggingface.co/datasets/mpg-ranch/leafy_spurge) | Montana drone imagery; 39×39 crops, larger context images, survey presence/absence, coordinates, and unlabelled orthomosaic | CC BY 4.0; Hugging Face | **Implemented: crops only.** Retain as the reproducible point-classification baseline; context is a later extension |
 | [DOC/LILA NZ trail cameras](https://lila.science/datasets/nz-trailcams) | Approximately 2.5 million wildlife camera images in the public subset; animal categories and unique location identifiers | Community Data License Agreement, permissive variant; confirm the selected snapshot and location availability | **Priority candidate:** sample daytime vegetation views for an incidental-discovery pilot; no supplied weed labels |
 | [Wellington camera traps](https://datasets.cms.waikato.ac.nz/taiao/wellington_camera_traps/) | 270,450 images from 187 camera locations; animal/empty/unclassifiable labels and triggered sequences | Community Data License Agreement, permissive variant; published image archive is about 185 GB | **Bounded benchmark candidate:** evaluate usable vegetation and overlap with other camera collections before acquisition |
-| [iNaturalist](https://www.inaturalist.org/pages/developers) | Photos of observed organisms with dates and locations of varying precision; original subjects may be animals or other plants | Image and observation licences plus platform terms; section 7 prohibits commercial AI training | **Priority feasibility candidate:** scan incidental vegetation where analysis/sharing is eligible; keep any reference use separate and do not assume training permission |
+| [iNaturalist](https://www.inaturalist.org/pages/developers) | Photos of observed organisms with dates and locations of varying precision; original subjects may be animals or other plants | Image and observation licences plus platform terms; include suitable non-commercially licensed material for this project's purpose | **Priority candidate:** incidental discovery, reviewed reference evidence, and non-commercial training where source conditions permit |
 | [Mapillary](https://help.mapillary.com/hc/en-us/articles/115001770409-CC-BY-SA-license-for-open-data) | Street/roadside imagery, often successive views; local NZ coverage still to measure | Publisher states CC BY-SA for images; platform terms, acquisition, and intended reuse need review | **Roadside candidate:** bounded NZ corridor sample after eligibility and coverage checks |
 | [KartaView](https://kartaview.org/doc) | Street-level imagery; NZ coverage, accessible metadata, and image quality still to inspect | Exact source terms and selected image eligibility not verified here | **Investigate:** alternative roadside corpus; no bulk import assumed |
 | [MAVSD](https://doi.org/10.6084/m9.figshare.28428707.v1) | Chinese UAV RGB images at several angles; 13 semantic categories including invasive goldenrod; pixel masks/polygons | CC BY 4.0; Figshare archive is approximately 15.3 GB | **Supporting:** multi-angle segmentation experiment; acquire only when it answers a measured pilot need |
@@ -92,7 +95,7 @@ conventions when implementing their adapters. Pin the exact release at import.
 | [ImageWeeds v2](https://data.mendeley.com/datasets/8kjcztbjz2/2) | North Dakota aerial and greenhouse/handheld imagery with bounding-box annotations in several formats | CC BY 4.0; Mendeley | **Optional:** box detection, scale variation, and agricultural transfer experiments |
 | [OpenWeeds](https://openweeds.linkoping-ri.se/) | Swedish agricultural images, including tractor views, with detection boxes and some sparse segmentation annotations | Publisher describes permissive commercial use; confirm the exact licence and accessible release before admission | **Investigate:** detection/sparse-label transfer; ingestion is blocked on source verification |
 | [Sentinel-2 Level-2A](https://dataspace.copernicus.eu/data-collections/copernicus-sentinel-missions/sentinel-2) | Repeated multispectral satellite observations; bands have different native resolutions; no supplied weed labels | Copernicus open data terms; preserve product metadata and attribution | **Later:** regional screening and change detection with independent reference labels |
-| [WeedMap](https://www.research-collection.ethz.ch/entities/researchdata/0a5dcd76-cc44-4fbe-9f48-d8a717c90a30) | Agricultural UAV multispectral imagery and semantic mapping labels | Repository states non-commercial use permitted | **Deferred:** research comparison only unless intended-use rights are resolved; exclude from the initial product dataset |
+| [WeedMap](https://www.research-collection.ethz.ch/entities/researchdata/0a5dcd76-cc44-4fbe-9f48-d8a717c90a30) | Agricultural UAV multispectral imagery and semantic mapping labels | Repository states non-commercial use permitted; retain the exact release conditions | **Optional research comparison:** non-commercial status fits the project; prioritise according to relevance to the incidental-discovery study |
 
 ImageWeeds' [data paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC10618417/)
 describes its annotations as bounding boxes. Multiple export formats do not
@@ -160,9 +163,10 @@ local regions with existing eligible models. Return candidate taxon, evidence
 crop, full-photo context, and abstention/review state. Compare direct image analysis
 with candidate-region identification using independently reviewed background
 labels. Boxes and masks require their own evidence. Another species' observation
-is not a confirmed weed-free scene. Commercial fine-tuning on this source is
-not part of the proposed default; obtain a separately established basis for any
-training use and prevent restricted examples from entering training releases.
+is not a confirmed weed-free scene. Non-commercial fine-tuning is an option where
+the source conditions permit and independently reviewed labels are available.
+Begin with inference to test discovery value; that experimental order does not
+imply that non-commercial training is excluded.
 
 Keep all photos of an observation, duplicate photos, and known encounters with
 the same plant in one partition. Test additional observer/site holdouts. Export
@@ -299,15 +303,16 @@ individual small plants; do not reuse the crop baseline's species claims or
 threshold. The [open data terms](https://dataspace.copernicus.eu/data-collections/copernicus-sentinel-missions/sentinel-2)
 apply independently of any imagery access service.
 
-### WeedMap: deferred multispectral segmentation
+### WeedMap: optional multispectral research comparison
 
-If permitted for a specific research use, align multispectral tiles and source
-semantic labels, preserve band order/scale and valid pixels, and fit a matching
+For a research comparison under the source's non-commercial conditions, align
+multispectral tiles and source semantic labels, preserve band order/scale and valid pixels, and fit a matching
 segmentation head. Split at field/flight level before generating derivatives.
 Evaluate field-level segmentation with the source's crop/weed label definitions;
-those labels do not establish NZ invasive-species identity. Keep this experiment
-separate from product training while its stated non-commercial restriction
-applies. Availability for download does not change the intended-use restriction.
+those labels do not establish NZ invasive-species identity. Its non-commercial
+conditions fit the project's stated purpose; the reason to defer this experiment
+would be relevance or effort, not an assumption that Weedz is commercial.
+Preserve the source's actual reuse and redistribution terms with the results.
 
 ## Generalising the pipeline
 

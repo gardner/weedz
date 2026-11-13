@@ -1,5 +1,8 @@
 # Weedz
 
+Weedz is an **open-source, non-commercial project for public good**, supporting
+conservation, biodiversity research, and community weed surveillance.
+
 Weedz aims to discover invasive plants incidentally visible in existing photos,
 including images originally taken to record animals or landscapes. The first
 product study will test useful discoveries and reviewer effort on a bounded
@@ -118,10 +121,9 @@ Next steps, in order:
 5. Add eligible training, segmentation, or aerial evidence only where the pilot
    demonstrates a need. Keep the existing baseline as supporting research.
 
-iNaturalist's [terms, section 7](https://www.inaturalist.org/pages/terms), prohibit
-commercial AI training. Selecting CC0/CC BY photos alone does not establish
-permission for that use. Source eligibility for analysis, sharing, and training
-is tracked separately in the [dataset plan](docs/datasets.md).
+The [dataset plan](docs/datasets.md) reflects this project's non-commercial
+research purpose. Preserve source attribution and the applicable terms for
+photos, reviewed annotations, and model weights when analysing or sharing them.
 
 ## Development
 

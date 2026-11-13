@@ -4,6 +4,10 @@ Draft, 13 November 2026. This is the target architecture and implementation orde
 not a description of completed functionality. See [datasets.md](datasets.md) for
 source contents, licences, and the processing route for each collection.
 
+Weedz is an **open-source, non-commercial project for public good**. The design
+supports openly shared methods and conservation research, with attribution and
+source-specific terms retained for imagery, annotations, and model assets.
+
 The updated product brief prioritises **incidental plants in photographs taken
 for another purpose**. The first experiment is inference and expert review on a
 bounded historical NZ collection. Demonstrating useful discoveries comes before
@@ -176,13 +180,14 @@ queries/releases, retrieval dates, licence/attribution evidence, and SHA-256 has
 Derived crops, normalised labels, and proposed masks never overwrite originals.
 Record unavailable or ineligible assets rather than silently dropping them.
 
-Track permitted uses separately. iNaturalist's
-[published terms, section 7](https://www.inaturalist.org/pages/terms), prohibit
-commercial AI training; a CC0/CC BY photo filter alone does not establish training
-eligibility. Check inference and evidence-sharing rights independently. Prevent
-analysis-only media, reviewed crops, and derived examples from automatically
-entering commercial training releases. Use separately eligible data or an
-established permission basis for any proposed training use.
+Track permitted uses for the project's non-commercial purpose. iNaturalist's
+[published commercial-training restriction](https://www.inaturalist.org/pages/terms)
+does not make this a commercial project or exclude non-commercial research.
+Include non-commercial training where image, metadata, and platform conditions
+permit; retain attribution and applicable restrictions when sharing media or
+derived examples. Keep analysis-only examples separate from training releases
+when their actual terms require it. The project's open-source code does not
+relicense source photographs or third-party model weights.
 
 ### 2. Build the inventory and reserve groups
 

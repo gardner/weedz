@@ -4,6 +4,9 @@ Status: Draft for product review. Date: 13 November 2026.
 
 ## Product summary
 
+Weedz is an open-source, non-commercial project for public good. Its purpose is
+to support conservation teams, researchers, and communities in protecting biodiversity.
+
 Weedz helps conservation and biosecurity teams discover invasive plants
 incidentally visible in existing photographs. A photo taken to record a bird,
 insect, animal, or landscape may contain a weed that nobody recorded. Weedz
@@ -65,6 +68,8 @@ location usefulness, novelty, and follow-up value may need different expertise.
 5. Produce evidence packages useful for specialist assessment and field follow-up.
 6. Build reliable reference examples across habitats, seasons, viewpoints, and
    sources while preserving the original observations and their owners' attribution.
+7. Make the project's software, methods, and permitted findings openly useful to
+   conservation practitioners and the research community.
 
 ## Initial release scope
 
@@ -185,6 +190,7 @@ user-observable outcomes and do not prescribe implementation.
 | P14 | Show assessed and unassessed coverage | Users can see which parts of the study were assessed and reviewed; a missing suggestion or record is not presented as verified weed absence |
 | P15 | Respect source and contributor restrictions | Sharing and reuse preserve attribution, source permissions, and location privacy; no automatic publication of a new observation on someone else's behalf is included |
 | P16 | Make review accessible | Core review actions are keyboard-accessible, status is not communicated by colour alone, and users understand decisions without specialist software knowledge |
+| P17 | Serve the public-good mission | Project software and methods are shared openly; findings and reference material are shared where source permissions and location privacy allow |
 
 ## Product behavior in difficult cases
 
@@ -260,7 +266,8 @@ is not a release dependency.
 - Which historical discoveries would still justify present-day follow-up?
 - What uses of source photos and derived evidence are permitted for the pilot and later service?
 - What sharing process would be appropriate for the source community and existing weed services?
-- What commercial or funding arrangement would make repeated use sustainable?
+- What community partnerships, grants, volunteer review, or donated resources
+  would sustain this non-commercial public-good work?
 
 These decisions refine pilot scope and launch criteria. Model selection, data
 processing, infrastructure, and other implementation choices are outside this PRD.
