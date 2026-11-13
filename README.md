@@ -3,6 +3,10 @@
 A reproducible invasive-weed baseline: Leafy Spurge survey crops → model scores →
 spatial evaluation → an offline review map and GeoJSON points.
 
+See [Datasets, curation, and detection methods](docs/datasets.md) for the source
+shortlist, the implemented pipeline, and proposed processing paths for each
+candidate dataset. Only Leafy Spurge crops are currently supported by the CLI.
+
 ## Run it
 
 Install [uv](https://docs.astral.sh/uv/) and run from this repository:
