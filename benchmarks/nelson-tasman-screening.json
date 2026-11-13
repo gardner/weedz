@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "run_id": "nelson-tasman-3e62ad801459",
+  "created_at": "2026-11-13T22:44:40.864275+00:00",
+  "status": "completed",
+  "spec": {
+    "limit_per_region": 12,
+    "controls_per_species": 1,
+    "before": "2024-12-31"
+  },
+  "regions": {
+    "Nelson": 40493,
+    "Tasman": 40494
+  },
+  "source": "iNaturalist API v1",
+  "counts": {
+    "photos": 30,
+    "incidental": 24,
+    "reference": 6,
+    "screened": 30,
+    "expert_verified_discoveries": 0
+  },
+  "photo_licenses": {
+    "cc-by": 16,
+    "cc-by-nc": 12,
+    "cc0": 2
+  },
+  "model": {
+    "model": "imageomics/bioclip",
+    "revision": "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
+    "weights_sha256": "e380384f0c30d425d8c6c40f24471f9dd497fbdfa734a89c461a94aee95f0ef4",
+    "device": "cpu",
+    "ranking_revision": 2,
+    "prompts": [
+      "a photograph of Clematis vitalba, Old man's beard",
+      "a photograph of Cortaderia selloana, Pampas grass",
+      "a photograph of Ulex europaeus, Gorse",
+      "a photograph of Austroderia toetoe, New Zealand native toetoe grass",
+      "a photograph of Clematis paniculata, New Zealand native clematis vine",
+      "a photograph of Leptospermum scoparium, manuka shrub",
+      "a photograph of Cytisus scoparius, broom shrub",
+      "a photograph of mixed grass and native forest vegetation",
+      "a photograph of a bird",
+      "a photograph of a butterfly",
+      "a photograph of an insect",
+      "a photograph of a landscape with no visible plants"
+    ],
+    "target_count": 3,
+    "regions": "whole image and four 60% width/height overlapping windows",
+    "ranking": "maximum target minus best comparison-label cosine similarity per window",
+    "calibrated": false,
+    "segmentation": false
+  },
+  "completion_manifest_sha256": "f99525f0f3bd385569340a70952d10a4454dcac7f8d81ebb16f5f514877c9bd5",
+  "temporal_history_sha256": "8db47538dd90dd3205b61dcdad9ed01e497ba7535ffc7b225e25266b9e00b83a",
+  "review_status": {
+    "unreviewed": 30
+  },
+  "verification": {
+    "source_image_checksums": 30,
+    "rankings_recomputed_from_saved_window_similarities": 30,
+    "temporal_history_replay": "passed",
+    "browser": {
+      "incidental_filter_count": 24,
+      "reference_filter_count": 6,
+      "runtime_errors": 0,
+      "mobile_horizontal_overflow": false
+    }
+  },
+  "limitations": [
+    "Small recent-first convenience sample; not representative of regional biodiversity or image perspectives",
+    "Uncalibrated similarity scores; highest-ranked animal image is an obvious false alarm with bird and sky",
+    "References are separately source-labelled, not expert-verified background-plant ground truth",
+    "No discovery precision, recall, infestation extent or novelty has been established"
+  ]
+}

@@ -1,0 +1,335 @@
+.queue {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.queue-heading {
+  padding: 19px 17px 12px;
+}
+.queue h2 {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+}
+.queue h2 span {
+  background: #edf2e7;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font:
+    10px "DM Sans",
+    sans-serif;
+  margin-left: 5px;
+  color: #6d7f5d;
+}
+.queue-heading p {
+  font-size: 10px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+.cohort-tabs {
+  display: flex;
+  margin: 3px 14px 12px;
+  padding: 3px;
+  border: 1px solid #e5e8df;
+  background: #f5f7f1;
+  border-radius: 5px;
+  gap: 3px;
+}
+.cohort-tabs button {
+  flex: 1;
+  font-size: 10px;
+  padding: 8px 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: #7d8776;
+}
+.cohort-tabs button[aria-pressed="true"] {
+  background: #fff;
+  color: #34533b;
+  border-color: #dce4d3;
+  box-shadow: 0 1px 2px #253d2b0b;
+}
+.queue-filters {
+  display: flex;
+  gap: 6px;
+  margin: 0 14px 14px;
+}
+.queue-filters select {
+  width: 50%;
+  padding: 7px 3px;
+  font-size: 10px;
+  color: #596853;
+}
+.photo-list {
+  max-height: 840px;
+  overflow-y: auto;
+}
+.photo-row {
+  width: 100%;
+  display: flex;
+  text-align: left;
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid #edf0e7;
+  padding: 14px;
+  gap: 11px;
+  align-items: center;
+  background: #fff;
+  border-left: 3px solid transparent;
+}
+.photo-row.selected {
+  background: #edf3e5;
+  border-left-color: #608349;
+}
+.photo-row img {
+  width: 68px;
+  height: 74px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.photo-row-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 400;
+}
+.row-index {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #82916f;
+  font-size: 8px;
+}
+.photo-row-body strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+.photo-row-body > span:not(.row-index) {
+  color: #6b7c61;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.photo-row-body small {
+  font-size: 8px;
+  color: #8b947f;
+}
+.evidence {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+  min-width: 0;
+}
+.evidence-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 22px;
+  gap: 10px;
+}
+.evidence-heading .eyebrow {
+  font-size: 8px;
+  color: #7c8c70;
+}
+.evidence h2 {
+  font-family: "Manrope", sans-serif;
+  font-size: 22px;
+  letter-spacing: -0.7px;
+  margin: 9px 0 5px;
+  font-weight: 650;
+}
+.scientific {
+  font-style: italic;
+  font-size: 11px;
+  margin: 0;
+  color: #8a9680;
+}
+.badge {
+  font-size: 9px;
+  white-space: nowrap;
+  padding: 6px 8px;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+.badge.unreviewed,
+.badge.uncertain {
+  color: #8a6f2c;
+  background: #f7f0dc;
+  border: 1px solid #ede0b4;
+}
+.badge.confirmed {
+  background: #eaf3e2;
+  color: #4a6f39;
+  border: 1px solid #c9dfb8;
+}
+.badge.rejected {
+  background: #f3eeee;
+  color: #8a6262;
+  border: 1px solid #e6d5d5;
+}
+.image-stage {
+  background: #192d22;
+  position: relative;
+  margin: 0 17px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px;
+}
+.image-stage svg {
+  display: block;
+  width: 100%;
+  max-height: 460px;
+}
+.image-stage > img {
+  width: 100%;
+  object-fit: contain;
+  max-height: 460px;
+  display: block;
+}
+.image-caption {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  padding: 7px 9px;
+  width: fit-content;
+  font-size: 9px;
+  line-height: 1.4;
+  color: #f0f2e8;
+  background: #1d3223d9;
+  border: 1px solid #7b92643d;
+  border-radius: 3px;
+}
+.image-tools {
+  margin: 13px 20px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: #627454;
+}
+.image-tools label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+input[type="checkbox"] {
+  accent-color: #4d6a3f;
+  margin: 0;
+}
+.image-tools a {
+  text-decoration: none;
+}
+.attribution {
+  margin: 0 20px 18px;
+  color: #7a8770;
+  font-size: 9px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.attribution a {
+  color: #4b6940;
+}
+.context-grid {
+  margin: 0 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.context-grid > div:last-child {
+  grid-column: span 2;
+}
+.context-grid > div > span {
+  display: block;
+  color: #819075;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 8px;
+  margin-bottom: 7px;
+}
+.context-grid strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 550;
+}
+.context-grid small {
+  display: block;
+  color: #8b9682;
+  font-size: 9px;
+  margin-top: 5px;
+}
+.review-form {
+  padding: 20px;
+}
+.review-form h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.review-form p {
+  font-size: 10px;
+  color: #7a8771;
+  line-height: 1.6;
+  margin: 0 0 15px;
+}
+.review-form label {
+  display: block;
+  font-size: 10px;
+  color: #617251;
+  margin-bottom: 7px;
+}
+textarea {
+  width: 100%;
+  border: 1px solid #dee5d5;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 11px;
+  resize: vertical;
+  color: var(--ink);
+}
+textarea::placeholder {
+  color: #9ba591;
+}
+.decision-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 12px 0 15px;
+}
+.decision-buttons button {
+  font-size: 10px;
+  padding: 10px 12px;
+}
+.primary {
+  background: #315638;
+  border-color: #315638;
+  color: #fff;
+}
+.primary:hover {
+  background: #426e46;
+}
+.text-button {
+  border: none;
+  padding: 0;
+  margin: 0 0 14px;
+  font-size: 10px;
+  color: #557947;
+}
+.review-form > small {
+  font-size: 9px;
+  color: #8a947f;
+  line-height: 1.7;
+  display: block;
+}

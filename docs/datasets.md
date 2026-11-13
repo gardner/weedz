@@ -35,14 +35,20 @@ reuse. iNaturalist [licenses images and observation data separately](https://hel
 Preserve attribution and any applicable non-commercial or share-alike conditions;
 open-source code does not change upstream asset licences. Consider other licence
 types according to the intended use; exclude all-rights-reserved material unless
-permission is established. No source images beyond Leafy Spurge have been downloaded.
+permission is established. A bounded Nelson/Tasman iNaturalist collection is now
+downloaded alongside the Leafy Spurge baseline; see [local operation](local-development.md).
 
 ## What works today
 
-Only the **Leafy Spurge `crop` configuration** is downloaded and supported by the
-executable pipeline. The other sources are candidates, not implemented adapters.
-Changing `--data-dir` changes a filesystem location; it does not select another
-dataset. No iNaturalist images have been imported.
+Two paths are implemented: the **Leafy Spurge `crop` baseline** below, and the
+**Nelson/Tasman iNaturalist screening pilot**. `uv run main.py dev` starts the
+regional review stack; `uv run main.py discover --wait` queues up to 24 licensed
+animal-subject photos and six separately labelled references through Temporal.
+BioCLIP screens the whole photo plus four overlapping windows. The Next.js
+review app retains source subjects, attribution, dates, coordinate uncertainty
+and human review history. These windows are not masks; no NZ accuracy or
+incidental discovery count has been established. Other adapters remain proposed.
+Changing the baseline's `--data-dir` only changes its filesystem location.
 
 ```sh
 uv run main.py
@@ -76,7 +82,7 @@ the upstream survey label; it has not been independently adjudicated by us.
 ## Dataset shortlist
 
 Priority is a suggested acquisition order, not a claim that sources can be pooled.
-Only Leafy Spurge crop files have been downloaded and exercised locally. Other
+Leafy Spurge and a bounded iNaturalist pilot have been exercised locally. Other
 entries describe published contents; verify actual archives and annotation
 conventions when implementing their adapters. Pin the exact release at import.
 
@@ -85,7 +91,7 @@ conventions when implementing their adapters. Pin the exact release at import.
 | [Leafy Spurge](https://huggingface.co/datasets/mpg-ranch/leafy_spurge) | Montana drone imagery; 39×39 crops, larger context images, survey presence/absence, coordinates, and unlabelled orthomosaic | CC BY 4.0; Hugging Face | **Implemented: crops only.** Retain as the reproducible point-classification baseline; context is a later extension |
 | [DOC/LILA NZ trail cameras](https://lila.science/datasets/nz-trailcams) | Approximately 2.5 million wildlife camera images in the public subset; animal categories and unique location identifiers | Community Data License Agreement, permissive variant; confirm the selected snapshot and location availability | **Priority candidate:** sample daytime vegetation views for an incidental-discovery pilot; no supplied weed labels |
 | [Wellington camera traps](https://datasets.cms.waikato.ac.nz/taiao/wellington_camera_traps/) | 270,450 images from 187 camera locations; animal/empty/unclassifiable labels and triggered sequences | Community Data License Agreement, permissive variant; published image archive is about 185 GB | **Bounded benchmark candidate:** evaluate usable vegetation and overlap with other camera collections before acquisition |
-| [iNaturalist](https://www.inaturalist.org/pages/developers) | Photos of observed organisms with dates and locations of varying precision; original subjects may be animals or other plants | Image and observation licences plus platform terms; include suitable non-commercially licensed material for this project's purpose | **Priority candidate:** incidental discovery, reviewed reference evidence, and non-commercial training where source conditions permit |
+| [iNaturalist](https://www.inaturalist.org/pages/developers) | Photos of observed organisms with dates and locations of varying precision; original subjects may be animals or other plants | Image and observation licences plus platform terms; include suitable non-commercially licensed material for this project's purpose | **Implemented: bounded Nelson/Tasman pilot.** Animal-subject photos and separate weed references; BioCLIP window screening and human review; accuracy unmeasured |
 | [Mapillary](https://help.mapillary.com/hc/en-us/articles/115001770409-CC-BY-SA-license-for-open-data) | Street/roadside imagery, often successive views; local NZ coverage still to measure | Publisher states CC BY-SA for images; platform terms, acquisition, and intended reuse need review | **Roadside candidate:** bounded NZ corridor sample after eligibility and coverage checks |
 | [KartaView](https://kartaview.org/doc) | Street-level imagery; NZ coverage, accessible metadata, and image quality still to inspect | Exact source terms and selected image eligibility not verified here | **Investigate:** alternative roadside corpus; no bulk import assumed |
 | [MAVSD](https://doi.org/10.6084/m9.figshare.28428707.v1) | Chinese UAV RGB images at several angles; 13 semantic categories including invasive goldenrod; pixel masks/polygons | CC BY 4.0; Figshare archive is approximately 15.3 GB | **Supporting:** multi-angle segmentation experiment; acquire only when it answers a measured pilot need |

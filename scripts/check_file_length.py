@@ -13,6 +13,12 @@ def main() -> None:
         Path("main.py"),
         *Path("src").rglob("*.py"),
         *Path("scripts").rglob("*.py"),
+        *(
+            path
+            for folder in ["app", "components", "lib", "scripts"]
+            for path in (Path("web") / folder).rglob("*")
+            if path.suffix in {".ts", ".tsx", ".mjs", ".css"}
+        ),
     ]
     failures = []
     for path in paths:

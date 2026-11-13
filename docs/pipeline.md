@@ -1,7 +1,7 @@
 # Ideal weed detection pipeline
 
-Draft, 13 November 2026. This is the target architecture and implementation order,
-not a description of completed functionality. See [datasets.md](datasets.md) for
+Draft, 13 November 2026. Most of this is the target architecture; the implemented
+regional screening path is described below. See [datasets.md](datasets.md) for
 source contents, licences, and the processing route for each collection.
 
 Weedz is an **open-source, non-commercial project for public good**. The design
@@ -16,11 +16,19 @@ labelled species datasets remain supporting research paths.
 
 ## Are we using SAM today?
 
-**No. We do not currently use SAM or any other segmentation model.**
+**No. We do not currently use SAM or any other segmentation model.** The regional
+pilot now uses pinned **BioCLIP ViT-B/16** embeddings on CPU for screening, with
+Temporal activities for acquisition, inference and export, and Next.js for review.
+Each image contributes a whole frame and four overlapping windows. Targets and
+lookalikes are compared using image/text cosine similarity; no calibrated
+probabilities, species boundaries or novel locality claims are produced.
+See [the operating guide](local-development.md) for the implemented path and limits.
+
+The separate supporting baseline in
 [model.py](../src/weedz/model.py) fits class-balanced logistic regression on 84
 handcrafted colour/texture features from 39×39 Leafy Spurge survey crops. It
-predicts presence at sampled locations and exports points. There are no masks,
-learned image encoders, general raster inference, or installed SAM dependencies.
+predicts presence at sampled locations and exports points. That baseline has no
+segmentation masks, general raster inference or installed SAM dependencies.
 The working baseline remains available through `uv run main.py`.
 
 The first proposed comparison is **direct whole-photo analysis versus candidate

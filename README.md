@@ -8,22 +8,59 @@ including images originally taken to record animals or landscapes. The first
 product study will test useful discoveries and reviewer effort on a bounded
 historical NZ collection.
 
-The current executable is supporting research: Leafy Spurge survey crops → model
-scores → spatial evaluation → an offline review map and GeoJSON points. It does
-not yet detect background weeds in general photographs.
+The Nelson/Tasman pilot now acquires a bounded historical iNaturalist collection,
+screens full photos and image windows with BioCLIP on CPU, and presents the
+results for human review in Next.js. Python and Temporal run the workflow.
+These are uncalibrated screening results; NZ detection accuracy and useful
+incidental discoveries have not yet been established.
+
+The earlier Leafy Spurge point-classification baseline remains available.
 
 The [Product Requirements Document](docs/prd.md) defines the intended users,
 discovery workflow, pilot scope, and product success criteria.
 
 See [Datasets, curation, and detection methods](docs/datasets.md) for the source
 shortlist, the implemented pipeline, and proposed processing paths for each
-candidate dataset. Only Leafy Spurge crops are currently supported by the CLI.
+candidate dataset. The CLI supports the regional pilot and Leafy Spurge crops.
 The [ideal pipeline draft](docs/pipeline.md) shows data curation, proposed SAM
 annotation assistance, task-specific models, inference, and review feedback.
 
 ## Run it
 
-Install [uv](https://docs.astral.sh/uv/) and run from this repository:
+Install [uv](https://docs.astral.sh/uv/), Node.js 20.9+ and pnpm. From this repository:
+
+```sh
+pnpm --dir web install --frozen-lockfile
+uv run main.py dev
+```
+
+Open **http://127.0.0.1:3001** for photo review. The local stack starts Temporal,
+a Python worker, the review API and Next.js. Temporal history is at
+http://127.0.0.1:8234. Data, review history and workflow state persist under
+`data/pilot/`; downloaded data are excluded from Git. This is a local development
+stack with no account system or public deployment.
+
+In another terminal, queue the first bounded run, or use the app's collection settings:
+
+```sh
+uv run main.py discover --limit 12 --controls 1 --before 2024-12-31 --wait
+```
+
+This requests 12 animal-subject photos per region and one reference per target
+species per region: up to **30 photos**. Targets are old man's beard, pampas
+grass and gorse. References stay separate from incidental results. The first
+run downloads a pinned BioCLIP checkpoint (about 600 MB); no GPU or inference
+API key is needed. Source requests are rate-limited and model inference is local.
+
+See [local operation and pilot limits](docs/local-development.md) for the actual
+processing steps, exports, ports, model provenance and verification commands.
+The [first Nelson/Tasman run](docs/pilot-nelson-tasman.md) completed screening of
+30 real photos. Its highest-ranked incidental suggestion is an obvious false
+alarm, so independent review and a stronger screening comparison come before scale.
+
+### Leafy Spurge baseline
+
+Run the original supporting experiment:
 
 ```sh
 uv run main.py
