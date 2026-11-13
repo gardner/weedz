@@ -4,6 +4,12 @@ Draft, 13 November 2026. This is the target architecture and implementation orde
 not a description of completed functionality. See [datasets.md](datasets.md) for
 source contents, licences, and the processing route for each collection.
 
+The updated product brief prioritises **incidental plants in photographs taken
+for another purpose**. The first experiment is inference and expert review on a
+bounded historical NZ collection. Demonstrating useful discoveries comes before
+building a general supervised segmentation service. Aerial segmentation and
+labelled species datasets remain supporting research paths.
+
 ## Are we using SAM today?
 
 **No. We do not currently use SAM or any other segmentation model.**
@@ -13,10 +19,12 @@ predicts presence at sampled locations and exports points. There are no masks,
 learned image encoders, general raster inference, or installed SAM dependencies.
 The working baseline remains available through `uv run main.py`.
 
-The proposed approach is to use **SAM-assisted annotation plus a supervised
-species segmentation model**. SAM assistance is optional; the pipeline must also
-accept existing masks and fully manual annotations. A mask boundary, species
-identity, and geographic accuracy are separate claims with separate evidence.
+The first proposed comparison is **direct whole-photo analysis versus candidate
+regions followed by specialist identification and expert review**. Segmentation
+may help isolate incidental plants or annotate evidence, but is not a prerequisite
+for testing discovery value. Add source-eligible supervised training only when
+the observed failures justify it. A mask boundary, species identity, and
+geographic accuracy remain separate claims with separate evidence.
 
 ## Model roles and initial choices
 
@@ -27,11 +35,13 @@ experiment; adopting a model does not establish NZ field performance.
 | Role | Proposed starting point | What it supplies | What still needs validation |
 | --- | --- | --- | --- |
 | Cheap regression baseline | Existing colour/texture logistic classifier | Reproducible point-level reference | Limited to the existing crop protocol |
+| Direct discovery baseline | Existing eligible multimodal image model examining the full photo against the watchlist | Candidate secondary plants, supporting regions, and inconclusive cases | Small/background-plant recall, invented details, lookalikes, and end-to-end review effort |
+| Candidate-region discovery | SAM 3-family concept/geometric proposals with full-scene and local context | Plant regions to identify and review | Proposal-stage misses and whether region analysis improves on the direct baseline |
 | Interactive annotation | Compare SAM 3-family visual prompting with SAM 2.1 point/box assistance | Candidate object/patch boundaries for a reviewer to correct | Species identity, completeness, edge quality, and whether annotation time improves |
 | Concept-based proposal experiment | SAM 3-family still-image pipeline with text or visual exemplars; pin its actual checkpoint | Candidate detections/masks matching a prompted concept | Botanical accuracy, confusing taxa, missed small plants, compute, and checkpoint eligibility |
 | Video segmentation/tracking experiment | SAM 3.1 Object Multiplex when video is introduced | Joint tracking and segmentation of multiple prompted objects | End-to-end weed recall, temporal stability, peak memory, throughput, and hardware dependence |
-| Ground-photo identification | Pretrained RGB image encoder with a species-classification head | Taxon scores for curated iNaturalist/DeepWeeds images | Transfer across observers, habitats, views, growth stages, and unfamiliar species |
-| Dense aerial segmentation | A small U-Net trained on reviewed masks | Per-pixel scores for the dataset's declared species/classes | Patch recall, boundaries, physical scale, site/season transfer, and inference cost |
+| Candidate plant identification | Benchmark existing BioCLIP 2/2.5 representations and contextual visual reasoning; later task-specific heads only on eligible data | Candidate taxon comparisons against lookalikes, with original-scene context | Background-plant identifiability, unknown species, plausible wrong matches, and source-use eligibility |
+| Supporting dense aerial segmentation | A small U-Net trained on eligible reviewed masks if a measured need justifies it | Per-pixel scores for the dataset's declared species/classes | Patch recall, boundaries, physical scale, site/season transfer, and inference cost |
 | Box detection | A supervised detector trained on reviewed boxes | Candidate locations and species scores | Small-object recall and annotation completeness; boxes do not define silhouettes |
 | Spectral/temporal screening | A separate model with explicit band/time inputs | Broad regional candidates or change scores | Independent labels at matching spatial/temporal support |
 
@@ -60,8 +70,8 @@ burden, and resource use on the same reviewed samples. Its code/checkpoint
 licensing is documented in the [official repository](https://github.com/facebookresearch/sam2#license).
 
 [U-Net](https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/) is the
-initial supervised architecture to benchmark for dense masks. Train or fine-tune
-it with task-compatible reviewed labels, including explicit background and ignored
+initial supervised architecture to benchmark if dense aerial masks are needed.
+Train or fine-tune it with task-compatible reviewed labels, including explicit background and ignored
 regions. Compare stronger encoder/decoder variants only when validation justifies
 the extra cost. Choose the exact implementation and any pretrained weights with
 their own provenance; citing an architecture is not a licence for arbitrary weights.
@@ -70,7 +80,60 @@ SAM's mask-quality output must not be presented as species confidence. Even a
 visually precise mask may outline the wrong plant, one leaf, several interwoven
 species, or only part of a patch. Keep these failures visible during review.
 
-## Flow 1: build data and release a model
+[BioCLIP 2/2.5](https://github.com/Imageomics/bioclip-2) is a biological image-model
+candidate, not a demonstrated background-weed recogniser. Test candidate crops
+and full-photo context separately; a ranked taxon similarity is not calibrated
+species confidence. A general visual model can propose or question identities,
+but independent botanical review establishes reference labels.
+
+## Flow 1: test incidental-discovery value
+
+This proposed route uses already-trained eligible models. Its output is a reviewed
+candidate occurrence, not an automatic new public biodiversity record.
+
+```mermaid
+flowchart TD
+    A["Eligible historical NZ photos and original subject metadata"] --> B["Bounded corpus with encounter groups, dates, and location limits"]
+    B --> C["Reserve independent reference examples for evaluation"]
+    C --> D["Direct whole-photo discovery baseline"]
+    C --> E["Full-scene and local plant-region proposals"]
+    E --> F["Compare candidate taxa and lookalikes with scene context"]
+    D --> G["Expert review of candidate plants and sampled missed cases"]
+    F --> G
+    G --> H["Deduplicate encounters and assess date and location usefulness"]
+    H --> I["Compare with declared occurrence records and their as-of dates"]
+    I --> J["Evidence-backed leads with identity, novelty, and uncertainty separated"]
+    J --> K["Measure useful discoveries, misses, false alarms, and review effort"]
+    K --> L{"Useful yield within the agreed review budget?"}
+    L -->|Yes| M["Expand a demonstrated source and scope"]
+    L -->|No| N["Inspect failure modes and revise the development experiment"]
+```
+
+Original animal or other-subject labels do not supervise incidental plants.
+Camera frames labelled empty may still contain vegetation. Reference labels must
+cover actual visible background plants and verified negatives, with unknowns for
+unidentifiable regions. Review a representative sample without candidates as
+well as proposed positives; candidate-only review cannot measure missed plants.
+
+Record differences between a newly noticed image finding, a finding absent from
+the chosen reference records, earlier photographic evidence, and a verified new
+locality. Missing catalogue records do not establish a first occurrence. Preserve
+capture, publication, and discovery dates separately. Historical presence does
+not imply current presence, and a camera/observation point is not a distant plant
+location. Known range should prioritise review, not veto unusual visual evidence.
+
+Evaluate at the corpus's real prevalence, not just on a balanced species benchmark.
+For illustration, if 1 in 1,000 independent photos contains a target, 80% recall
+and a 1% false-positive rate yield only about 7.4% true candidates before review.
+Those are hypothetical inputs, not measured Weedz performance. Deduplicate events
+and report reviewer time per useful finding; overall image accuracy is insufficient.
+
+The [SWAT description](https://weeds.doc.govt.nz/about) explains its use of existing
+exotic-plant records. Weedz could complement that workflow with reviewed incidental
+evidence. A direct integration or permission to create new observations on other
+people's behalf is not assumed; external sharing follows a separate decision.
+
+## Flow 2: build eligible reference data and optionally train
 
 All nodes below are proposed. The test branch is independently annotated and
 remains outside training, active learning, prompt tuning, and model selection.
@@ -107,10 +170,19 @@ holdout before another generalisation claim. Do not relabel it into training.
 ### 1. Acquire and preserve bronze
 
 Use source adapters for Leafy Spurge, iNaturalist, MAVSD, geographic imagery,
-box datasets, and occurrence tables. Preserve original media/labels, source IDs,
+NZ trail cameras, roadside photographs, box datasets, and occurrence tables.
+Preserve original media/labels, source IDs,
 queries/releases, retrieval dates, licence/attribution evidence, and SHA-256 hashes.
 Derived crops, normalised labels, and proposed masks never overwrite originals.
 Record unavailable or ineligible assets rather than silently dropping them.
+
+Track permitted uses separately. iNaturalist's
+[published terms, section 7](https://www.inaturalist.org/pages/terms), prohibit
+commercial AI training; a CC0/CC BY photo filter alone does not establish training
+eligibility. Check inference and evidence-sharing rights independently. Prevent
+analysis-only media, reviewed crops, and derived examples from automatically
+entering commercial training releases. Use separately eligible data or an
+established permission basis for any proposed training use.
 
 ### 2. Build the inventory and reserve groups
 
@@ -154,10 +226,11 @@ regions, taxonomy mapping, source rights, and fitting/validation/test groups.
 Version preprocessing, augmentations, sampling, model configuration, and seeds.
 Reject incompatible sample/task combinations instead of silently weakening labels.
 
-| Evidence and sources | Training path | Valid prediction |
+| Evidence and sources | Processing path | Valid prediction |
 | --- | --- | --- |
 | Surveyed points: Leafy Spurge | Existing local-crop classification; later explicitly specified point supervision | Point/local-crop presence score |
-| Species images/photo sets: iNaturalist, DeepWeeds | Species-classification head; declare any observation aggregation | Image/observation taxon scores and abstention |
+| Incidental photos: eligible community, camera-trap, or roadside imagery | Inference with existing eligible models and independent expert evaluation; original labels are context only | Secondary plant candidates and evidence-backed, uncertain occurrence leads |
+| Eligible species-labelled reference images, such as DeepWeeds | Species-classification head if training rights permit; declare any observation aggregation | Image/observation taxon scores and abstention |
 | Dense masks: MAVSD, reviewed LINZ/drone imagery | Supervised semantic segmentation; preserve source classes and ignored pixels | Image-space class score maps and masks |
 | Boxes: ImageWeeds, eligible OpenWeeds annotations | Box detector with correct class/coordinate conventions | Species boxes and scores |
 | Sparse masks: eligible OpenWeeds annotations | Loss/metrics only on annotated pixels | Mask predictions whose unreviewed extent remains unverified |
@@ -189,7 +262,7 @@ and runtime for a particular deployment before final evaluation. Exact values
 need field requirements and representative data; this draft does not invent a
 universal accuracy target. A failed configuration stays an experiment.
 
-## Flow 2: run detection on new imagery
+## Flow 3: general runtime route for supported imagery
 
 ```mermaid
 flowchart TD
@@ -198,7 +271,7 @@ flowchart TD
     C -->|No| R["Abstain or request review and suitable imagery"]
     C -->|Yes| D["Prepare image or overlapping windows with valid pixels"]
     D --> E{"Declared task"}
-    E -->|Image or surveyed point| F["Classify using the matching model"]
+    E -->|Incidental photo, image, or surveyed point| F["Discover or classify using the matching route"]
     E -->|Boxes| G["Detect using the matching model"]
     E -->|Dense masks| H["Segment using the matching model"]
     E -->|Spectral or temporal| I["Screen using the matching model"]
@@ -264,26 +337,27 @@ location is not the footprint of the organism in its photo.
 Review feedback creates new development examples with provenance. Audit some
 predicted negatives and uncertain areas as well as high-score candidates to
 find missed infestations. Never silently retrain on the final holdout or
-overwrite accepted originals. Model updates produce a new frozen release.
+overwrite accepted originals. Check training eligibility again before promotion;
+expert review does not remove source restrictions. Model/prompt updates produce
+a new frozen release or evaluated experiment configuration.
 
 ## Pragmatic implementation sequence
 
-This sequence prioritises the first working segmentation path. MAVSD already
-supplies masks, so that experiment need not wait for SAM integration. The bounded
-iNaturalist classification experiment in [datasets.md](datasets.md) can follow
-the shared inventory independently; its image labels do not train the mask head.
+This sequence now prioritises the incidental-discovery product hypothesis.
+The existing point baseline and optional MAVSD segmentation route support later
+experiments; neither must be expanded before the discovery study can begin.
 
 | Slice | Concrete result | Acceptance evidence |
 | --- | --- | --- |
-| 1. Shared inventory and review | Typed dataset adapters, grouping, append-only decisions, and release manifests; retain the existing baseline | Rebuild identical sample lists; enforce supervision/rights/geometry rules and split separation |
-| 2. Small segmentation baseline | Train a U-Net on a bounded, scene-grouped MAVSD subset with existing masks | Aligned image/mask transforms, ignored-pixel handling, angle-specific validation, and an honest independent test |
-| 3. Annotation assistance | Compare SAM 3-family image proposals with SAM 2.1 point/box assistance; include SAM 3.1 for video experiments | Corrected masks, actual checkpoint/task recorded, evidence of species identity, saved reviewer time, correction burden, and independent audit |
-| 4. Local collection and transfer | Build NZ target/negative labels with suitable LINZ/drone imagery; use iNaturalist for a separate classification task | Same-species/view/scale coverage and an independent local field holdout |
-| 5. Geographic inference | Windowed inference, score merging, raster/polygon export, and abstention | Spatial round-trip checks, small-patch recall, and measured cost/review load |
-| 6. Release and feedback | Frozen inference bundle, repeatable evaluation, and versioned corrections | Deployment-specific acceptance criteria met without test-driven tuning |
+| 1. Bounded corpus and review | Inspect accessible NZ source metadata and eligibility; preserve original subjects, grouped encounters, dates, and location uncertainty | Representative usable imagery, manageable acquisition size, and independent review groups |
+| 2. Inference-first comparison | Compare direct whole-photo analysis with region proposals and specialist identification using existing eligible models | Independently reviewed background labels, missed-case audit, and end-to-end false-alarm/review cost |
+| 3. Evidence and novelty assessment | Link original photos, candidate regions, specialist decisions, encounter groups, and dated reference records | Useful deduplicated leads; no invented locations or unsupported first-occurrence claims |
+| 4. Targeted improvement | Add annotation assistance, eligible fine-tuning, or segmentation only for observed failures | Measured improvement on independent incidental photos and clear source/model provenance |
+| 5. Supporting geographic work | Add LINZ evidence, grounded mapping, or later aerial patch inference where warranted | Capture-date compatibility, supported geometry, and measured value beyond the ground-photo lead |
+| 6. Expansion decision | Freeze the evaluated route and review process; scale only demonstrated sources and conditions | Agreed discovery yield and review economics; no dependency on restricted NZTA footage or external publication |
 
-Begin local field collection alongside slices 1–3, because new independent sites
-and seasonal coverage take time. Run annotation/training jobs on optional GPU
+Begin local specialist review and reference-record collection alongside slices 1–3.
+Run inference, annotation, or any source-eligible training jobs on optional GPU
 workers when needed; keep source acquisition, manifests, and reports usable
 without a GPU. Cache expensive image embeddings by input checksum, image/window
 transform, model hash, and preprocessing version. Start with local files and

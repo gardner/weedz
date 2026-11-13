@@ -5,6 +5,35 @@ processing choices are our proposed design unless marked **implemented**.
 See [the ideal pipeline flow](pipeline.md) for the end-to-end design, SAM's
 proposed role, model training, and the runtime detection path.
 
+## Current research direction
+
+The product target is **incidental weed discovery in photos taken for another
+purpose**. The first product experiment is a bounded retrospective NZ collection,
+with expert review of useful discoveries and their cost. Existing labelled weed
+datasets support development; they do not establish performance on overlooked
+background plants. Aerial mapping and broad model training are supporting paths.
+
+Keep a discovery corpus separate from target-species reference photos. Preserve
+the original subject label; a bird observation or an animal-empty camera frame
+does not supply a background plant label. Detection/annotation work must establish
+that separately. Do not select the entire discovery corpus using target-weed labels.
+
+### Important source-use correction
+
+iNaturalist's [Terms of Use, section 7](https://www.inaturalist.org/pages/terms)
+explicitly prohibit using its data for commercial AI training. Our earlier
+recommendation to select CC0/CC BY photos did not account for that additional
+restriction and is superseded here. Individual image/metadata licences still
+matter, but they are not sufficient evidence for that training use.
+
+Record eligibility separately for analysis/inference, display/sharing, and
+training. The training restriction does not itself establish permission for other
+uses. Confirm applicable source terms and the intended purpose before admission;
+do not automatically promote reviewed discovery photos into commercial training
+data. Initial iNaturalist work is an inference/feasibility candidate subject to
+that eligibility check. Existing-model use and commercial training are separate
+activities. No source images beyond the Leafy Spurge crops have been downloaded.
+
 ## What works today
 
 Only the **Leafy Spurge `crop` configuration** is downloaded and supported by the
@@ -51,9 +80,13 @@ conventions when implementing their adapters. Pin the exact release at import.
 | Source | Contents and viewpoint | Rights/access | Intended role and status |
 | --- | --- | --- | --- |
 | [Leafy Spurge](https://huggingface.co/datasets/mpg-ranch/leafy_spurge) | Montana drone imagery; 39×39 crops, larger context images, survey presence/absence, coordinates, and unlabelled orthomosaic | CC BY 4.0; Hugging Face | **Implemented: crops only.** Retain as the reproducible point-classification baseline; context is a later extension |
-| [iNaturalist](https://www.inaturalist.org/pages/developers) | Species observations with one or more photos, often ground/oblique views and close-ups; viewing angle needs curation | Photo and observation licences are independent; initially admit CC0/CC BY for both | **Next:** curated species-identification collection, starting with NZ gorse, broom, and reviewed lookalikes |
-| [MAVSD](https://doi.org/10.6084/m9.figshare.28428707.v1) | Chinese UAV RGB images at several angles; 13 semantic categories including invasive goldenrod; pixel masks/polygons | CC BY 4.0; Figshare archive is approximately 15.3 GB | **Next:** multi-angle segmentation benchmark; acquire the archive, then extract a bounded working subset before broad training |
-| [LINZ imagery](https://github.com/linz/imagery) plus our own field labels | NZ orthorectified geographic imagery; rural surveys typically 20–30 cm; NIR products exist for some surveys; no supplied weed labels | Open imagery; retain the selected collection's actual licence, owner, and attribution | **Early local validation:** independently label one target species at several sites using suitable capture dates and resolution |
+| [DOC/LILA NZ trail cameras](https://lila.science/datasets/nz-trailcams) | Approximately 2.5 million wildlife camera images in the public subset; animal categories and unique location identifiers | Community Data License Agreement, permissive variant; confirm the selected snapshot and location availability | **Priority candidate:** sample daytime vegetation views for an incidental-discovery pilot; no supplied weed labels |
+| [Wellington camera traps](https://datasets.cms.waikato.ac.nz/taiao/wellington_camera_traps/) | 270,450 images from 187 camera locations; animal/empty/unclassifiable labels and triggered sequences | Community Data License Agreement, permissive variant; published image archive is about 185 GB | **Bounded benchmark candidate:** evaluate usable vegetation and overlap with other camera collections before acquisition |
+| [iNaturalist](https://www.inaturalist.org/pages/developers) | Photos of observed organisms with dates and locations of varying precision; original subjects may be animals or other plants | Image and observation licences plus platform terms; section 7 prohibits commercial AI training | **Priority feasibility candidate:** scan incidental vegetation where analysis/sharing is eligible; keep any reference use separate and do not assume training permission |
+| [Mapillary](https://help.mapillary.com/hc/en-us/articles/115001770409-CC-BY-SA-license-for-open-data) | Street/roadside imagery, often successive views; local NZ coverage still to measure | Publisher states CC BY-SA for images; platform terms, acquisition, and intended reuse need review | **Roadside candidate:** bounded NZ corridor sample after eligibility and coverage checks |
+| [KartaView](https://kartaview.org/doc) | Street-level imagery; NZ coverage, accessible metadata, and image quality still to inspect | Exact source terms and selected image eligibility not verified here | **Investigate:** alternative roadside corpus; no bulk import assumed |
+| [MAVSD](https://doi.org/10.6084/m9.figshare.28428707.v1) | Chinese UAV RGB images at several angles; 13 semantic categories including invasive goldenrod; pixel masks/polygons | CC BY 4.0; Figshare archive is approximately 15.3 GB | **Supporting:** multi-angle segmentation experiment; acquire only when it answers a measured pilot need |
+| [LINZ imagery](https://github.com/linz/imagery) plus our own field labels | NZ orthorectified geographic imagery; rural surveys typically 20–30 cm; NIR products exist for some surveys; no supplied weed labels | Open imagery; retain the selected collection's actual licence, owner, and attribution | **Supporting:** compare local evidence where resolution/dates allow; later patch mapping with independently reviewed labels |
 | [DOC weed observations](https://www.gbif.org/dataset/d986e335-a2e3-44f0-9606-845e2eb6081d) | NZ occurrence records from 1983–2023; locations may be approximate to 100 m | CC BY 4.0; GBIF/Darwin Core archive | **Supporting:** select survey areas and check taxonomy; no direct image supervision |
 | [DeepWeeds](https://github.com/AlexOlsen/DeepWeeds) | 17,509 field photos from Queensland; eight weed species plus a negative class; image-level labels | Dataset images/annotations: CC BY 4.0; repository code licence is separate | **Optional:** ground-photo classification and transfer experiments |
 | [ImageWeeds v2](https://data.mendeley.com/datasets/8kjcztbjz2/2) | North Dakota aerial and greenhouse/handheld imagery with bounding-box annotations in several formats | CC BY 4.0; Mendeley | **Optional:** box detection, scale variation, and agricultural transfer experiments |
@@ -68,6 +101,20 @@ and [documentation](https://github.com/edl78/obdb_docs) describe acquisition and
 training workflows, but the website still has placeholder sections and the
 exact dataset licence has not been confirmed here. Its entry remains a candidate
 rather than a verified acquisition recommendation.
+
+The [LILA publisher page](https://lila.science/datasets/nz-trailcams) also describes
+an expanded DOC collection of 3.3 million animal and 6.8 million empty images.
+It is a different acquisition scope from the public subset. Verify licence scope,
+overlap, metadata, and usable locations for the exact collection rather than
+merging counts. Neither animal presence nor an "empty" category describes plants.
+
+Other leads from the research brief include Flickr, Wikimedia Commons, DigitalNZ,
+GNS landscape archives, National Library collections, GBIF-linked media,
+Macaulay Library, and vegetation-survey photographs. Treat them as discovery leads
+until image-level rights, access, NZ coverage, dates, and location quality are checked.
+Metadata catalogue size is not a count of usable photographs. NZTA road-survey
+video is a later negotiated-access possibility, not an open source assumed by
+the pilot or a reason to delay work on accessible collections.
 
 ## Processing each source according to its contents
 
@@ -89,26 +136,33 @@ separation; the current 2 m guard is specific to the tiny crops. The unlabelled
 orthomosaic can support inference and candidate review after geographic alignment
 is verified, but cannot independently score segmentation or area estimates.
 
-### iNaturalist: species observations and photos
+### iNaturalist: incidental plants and reference evidence
 
-Acquire a bounded taxon/place query using the official API, or the
+After the source-use check above, acquire a bounded place/date/subject query using
+the official API, or the
 [licensed image dataset](https://github.com/inaturalist/inaturalist-open-data)
 for bulk work, following the [API practices](https://www.inaturalist.org/pages/api%2Brecommended%2Bpractices).
 Archive the response/query, observation and photo IDs, taxon, observer/photographer,
 licences, retrieval date, and checksums. Check each photo individually even when
 the observation passes the licence filter; keep API credentials out of manifests.
 
-Start with species-level, Research Grade observations, then review image
-suitability. [Research Grade](https://help.inaturalist.org/en/support/solutions/articles/151000169936-what-is-the-data-quality-assessment-and-how-do-observations-qualify-to-become-research-grade-)
-is an observation assessment, not a guarantee that every associated photo shows
-diagnostic features. Select target-visible images or curate observation-level
-photo sets. Record close-up, whole-plant, and habitat views separately.
+For discovery, include photos whose original subject is not the target weed;
+animal and landscape views may be useful. Inspect the whole scene and candidate
+regions. Keep the original observation's identity separate from every proposed
+plant identity. [Research Grade](https://help.inaturalist.org/en/support/solutions/articles/151000169936-what-is-the-data-quality-assessment-and-how-do-observations-qualify-to-become-research-grade-)
+describes the original subject, not the incidental plant. Species-labelled target
+photos are a separate reference/control collection, not evidence of discovery.
+Review whether each candidate actually contains diagnostic features; preserve
+close-up, whole-plant, habitat, and original-subject context.
 
-Preserve aspect ratio; use controlled resize/padding or reviewed crops for a
-pretrained image encoder and species-classification head. Train and score
-image-level classification, or declare observation-level aggregation in advance.
-Return taxon scores and an abstain/review decision. Boxes and masks require new
-annotations. Another species' observation is not a confirmed weed-free scene.
+Preserve aspect ratio and parent coordinates when analysing whole images and
+local regions with existing eligible models. Return candidate taxon, evidence
+crop, full-photo context, and abstention/review state. Compare direct image analysis
+with candidate-region identification using independently reviewed background
+labels. Boxes and masks require their own evidence. Another species' observation
+is not a confirmed weed-free scene. Commercial fine-tuning on this source is
+not part of the proposed default; obtain a separately established basis for any
+training use and prevent restricted examples from entering training releases.
 
 Keep all photos of an observation, duplicate photos, and known encounters with
 the same plant in one partition. Test additional observer/site holdouts. Export
@@ -117,6 +171,37 @@ a plant boundary or a camera-to-ground projection. Respect
 [obscured/private coordinates](https://help.inaturalist.org/en/support/solutions/articles/151000233080-how-does-inaturalist-protect-the-locations-of-sensitive-species-).
 Hosted photos have metadata removed, so camera pose must not be assumed available
 from [downloaded image EXIF](https://help.inaturalist.org/en/support/solutions/articles/151000233085-how-to-download-a-photo-from-inaturalist).
+
+### NZ trail cameras: vegetation behind animals and in empty frames
+
+Read source image IDs, camera/location IDs, dates, and sequences from the published
+annotations. Animal categories are contextual metadata, not weed supervision;
+the Wellington source notes that a sequence label can apply even when an animal
+is absent from an individual frame. Audit source overlap before combining collections.
+
+Sample a bounded set of daytime views across independent cameras and periods;
+record night/infrared exclusions and the conditions the experiment actually tests.
+Analyse background vegetation and retain the full scene for review. Create new
+plant labels through expert review, including genuinely negative and unidentifiable
+regions. Hold out whole camera sites and keep triggered/repeated sequences together.
+Count distinct encounters/sites as well as frames. A location identifier alone
+does not provide plant coordinates; obtain permitted location context before
+claiming an actionable occurrence. Keep precise locations private where required.
+
+### Mapillary/KartaView: incidental roadside vegetation
+
+Verify local coverage and intended-use eligibility first. Preserve capture date,
+sequence/image IDs, photographer attribution, public camera locations and any
+supplied pose. Sample independent road segments rather than every adjacent frame.
+Search full scenes and local plant regions with consistent transforms back to the
+source image. Link repeated views of the same probable plant and separate them
+from independent detections; hold out corridors/encounters for evaluation.
+
+Review candidate identity, cultivated/wild context, source-date relevance, and
+actionability. The camera point is not the plant point. Export an uncertain search
+area when geometry does not support a plant location. Keep existing reference
+records and the basis of any novelty claim with each reviewed lead. Do not infer
+that platform availability alone permits unrestricted bulk analysis or training.
 
 ### MAVSD: pixel masks across viewing angles
 
@@ -172,8 +257,8 @@ visual supervision only through a documented imagery/field verification step.
 
 Import the photos and label CSV without collapsing eight species into a single
 universal "weed" category. Retain the source negative-class meaning. Use the
-same proposed classification interface as iNaturalist, with a dataset-specific
-label map and aspect-preserving preprocessing. Score per-class precision/recall,
+shared image-classification interface, with a dataset-specific label map and
+aspect-preserving preprocessing. Score per-class precision/recall,
 macro F1, and confusion with the negative class. Audit time/location/camera groups
 and duplicate images before accepting published or newly generated splits.
 Use overlapping taxa for transfer comparisons; NZ relevance is a separate test.
@@ -300,7 +385,7 @@ persist review decisions; editable review and dataset promotion are still to bui
 | Stage | Experiment | Evidence needed before adopting it |
 | --- | --- | --- |
 | Preserve | Retain the current colour/texture model as a cheap regression baseline | Reproduce its frozen protocol and recorded results |
-| Learn representations | Compare a pretrained RGB image encoder with a frozen-embedding classifier on curated classification data | Better grouped validation and source/site transfer at a recorded compute cost |
+| Learn representations | Compare a pretrained RGB image encoder with a frozen-embedding classifier on source-eligible curated classification data | Better grouped validation and source/site transfer at a recorded compute cost |
 | Match supervision | Fine-tune classification, box detection, or segmentation heads only for compatible labels | Better task-specific validation; no conversion of weak labels into unjustified dense truth |
 | Improve robustness | Train with rotations, scale/crop changes, illumination variation, and modest perspective changes | Better measured performance on actual views and resolutions expected in deployment |
 | Control domain mixtures | Balance batches/loss contributions across sources, species, and label quality; use separate modality heads where needed | Improvement on each critical domain; large sources must not hide regression on a smaller target domain |
@@ -357,18 +442,25 @@ This is proposed follow-up work. The only available CLI remains the Leafy Spurge
 1. **Shared inventory and curation:** introduce source-independent IDs, typed
    supervision, review decisions, and frozen release/split manifests. Preserve
    the legacy baseline adapter and its recorded experiment.
-2. **Second classification source:** add a bounded iNaturalist import for selected
-   taxa with per-photo rights checks and observation grouping. Compare a learned
-   image representation with the baseline using appropriate new training data.
-3. **Second task:** add a bounded MAVSD segmentation experiment, verify palette/
-   geometry and scene groups, and report angle-specific results. Demonstrate that
-   the shared pipeline can support a different label type without fabricating it.
-4. **Local benchmark:** gather reviewed NZ labels with LINZ or permitted drone
-   imagery, dates, and ground truth at the intended scale. Begin this collection
-   early; unrelated international data cannot substitute for its independent test.
-5. **Optional extensions:** admit DeepWeeds/ImageWeeds where they fill measured
-   coverage gaps. Investigate OpenWeeds rights/access; defer satellite and
-   restricted-data experiments until their task and eligibility are explicit.
+2. **Bounded incidental-photo collection:** inspect metadata and eligibility for
+   an accessible NZ trail-camera, community-photo, or roadside source. Keep original
+   subjects, duplicate/encounter groups, capture dates, and location limitations.
+   Start with manageable daytime or otherwise supported views; do not download
+   whole multi-million-image archives as the first step.
+3. **Inference-first comparison:** compare direct whole-photo analysis with region
+   proposals plus specialist identification using existing eligible models. Obtain
+   independent incidental-plant labels; measure review effort, false alarms,
+   missed visible targets, and deduplicated useful discoveries. Do not require
+   supervised segmentation before testing the product hypothesis.
+4. **Local retrospective benchmark:** define the weed watchlist and reference
+   occurrence records with specialists. Preserve as-of dates and distinguish an
+   unlabelled photo, a finding missing from the reference set, earlier available
+   evidence, and a verified new locality. Geographic expectations prioritise review
+   but do not veto credible unusual candidates.
+5. **Targeted extensions:** add source-eligible supervised training or a MAVSD
+   segmentation comparison only if it addresses observed failure modes. Use LINZ
+   for supporting evidence where useful; defer restricted footage and a continuous
+   monitoring service until the pilot's yield and review economics are demonstrated.
 
 Use failing tests first for these behavior changes. Consequential acceptance
 checks include stable IDs without cross-source collisions; checksum failure on
