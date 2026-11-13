@@ -27,25 +27,37 @@ experiment; adopting a model does not establish NZ field performance.
 | Role | Proposed starting point | What it supplies | What still needs validation |
 | --- | --- | --- | --- |
 | Cheap regression baseline | Existing colour/texture logistic classifier | Reproducible point-level reference | Limited to the existing crop protocol |
-| Interactive annotation | SAM 2.1 with reviewer point/box prompts | Candidate object/patch boundaries for a reviewer to correct | Species identity, completeness, edge quality, and whether annotation time improves |
-| Concept-based proposal experiment | SAM 3 with text or visual exemplars | Candidate detections/masks matching a prompted concept | Botanical accuracy, confusing taxa, missed small plants, compute, and checkpoint eligibility |
+| Interactive annotation | Compare SAM 3-family visual prompting with SAM 2.1 point/box assistance | Candidate object/patch boundaries for a reviewer to correct | Species identity, completeness, edge quality, and whether annotation time improves |
+| Concept-based proposal experiment | SAM 3-family still-image pipeline with text or visual exemplars; pin its actual checkpoint | Candidate detections/masks matching a prompted concept | Botanical accuracy, confusing taxa, missed small plants, compute, and checkpoint eligibility |
+| Video segmentation/tracking experiment | SAM 3.1 Object Multiplex when video is introduced | Joint tracking and segmentation of multiple prompted objects | End-to-end weed recall, temporal stability, peak memory, throughput, and hardware dependence |
 | Ground-photo identification | Pretrained RGB image encoder with a species-classification head | Taxon scores for curated iNaturalist/DeepWeeds images | Transfer across observers, habitats, views, growth stages, and unfamiliar species |
 | Dense aerial segmentation | A small U-Net trained on reviewed masks | Per-pixel scores for the dataset's declared species/classes | Patch recall, boundaries, physical scale, site/season transfer, and inference cost |
 | Box detection | A supervised detector trained on reviewed boxes | Candidate locations and species scores | Small-object recall and annotation completeness; boxes do not define silhouettes |
 | Spectral/temporal screening | A separate model with explicit band/time inputs | Broad regional candidates or change scores | Independent labels at matching spatial/temporal support |
 
-[SAM 2](https://github.com/facebookresearch/sam2) provides prompted image masks,
-automatic mask generation, and video propagation; its repository includes the
-SAM 2.1 checkpoints. Start with point/box assistance on representative images,
-then measure saved review time and correction burden. Its code/checkpoint
-licensing is documented in the [official repository](https://github.com/facebookresearch/sam2#license).
-
 [SAM 3](https://github.com/facebookresearch/sam3) adds text/exemplar concept
-segmentation. It is a useful candidate to benchmark, but a prompt such as
-"gorse" is not a verified botanical label. It has its own
+segmentation. Include **SAM 3.1** in the model evaluation: the
+[27 March 2026 release](https://github.com/facebookresearch/sam3/blob/main/RELEASE_SAM3p1.md)
+introduces Object Multiplex for joint multi-object video tracking, with optimized
+inference and updated checkpoints. Prefer it as the initial video candidate
+rather than starting from the November 2025 video release. The published results
+are task/hardware-specific and do not establish better weed masks on still images.
+
+The official [model builders](https://github.com/facebookresearch/sam3/blob/main/sam3/model_builder.py)
+separate the still-image path from the SAM 3.1 multiplex video path. Record the
+actual builder, checkpoint, and task; do not relabel an ordinary SAM 3 image
+experiment as SAM 3.1. Benchmark the supported still-image path on our reviewed
+images and use SAM 3.1 for the corresponding video experiment. A prompt such as
+"gorse" is not a verified botanical label. This family has its own
 [SAM licence](https://github.com/facebookresearch/sam3/blob/main/LICENSE)
-and checkpoint access process; do not assume SAM 2's terms apply. No model access
-or checkpoint download is part of this draft.
+and checkpoint access process; record exact terms and model provenance.
+
+[SAM 2](https://github.com/facebookresearch/sam2) provides prompted image masks,
+automatic mask generation, and video propagation, including SAM 2.1 checkpoints.
+Keep point/box assistance as a comparison baseline rather than assuming it is
+the preferred annotation model. Measure mask quality, saved review time, correction
+burden, and resource use on the same reviewed samples. Its code/checkpoint
+licensing is documented in the [official repository](https://github.com/facebookresearch/sam2#license).
 
 [U-Net](https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/) is the
 initial supervised architecture to benchmark for dense masks. Train or fine-tune
@@ -224,15 +236,16 @@ to original image space. Apply tested patch/edge rules and check that filtering
 does not erase the small infestations we need to find.
 
 The normal dense-segmentation path can run without SAM. An optional alternative
-is a species detector supplying boxes to SAM 2.1 for boundary refinement, or a
-SAM 3 proposal route followed by species verification. Each alternative needs
-its own end-to-end test, including the recall of its candidate stage. Automatic
+is a species detector supplying boxes to a prompted SAM model for boundary
+refinement, or a SAM 3-family concept proposal route followed by species verification.
+Each alternative needs its own end-to-end test, including the recall of its candidate stage. Automatic
 mask generation is not a completeness guarantee, and running all tiles through
 SAM is not a prerequisite for the first useful system.
 
-For video, propagation can reduce annotation effort but repeated frames remain
-one encounter group. Add a runtime video tracker only after a video-specific
-evaluation exists; current source data do not establish tracking performance.
+For video, benchmark SAM 3.1's joint tracking/segmentation path. Propagation can
+reduce annotation effort but repeated frames remain one encounter group. Add a
+runtime video tracker only after a video-specific evaluation exists; current
+source data do not establish tracking performance.
 
 ### Review and export only supported claims
 
@@ -264,7 +277,7 @@ the shared inventory independently; its image labels do not train the mask head.
 | --- | --- | --- |
 | 1. Shared inventory and review | Typed dataset adapters, grouping, append-only decisions, and release manifests; retain the existing baseline | Rebuild identical sample lists; enforce supervision/rights/geometry rules and split separation |
 | 2. Small segmentation baseline | Train a U-Net on a bounded, scene-grouped MAVSD subset with existing masks | Aligned image/mask transforms, ignored-pixel handling, angle-specific validation, and an honest independent test |
-| 3. Annotation assistance | Add SAM 2.1 to a review queue for eligible development images; benchmark SAM 3 proposals if useful | Corrected masks, evidence of species identity, saved reviewer time, correction burden, and independent audit |
+| 3. Annotation assistance | Compare SAM 3-family image proposals with SAM 2.1 point/box assistance; include SAM 3.1 for video experiments | Corrected masks, actual checkpoint/task recorded, evidence of species identity, saved reviewer time, correction burden, and independent audit |
 | 4. Local collection and transfer | Build NZ target/negative labels with suitable LINZ/drone imagery; use iNaturalist for a separate classification task | Same-species/view/scale coverage and an independent local field holdout |
 | 5. Geographic inference | Windowed inference, score merging, raster/polygon export, and abstention | Spatial round-trip checks, small-patch recall, and measured cost/review load |
 | 6. Release and feedback | Frozen inference bundle, repeatable evaluation, and versioned corrections | Deployment-specific acceptance criteria met without test-driven tuning |
