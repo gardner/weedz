@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weedz · Leafy Spurge review</title>
+<style>
+  :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #182e27; background: #f3f5ef }
+  body { max-width: 1400px; margin: auto; padding: 24px }
+  h1 { margin-bottom: 4px; font-size: 28px }
+  p { margin-top: 6px }
+  .muted { color: #51655a; font-size: 14px }
+  .controls { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin: 20px 0 }
+  select, button { font: inherit; padding: 6px 12px; border: 1px solid #bac8bd; border-radius: 6px; background: white }
+  button { cursor: pointer }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px }
+  section, aside { background: white; padding: 18px; border: 1px solid #d4ded3; border-radius: 10px }
+  svg { display: block; width: 100%; aspect-ratio: 1; background: #f5f7f3 }
+  circle { stroke: white; stroke-width: 1; cursor: pointer }
+  circle:focus, circle.selected { stroke: #10291e; stroke-width: 3; outline: none }
+  #crop { width: 100%; image-rendering: pixelated; border-radius: 4px }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; margin: 12px 0 }
+  .legend span::before { content: '●'; color: var(--color); margin-right: 5px }
+  dl { display: grid; grid-template-columns: 1fr 1fr; font-size: 14px; gap: 5px }
+  dt { color: #51655a } dd { margin: 0; text-align: right; overflow-wrap: anywhere }
+  #count { font-weight: 600 } #coordinates { font-size: 13px }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr } body { padding: 12px } #crop { max-width: 260px } }
+</style>
+<header>
+  <h1>Leafy Spurge · survey review</h1>
+  <p>Explore georeferenced survey points and inspect the crop behind each prediction.</p>
+  <p id="metrics"></p>
+  <p class="muted">Point classification in Montana, USA. These are surveyed locations, not infestation boundaries.
+    Scores are model outputs, not calibrated confidence. This offline map has no basemap.</p>
+</header>
+<div class="controls">
+  <label>Partition <select id="partition">
+    <option value="test">Published test</option><option value="validation">Validation</option>
+    <option value="fit">Training (in-sample)</option><option value="excluded">Excluded by buffer</option>
+    <option value="all">All points</option>
+  </select></label>
+  <label><input type="checkbox" id="errors"> Errors only</label>
+  <button id="previous" type="button">Previous point</button>
+  <button id="next" type="button">Next point</button>
+  <span id="count" role="status" aria-live="polite"></span>
+</div>
+<main>
+  <section aria-label="Geographic point map">
+    <svg id="map" viewBox="0 0 800 800" role="group" aria-label="Survey points in longitude and latitude"></svg>
+    <div class="legend">
+      <span style="--color:#24734f">True positive</span><span style="--color:#a5333f">Missed weed</span>
+      <span style="--color:#bb6900">False alarm</span><span style="--color:#63839a">True negative</span>
+    </div>
+    <p class="muted">North is up. Extent fits the selected partition; coordinates are WGS84.
+      Use Previous/Next or select a point to inspect it.</p>
+  </section>
+  <aside aria-label="Selected observation">
+    <h2 id="sample">Select a point</h2>
+    <img id="crop" alt="Selected survey crop" hidden>
+    <dl id="details"></dl><p id="coordinates"></p>
+  </aside>
+</main>
+<footer class="muted">
+  <p>Source: Doherty et al., <a href="https://doi.org/10.57967/hf/2508">Leafy Spurge Dataset</a>,
+    CC BY 4.0. Images converted to PNG for this report. Training points show in-sample predictions.</p>
+</footer>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+  'use strict';
+  const {rows, images, metrics} = JSON.parse(document.getElementById('data').textContent);
+  document.getElementById('metrics').textContent = `Published test · Recall ${(metrics.recall * 100).toFixed(1)}% · ` +
+    `Precision ${(metrics.precision * 100).toFixed(1)}% · Validation-selected threshold ${metrics.threshold.toFixed(3)}`;
+  const svg = document.getElementById('map');
+  const namespace = 'http://www.w3.org/2000/svg';
+  const colors = {true_positive:'#24734f', false_negative:'#a5333f', false_positive:'#bb6900', true_negative:'#63839a'};
+  let visible = [], selected = 0;
+  function element(name, attributes, content) {
+    const node = document.createElementNS(namespace, name);
+    for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
+    if (content !== undefined) node.textContent = content;
+    svg.appendChild(node); return node;
+  }
+  function select(index) {
+    if (!visible.length) return;
+    selected = (index + visible.length) % visible.length;
+    const row = visible[selected];
+    document.getElementById('sample').textContent = `Survey ${row.sample_id}`;
+    const crop = document.getElementById('crop');
+    crop.hidden = false; crop.src = images[row.sample_id];
+    const values = {
+      Partition: row.partition, Cluster: row.cluster, 'Survey label': row.truth ? 'Present' : 'Absent',
+      Prediction: row.predicted ? 'Present' : 'Absent', Score: row.score.toFixed(3),
+      Result: row.outcome.replaceAll('_', ' ')
+    };
+    const details = document.getElementById('details'); details.replaceChildren();
+    for (const [key, value] of Object.entries(values)) {
+      const term = document.createElement('dt'), detail = document.createElement('dd');
+      term.textContent = key; detail.textContent = value; details.append(term, detail);
+    }
+    document.getElementById('coordinates').textContent = `${row.latitude.toFixed(7)}, ${row.longitude.toFixed(7)}`;
+    for (const point of svg.querySelectorAll('circle')) {
+      point.classList.toggle('selected', Number(point.dataset.index) === selected);
+    }
+  }
+  function render() {
+    const partition = document.getElementById('partition').value;
+    const errors = document.getElementById('errors').checked;
+    const extent = rows.filter(row => partition === 'all' || row.partition === partition);
+    visible = extent.filter(row => !errors || row.truth !== row.predicted);
+    svg.replaceChildren();
+    document.getElementById('count').textContent = `${visible.length} points`;
+    document.getElementById('crop').hidden = true;
+    document.getElementById('sample').textContent = 'No points to review';
+    document.getElementById('details').replaceChildren();
+    document.getElementById('coordinates').textContent = '';
+    if (!extent.length) return;
+    const lon = extent.map(row => row.longitude), lat = extent.map(row => row.latitude);
+    const middleLat = (Math.min(...lat) + Math.max(...lat)) / 2;
+    const xFactor = Math.cos(middleLat * Math.PI / 180);
+    const minLon = Math.min(...lon), minLat = Math.min(...lat), maxLat = Math.max(...lat);
+    const width = Math.max((Math.max(...lon) - minLon) * xFactor, 0.00001);
+    const height = Math.max(maxLat - minLat, 0.00001), scale = 660 / Math.max(width, height);
+    const x = value => 70 + (value - minLon) * xFactor * scale;
+    const y = value => 730 - (value - minLat) * scale;
+    for (let index = 0; index <= 4; index++) {
+      const longitude = minLon + width / xFactor * index / 4;
+      const latitude = minLat + height * index / 4;
+      element('line', {x1:x(longitude),x2:x(longitude),y1:40,y2:740,stroke:'#dce4d8'});
+      element('line', {x1:60,x2:760,y1:y(latitude),y2:y(latitude),stroke:'#dce4d8'});
+      element('text', {x:x(longitude),y:770,'text-anchor':'middle','font-size':11}, longitude.toFixed(4));
+      element('text', {x:8,y:y(latitude),'font-size':11}, latitude.toFixed(4));
+    }
+    visible.forEach((row, index) => {
+      const point = element('circle', {cx:x(row.longitude),cy:y(row.latitude),r:5,
+        fill:colors[row.outcome],tabindex:0,role:'button',
+        'aria-label':`Survey ${row.sample_id}: ${row.outcome.replaceAll('_', ' ')}`});
+      point.dataset.index = index;
+      point.addEventListener('click', () => select(index));
+      point.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(index); }
+      });
+    });
+    select(0);
+  }
+  document.getElementById('partition').addEventListener('change', render);
+  document.getElementById('errors').addEventListener('change', render);
+  document.getElementById('previous').addEventListener('click', () => select(selected - 1));
+  document.getElementById('next').addEventListener('click', () => select(selected + 1));
+  render();
+</script>
+</html>

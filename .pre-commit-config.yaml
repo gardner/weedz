@@ -1,0 +1,26 @@
+repos:
+  - repo: local
+    hooks:
+      - id: file-length
+        name: Maximum 500 lines per Python source file
+        entry: uv run --locked python scripts/check_file_length.py
+        args: [--max-lines, "500"]
+        language: system
+        files: ^(src/|scripts/).*\.py$|^main\.py$
+        types: [python]
+      - id: ruff
+        name: Ruff lint and complexity
+        entry: uv run --locked ruff check
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: Ruff format
+        entry: uv run --locked ruff format --check
+        language: system
+        types_or: [python, pyi]
+      - id: pyright
+        name: Pyright type checking
+        entry: uv run --locked pyright
+        language: system
+        pass_filenames: false
+        files: ^(src/|tests/|scripts/|main\.py$|pyproject\.toml$|uv\.lock$)
