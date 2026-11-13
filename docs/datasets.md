@@ -2,6 +2,8 @@
 
 Reviewed 13 November 2026. Dataset facts below link to publisher documentation;
 processing choices are our proposed design unless marked **implemented**.
+See [the ideal pipeline flow](pipeline.md) for the end-to-end design, SAM's
+proposed role, model training, and the runtime detection path.
 
 ## What works today
 

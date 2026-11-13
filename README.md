@@ -6,6 +6,8 @@ spatial evaluation → an offline review map and GeoJSON points.
 See [Datasets, curation, and detection methods](docs/datasets.md) for the source
 shortlist, the implemented pipeline, and proposed processing paths for each
 candidate dataset. Only Leafy Spurge crops are currently supported by the CLI.
+The [ideal pipeline draft](docs/pipeline.md) shows data curation, proposed SAM
+annotation assistance, task-specific models, inference, and review feedback.
 
 ## Run it
 
