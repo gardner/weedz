@@ -210,6 +210,14 @@ Python tests use synthetic records and images and require no model or network.
 They exercise source eligibility, uncertainty, separate reference labels,
 comparison ranking, review persistence, retries and export failure handling.
 The frontend regression check mocks delayed API responses to verify run switching.
+The accessibility check runs axe-core with the WCAG 2.0–2.2 A/AA rules at desktop
+and phone widths, and fails on any violation. It also audits the empty-queue
+state and computes WCAG contrast directly for every text node and placeholder,
+because axe leaves very short text (such as a count) unresolved and never checks
+placeholders. It also makes a review decision by
+keyboard alone, checking that the focused control is visibly marked. Muted text
+colours were darkened within their hue to at least 4.5:1 contrast after the
+first audit found 42 failures.
 The smoke check is read-only against a completed local pilot and verifies filters,
 source-image loading, window toggling, export and mobile layout.
 
