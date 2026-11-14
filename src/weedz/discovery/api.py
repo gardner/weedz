@@ -24,7 +24,7 @@ from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review,
 from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
 from weedz.discovery.sharing import image_use, shareable_export, with_location
 from weedz.discovery.store import Store, now
-from weedz.discovery.study import StudyDefinition, StudyEdit, StudyLink
+from weedz.discovery.study import NewStudy, StudyDefinition, StudyEdit, StudyLink, terms
 from weedz.discovery.study_store import (
     StaleVersion,
     link_study,
@@ -173,8 +173,14 @@ class ReviewAPI:
         linked = [item["runs"] for item in studies(self.store) if item["id"] == study_id]
         return {"id": study_id, "current": history[-1], "versions": history, "runs": linked[0]}
 
-    def create_study(self, edit: StudyEdit) -> dict:
-        return self._save_study(None, edit)
+    def create_study(self, edit: NewStudy) -> dict:
+        """A new study, linked to its run in the same request so none is left unlinked."""
+        if edit.run_id:
+            self.run(edit.run_id)
+        saved = self._save_study(None, edit)
+        if edit.run_id:
+            link_study(self.store, edit.run_id, saved["id"], edit.author)
+        return saved
 
     def edit_study(self, study_id: str, edit: StudyEdit) -> dict:
         self.study(study_id)
@@ -347,6 +353,8 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.get("/runs/{run_id}/study")(api.run_study)
     app.post("/runs/{run_id}/study")(api.link_study)
     app.get("/studies")(api.studies)
+    # Before /studies/{study_id}, which would otherwise take "terms" as an id.
+    app.get("/studies/terms")(terms)
     app.post("/studies", status_code=201)(api.create_study)
     app.get("/studies/{study_id}")(api.study)
     app.post("/studies/{study_id}/versions", status_code=201)(api.edit_study)

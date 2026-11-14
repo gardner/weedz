@@ -1,0 +1,125 @@
+.study-panel {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin: 14px 0;
+  background: #fafbf7;
+  padding: 13px 17px;
+}
+.study-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 11px;
+}
+.study-panel summary > span {
+  font-weight: 400;
+  float: right;
+  font-size: 10px;
+  color: var(--muted);
+}
+.study-panel p {
+  margin-bottom: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.study-panel h2 {
+  margin: 16px 0 6px;
+  font-size: 11px;
+}
+.study-panel ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.study-panel > button,
+.study-view + button {
+  margin-top: 12px;
+  font-size: 11px;
+}
+.study-view dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px 18px;
+  margin: 16px 0 0;
+}
+.study-view dt {
+  font-size: 10px;
+  color: var(--muted);
+}
+.study-view dd {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.study-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+.study-form fieldset {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 0;
+  min-width: 0;
+}
+.study-form legend {
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.study-form label,
+.study-field {
+  display: grid;
+  gap: 5px;
+  font-size: 10px;
+  color: #586855;
+  min-width: 0;
+}
+.study-field small {
+  color: var(--muted);
+}
+.study-form input:not([type="checkbox"]),
+.study-form textarea {
+  width: 100%;
+  border: 1px solid #dce2d6;
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 11px;
+  color: var(--ink);
+  background: #fff;
+}
+.study-pick {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 10px;
+  align-items: end;
+}
+.study-form .study-check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--ink);
+}
+.study-problem {
+  margin: 0;
+  color: #8a2a16;
+  font-size: 11px;
+}
+.study-actions {
+  display: flex;
+  gap: 8px;
+}
+.study-actions button {
+  font-size: 11px;
+}
+@media (max-width: 640px) {
+  .study-pick {
+    grid-template-columns: 1fr;
+  }
+}

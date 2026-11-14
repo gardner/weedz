@@ -43,6 +43,17 @@ def test_api_creates_versions_lists_and_links_a_study(tmp_path: Path) -> None:
     assert unknown.status_code == 404
 
 
+def test_a_new_study_can_be_linked_to_its_run_in_one_request(tmp_path: Path) -> None:
+    pilot(tmp_path)
+    client = TestClient(create_app(tmp_path))
+    refused = client.post("/studies", json=body() | {"run_id": "none"})
+    assert refused.status_code == 404
+    assert client.get("/studies").json() == []
+    created = client.post("/studies", json=body() | {"run_id": "run"}).json()
+    linked = client.get("/runs/run/study").json()
+    assert (linked["id"], linked["linked_by"]) == (created["id"], "Ana")
+
+
 def test_api_refuses_an_unscreened_species_without_the_mark(tmp_path: Path) -> None:
     client = TestClient(create_app(tmp_path))
     refused = client.post("/studies", json=body(watchlist=[{"species": "Gunnera tinctoria"}]))
@@ -96,3 +107,16 @@ def test_cli_needs_an_author_to_record_and_refuses_an_invalid_file(tmp_path: Pat
         cli.main(args)
     with pytest.raises(SystemExit, match="not yet screened"):
         cli.main([*args, "--author", "Ana"])
+
+
+def test_api_serves_the_screening_terms_a_study_is_checked_against(tmp_path: Path) -> None:
+    terms = TestClient(create_app(tmp_path)).get("/studies/terms").json()
+    assert terms["regions"] == ["Nelson", "Tasman"]
+    assert terms["species"]["Clematis vitalba"] == "Old man's beard"
+    lookalike = {"name": "Clematis paniculata", "confusable_with": "Clematis vitalba"}
+    assert lookalike in terms["lookalikes"]
+    assert terms["limits"]["coverage"] == {
+        "measure": "Coverage and review usability",
+        "direction": "at least",
+        "unit": "% of incidental photos reviewed",
+    }

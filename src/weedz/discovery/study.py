@@ -161,9 +161,27 @@ class StudyEdit(BaseModel):
     change_note: Text = ""
 
 
+class NewStudy(StudyEdit):
+    """A new study, linked to `run_id` by its author when one is given."""
+
+    run_id: Name | None = None
+
+
 class StudyLink(BaseModel):
     study_id: Name
     linked_by: ReviewerName
+
+
+def terms() -> dict[str, Any]:
+    """What the screening code covers, and how each limit reads, for a study to name."""
+    return {
+        "regions": list(REGIONS),
+        "species": SPECIES,
+        "lookalikes": [
+            {"name": name, "confusable_with": weed} for name, weed in LOOKALIKE_NAMES.items()
+        ],
+        "limits": {key: item._asdict() for key, item in LIMITS.items()},
+    }
 
 
 def open_decisions(study: StudyDefinition) -> list[str]:
