@@ -98,3 +98,18 @@ def test_a_watchlist_subject_is_not_compared_against_itself() -> None:
     # Reference photos are labelled with the target; comparing it with itself zeroes the margin.
     photo = {"original_taxon": "Ulex europaeus", "original_common_name": "gorse"}
     assert subject_label(photo) is None
+
+
+def test_a_target_identified_below_species_is_not_compared_against_itself() -> None:
+    photo = {"original_taxon": "Ulex europaeus europaeus", "original_common_name": "Common Gorse"}
+    assert subject_label(photo) is None
+
+
+def test_a_reference_photo_never_gets_a_subject_comparison() -> None:
+    photo = {"cohort": "reference", "original_taxon": "Ulex", "original_common_name": "gorses"}
+    assert subject_label(photo) is None
+
+
+def test_a_taxon_sharing_a_target_prefix_is_still_compared() -> None:
+    photo = {"original_taxon": "Ulex europaeusoides", "original_common_name": ""}
+    assert subject_label(photo) == "Ulex europaeusoides"

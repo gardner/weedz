@@ -90,10 +90,14 @@ def subject_label(photo: dict[str, Any]) -> str | None:
     """The photo's original subject, so a window showing it is not read as a weed.
 
     A watchlist target is never its own comparison: reference photos would score zero.
+    That includes references identified below species, such as a gorse subspecies.
     """
-    if photo.get("original_taxon") in SPECIES:
+    taxon = photo.get("original_taxon", "")
+    if photo.get("cohort") == "reference" or any(
+        taxon == name or taxon.startswith(f"{name} ") for name in SPECIES
+    ):
         return None
-    names = [photo.get("original_taxon", ""), photo.get("original_common_name", "")]
+    names = [taxon, photo.get("original_common_name", "")]
     return ", ".join(name for name in names if name) or None
 
 
