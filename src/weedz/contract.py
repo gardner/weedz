@@ -11,10 +11,14 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    SerializerFunctionWrapHandler,
     StringConstraints,
     field_serializer,
+    model_serializer,
     model_validator,
 )
+
+from weedz.consent import Permission
 
 SCHEMA_VERSION = 1
 
@@ -55,6 +59,19 @@ class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
 
+class ContributorConsent(Contract):
+    """What a contributor permitted for their own photo, under which consent wording (#60)."""
+
+    version: Text
+    uses: frozenset[Permission]
+    # When the contributor withdrew it; from then on the photo serves no further use.
+    withdrawn_at: Text | None = None
+
+    @field_serializer("uses")
+    def sorted_uses(self, uses: frozenset[str]) -> list[str]:
+        return sorted(uses)
+
+
 class Rights(Contract):
     """Image and metadata licences are separate; `license_source` is where they were read."""
 
@@ -65,6 +82,17 @@ class Rights(Contract):
     creator: Text | None = None
     attribution: Text
     license_source: Text
+    # Only for a photo its contributor sent us directly; sourced material has none and is
+    # governed by its licence alone.
+    consent: ContributorConsent | None = None
+
+    @model_serializer(mode="wrap")
+    def without_absent_consent(self, handler: SerializerFunctionWrapHandler) -> dict:
+        """Rights without consent serialise as before, so existing manifests keep their bytes."""
+        data = handler(self)
+        if data.get("consent", True) is None:
+            del data["consent"]
+        return data
 
 
 class Media(Contract):

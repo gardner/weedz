@@ -104,7 +104,11 @@ void main() {
     test('an exact photo fills location and capture time as the fixture', () {
       final metadata = extractPhotoMetadata(iphonePhoto());
       final report = minimalReport().copyWith(
-        consent: Consent(wordingVersion: 'v1', image: false, location: true),
+        consent: Consent(
+          wordingVersion: '2026-11',
+          image: false,
+          location: true,
+        ),
         location: metadata.reportLocation,
         capturedAt: metadata.reportCapturedAt,
       );
