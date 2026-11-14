@@ -29,6 +29,10 @@ SELECT l.* FROM run_studies l WHERE l.id = (
 """
 
 
+class AlreadyLinked(Exception):
+    """The run already has a study; a new one would replace it unseen."""
+
+
 class StaleVersion(Exception):
     """The edit was based on a version that is no longer the latest."""
 
@@ -74,6 +78,41 @@ def save_version(store: Store, study_id: str | None, edit: StudyEdit) -> dict[st
             f"This study is at version {latest}, not {edit.base_version}; reload and edit again"
         )
     return {"id": study_id, "version": version}
+
+
+# Links only if the run has never had a study, in the same write that records it.
+LINK_FIRST = """
+INSERT INTO run_studies(run_id,study_id,linked_by,created_at)
+SELECT ?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM run_studies WHERE run_id=?)
+"""
+
+
+def create_linked(store: Store, run_id: str, edit: StudyEdit) -> dict[str, Any]:
+    """Record a new study and link it to a run that has none, in one transaction, so of
+    two people creating a study for the same run at once only the first succeeds."""
+    study_id = f"study-{uuid.uuid4().hex[:12]}"
+    created = _now()
+    with store.connect() as db:
+        linked = db.execute(LINK_FIRST, (run_id, study_id, edit.author, created, run_id))
+        if linked.rowcount == 1:
+            db.execute(
+                INSERT_NEXT,
+                (
+                    study_id,
+                    1,
+                    edit.definition.model_dump_json(),
+                    edit.author,
+                    edit.change_note,
+                    created,
+                    study_id,
+                    0,
+                ),
+            )
+            return {"id": study_id, "version": 1}
+    existing = run_study(store, run_id)
+    raise AlreadyLinked(
+        f"This run already has study {existing['id'] if existing else ''}; reload and edit it"
+    )
 
 
 def _links(store: Store) -> list[dict[str, Any]]:

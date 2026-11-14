@@ -12,6 +12,7 @@ from datetime import date
 from typing import Annotated, Any, Literal, NamedTuple
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -24,8 +25,29 @@ from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.outcome_terms import CONDITIONS
 from weedz.discovery.records import REGIONS, SPECIES, ReviewerName, RunSpec
 
+
+def _one_line(value: str) -> str:
+    if "\n" in value or "\r" in value:
+        raise ValueError("Keep this to one line; the review app edits it as one")
+    return value
+
+
+def _no_colon(value: str) -> str:
+    if ":" in value:
+        raise ValueError(f"{value!r}: a name cannot contain ':', which the review app's lists use")
+    return value
+
+
+# Longer prose may span lines; names and short notes are edited in the review app as
+# single lines, and lists as "Name: why" lines, so they must round-trip unchanged.
 Text = Annotated[str, StringConstraints(strip_whitespace=True, max_length=4000)]
-Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+Line = Annotated[Text, AfterValidator(_one_line)]
+Name = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=200),
+    AfterValidator(_one_line),
+    AfterValidator(_no_colon),
+]
 Direction = Literal["at least", "at most"]
 
 
@@ -73,36 +95,36 @@ class Person(BaseModel):
 
 class Area(BaseModel):
     name: Name
-    rationale: Text = ""
+    rationale: Line = ""
     screened: bool = True
 
 
 class WatchSpecies(BaseModel):
     species: Name
-    rationale: Text = ""
+    rationale: Line = ""
     screened: bool = True
 
 
 class LookalikeNote(BaseModel):
     taxon: Name
-    rationale: Text = ""
+    rationale: Line = ""
     screened: bool = True
 
 
 class ReferenceRecords(BaseModel):
     name: Name
-    note: Text = ""
+    note: Line = ""
 
 
 class Budget(BaseModel):
     hours: float | None = Field(default=None, gt=0, le=100_000)
     photos: int | None = Field(default=None, gt=0, le=1_000_000)
-    note: Text = ""
+    note: Line = ""
 
 
 class Limit(BaseModel):
     value: float = Field(ge=0, le=1_000_000)
-    note: Text = ""
+    note: Line = ""
 
 
 def _check_in_code(names: list[tuple[str, bool]], known: set[str], what: str, mark: str) -> None:
@@ -123,7 +145,7 @@ class StudyDefinition(BaseModel):
 
     status: Literal["provisional", "agreed"] = "provisional"
     question: Text = ""
-    partner: Text = ""
+    partner: Line = ""
     people: list[Person] = Field(default_factory=list, max_length=50)
     regions: list[Area] = Field(default_factory=list, max_length=20)
     period_start: date | None = None
@@ -176,7 +198,7 @@ class StudyEdit(BaseModel):
     definition: StudyDefinition
     author: ReviewerName
     base_version: int = Field(default=0, ge=0)
-    change_note: Text = ""
+    change_note: Line = ""
 
 
 class NewStudy(StudyEdit):
@@ -256,6 +278,11 @@ def _screening_gaps(study: StudyDefinition) -> list[str]:
         f"{name} is queried by every run but not one of this study's regions"
         for name in REGIONS
         if name not in regions
+    ]
+    notes += [
+        f"{item.taxon} is a lookalike but not yet screened"
+        for item in study.lookalikes
+        if not item.screened
     ]
     notes += [
         f"{item.name} is a study region but not yet screened"

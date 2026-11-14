@@ -19,7 +19,9 @@ from weedz.discovery.study import (
     open_decisions,
 )
 from weedz.discovery.study_store import (
+    AlreadyLinked,
     StaleVersion,
+    create_linked,
     link_study,
     run_study,
     save_version,
@@ -125,7 +127,10 @@ def test_differences_name_every_gap_between_the_study_and_the_screening() -> Non
                 {"species": "Clematis vitalba"},
                 {"species": "Gunnera tinctoria", "screened": False},
             ],
-            lookalikes=[{"taxon": "Clematis paniculata", "rationale": "Native, flowers alike"}],
+            lookalikes=[
+                {"taxon": "Clematis paniculata", "rationale": "Native, flowers alike"},
+                {"taxon": "Clematis montana", "screened": False},
+            ],
             period_start="2015-01-01",
             period_end="2020-12-31",
         )
@@ -133,6 +138,7 @@ def test_differences_name_every_gap_between_the_study_and_the_screening() -> Non
     notes = differences(study, RunSpec(after=date(2010, 1, 1), before=date(2024, 12, 31)))
     assert any("Cortaderia selloana" in note and "screened" in note for note in notes)
     assert any("Gunnera tinctoria" in note and "not yet screened" in note for note in notes)
+    assert any("Clematis montana" in note and "not yet screened" in note for note in notes)
     assert any("Clematis forsteri" in note and "no rationale" in note for note in notes)
     assert not any("Clematis paniculata" in note for note in notes)
     assert any("Tasman" in note for note in notes)
@@ -209,3 +215,35 @@ def test_a_stored_study_still_reads_after_the_screening_code_changes(
     assert any("Clematis vitalba" in note and "no longer" in note for note in linked["differences"])
     with pytest.raises(ValidationError, match="not in the screening watchlist"):
         StudyDefinition.model_validate(definition())
+
+
+def test_what_the_form_writes_on_one_line_stays_on_one_line() -> None:
+    """The review app edits names and short notes as single lines, and lists as
+    'Name: why' lines, so the API refuses what those could not carry back unchanged."""
+    with pytest.raises(ValidationError, match="cannot contain ':'"):
+        StudyDefinition.model_validate(
+            definition(regions=[{"name": "Tasman: Golden Bay", "screened": False}])
+        )
+    with pytest.raises(ValidationError, match="one line"):
+        StudyDefinition.model_validate(
+            definition(watchlist=[{"species": "Clematis vitalba", "rationale": "a\nb"}])
+        )
+    with pytest.raises(ValidationError, match="one line"):
+        StudyDefinition.model_validate(
+            definition(reference_records=[{"name": "DOC", "note": "a\nb"}])
+        )
+    with pytest.raises(ValidationError, match="cannot contain ':'"):
+        StudyDefinition.model_validate(definition(people=[{"role": "Lead", "name": "A: B"}]))
+    long = StudyDefinition.model_validate(definition(question="Line one\nLine two"))
+    assert long.question == "Line one\nLine two"
+
+
+def test_two_new_studies_for_one_run_cannot_both_link(tmp_path: Path) -> None:
+    store = Store(tmp_path)
+    store.create_run("run", RunSpec())
+    first = create_linked(store, "run", edit())
+    with pytest.raises(AlreadyLinked, match=first["id"]):
+        create_linked(store, "run", edit("Ben"))
+    assert len(studies(store)) == 1
+    linked = run_study(store, "run")
+    assert linked is not None and linked["id"] == first["id"]

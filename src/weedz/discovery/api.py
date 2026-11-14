@@ -26,7 +26,9 @@ from weedz.discovery.sharing import image_use, shareable_export, with_location
 from weedz.discovery.store import Store, now
 from weedz.discovery.study import NewStudy, StudyDefinition, StudyEdit, StudyLink, terms
 from weedz.discovery.study_store import (
+    AlreadyLinked,
     StaleVersion,
+    create_linked,
     link_study,
     run_study,
     save_version,
@@ -174,18 +176,15 @@ class ReviewAPI:
         return {"id": study_id, "current": history[-1], "versions": history, "runs": linked[0]}
 
     def create_study(self, edit: NewStudy) -> dict:
-        """A new study, linked to its run in the same request so none is left unlinked."""
-        if edit.run_id:
-            self.run(edit.run_id)
-            linked = run_study(self.store, edit.run_id)
-            if linked:
-                raise HTTPException(
-                    409, f"This run already has study {linked['id']}; reload and edit it"
-                )
-        saved = self._save_study(None, edit)
-        if edit.run_id:
-            link_study(self.store, edit.run_id, saved["id"], edit.author)
-        return saved
+        """A new study, linked to its run in the same transaction so none is left unlinked
+        and a run's existing study is never replaced unseen."""
+        if not edit.run_id:
+            return self._save_study(None, edit)
+        self.run(edit.run_id)
+        try:
+            return create_linked(self.store, edit.run_id, edit)
+        except AlreadyLinked as error:
+            raise HTTPException(409, str(error)) from error
 
     def edit_study(self, study_id: str, edit: StudyEdit) -> dict:
         self.study(study_id)
