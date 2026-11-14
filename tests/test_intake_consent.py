@@ -112,7 +112,10 @@ def test_reports_stored_before_consent_records_stay_readable(tmp_path: Path) -> 
     store = ReportStore(tmp_path)
     (stored,) = store.active()
     assert stored.report.consent.uses == frozenset({"review"})
-    assert stored.report.consent.location is True
+    # Nothing recorded that the exact point was knowingly shared, so it is not kept.
+    assert stored.report.consent.location is False
+    assert stored.report.location is None
+    assert b"173.28" not in (folder / "reports.sqlite3").read_bytes()
     assert stored.report.consent.wording_version == "consent-2026-11"
     receipt = store.receipt(1, "old")
     assert receipt is not None

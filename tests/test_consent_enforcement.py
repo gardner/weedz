@@ -1,13 +1,18 @@
 """Every place a photo is used honours what its contributor permitted (#60)."""
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
+from test_judgements import store_with_photo
+from test_leads import select
 from test_reference import note, reasons
 from test_sharing import photo
 
 from weedz.contract import Sample
 from weedz.discovery import package, package_report
+from weedz.discovery.activities import export
 from weedz.discovery.sharing import image_use, location, shareable_export, shareable_photo
 from weedz.reference import examples
 
@@ -164,3 +169,13 @@ def test_a_withdrawn_photo_is_left_out_of_follow_up_packages() -> None:
         "created_at": "t",
     }
     assert package.follow_up_package(export, [selection], "t")["leads"] == []
+
+
+def test_nothing_derived_from_a_withdrawn_photo_is_exported(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path)
+    select(store, photo_id)
+    stored = store.photos
+    ended = consented(["review", "agencies"], WITHDRAWN_AT)
+    store.photos = lambda run_id: [item | {"consent": ended} for item in stored(run_id)]  # type: ignore[method-assign]
+    shared = json.dumps(shareable_export(export(store, "run")))
+    assert photo_id not in shared
