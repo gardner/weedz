@@ -170,31 +170,33 @@ def _applies(meaning: dict[str, Any] | None, model: dict[str, Any]) -> bool:
 def pin_meaning(saved: dict[str, Any] | None, metadata: dict[str, Any]) -> dict[str, Any]:
     """The model metadata to record for a run: the screener's, plus its pinned meaning.
 
-    A resumed run keeps the pin it started with (or none, if screened before pinning),
-    and a changed scoring configuration is refused, as mixing scores would be.
+    A new run is pinned to the current declaration, or to None (explicitly undeclared) so
+    a later declaration cannot claim it. A resumed run keeps what it started with (no pin
+    at all, if screened before pinning), and a changed scoring configuration is refused,
+    as mixing scores would be.
     """
-    if saved:
-        previous = {"model_key": "bioclip"} | saved
-        pinned = previous.pop("score_meaning", None)
-        if previous != metadata:
-            raise ValueError(
-                "Scoring configuration changed; start a new run to preserve provenance"
-            )
-    else:
+    if not saved:
         current = CURRENT.get(_configuration(metadata))
         pinned = current if _applies(DECLARED.get(current or ""), metadata) else None
-    return metadata | ({"score_meaning": pinned} if pinned else {})
+        return metadata | {"score_meaning": pinned}
+    previous = {"model_key": "bioclip"} | saved
+    pin = {"score_meaning": previous.pop("score_meaning")} if "score_meaning" in previous else {}
+    if previous != metadata:
+        raise ValueError("Scoring configuration changed; start a new run to preserve provenance")
+    return metadata | pin
 
 
 def score_meaning(model: dict[str, Any] | None) -> dict[str, Any]:
     """The declared meaning of a run's scores, from the model metadata it recorded.
 
-    A run screened before meanings were pinned has the configuration's first declaration,
-    which was the only one when it was scored.
+    A run screened before meanings were pinned (no `score_meaning` key) has the
+    configuration's first declaration, which was the only one when it was scored; a run
+    pinned to None was screened undeclared and stays so.
     """
     model = model or {}
     key, ranking = _configuration(model)
-    declared = DECLARED.get(model.get("score_meaning") or f"{key}/ranking-{ranking}/meaning-1")
+    pinned = model.get("score_meaning", f"{key}/ranking-{ranking}/meaning-1")
+    declared = DECLARED.get(pinned) if pinned else None
     if declared is None or not _applies(declared, model):
         return copy.deepcopy(UNDECLARED | {"model_key": model.get("model_key")})
     return copy.deepcopy(declared)

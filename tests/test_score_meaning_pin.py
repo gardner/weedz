@@ -29,8 +29,19 @@ def test_a_new_run_is_pinned_to_the_current_declaration() -> None:
     assert pin_meaning(None, model()) == model() | {"score_meaning": FIRST}
 
 
-def test_an_undeclared_configuration_is_not_pinned() -> None:
-    assert "score_meaning" not in pin_meaning(None, model(ranking=3))
+def test_an_undeclared_configuration_is_pinned_as_undeclared(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    saved = pin_meaning(None, model(ranking=5))
+    assert saved["score_meaning"] is None
+    later = meanings.DECLARED[FIRST] | {
+        "id": "bioclip-2/ranking-5/meaning-1",
+        "ranking_revision": 5,
+    }
+    monkeypatch.setitem(meanings.DECLARED, later["id"], later)
+    assert score_meaning(later_model := model(ranking=5))["id"] == later["id"]
+    assert score_meaning(saved)["declared"] is False, "a later declaration cannot claim it"
+    assert pin_meaning(saved, later_model)["score_meaning"] is None, "a retry keeps it"
 
 
 @pytest.mark.usefixtures("second_version")

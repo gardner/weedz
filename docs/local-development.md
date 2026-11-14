@@ -128,8 +128,10 @@ intended for local development, not shared public hosting.
    any final test. Screening pins each run to the declaration current when it
    started (the run's model metadata records its `score_meaning` id, and a retry
    keeps it), and declarations are never edited, so a new version never changes
-   an earlier run's meaning. Runs screened before pinning keep their
-   configuration's first declaration. Any other configuration, such as runs scored under ranking
+   an earlier run's meaning. A run screened under a configuration with no
+   declaration is pinned as undeclared (`null`), so a declaration added later
+   cannot claim it. Runs screened before pinning keep their configuration's
+   first declaration. Any other configuration, such as runs scored under ranking
    revisions 2 or 3, is served with "no declared meaning": compare its scores
    only within that run. The review desk shows each species' margin in words
    beside the suggestion, with the declaration behind "What this score means";
