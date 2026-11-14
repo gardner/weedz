@@ -41,23 +41,34 @@ def summarise(data: dict[str, Any]) -> dict[str, Any]:
         },
         "timestamped": len(hours),
         "daylight_07_19": sum(7 <= hour < 19 for hour in hours),
+        "midday_09_16": sum(_midday(image) for image in images),
+        "midday_sites": len({image["location"] for image in images if _midday(image)}),
         "by_year": dict(sorted(years.items())),
         "top_labels": [[name, count] for name, count in labels.most_common(10)],
     }
 
 
-def daytime_sample(data: dict[str, Any], per_project: int = 1) -> list[dict[str, Any]]:
-    """A stable-hash pick of mid-day frames from known sites, `per_project` per project."""
+def _midday(image: dict[str, Any]) -> bool:
+    hour = _hour(image)
+    return hour is not None and 9 <= hour < 16
+
+
+def _hash(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def daytime_sample(
+    data: dict[str, Any], per_project: int = 1, projects: int | None = 12
+) -> list[dict[str, Any]]:
+    """Mid-day frames from known sites: the first `projects` projects by name hash, then
+    the first `per_project` frames of each by image-id hash. This is the recorded sample."""
     by_project: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for image in data["images"]:
-        hour = _hour(image)
-        if hour is not None and 9 <= hour < 16 and not image["location"].endswith("unknown"):
+        if _midday(image) and not image["location"].endswith("unknown"):
             by_project[image["project"]].append(image)
     picks = []
-    for project in sorted(by_project):
-        ranked = sorted(
-            by_project[project], key=lambda i: hashlib.sha256(i["id"].encode()).digest()
-        )
+    for project in sorted(by_project, key=_hash)[:projects]:
+        ranked = sorted(by_project[project], key=lambda image: _hash(image["id"]))
         picks += ranked[:per_project]
     return picks
 

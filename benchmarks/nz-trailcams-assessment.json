@@ -22,6 +22,8 @@
     },
     "timestamped": 2280269,
     "daylight_07_19": 753399,
+    "midday_09_16": 442567,
+    "midday_sites": 1793,
     "by_year": {
       "2010": 470,
       "2011": 296,
@@ -82,10 +84,24 @@
     ]
   },
   "visual_sample": {
-    "method": "one stable-hash 09:00-16:00 frame from a known site in each of 12 projects (by project-name hash)",
+    "method": "daytime_sample(): the first 12 projects by sha256(project name), then the first 09:00-16:00 frame from a known site in each by sha256(image id)",
     "with_substantial_vegetation": 11,
     "low_light_infrared": 1,
-    "of": 12
+    "of": 12,
+    "image_ids": [
+      "LC3/pig/997e83ca-a2d9-44a2-96d4-65135fe3675f.JPG",
+      "LCC/deer/293a4948-26e1-4337-b815-1450455abbdd.JPG",
+      "R29/dunnock/91B617FC-A50E-4BFF-A832-DC890FE046A0.JPG",
+      "R20/blackbird/DFC60D8F-2353-4A14-B6B5-D0B4DA9E3090.JPG",
+      "MLP/canada_goose/8b8030a9-ad17-429c-b57d-84eea3f3ef0e.JPG",
+      "KCR/cat/4420191e-d669-4d07-a4c1-21f042d9aeda.JPG",
+      "EFD/mouse/33C0E8BD-35E6-4EC3-8960-4E150FC72638.JPG",
+      "DW2/kereru/677EBA26-6787-4FAB-A58C-ADF1800D073C.JPG",
+      "PS3/robin/5e2383ca-3386-4927-9cee-e673cb587f5c.JPG",
+      "ACC/pheasant/36FE7757-C0D1-4C26-860D-E443F3E7B4C8.JPG",
+      "CCP/sheep/4ead9167-fe58-4be0-8362-bceedb6c74ef.JPG",
+      "ZIK/tui/db0a49dd-8fc6-4621-8a9a-5dc8163a8a74.JPG"
+    ]
   },
   "location": "No coordinates published; DOC provides camera coordinates on request, rounded to the nearest 10 km"
 }

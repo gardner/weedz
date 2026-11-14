@@ -56,3 +56,28 @@ def test_cli_writes_json(tmp_path: Path) -> None:
     output = tmp_path / "summary.json"
     assess.main([str(source), "--output", str(output)])
     assert json.loads(output.read_text())["images"] == 4
+
+
+def test_sample_keeps_the_first_projects_by_name_hash_like_the_recorded_check() -> None:
+    import hashlib
+
+    data = coco()
+    for project in ["P3", "P4", "P5"]:
+        data["images"].append(
+            {
+                "id": f"{project}-x",
+                "location": f"{project}_A",
+                "project": project,
+                "datetime": "2021-02-02 11:00:00",
+            }
+        )
+    expected = sorted(
+        ["P1", "P3", "P4", "P5"], key=lambda p: hashlib.sha256(p.encode()).hexdigest()
+    )
+    picks = assess.daytime_sample(data, projects=2)
+    assert [image["project"] for image in picks] == expected[:2]
+
+
+def test_summary_reports_midday_frames_and_sites() -> None:
+    summary = assess.summarise(coco())
+    assert (summary["midday_09_16"], summary["midday_sites"]) == (2, 2)

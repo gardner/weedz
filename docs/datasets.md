@@ -212,7 +212,8 @@ are downloaded.
 - **Timing:** there are no sequence IDs. 93% of frames are timestamped, mostly
   2019–2020 with only 2,709 before 2015. Only 33% are between 07:00 and 19:00;
   442,567 frames from 1,793 sites are between 09:00 and 16:00.
-- **Vegetation:** in one mid-day frame from each of 12 projects, 11 show substantial
+- **Vegetation:** in the script's `daytime_sample` (the first 12 projects by name hash,
+  with one mid-day frame from each; the frame ids are listed in the summary), 11 show substantial
   forest-floor, fern, tussock or grassland vegetation, and one is a low-light
   infrared frame. That is far more visible vegetation than the pilot's
   iNaturalist bird photos.
