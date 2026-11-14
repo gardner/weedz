@@ -491,7 +491,7 @@ pipelines.
 | Rights | Media and metadata licences kept separately; creator; attribution; where the licence was read | Intended-use eligibility |
 | Media | Width/height and format when known | Colour space, dtype, bands, valid-data mask |
 | Taxonomy | The original source label kept as context only; annotation taxon as recorded | Taxon IDs, synonym mapping, regional status |
-| Supervision / label extent | Typed annotations with `present`/`absent`/`unknown`/`ignored` labels, pixel points, boxes and mask URIs | Mask files and ignored-pixel handling |
+| Supervision / label extent | Typed annotations with `present`/`absent`/`unknown`/`ignored` labels, pixel points, boxes and mask URIs | Mask files and ignored-pixel handling; annotation completeness, so a verified target-absent image can count as a detection negative without an invented box |
 | View/scale | Nadir/oblique/ground/unknown, detail/plant/patch/unknown, and GSD when known | Pose, angle convention, footprint |
 | Geography/time | Optional WGS84 point with uncertainty and public/obscured privacy; capture date | CRS/affine transforms, survey dates, sensor |
 | Grouping | Free-form groups (survey cluster, published split, observation) | Duplicate/encounter linking, final splits (#7) |

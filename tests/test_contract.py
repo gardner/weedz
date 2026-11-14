@@ -113,7 +113,7 @@ def test_occurrence_supervision_needs_a_real_location() -> None:
         ({"box": [1, 1, 2, 2]}, "image_class"),
         ({"supervision": "dense_mask"}, "mask_uri"),
         ({"supervision": "dense_mask", "mask_uri": "  "}, "mask_uri"),
-        ({"supervision": "surveyed_point", "point": [401, 10]}, "inside the image"),
+        ({"supervision": "surveyed_point", "point": [400, 10]}, "inside the image"),
         ({"supervision": "surveyed_point"}, "point"),
         ({"supervision": "unlabelled"}, "unlabelled"),
     ],
@@ -133,6 +133,11 @@ def test_non_finite_numbers_are_refused_because_json_cannot_hold_them(value: flo
     ):
         with pytest.raises(ValidationError, match="finite"):
             Sample.model_validate(invalid)
+
+
+def test_a_box_may_reach_the_far_image_edges() -> None:
+    whole = annotation(supervision="box", box=[0, 0, 400, 300])
+    assert Sample.model_validate(sample(tasks=["detection"], annotations=[whole]))
 
 
 def test_a_sample_rejects_unknown_schema_versions_and_unnamespaced_ids() -> None:

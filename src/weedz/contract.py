@@ -180,13 +180,12 @@ class Sample(Contract):
         return self
 
     def _check_extent(self, note: Annotation) -> None:
-        width, height = self.media.width, self.media.height
-        corners = [note.point] if note.point else []
-        if note.box:
-            corners += [note.box[:2], note.box[2:]]
-        for x, y in corners:
-            if (width and x > width) or (height and y > height):
-                raise ValueError(f"Annotation {note.id} must lie inside the image")
+        width, height = self.media.width or float("inf"), self.media.height or float("inf")
+        # A point addresses a pixel in the half-open extent; a box's far edges may touch it.
+        inside_point = not note.point or (note.point[0] < width and note.point[1] < height)
+        inside_box = not note.box or (note.box[2] <= width and note.box[3] <= height)
+        if not (inside_point and inside_box):
+            raise ValueError(f"Annotation {note.id} must lie inside the image")
         if note.supervision == "occurrence" and self.geography is None:
             raise ValueError("Occurrence supervision needs a real location")
 
