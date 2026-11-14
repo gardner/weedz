@@ -96,6 +96,8 @@ def test_unknown_dates_stay_unknown() -> None:
     assert (dates.photographed, dates.uploaded) == (None, None)
     assert (dates.days_photo_to_upload, dates.days_photo_to_screening) == (None, None)
     assert "date unknown" in dates.current_presence.lower()
+    # Nor does an undated candidate presuppose that the plant was ever there.
+    assert "if the plant is visible" in dates.current_presence.lower()
     assert "not that it is there now" not in dates.current_presence
 
 

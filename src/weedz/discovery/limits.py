@@ -99,8 +99,8 @@ def _days(start: date | None, end: date | None) -> int | None:
 def _presence(photographed: date | None) -> str:
     if photographed is None:
         return (
-            "Photo date unknown: it cannot show when the plant was there, "
-            "nor whether it is there now"
+            "Photo date unknown: even if the plant is visible, the photo cannot show "
+            "when it was there, nor whether it is there now"
         )
     return (
         f"If the plant is visible, the photo shows it was there on {photographed.isoformat()}, "

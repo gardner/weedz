@@ -76,7 +76,8 @@ try {
     screened: null,
     days_photo_to_upload: null,
     days_photo_to_screening: null,
-    current_presence: "Photo date unknown: it cannot show when the plant was there",
+    current_presence:
+      "Photo date unknown: even if the plant is visible, the photo cannot show when it was there",
   };
   const photos = [
     photo("a", 0.3, searchable, dates),
