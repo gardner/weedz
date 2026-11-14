@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sqlite3
+import threading
 import time
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
@@ -324,6 +325,29 @@ def test_concurrent_uploads_decode_only_what_the_budget_allows(
 
         assert sorted(pool.map(send, range(4))) == [201, 429, 429, 429]
     assert len(decoded) == 1
+
+
+def test_a_withdrawal_during_an_upload_waits_for_it_and_withdraws_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Not a 404 followed by the report being stored anyway."""
+    decoding = threading.Event()
+
+    def slow(data: bytes, max_pixels: int) -> bytes:
+        decoding.set()
+        time.sleep(0.2)
+        return clean_image(data, max_pixels)
+
+    monkeypatch.setattr("weedz.intake.api.clean_image", slow)
+    headers, path = auth(tmp_path), f"/reports/{new_id()}"
+    with TestClient(create_intake_app(tmp_path)) as client, ThreadPoolExecutor(1) as pool:
+        upload = pool.submit(client.put, path, json=with_image(jpeg()), headers=headers)
+        assert decoding.wait(5)
+        withdrawn = client.delete(path, headers=headers)
+        assert upload.result().status_code == 201
+    assert withdrawn.status_code == 200 and withdrawn.json()["status"] == "withdrawn"
+    assert ReportStore(tmp_path).active() == []
+    assert images(tmp_path) == []
 
 
 def test_crops_orphaned_by_a_crash_are_deleted_when_the_intake_starts(

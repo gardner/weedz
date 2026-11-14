@@ -95,9 +95,10 @@ class IntakeAPI:
     def __init__(self, root: Path, limits: Limits) -> None:
         self.store = ReportStore(root)
         self.limits = limits
-        # Each submitter's reports are taken in turn, so the budget is checked against every
-        # earlier one before any image is decoded. Waiting is on the event loop, so queued
-        # reports hold no worker thread. (One server process, as ``intake serve`` runs.)
+        # Each submitter's uploads and withdrawals are taken in turn, so the budget is checked
+        # against every earlier report before any image is decoded, and a withdrawal never
+        # slips between checking and storing a report. Waiting is on the event loop, so queued
+        # requests hold no worker thread. (One server process, as ``intake serve`` runs.)
         self._submitting: dict[int, asyncio.Lock] = {}
 
     async def put(self, report_id: uuid.UUID, request: Request, response: Response) -> Receipt:
@@ -128,8 +129,12 @@ class IntakeAPI:
         receipt = self.store.receipt(request.state.submitter, str(report_id))
         return receipt or receipt_missing()
 
-    def delete(self, report_id: uuid.UUID, request: Request) -> Receipt:
-        receipt = self.store.withdraw(request.state.submitter, str(report_id))
+    async def delete(self, report_id: uuid.UUID, request: Request) -> Receipt:
+        """Taken in turn with the submitter's uploads, so a withdrawal that arrives while
+        its report is being stored waits for it and withdraws it, rather than missing it."""
+        submitter: int = request.state.submitter
+        async with self._submitting.setdefault(submitter, asyncio.Lock()):
+            receipt = await run_in_threadpool(self.store.withdraw, submitter, str(report_id))
         return receipt or receipt_missing()
 
 
