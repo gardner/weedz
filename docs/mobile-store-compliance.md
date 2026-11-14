@@ -566,13 +566,18 @@ Play's User Data policy.
 - [ ] `targetSdkVersion` 36.
 - [ ] Merged manifest checked: no `READ_MEDIA_VIDEO`, `READ_MEDIA_AUDIO`,
       `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` or `ACCESS_BACKGROUND_LOCATION`.
-      `ACCESS_MEDIA_LOCATION` **stays**: it is how the app reads a photo's GPS.
+      Default flavour: `ACCESS_MEDIA_LOCATION` **stays**, because it is how the app reads
+      a photo's GPS. Picker flavour: no `ACCESS_MEDIA_LOCATION`, `READ_MEDIA_IMAGES`,
+      `READ_MEDIA_VISUAL_USER_SELECTED` or `READ_EXTERNAL_STORAGE`.
 - [ ] Foreground service: either none is present, or `FOREGROUND_SERVICE_MEDIA_PROCESSING`
       is declared in the Play Console with a video.
 - [ ] Photo and video permissions declaration submitted with the justification and
       video. The picker-only flavour is ready if it is refused.
-- [ ] `ACCESS_MEDIA_LOCATION` and `setRequireOriginal()` tested on Android 10, 13, 14 and 16.
-- [ ] Partial access (`READ_MEDIA_VISUAL_USER_SELECTED`) tested.
+- [ ] Default flavour: `ACCESS_MEDIA_LOCATION` and `setRequireOriginal()` tested on
+      Android 10, 13, 14 and 16, and partial access (`READ_MEDIA_VISUAL_USER_SELECTED`)
+      tested.
+- [ ] Picker flavour: the photo picker's location opt-in and the manual-placement path
+      (#54) tested.
 - [ ] Data safety form matches the draft. Deletion URL provided.
 - [ ] Closed test run, if the account is a new personal account (12 testers, 14 days).
 - [ ] App registered for Android developer verification in the Play Console.
