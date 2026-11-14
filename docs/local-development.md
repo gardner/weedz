@@ -170,8 +170,9 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   token is lost or revoked, the operator can withdraw its reports with
   `intake withdraw`.
 - Each submitter may send 100 reports and 50 MB of images per rolling 24 hours,
-  withdrawn reports included. Past that, the server answers 429 with
-  `Retry-After`.
+  including withdrawn reports and crops refused after decoding. Past that, the
+  server answers 429 with `Retry-After`. Usage records (ids, times and stored
+  crop sizes) are deleted once they leave the window.
 
 Reports are kept in `data/intake/reports/` (owner-only), apart from the
 discovery evidence. Nothing serves them to reviewers or publishes them yet:

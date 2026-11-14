@@ -13,20 +13,24 @@ import uuid
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 
 from weedz import tokens
-from weedz.intake.limits import DAY_SECONDS, Limits
+from weedz.intake import budget
+from weedz.intake.limits import Limits
 from weedz.intake.schema import Report, ReportContent
 
-SCHEMA = """
+SCHEMA = (
+    """
 CREATE TABLE IF NOT EXISTS reports(
     submitter INTEGER NOT NULL, report_id TEXT NOT NULL, received_at TEXT NOT NULL,
-    content_sha256 TEXT, body TEXT, image_file TEXT, image_bytes INTEGER NOT NULL,
-    withdrawn_at TEXT, PRIMARY KEY(submitter, report_id)
+    content_sha256 TEXT, body TEXT, image_file TEXT, withdrawn_at TEXT,
+    PRIMARY KEY(submitter, report_id)
 );
 """
+    + budget.SCHEMA
+)
 
 
 class Withdrawn(Exception):
@@ -35,12 +39,6 @@ class Withdrawn(Exception):
 
 class Conflict(Exception):
     """The report id was already received with different content."""
-
-
-class OverBudget(Exception):
-    def __init__(self, retry_after: int) -> None:
-        super().__init__(f"Daily budget used; retry after {retry_after} seconds")
-        self.retry_after = retry_after
 
 
 @dataclass(frozen=True)
@@ -99,14 +97,13 @@ class ReportStore:
     def admit(
         self, submitter: int, report_id: str, digest: str, has_image: bool, limits: Limits
     ) -> Receipt | None:
-        """Before any image work: the receipt when this is a retry, None when it is new and
-        within budget. Raises Withdrawn, Conflict or OverBudget. Only the stored crop counts
-        against the image budget and its size is not known yet, so a crop is counted here
-        as one byte; ``receive`` decides exactly, under the write lock."""
-        with closing(self._connect()) as db:
+        """Before any image work: the receipt when this is a retry, or None when it is new,
+        having charged it to the submitter's budget. Raises Withdrawn, Conflict or
+        OverBudget. ``receive`` then charges the stored crop's exact size."""
+        with self._transaction() as db:
             earlier = _existing(db, submitter, report_id, digest)
             if earlier is None:
-                _check_budget(db, submitter, int(has_image), limits)
+                budget.charge(db, submitter, report_id, has_image, limits)
             return earlier
 
     def receive(
@@ -118,27 +115,20 @@ class ReportStore:
         image: bytes | None,
         limits: Limits,
     ) -> tuple[Receipt, bool]:
-        """Store a new report (True), or return the receipt of the same one received
-        before (False). Raises Withdrawn, Conflict or OverBudget."""
+        """Store a report that ``admit`` charged (True), or return the receipt of the same
+        one received before (False). Raises Withdrawn, Conflict or OverBudget."""
         name = None
         try:
             with self._transaction() as db:
                 existing = _existing(db, submitter, report_id, digest)
                 if existing:
                     return existing, False
-                _check_budget(db, submitter, len(image or b""), limits)
+                budget.settle(db, submitter, report_id, len(image or b""), limits)
                 received = _now()
                 name = self._write_image(image) if image else None
-                row = (
-                    submitter,
-                    report_id,
-                    received,
-                    digest,
-                    report.model_dump_json(exclude={"image"}),
-                    name,
-                    len(image or b""),
-                )
-                db.execute("INSERT INTO reports VALUES(?,?,?,?,?,?,?,NULL)", row)
+                content = report.model_dump_json(exclude={"image"})
+                row = (submitter, report_id, received, digest, content, name)
+                db.execute("INSERT INTO reports VALUES(?,?,?,?,?,?,NULL)", row)
         except BaseException:
             # Not committed, so no image is left behind without its report.
             if name:
@@ -221,38 +211,5 @@ def _existing(
     return Receipt.of(row)
 
 
-def _check_budget(db: sqlite3.Connection, submitter: int, image_bytes: int, limits: Limits) -> None:
-    """Refuse a report that would take a submitter past its rolling 24-hour budget, saying
-    when enough of the window will have expired for it to fit. Withdrawn reports keep
-    their tombstone, so they still count."""
-    now = datetime.now(UTC)
-    rows = db.execute(
-        "SELECT received_at, image_bytes FROM reports WHERE submitter=? AND received_at>? "
-        "ORDER BY received_at",
-        (submitter, _stamp(now - timedelta(seconds=DAY_SECONDS))),
-    ).fetchall()
-    count, used = len(rows), sum(row["image_bytes"] for row in rows)
-
-    def fits() -> bool:
-        return (
-            count + 1 <= limits.reports_per_day and used + image_bytes <= limits.image_bytes_per_day
-        )
-
-    if fits():
-        return
-    wait = timedelta(seconds=DAY_SECONDS)  # if nothing expiring makes room: a whole day
-    for row in rows:
-        count, used = count - 1, used - row["image_bytes"]
-        if fits():
-            wait = datetime.fromisoformat(row["received_at"]) + wait - now
-            break
-    raise OverBudget(max(1, int(wait.total_seconds()) + 1))
-
-
 def _now() -> str:
-    return _stamp(datetime.now(UTC))
-
-
-def _stamp(when: datetime) -> str:
-    # A fixed width, so stored times compare in order as text.
-    return when.isoformat(timespec="microseconds")
+    return budget.stamp(datetime.now(UTC))

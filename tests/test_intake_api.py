@@ -289,11 +289,11 @@ def test_retry_after_waits_until_enough_image_bytes_expire(tmp_path: Path) -> No
     now = datetime.now(UTC)
     with sqlite3.connect(tmp_path / "reports" / "reports.sqlite3") as db:
         db.execute(
-            "UPDATE reports SET received_at=? WHERE image_bytes=0",
+            "UPDATE usage SET used_at=? WHERE image_bytes=0",
             ((now - timedelta(hours=23)).isoformat(timespec="microseconds"),),
         )
         db.execute(
-            "UPDATE reports SET received_at=?, image_bytes=? WHERE image_bytes>0",
+            "UPDATE usage SET used_at=?, image_bytes=? WHERE image_bytes>0",
             ((now - timedelta(hours=1)).isoformat(timespec="microseconds"), len(jpeg()) * 3),
         )
     refused = client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=headers)
@@ -348,3 +348,29 @@ def test_the_daily_image_budget_counts_the_stored_crop_not_the_upload(tmp_path: 
         f"/reports/{new_id()}", json=with_image(out.getvalue()), headers=auth(tmp_path)
     )
     assert response.status_code == 201
+
+
+def test_a_crop_refused_after_decoding_still_costs_budget(tmp_path: Path) -> None:
+    """Otherwise one token could have the server decode refused crops without end."""
+    client = TestClient(create_intake_app(tmp_path, Limits(reports_per_day=1)))
+    headers = auth(tmp_path)
+    bad = with_image(b"not an image")
+    assert client.put(f"/reports/{new_id()}", json=bad, headers=headers).status_code == 422
+    assert client.put(f"/reports/{new_id()}", json=report(), headers=headers).status_code == 429
+
+
+def test_crop_sizes_are_not_kept_past_the_budget_window(tmp_path: Path) -> None:
+    """A withdrawn report keeps only ids and times; usage leaves once its window passes."""
+    client = TestClient(create_intake_app(tmp_path))
+    headers, path = auth(tmp_path), f"/reports/{new_id()}"
+    client.put(path, json=with_image(jpeg()), headers=headers)
+    client.delete(path, headers=headers)
+    database = tmp_path / "reports" / "reports.sqlite3"
+    with sqlite3.connect(database) as db:
+        columns = {row[1] for row in db.execute("PRAGMA table_info(reports)")}
+        assert "image_bytes" not in columns
+        day_ago = (datetime.now(UTC) - timedelta(days=1, seconds=1)).isoformat()
+        db.execute("UPDATE usage SET used_at=?", (day_ago,))
+    client.put(f"/reports/{new_id()}", json=report(), headers=headers)
+    with sqlite3.connect(database) as db:
+        assert db.execute("SELECT COUNT(*) FROM usage WHERE image_bytes>0").fetchone() == (0,)

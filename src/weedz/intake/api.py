@@ -18,10 +18,11 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 
+from weedz.intake.budget import OverBudget
 from weedz.intake.images import ImageRefused, clean_image
 from weedz.intake.limits import Limits
 from weedz.intake.schema import Report
-from weedz.intake.store import Conflict, OverBudget, Receipt, ReportStore, Withdrawn
+from weedz.intake.store import Conflict, Receipt, ReportStore, Withdrawn
 from weedz.intake.submitters import Submitters, require_submitter
 
 
@@ -115,7 +116,8 @@ class IntakeAPI:
         digest = hashlib.sha256(report.model_dump_json().encode()).hexdigest()
         upload = uploaded_image(report, self.limits)
         with refusals():
-            # A retry, or a report already over budget, costs no image decoding.
+            # A retry, or a report over budget, costs no image decoding; any other is
+            # charged before decoding, so a crop refused afterwards still costs.
             earlier = self.store.admit(submitter, report_id, digest, bool(upload), self.limits)
             if earlier:
                 return earlier, False
