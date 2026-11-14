@@ -43,7 +43,7 @@ export function SearchAreaNote({ photo }: { photo: Photo }) {
       <span>Search area</span>
       <strong>{searchAreaHeadline(area)}</strong>
       {point && <small>{point}</small>}
-      <small>{searchAreaBasis(area)}</small>
+      <small>{searchAreaBasis(area, photo.positional_accuracy_m)}</small>
     </div>
   );
 }

@@ -122,6 +122,7 @@ try {
   await area.getByText("Not searchable: obscured location").waitFor();
   const obscured = await area.textContent();
   assert.match(obscured, /Location obscured by the source/);
+  assert.match(obscured, /Reported accuracy ±12 m/, "the source's accuracy is still shown");
   assert.doesNotMatch(obscured, /-41\.27/, "an obscured point is never shown");
   assert.doesNotMatch(obscured, /radius/);
   const undatedText = await when.textContent();

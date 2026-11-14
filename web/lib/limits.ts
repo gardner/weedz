@@ -46,8 +46,12 @@ export function observationPoint(
   return `Observation point ${latitude.toFixed(3)}, ${longitude.toFixed(3)} is where the photographer was, not the plant.`;
 }
 
-export function searchAreaBasis(area: SearchArea): string {
-  if (area.status !== "searchable") return area.reason;
+/** Why the area has this radius, or why there is none; a reported accuracy is kept. */
+export function searchAreaBasis(area: SearchArea, reportedAccuracy: number | null): string {
+  if (area.status !== "searchable") {
+    const accuracy = reportedAccuracy === null ? "" : ` Reported accuracy ±${reportedAccuracy} m.`;
+    return `${area.reason}.${accuracy}`;
+  }
   const context = area.site_context
     ? " Accurate enough for aerial site context, not to place the plant."
     : "";
