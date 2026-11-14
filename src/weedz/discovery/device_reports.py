@@ -16,6 +16,7 @@ judgements, referrals and lead events made on it still read sensibly.
 import hashlib
 import json
 import os
+import uuid
 from typing import Literal
 
 from PIL import Image
@@ -133,8 +134,9 @@ def _copy_image(store: Store, stored: StoredReport, record: DeviceItem, found: d
     relative = f"{IMAGES}/{record.id}.jpg"
     target = store.root / relative
     target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    temporary = target.with_suffix(".tmp")
-    descriptor = os.open(temporary, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600)
+    # Its own temporary name, so two syncs at once never write into the same file.
+    temporary = target.with_suffix(f".{uuid.uuid4().hex}.tmp")
+    descriptor = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     with os.fdopen(descriptor, "wb") as out:
         out.write(data)
     temporary.replace(target)
