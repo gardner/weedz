@@ -1,7 +1,8 @@
 """Group photos from one site visit so repeated views are not counted as independent finds.
 
 A group is a review and counting aid: it does not claim the photos show the same plant.
-Links need positive evidence, so unknown or obscured details never join a group.
+Links need positive evidence, so unknown, obscured or imprecise details never join a group.
+Such photos are reported as ungrouped, never as independent visits.
 """
 
 import math
@@ -12,7 +13,8 @@ from typing import Any
 THRESHOLD_M = 250.0
 RULE = (
     "same observer and observed date; public coordinates within "
-    f"{THRESHOLD_M:g} m after allowing for both positional-accuracy radii"
+    f"{THRESHOLD_M:g} m after allowing for both positional-accuracy radii; "
+    f"photos with accuracy over {THRESHOLD_M:g} m are ungrouped"
 )
 
 
@@ -34,6 +36,7 @@ def _linkable(photo: dict[str, Any]) -> bool:
         and photo.get("longitude") is not None
         and bool(photo.get("observed_on"))
         and bool(photo.get("observer"))
+        and (photo.get("positional_accuracy_m") or 0) <= THRESHOLD_M
     )
 
 
@@ -62,20 +65,27 @@ def encounter_groups(photos: list[dict[str, Any]]) -> dict[str, str]:
 
 
 def summarize(photos: list[dict[str, Any]], groups: dict[str, str]) -> dict[str, Any]:
-    incidental = [photo["id"] for photo in photos if photo["cohort"] == "incidental"]
+    """Count visits among checkable incidental photos; the rest stay explicitly ungrouped."""
+    incidental = [photo for photo in photos if photo["cohort"] == "incidental"]
+    linkable = [photo["id"] for photo in incidental if _linkable(photo)]
     return {
         "rule": RULE,
         "incidental_photos": len(incidental),
-        "independent_site_visits": len({groups[photo_id] for photo_id in incidental}),
+        "independent_site_visits": len({groups[photo_id] for photo_id in linkable}),
+        "ungrouped_photos": len(incidental) - len(linkable),
     }
 
 
 def with_encounters(photos: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Annotate photos with their site-visit group and its size."""
+    """Annotate photos with their site-visit group, its size and whether it could be checked."""
     groups = encounter_groups(photos)
     sizes = Counter(groups.values())
     return [
         photo
-        | {"encounter_group": groups[photo["id"]], "encounter_size": sizes[groups[photo["id"]]]}
+        | {
+            "encounter_group": groups[photo["id"]],
+            "encounter_size": sizes[groups[photo["id"]]],
+            "encounter_linkable": _linkable(photo),
+        }
         for photo in photos
     ]

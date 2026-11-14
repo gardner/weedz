@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { imageUrl, names, type Photo, type Status, siteVisitNote } from "../lib/types";
+import { imageUrl, names, type Photo, type Status, siteVisitSummary } from "../lib/types";
 
 export default function Evidence({
   photo,
@@ -101,7 +101,7 @@ export default function Evidence({
         </div>
         <div>
           <span>Site visit</span>
-          <strong>{siteVisitNote(photo) ?? "No other photos from this visit"}</strong>
+          <strong>{siteVisitSummary(photo)}</strong>
           <small>Same observer, date and nearby location; not necessarily the same plant</small>
         </div>
         <div>

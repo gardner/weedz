@@ -72,7 +72,9 @@ export default function ReviewDesk() {
     .sort((a, b) => (b.scores.margin ?? -2) - (a.scores.margin ?? -2));
   const active = filtered.find((photo) => photo.id === activeId) ?? filtered[0];
   const incidental = photos.filter((photo) => photo.cohort === "incidental");
-  const visits = new Set(incidental.map((photo) => photo.encounter_group ?? photo.id)).size;
+  const groupable = incidental.filter((photo) => photo.encounter_linkable === true);
+  const visits = new Set(groupable.map((photo) => photo.encounter_group ?? photo.id)).size;
+  const ungrouped = incidental.length - groupable.length;
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
 
   async function save(status: Status, note: string) {
@@ -183,8 +185,8 @@ export default function ReviewDesk() {
               <span>Incidental photos</span>
               <strong>{incidental.length.toString().padStart(2, "0")}</strong>
               <small>
-                Independent site visits: {visits.toString().padStart(2, "0")} · background
-                unlabelled
+                Independent site visits: {visits.toString().padStart(2, "0")}
+                {ungrouped > 0 && ` · ${ungrouped} could not be grouped`} · background unlabelled
               </small>
             </div>
             <div>

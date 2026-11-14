@@ -27,6 +27,7 @@ export type Photo = {
   review_note: string;
   encounter_group?: string;
   encounter_size?: number;
+  encounter_linkable?: boolean;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -42,6 +43,15 @@ export function siteVisitNote(photo: Photo): string | null {
   const others = (photo.encounter_size ?? 1) - 1;
   if (others < 1) return null;
   return `Same site visit as ${others} other photo${others === 1 ? "" : "s"}`;
+}
+
+export const unknownSiteVisit =
+  "Site visit unknown: location obscured, missing or imprecise, or date unknown";
+
+/** Describe a photo's site visit; an unchecked visit is unknown, never independent. */
+export function siteVisitSummary(photo: Photo): string {
+  if (photo.encounter_linkable !== true) return unknownSiteVisit;
+  return siteVisitNote(photo) ?? "No other photos from this visit";
 }
 
 export const names: Record<string, string> = {
