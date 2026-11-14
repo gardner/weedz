@@ -57,7 +57,9 @@ def _dates(dates: dict[str, Any]) -> list[str]:
         f"{corpus.get('sampling', 'unknown')}",
         f"- Study period: {_period(dates['study_period'])}",
         "- Outside the study period: "
-        + ("not assessed" if period is None else _photos(dates["outside_study_period"])),
+        + ("not assessed" if period is None else _photos(dates["outside_study_period"]))
+        + "; cannot be placed in it: "
+        + ("not assessed" if period is None else _photos(dates["study_period_unknown"])),
         f"- Undated: {_photos(dates['undated'])}; dated only to a month or year: "
         f"{_photos(dates['imprecise'])}",
         f"- By year: {_counts(corpus.get('by_year', {}))}",

@@ -407,8 +407,9 @@ the reference comparison and the linked study. It covers:
   A shortfall, an unfinished run or a missing reference snapshot is listed as
   affected coverage.
 - **Dates:** earliest and latest photo, the query period and the study period.
-  Also photos outside the study period, undated or month-only photos, and years
-  and seasons with no photos. A recent (newest-first) run has an open start, so
+  Also photos outside the study period, and those that cannot be placed in it
+  because they are undated, or dated only to a month or year that crosses one of
+  its ends. Years and seasons with no photos inside the period are listed too. A recent (newest-first) run has an open start, so
   its earlier years are stated as not sampled.
 - **Location quality:** photos with a search area, each reason the rest have none,
   and the reported accuracy (median and bands, with 20 m or better marked as

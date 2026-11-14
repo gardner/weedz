@@ -9,6 +9,7 @@ ungrouped photos. Unknown stays unknown, and an unassessed photo, area or year i
 never presented as weed-free.
 """
 
+import calendar
 import statistics
 from collections import Counter
 from collections.abc import Callable
@@ -25,7 +26,7 @@ from weedz.discovery.limits import (
 from weedz.discovery.occurrences import NOT_QUERIED
 from weedz.discovery.outcome_terms import EVIDENCE_FIELDS, Photos, tally
 from weedz.discovery.records import REGIONS, SPECIES, RunSpec
-from weedz.discovery.sampling import SEASONS
+from weedz.discovery.sampling import SEASONS, season_of
 from weedz.discovery.sharing import image_use, location, terms
 from weedz.discovery.study import StudyDefinition, differences
 
@@ -100,16 +101,40 @@ def scope(export: dict[str, Any], photos: Photos) -> dict[str, Any]:
     }
 
 
-def _in_period(photo: Photo, start: date | None, end: date | None) -> bool | None:
-    """Inside the period, outside it, or unknown (no full date)."""
-    day = calendar_day(photo.get("observed_on"))
-    if day is None:
+def _span(observed: str | None) -> tuple[date, date] | None:
+    """The first and last day the photo could have been taken: a day, month or year."""
+    day = calendar_day(observed)
+    if day or not observed:
+        return (day, day) if day else None
+    try:
+        year, month = int(observed[:4]), int(observed[5:7] or 0)
+        if not month:
+            return date(year, 1, 1), date(year, 12, 31)
+        return date(year, month, 1), date(year, month, calendar.monthrange(year, month)[1])
+    except ValueError:
         return None
-    return (start is None or day >= start) and (end is None or day <= end)
 
 
-def _outside(photos: Photos, study: StudyDefinition) -> Photos:
-    return [p for p in photos if _in_period(p, study.period_start, study.period_end) is False]
+def _in_period(photo: Photo, start: date | None, end: date | None) -> bool | None:
+    """Inside the period, outside it, or unknown: undated, or a month or year across an end."""
+    span = _span(photo.get("observed_on"))
+    if span is None:
+        return None
+    first, last = span
+    if (start and last < start) or (end and first > end):
+        return False
+    return None if (start and first < start) or (end and last > end) else True
+
+
+def _placed(photos: Photos, study: StudyDefinition, inside: bool | None) -> Photos:
+    """Photos inside the study period (True), outside it (False), or not placeable (None)."""
+    start, end = study.period_start, study.period_end
+    return [p for p in photos if _in_period(p, start, end) is inside]
+
+
+def _seasons(photos: Photos) -> set[str]:
+    spans = [_span(p.get("observed_on")) for p in photos]
+    return {season_of(s[0].month) for s in spans if s and s[0].month == s[1].month}
 
 
 def _window(export: dict[str, Any], study: StudyDefinition | None) -> tuple[date | None, date]:
@@ -121,10 +146,12 @@ def _window(export: dict[str, Any], study: StudyDefinition | None) -> tuple[date
     return start, end
 
 
-def _empty_years(photos: Photos, start: date | None, end: date) -> list[int] | None:
+def _empty_years(inside: Photos, start: date | None, end: date) -> list[int] | None:
+    """Years of the window with no photo dated to them; None for an open start."""
     if start is None:
         return None
-    years = {int(p["observed_on"][:4]) for p in photos if p.get("observed_on")}
+    spans = [_span(p.get("observed_on")) for p in inside]
+    years = {s[0].year for s in spans if s and s[0].year == s[1].year}
     return [year for year in range(start.year, end.year + 1) if year not in years]
 
 
@@ -153,10 +180,12 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
     start, end = _window(export, study)
     dated = [p["observed_on"][:10] for p in photos if p.get("observed_on")]
     corpus = export.get("corpus_coverage") or {}
-    outside = None
+    outside = unknown = None
     if study and period:
-        outside = tally(_outside(photos, study))
-    years = _empty_years(photos, start, end)
+        outside, unknown = tally(_placed(photos, study, False)), tally(_placed(photos, study, None))
+    # Years and seasons count only photos known to fall inside the window.
+    inside = [p for p in photos if _in_period(p, start, end)]
+    years = _empty_years(inside, start, end)
     return {
         "corpus": corpus,
         "earliest": min(dated, default=None),
@@ -167,12 +196,13 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
         },
         "study_period": period,
         "outside_study_period": outside,
+        "study_period_unknown": unknown,
         "undated": tally([p for p in photos if not p.get("observed_on")]),
         "imprecise": tally(
             [p for p in photos if p.get("observed_on") and not calendar_day(p["observed_on"])]
         ),
         "years_without_photos": years,
-        "seasons_without_photos": [s for s in SEASONS if s not in corpus.get("by_season", {})],
+        "seasons_without_photos": [s for s in SEASONS if s not in _seasons(inside)],
         "notes": _date_notes(dated, start, years),
     }
 
@@ -360,8 +390,9 @@ def _study_period_limit(photos: Photos, study: StudyDefinition | None) -> dict[s
     item = {"key": "study_period", "conclusion": "A conclusion about the study period"}
     if study is None or not (study.period_start or study.period_end):
         return item | {"because": NO_STUDY_PERIOD, "photos": None}
-    because = "Photographed outside the study period (undated photos are counted under history)"
-    return item | {"because": because, "photos": tally(_outside(photos, study))}
+    because = "Photographed outside the study period, or not dated precisely enough to place in it"
+    placed = _placed(photos, study, False) + _placed(photos, study, None)
+    return item | {"because": because, "photos": tally(placed)}
 
 
 def cannot_support(photos: Photos, study: StudyDefinition | None) -> list[dict[str, Any]]:

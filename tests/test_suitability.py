@@ -107,18 +107,29 @@ def test_dates_are_checked_against_the_study_period_with_empty_years_unassessed(
         photo("b", "b", observed_on="2019-03-01"),
         photo("c", None, observed_on=None),
         photo("d", None, observed_on="2023-06"),
+        photo("e", None, observed_on="2021"),
     ]
     linked = study(period_start="2022-01-01", period_end="2024-12-31")
     dates = suitability(run_export(photos, study=linked))["dates"]
     assert dates["study_period"] == {"start": "2022-01-01", "end": "2024-12-31"}
     assert dates["query_period"] == {"start": "2022-01-01", "end": "2024-12-31"}
     assert (dates["earliest"], dates["latest"]) == ("2019-03-01", "2024-01-05")
-    assert dates["outside_study_period"] == tally(1, 1, 0)
-    # Undated, or dated only to a month: whether it is inside the period is unknown.
+    # A month or a year is enough when all of it falls on one side of the period.
+    assert dates["outside_study_period"] == tally(2, 1, 1)
+    assert dates["study_period_unknown"] == tally(1, 0, 1)
     assert dates["undated"] == tally(1, 0, 1)
-    assert dates["imprecise"] == tally(1, 0, 1)
+    assert dates["imprecise"] == tally(2, 0, 2)
     assert dates["years_without_photos"] == [2022]
-    assert dates["seasons_without_photos"] == ["MAM", "JJA", "SON"]
+    # Seasons come from photos inside the period: the 2019 autumn photo does not count.
+    assert dates["seasons_without_photos"] == ["MAM", "SON"]
+
+
+def test_an_imprecise_date_straddling_the_period_start_is_unknown_not_inside() -> None:
+    linked = study(period_start="2024-06-01")
+    report = suitability(run_export([photo("a", "a", observed_on="2024")], study=linked))
+    assert report["dates"]["outside_study_period"] == tally(0, 0, 0)
+    assert report["dates"]["study_period_unknown"] == tally(1, 1, 0)
+    assert cannot(report, "study_period")["photos"] == tally(1, 1, 0)
 
 
 def test_without_a_study_the_query_period_bounds_the_years_and_recent_runs_say_so() -> None:
@@ -256,7 +267,8 @@ def test_each_conclusion_lists_the_photos_that_cannot_support_it() -> None:
     assert cannot(report, "field_search")["photos"] == tally(1, 0, 1)
     assert cannot(report, "site_context")["photos"] == tally(2, 1, 1)
     assert cannot(report, "history")["photos"] == tally(1, 0, 1)
-    assert cannot(report, "study_period")["photos"] == tally(2, 2, 0)
+    # The undated photo cannot be placed in the period either.
+    assert cannot(report, "study_period")["photos"] == tally(3, 2, 1)
     assert cannot(report, "independent_count")["photos"] == tally(1, 0, 1)
     assert cannot(report, "shared_image")["photos"] == tally(1, 1, 0)
     assert cannot(report, "shared_location")["photos"] == tally(1, 0, 1)

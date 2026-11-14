@@ -25,6 +25,7 @@ export const suitability = {
     query_period: { start: null, end: "2024-12-31" },
     study_period: null,
     outside_study_period: null,
+    study_period_unknown: null,
     undated: tally(0, 0, 0),
     imprecise: tally(0, 0, 0),
     years_without_photos: null,
