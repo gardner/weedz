@@ -199,3 +199,35 @@ def test_the_archive_refuses_a_photo_changed_after_checking(
     monkeypatch.setattr(api, "package_contents", then_changed)
     response = TestClient(create_app(tmp_path)).get("/runs/run/package/archive")
     assert response.status_code == 409 and "changed" in response.json()["detail"]
+
+
+def test_the_written_folder_keeps_ordinary_permissions(tmp_path: Path) -> None:
+    store, _photo_id = selected_store(tmp_path)
+    package, photos = package_contents(store, "run", "2026-11-14")
+    reference = tmp_path / "reference"
+    reference.mkdir()
+    write(package, photos, tmp_path / "new")
+    assert (tmp_path / "new").stat().st_mode == reference.stat().st_mode
+    chosen = tmp_path / "chosen"
+    chosen.mkdir(mode=0o750)
+    chosen.chmod(0o750)
+    write(package, photos, chosen)
+    assert chosen.stat().st_mode & 0o777 == 0o750
+
+
+def test_the_archive_refuses_a_photo_deleted_after_checking(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from weedz.discovery import api
+
+    selected_store(tmp_path)
+    checked = api.package_contents
+
+    def then_deleted(*args: object) -> object:
+        result = checked(*args)  # type: ignore[arg-type]
+        (tmp_path / "images" / "101.jpg").unlink()
+        return result
+
+    monkeypatch.setattr(api, "package_contents", then_deleted)
+    response = TestClient(create_app(tmp_path)).get("/runs/run/package/archive")
+    assert response.status_code == 409

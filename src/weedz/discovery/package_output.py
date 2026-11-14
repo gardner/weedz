@@ -7,7 +7,7 @@ memory together, so a package of many large photos stays cheap to build.
 import hashlib
 import json
 import shutil
-import tempfile
+import uuid
 import zipfile
 from pathlib import Path
 from typing import IO, Any, NamedTuple
@@ -40,7 +40,7 @@ def _copy_verified(photo: Retained, target: IO[bytes]) -> None:
             digest.update(chunk)
             target.write(chunk)
     if digest.hexdigest() != photo.sha256:
-        raise ValueError(f"{photo.path.name} changed after it was checked; package again")
+        raise ValueError(f"{photo.path.name} changed after it was checked")
 
 
 def _retained(root: Path, photo: dict[str, Any]) -> Retained | str:
@@ -110,8 +110,13 @@ def write(package: dict[str, Any], photos: dict[str, Retained], destination: Pat
     if any(not (inside / name).resolve().is_relative_to(inside) for name in photos):
         raise ValueError(f"A package file would be written outside {destination}")
     inside.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(tempfile.mkdtemp(prefix=f".{inside.name}-", dir=inside.parent))
+    # mkdir, not mkdtemp: the folder is for others, so it follows the umask, and an
+    # existing empty --out keeps the mode its owner gave it.
+    staging = inside.parent / f".{inside.name}-{uuid.uuid4().hex}"
+    staging.mkdir()
     try:
+        if inside.exists():
+            shutil.copymode(inside, staging)
         _fill(staging, package, photos)
         if inside.exists():
             inside.rmdir()  # only an empty folder; anything in it is refused here

@@ -151,9 +151,11 @@ class ReviewAPI:
         spool = tempfile.TemporaryFile()  # noqa: SIM115 - closed once streamed or refused
         try:
             archive(package, photos, spool)
-        except ValueError as error:
+        except (ValueError, OSError) as error:
             spool.close()
-            raise HTTPException(409, str(error)) from error
+            # A retained photo changed or vanished after it was checked; name no local path.
+            reason = str(error) if isinstance(error, ValueError) else "A photo could not be read"
+            raise HTTPException(409, f"{reason}; package again") from error
         spool.seek(0)
 
         def chunks() -> Iterator[bytes]:
