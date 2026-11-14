@@ -113,11 +113,8 @@ void main() {
         throwsArgumentError,
       );
       expect(
-        () => Consent(
-          wordingVersion: '2026-11',
-          image: false,
-          credit: 'x' * 81,
-        ),
+        () =>
+            Consent(wordingVersion: '2026-11', image: false, credit: 'x' * 81),
         throwsArgumentError,
       );
       final consent = Consent(
@@ -170,11 +167,8 @@ void main() {
       expect(() => photo({'training'}), throwsArgumentError);
       expect(() => photo({'review', 'advertising'}), throwsArgumentError);
       expect(
-        () => Consent(
-          wordingVersion: '2026-11',
-          image: false,
-          uses: {'review'},
-        ),
+        () =>
+            Consent(wordingVersion: '2026-11', image: false, uses: {'review'}),
         throwsArgumentError,
       );
       expect(photo({'training', 'review'}).toJson()['uses'], [
