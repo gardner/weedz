@@ -9,6 +9,7 @@ from typing import Any
 
 from temporalio import activity
 
+from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
@@ -88,10 +89,12 @@ def export(store: Store, run_id: str) -> dict:
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
+    photos = store.photos(run_id)
     return {
         "schema": 1,
         "run": run,
-        "photos": store.photos(run_id),
+        "photos": with_encounters(photos),
+        "encounters": summarize(photos, encounter_groups(photos)),
         "review_history": [
             dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"]))
             for photo in store.photos(run_id)
@@ -111,5 +114,6 @@ def export(store: Store, run_id: str) -> dict:
             "Reference photos are separate; animal photos have no background weed ground truth",
             "Observation coordinates locate the observation, not a confirmed weed",
             "No novelty comparison, infestation area estimate or external publication performed",
+            "Site-visit groups link photos by observer, date and distance; not the same plant",
         ],
     }
