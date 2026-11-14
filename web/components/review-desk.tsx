@@ -2,7 +2,15 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { imageUrl, names, type Photo, type Run, request, type Status } from "../lib/types";
+import {
+  imageUrl,
+  names,
+  type Photo,
+  type References,
+  type Run,
+  request,
+  type Status,
+} from "../lib/types";
 import Evidence from "./evidence";
 
 export default function ReviewDesk() {
@@ -10,6 +18,7 @@ export default function ReviewDesk() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [runId, setRunId] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [references, setReferences] = useState<References>(null);
   const [activeId, setActiveId] = useState("");
   const [cohort, setCohort] = useState("incidental");
   const [region, setRegion] = useState("all");
@@ -32,9 +41,12 @@ export default function ReviewDesk() {
       const selected = runId || list[0]?.id;
       if (selected) {
         if (!runId) setRunId(selected);
-        const result = await request<{ run: Run; photos: Photo[] }>(`runs/${selected}`);
+        const result = await request<{ run: Run; photos: Photo[]; references?: References }>(
+          `runs/${selected}`,
+        );
         if (generation !== requestGeneration.current) return;
         setPhotos(result.photos);
+        setReferences(result.references ?? null);
       }
       setError("");
     } catch (failure) {
@@ -368,6 +380,7 @@ export default function ReviewDesk() {
                 runId={runId}
                 onSave={save}
                 saving={saving}
+                references={references}
               />
             ) : (
               <div className="evidence empty-evidence">

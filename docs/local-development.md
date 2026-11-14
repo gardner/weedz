@@ -95,8 +95,31 @@ Byte checksums are verified before inference. Inputs already cached for the firs
 time in a new run are checksummed as that run's input; this is not a publisher
 signature or proof that a previously modified local cache matches the source.
 
-No training, SAM segmentation, automatic augmentation, existing-occurrence
-comparison, public posting or creation of new iNaturalist observations occurs.
+### Compare with known records
+
+```sh
+uv run main.py references
+```
+
+This writes a new, never-overwritten snapshot of the
+[DOC Weeds Observation Data 1983–2023](https://www.gbif.org/dataset/d986e335-a2e3-44f0-9606-845e2eb6081d)
+(CC BY 4.0) to `data/pilot/references/`. It covers each watchlist taxon inside a
+declared Nelson/Tasman bounding box. The snapshot records its retrieval date,
+query, taxon keys and limitations. For each species, the run detail and export
+report the distance and year of the nearest record and the number of records
+within 5 km. This applies only to photos with public coordinates and known
+accuracy within 5 km; other photos are marked not compared, with a reason. The
+evidence panel shows this for the suggested species.
+
+This is a distance comparison, not a novelty verdict. A missing record is not
+an absence, and neither point locates a plant. The 13 November 2026 snapshot
+(51 old man's beard, 4 pampas, 147 gorse records) is sparse near the pilot
+photos: nearest records are typically 7–70 km away and mostly from the late
+1990s. "No nearby record" therefore says more about the reference set than about
+the plant.
+
+No training, SAM segmentation, automatic augmentation, novelty classification,
+public posting or creation of new iNaturalist observations occurs.
 Tiny/background-plant recall, skew tolerance and NZ field accuracy remain unmeasured.
 The six requested references are source-labelled reference evidence, not six
 independent expert-verified segmentation ground truths. Do not report classification
@@ -110,6 +133,7 @@ Everything generated is ignored by Git:
 | --- | --- |
 | `data/pilot/images/` | Downloaded large photo derivatives; source rights remain attached |
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
+| `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
 | `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions and review events |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |

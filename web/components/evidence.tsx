@@ -2,18 +2,27 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { imageUrl, names, type Photo, type Status } from "../lib/types";
+import {
+  imageUrl,
+  names,
+  type Photo,
+  type References,
+  referenceNote,
+  type Status,
+} from "../lib/types";
 
 export default function Evidence({
   photo,
   runId,
   onSave,
   saving,
+  references,
 }: {
   photo: Photo;
   runId: string;
   onSave: (status: Status, note: string) => Promise<void>;
   saving: boolean;
+  references: References;
 }) {
   const [note, setNote] = useState(photo.review_note);
   const [windowVisible, setWindowVisible] = useState(true);
@@ -112,6 +121,15 @@ export default function Evidence({
             {photo.positional_accuracy_m
               ? `Reported accuracy ±${photo.positional_accuracy_m} m`
               : "Accuracy not supplied"}
+          </small>
+        </div>
+        <div>
+          <span>Known records</span>
+          <strong>{referenceNote(photo, references)}</strong>
+          <small>
+            {references
+              ? `${references.dataset.title}, snapshot as of ${references.retrieved_at.slice(0, 10)}. Distance between reported points; a missing record is not evidence of a new locality.`
+              : "Run `uv run main.py references` to load DOC weed records for comparison."}
           </small>
         </div>
       </div>

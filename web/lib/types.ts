@@ -25,6 +25,7 @@ export type Photo = {
   coordinate_status: string;
   review_status: Status;
   review_note: string;
+  reference_comparison?: Record<string, ReferenceComparison>;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -35,6 +36,29 @@ export type Photo = {
     species?: { name: string; similarity: number; margin: number; box: number[] }[];
   };
 };
+
+export type ReferenceComparison = {
+  comparable: boolean;
+  reason?: string;
+  nearest?: { gbif_key: number; distance_m: number; year: number | null } | null;
+  within_radius?: number;
+  radius_m?: number;
+};
+
+export type References = { retrieved_at: string; dataset: { title: string } } | null;
+
+/** Distance and date to known records for the suggested species; never a novelty claim. */
+export function referenceNote(photo: Photo, references: References): string {
+  const species = photo.scores.best_species;
+  if (!references) return "No reference snapshot loaded";
+  const comparison = species ? photo.reference_comparison?.[species] : undefined;
+  if (!species || !comparison) return "Awaiting screening";
+  if (!comparison.comparable) return `Not compared: ${comparison.reason}`;
+  const common = names[species] ?? species;
+  if (!comparison.nearest) return `No DOC record of ${common} in the snapshot`;
+  const km = (comparison.nearest.distance_m / 1000).toFixed(1);
+  return `Nearest DOC record of ${common}: ${km} km (${comparison.nearest.year ?? "year unknown"})`;
+}
 
 export const names: Record<string, string> = {
   "Clematis vitalba": "Old man's beard",
