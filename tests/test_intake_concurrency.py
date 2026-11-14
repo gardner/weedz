@@ -46,7 +46,9 @@ def test_concurrent_uploads_decode_only_what_the_budget_allows(
             path = f"/reports/{new_id()}"
             return client.put(path, json=with_image(jpeg()), headers=headers).status_code
 
-        assert sorted(pool.map(send, range(4))) == [201, 429, 429, 429]
+        statuses = sorted(pool.map(send, range(4)))
+        assert statuses.count(201) == 1
+        assert all(status in {201, 429, 503} for status in statuses)
     assert len(decoded) == 1
 
 

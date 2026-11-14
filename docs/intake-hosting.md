@@ -30,6 +30,14 @@ lock files must never be removed while any server or operator process is running
 Cancelling a request waits for an already-running storage worker to finish before
 releasing the lock.
 
+Before opening lock files, each process admits at most two operations for one
+submitter (an owner and one waiter), and 64 operations in total. Further requests
+get retryable 503 responses immediately, without reading their bodies. Local
+capacity is released on completion, timeout, cancellation or an open failure;
+idle submitter entries are removed. These admission bounds multiply with the
+number of processes, while the advisory lock still serializes each submitter
+across those processes.
+
 SQLite write transactions still enforce ownership, budgets and withdrawal
 barriers. Startup crop cleanup takes the same write transaction as crop creation,
 so a second process cannot delete another process's uncommitted upload crop.
