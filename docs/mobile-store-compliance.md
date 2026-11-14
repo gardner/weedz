@@ -209,6 +209,15 @@ choice. Settle the category before submitting, rather than ticking both: the
 stores require declarations to be accurate, and ticking both would wrongly
 claim a device ID is collected.
 
+**Consent choices are report content, not product interaction.** Each report
+records the consent wording version, whether a location and a crop are
+included, and the crop's licence (#57, #61). These are attributes of what the
+person chose to publish, like a licence on a post. They go with Other User
+Content (Play: Other user-generated content). They are not Apple's Product
+Interaction or Play's "Other actions", which describe behaviour and usage
+(taps, launches, gameplay). The app records no such behaviour. Revisit this if
+the app ever uploads a log of what people tapped or declined.
+
 Apple has no "scientific research" purpose. App Functionality is the closest fit,
 as long as reports serve the app's stated purpose. If #60 lets the project use
 crops to train models, that counts as "Other Purposes"
@@ -326,8 +335,11 @@ Notes:
 - **Flutter and plugins**: `Flutter.framework` ships its own privacy manifest, as
   do current versions of the first-party plugins (for example
   `shared_preferences`). Each third-party plugin (photo library, background tasks,
-  inference runtime) must ship its own `PrivacyInfo.xcprivacy`. Otherwise its
-  required-reason calls must be declared in ours. Apple rejects apps that use
+  inference runtime) must ship its own `PrivacyInfo.xcprivacy` in its own bundle.
+  Declaring a plugin's required-reason calls in the Runner manifest is **not** a
+  valid substitute, because Apple says an SDK can't rely on the app's manifest. If
+  a plugin lacks a manifest, upgrade it, patch it (a fork or a CocoaPods/SwiftPM
+  resource), or replace it. Apple rejects apps that use
   listed "commonly used SDKs" without a manifest and signature. Before each
   submission, run **Product → Archive → Generate Privacy Report** in Xcode, and
   read the merged report rather than trusting this list.
