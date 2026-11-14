@@ -44,7 +44,8 @@ Two paths are implemented: the **Leafy Spurge `crop` baseline** below, and the
 **Nelson/Tasman iNaturalist screening pilot**. `uv run main.py dev` starts the
 regional review stack; `uv run main.py discover --wait` queues up to 24 licensed
 animal-subject photos and six separately labelled references through Temporal.
-BioCLIP screens the whole photo plus four overlapping windows. The Next.js
+BioCLIP screens the letterboxed whole photo plus overlapping square tiles that
+cover every pixel. The Next.js
 review app retains source subjects, attribution, dates, coordinate uncertainty
 and human review history. These windows are not masks; no NZ accuracy or
 incidental discovery count has been established. Other adapters remain proposed.

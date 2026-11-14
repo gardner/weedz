@@ -3,18 +3,56 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 from PIL import Image
 
-from weedz.discovery.inference import Screener, region_boxes, subject_label, summarize_scores
+from weedz.discovery.inference import (
+    ENCODE_BATCH,
+    LETTERBOX,
+    MAX_TILES,
+    Screener,
+    covers_every_pixel,
+    featureless,
+    region_boxes,
+    square_view,
+    subject_label,
+    summarize_scores,
+)
 
 
-def test_regions_include_whole_frame_and_cover_edges() -> None:
-    boxes = region_boxes(1000, 600)
-    assert boxes[0] == (0, 0, 1000, 600)
-    assert (0, 0, 600, 360) in boxes
-    assert (400, 240, 1000, 600) in boxes
-    assert all(0 <= x1 < x2 <= 1000 and 0 <= y1 < y2 <= 600 for x1, y1, x2, y2 in boxes)
+def tiles_cover_every_pixel(width: int, height: int) -> bool:
+    seen = np.zeros((height, width), bool)
+    for x1, y1, x2, y2 in region_boxes(width, height)[1:]:
+        seen[y1:y2, x1:x2] = True
+    return bool(seen.all())
+
+
+@pytest.mark.parametrize("size", [(1024, 768), (768, 1024), (485, 1024), (1024, 576), (633, 616)])
+def test_square_tiles_cover_the_whole_photo_with_overlap(size: tuple[int, int]) -> None:
+    width, height = size
+    boxes = region_boxes(width, height)
+    assert boxes[0] == (0, 0, width, height)
+    tiles = boxes[1:]
+    side = round(min(width, height) * 0.6)
+    assert all(x2 - x1 == side and y2 - y1 == side for x1, y1, x2, y2 in tiles)
+    assert all(x1 >= 0 and y1 >= 0 and x2 <= width and y2 <= height for x1, y1, x2, y2 in tiles)
+    assert tiles_cover_every_pixel(width, height)
+    xs = sorted({x1 for x1, _, _, _ in tiles})
+    assert all(b - a <= side * 0.75 + 1 for a, b in zip(xs, xs[1:], strict=False))
+
+
+def test_tile_counts_follow_the_photo_shape() -> None:
+    assert len(region_boxes(1024, 768)) == 1 + 6
+    assert len(region_boxes(485, 1024)) == 1 + 10
+
+
+def test_the_whole_frame_reaches_the_model_as_a_letterboxed_square() -> None:
+    image = Image.new("RGB", (40, 20), (200, 0, 0))
+    view = square_view(image, (0, 0, 40, 20))
+    assert view.size == (40, 40)
+    assert view.getpixel((20, 10)) == (200, 0, 0)
+    assert view.getpixel((20, 1)) == LETTERBOX
 
 
 def test_summary_preserves_raw_similarity_and_best_region() -> None:
@@ -86,7 +124,7 @@ def test_comparisons_include_non_vegetation_scenes() -> None:
     prompts = " ".join(fake_screener().prompts).lower()
     for scene in ["sky", "water", "sand", "rock"]:
         assert scene in prompts
-    assert fake_screener().metadata["ranking_revision"] == 3
+    assert fake_screener().metadata["ranking_revision"] == 4
 
 
 def test_subject_label_uses_taxon_and_optional_common_name() -> None:
@@ -119,3 +157,53 @@ def test_a_reference_photo_never_gets_a_subject_comparison() -> None:
 def test_a_taxon_sharing_a_target_prefix_is_still_compared() -> None:
     photo = {"original_taxon": "Ulex europaeusoides", "original_common_name": ""}
     assert subject_label(photo) == "Ulex europaeusoides"
+
+
+def test_featureless_tiles_cannot_win_a_weed_ranking() -> None:
+    boxes = [(0, 0, 100, 100), (0, 0, 60, 60), (40, 40, 100, 100)]
+    scores = np.array([[0.30, 0.2, 0.2, 0.3], [0.50, 0.2, 0.2, 0.3], [0.33, 0.2, 0.2, 0.3]])
+    labels = ["weed A", "weed B", "weed C", "comparison"]
+    result = summarize_scores(scores, boxes, labels, 3, eligible=[True, False, True])
+    assert result["box"] == [40, 40, 100, 100]
+    assert result["margin"] == pytest.approx(0.03)
+
+
+def test_a_uniform_tile_is_featureless_and_a_textured_one_is_not() -> None:
+    dark = Image.new("RGB", (50, 50), (3, 3, 3))
+    assert featureless(dark)
+    textured = Image.effect_noise((50, 50), 40).convert("RGB")
+    assert not featureless(textured)
+
+
+def test_extreme_panoramas_are_capped_and_flagged() -> None:
+    boxes = region_boxes(2048, 10)
+    assert len(boxes) <= 1 + MAX_TILES
+    assert not covers_every_pixel(2048, 10)
+    assert covers_every_pixel(1024, 768)
+
+
+class CountingBatches(FakeEncoder):
+    def __init__(self) -> None:
+        self.batches: list[int] = []
+
+    def encode_image(self, image: torch.Tensor, *, normalize: bool) -> torch.Tensor:
+        self.batches.append(len(image))
+        return super().encode_image(image, normalize=normalize)
+
+
+def test_windows_are_encoded_in_bounded_batches(tmp_path: Path) -> None:
+    path = tmp_path / "tall.jpg"
+    Image.effect_noise((300, 1600), 40).convert("RGB").save(path)
+    encoder = CountingBatches()
+    screener = Screener(
+        encoder, lambda _image: torch.zeros(3), lambda p: p, "hash", preprocessing={}
+    )
+    result = screener.screen(path)
+    assert len(encoder.batches) > 1 and max(encoder.batches) <= ENCODE_BATCH
+    assert sum(encoder.batches) == len(result["window_similarities"])
+    assert result["coverage_complete"] is True
+
+
+def test_metadata_does_not_claim_full_coverage_unconditionally() -> None:
+    regions = fake_screener().metadata["regions"]
+    assert "coverage_complete" in regions and str(MAX_TILES) in regions

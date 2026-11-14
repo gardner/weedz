@@ -71,6 +71,32 @@ window shows riverbed vegetation, which is reviewable but unverified. Fewer
 positives is not higher recall: nothing here measures missed weeds, and 30
 unreviewed photos give no accuracy estimate.
 
+### Ranking revision 4: look at the whole photo
+
+Revision 3 never showed the model a median 14.9% of each photo, and up to 31.5%
+of tall photos ([#13](https://github.com/gardner/weedz/issues/13)). The four 60%
+corner windows and the full frame were centre-cropped, losing their edges.
+Revision 4 scores a letterboxed whole frame plus square tiles covering every
+pixel, and ignores featureless tiles as winners. The 30 photos were re-screened
+with the same weights ([summary](../benchmarks/nelson-tasman-rescreen-r4.json)).
+
+| Check | Revision 3 | Revision 4 |
+| --- | --- | --- |
+| Incidental photos with a positive margin | 2 of 24 | 5 of 24 |
+| References ranking their own target first | 6 of 6 | 6 of 6 |
+| Featureless tiles excluded | n/a | 5 |
+
+Looking at more of each photo surfaces more candidates. The extra three are a
+grassy skink window, which is plausible vegetation, and two near-zero margins
+(+0.005) on sky and on blurred water. A black night strip that briefly ranked
+as pampas is now excluded as featureless. Lookalike confusion rises with
+coverage too. Without the subject prompt, toetoe passes as pampas in 6 of 6
+photos (previously 5), puawhānanga as old man's beard in 4 of 6 (previously 1),
+and kānuka as gorse in 2 of 6 (previously 0). Seeing the whole photo is
+necessary to find edge weeds, but it does not make the ranking more selective.
+Calibrated thresholds and lookalike discrimination (#16, #14) remain the
+limiting problems.
+
 The next experiment should include independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.
 Retain low-ranked photos for missed-weed review. Compare whole-frame and regional
