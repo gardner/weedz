@@ -86,6 +86,7 @@ try {
       score_meaning: "bioclip-2/ranking-4/meaning-1",
       consent_wording: "2026-11",
       image_consent: consent,
+      location_consent: fields.latitude !== null,
     },
     ...fields,
   });
@@ -93,6 +94,14 @@ try {
     report("device-1-a", true),
     report("device-1-b", false),
     // Consented, but the crop is not kept: nothing to request either.
+    // No location consent, so no point was sent.
+    report("device-1-d", false, {
+      latitude: null,
+      longitude: null,
+      positional_accuracy_m: null,
+      coordinate_status: "missing",
+      scores: { best_species: "Ulex europaeus", margin: -0.1 },
+    }),
     report("device-1-c", true, {
       image_path: "",
       scores: { best_species: "Ulex europaeus", margin: 0.01, width: 64, height: 48 },
@@ -133,6 +142,7 @@ try {
     "CC-BY",
     "Aroha",
     "Margin 0.12",
+    "Agreed to share the exact point",
   ]) {
     assert.ok(text.includes(shown), `provenance shows ${shown}`);
   }
@@ -157,6 +167,8 @@ try {
   assert.equal(await evidence.getByText("Aroha").count(), 0);
   await rows.nth(2).click();
   await evidence.getByText("the crop was not received").first().waitFor();
+  await rows.nth(3).click();
+  await evidence.getByText("did not consent to share the location").first().waitFor();
   assert.equal(await page.locator(".image-stage img, .image-stage svg image").count(), 0);
   assert.ok(
     images.every((path) => !path.includes("device-1-b") && !path.includes("device-1-c")),

@@ -19,7 +19,11 @@ export type DeviceProvenance = {
   score_meaning: string | null;
   consent_wording: string;
   image_consent: boolean;
+  /** Whether the person agreed to share the exact point; a point is sent only then. */
+  location_consent: boolean;
 };
+
+export const NO_LOCATION_CONSENT = "Not shared: the person did not consent to share the location";
 
 export const NO_CROP = "No image: the crop was not received, or is no longer kept";
 
@@ -33,7 +37,9 @@ export const noImageReason = (photo: Photo) =>
 /** The device's exact point with its accuracy; the location is the point of the report. */
 export function exactPoint(photo: Photo): string {
   const { latitude, longitude, positional_accuracy_m: accuracy } = photo;
-  if (latitude === null || longitude === null) return "No location sent";
+  if (latitude === null || longitude === null) {
+    return photo.device?.location_consent === false ? NO_LOCATION_CONSENT : "No location sent";
+  }
   const within = accuracy === null ? "accuracy not sent" : `±${accuracy} m`;
   return `${latitude}, ${longitude} ${within}`;
 }
@@ -57,6 +63,10 @@ export function provenanceRows(photo: Photo, device: DeviceProvenance): [string,
     [
       "Image licence",
       device.image_consent ? `${licence} · ${photo.attribution}` : NO_IMAGE_CONSENT,
+    ],
+    [
+      "Location consent",
+      device.location_consent ? "Agreed to share the exact point" : NO_LOCATION_CONSENT,
     ],
     ["Captured", device.captured_at ?? "Capture time not sent"],
     ["Received", device.received_at],

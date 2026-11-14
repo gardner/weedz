@@ -20,6 +20,8 @@ from temporalio.worker import Worker
 from weedz.discovery.access import Access
 from weedz.discovery.activities import Activities, export
 from weedz.discovery.api import create_app
+from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
+from weedz.discovery.device_reports import sync
 from weedz.discovery.occurrences import fetch_snapshot
 from weedz.discovery.outcome_report import to_markdown
 from weedz.discovery.outcomes import outcomes
@@ -38,6 +40,7 @@ from weedz.discovery.study_store import (
 )
 from weedz.discovery.suitability_report import to_markdown as suitability_markdown
 from weedz.discovery.workflows import DiscoveryWorkflow
+from weedz.intake.store import ReportStore
 from weedz.reference import collection
 from weedz.reference_report import to_markdown as reference_markdown
 
@@ -173,9 +176,20 @@ def run_store(args: argparse.Namespace) -> Store:
     if not (args.pilot_dir / "discovery.sqlite3").is_file():
         raise SystemExit(f"No pilot store in {args.pilot_dir}")
     store = Store(args.pilot_dir)
+    if args.run == DEVICE_RUN:
+        sync_device_run(store, args.intake_dir)
     if not any(run["id"] == args.run for run in store.runs()):
         raise SystemExit(f"No run {args.run!r} in {args.pilot_dir}")
     return store
+
+
+def sync_device_run(store: Store, intake_dir: Path | None) -> None:
+    """Device reports change as people withdraw them, so apply withdrawals first (#58)."""
+    if intake_dir is None:
+        raise SystemExit(
+            f"{DEVICE_RUN} holds device reports: pass --intake-dir so withdrawals apply first"
+        )
+    sync(store, ReportStore(intake_dir))
 
 
 def package(args: argparse.Namespace) -> None:
@@ -363,6 +377,10 @@ def parse(argv: list[str]) -> argparse.Namespace:
     bundle.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     bundle.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     bundle.add_argument("--out", type=Path, required=True, help="New or empty folder to write")
+    for command in (measures, suits, define, curate, bundle):
+        command.add_argument(
+            "--intake-dir", type=Path, help=f"Report intake folder, needed for --run {DEVICE_RUN}"
+        )
     return parser.parse_args(argv)
 
 

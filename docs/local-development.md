@@ -206,7 +206,8 @@ approved reports appear as the **device-reports** run, in a "Device reports"
 view (issue #58). Each is labelled as a device report. It shows the submitter
 by number (never the operator's label), the app version, the screening model
 stamp and score meaning, the consent wording, and the licence chosen on the
-phone. Its exact location is shown with the device's accuracy. Reports are
+phone. With location consent, its exact location is shown with the device's
+accuracy; without it, no point was sent and the panel says so. Reports are
 grouped into site visits (same submitter, capture date and nearby point),
 compared with the reference snapshot, and can be judged, referred, and selected
 as leads for a follow-up package, like incidental photos. They are their own
@@ -225,6 +226,10 @@ cohort, so they never change an iNaturalist run's counts.
   withdrawal recorded by intake erases a report; a report merely missing (for
   example, from a wrong `--intake-dir`) is left as it was.
 - Once it holds device reports, the review database is owner-only.
+- Without `--intake-dir`, the review app does not serve a device run it
+  stored earlier, since withdrawals cannot be checked. The `outcomes`,
+  `suitability`, `study`, `reference` and `package` commands need
+  `--intake-dir` for `--run device-reports`, and apply withdrawals first.
 
 Hosting, accounts and enrolment, the retention period, and whether images are
 uploaded at all are the project owner's decisions; see issues #55 and #57.

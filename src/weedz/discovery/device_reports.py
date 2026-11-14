@@ -47,6 +47,8 @@ class Provenance(BaseModel):
     score_meaning: str | None
     consent_wording: str
     image_consent: bool
+    # Whether the person agreed to share the exact point (#91); a point is sent only then.
+    location_consent: bool
 
 
 class DeviceItem(BaseModel):
@@ -114,6 +116,7 @@ def item(stored: StoredReport) -> DeviceItem:
             score_meaning=content.model.score_meaning,
             consent_wording=content.consent.wording_version,
             image_consent=content.consent.image,
+            location_consent=content.consent.location,
         ),
     )
 
@@ -171,13 +174,26 @@ def _add(store: Store, stored: StoredReport) -> None:
             "INSERT OR IGNORE INTO photos(run_id,id,record,scores) VALUES(?,?,?,?)",
             (RUN_ID, record.id, record.model_dump_json(), json.dumps(found)),
         )
-    if not (data and cursor.rowcount == 1):
-        return
-    target = store.root / record.image_path
+    if data and cursor.rowcount == 1:
+        _store_crop(store, record.id, record.image_path, data)
+
+
+def _store_crop(store: Store, identifier: str, image_path: str, data: bytes) -> None:
+    """Write the crop its row names; delete it again if withdrawn while it was written."""
+    target = store.root / image_path
     _write_private(target, data)
-    # Withdrawn while it was written: the erase may have run before the file existed.
-    if not _names(store, record.id, record.image_path):
+    # Withdrawn meanwhile: the erase may have run before the file existed.
+    if not _names(store, identifier, image_path):
         target.unlink(missing_ok=True)
+
+
+def _restore(store: Store, stored: StoredReport, record: dict) -> None:
+    """Copy again a crop whose earlier copy did not complete (a full disk, a crash)."""
+    if (store.root / record["image_path"]).exists():
+        return
+    data = _crop(stored, DeviceItem.model_validate(record))
+    if data and hashlib.sha256(data).hexdigest() == record["sha256"]:
+        _store_crop(store, record["id"], record["image_path"], data)
 
 
 def _erased(record: dict) -> dict:
@@ -240,6 +256,8 @@ def sync(store: Store, reports: ReportStore) -> None:
     for identifier, stored in active.items():
         if identifier not in known:
             _add(store, stored)
+        elif known[identifier].get("image_path"):
+            _restore(store, stored, known[identifier])
     withdrawn = 0
     for identifier, record in known.items():
         if record.get("withdrawn_at"):

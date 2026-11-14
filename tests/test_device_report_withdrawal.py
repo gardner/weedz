@@ -1,16 +1,20 @@
 """A withdrawal erases a device report from review, and nothing else does (issue #58)."""
 
+import json
 from pathlib import Path
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from intake_helpers import jpeg, report, with_image
+from intake_helpers import jpeg, new_id, report, with_image
 from test_device_reports import send, synced
 
-from weedz.discovery import device_reports
+from weedz.discovery import cli, device_reports
 from weedz.discovery.api import create_app
 from weedz.discovery.device_reports import RUN_ID
 from weedz.discovery.store import Store
+from weedz.intake.api import IntakeAPI
+from weedz.intake.limits import Limits
 from weedz.intake.store import ReportStore
 
 
@@ -91,3 +95,60 @@ def test_a_referral_on_a_withdrawn_report_cannot_be_answered(tmp_path: Path) -> 
     answer = {"action": "answered", "actor": "Dr Wiri", "note": "Native"}
     response = client.post(f"{path}/{referral_id}/events", json=answer)
     assert response.status_code == 410, response.text
+
+
+def test_without_an_intake_folder_a_stored_device_run_is_not_served(tmp_path: Path) -> None:
+    """Withdrawals cannot be checked without intake, so nothing of the run is served."""
+    intake = tmp_path / "intake"
+    send(intake, with_image(jpeg()))
+    [photo] = synced(tmp_path, intake)
+    client = TestClient(create_app(tmp_path / "pilot"))
+    assert RUN_ID not in [run["id"] for run in client.get("/runs").json()]
+    for path in ("", "/package", "/export", f"/photos/{photo['id']}/image"):
+        assert client.get(f"/runs/{RUN_ID}{path}").status_code == 404, path
+
+
+def test_the_cli_syncs_withdrawals_before_reading_the_device_run(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    intake, pilot = tmp_path / "intake", tmp_path / "pilot"
+    report_id = send(intake, with_image(jpeg()))
+    client = TestClient(create_app(pilot, intake_dir=intake))
+    [photo] = client.get(f"/runs/{RUN_ID}").json()["photos"]
+    lead = {"action": "selected", "selector": "Ana", "reason": "Gorse by the track"}
+    client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/leads", json=lead)
+    ReportStore(intake).withdraw(1, report_id)
+    out = tmp_path / "out"
+    base = ["package", "--run", RUN_ID, "--pilot-dir", str(pilot), "--out", str(out)]
+    with pytest.raises(SystemExit, match="--intake-dir"):
+        cli.main(base)
+    cli.main([*base, "--intake-dir", str(intake)])
+    assert "Nothing written" in capsys.readouterr().out
+    assert not out.exists()
+
+
+def test_a_crop_whose_copy_failed_is_copied_again(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    intake = tmp_path / "intake"
+    send(intake, with_image(jpeg()))
+    write = device_reports._write_private
+
+    def full_disk(target: Path, data: bytes) -> None:
+        raise OSError("No space left on device")
+
+    monkeypatch.setattr(device_reports, "_write_private", full_disk)
+    with pytest.raises(OSError):
+        synced(tmp_path, intake)
+    monkeypatch.setattr(device_reports, "_write_private", write)
+    [photo] = synced(tmp_path, intake)
+    assert (tmp_path / "pilot" / photo["image_path"]).is_file()
+
+
+def test_a_report_withdrawn_before_it_arrives_never_enters_review(tmp_path: Path) -> None:
+    intake = tmp_path / "intake"
+    report_id = new_id()
+    ReportStore(intake).withdraw(1, report_id, before_arrival=True)
+    with pytest.raises(HTTPException, match="410"):
+        IntakeAPI(intake, Limits()).accept(1, report_id, json.dumps(report()).encode())
+    assert synced(tmp_path, intake) == []

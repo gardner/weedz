@@ -102,17 +102,24 @@ class ReviewAPI:
         if self.reports:
             sync(self.store, self.reports)
 
+    def served(self) -> list[dict]:
+        """The runs, after syncing device reports. Without intake, withdrawals cannot be
+        checked, so a device run kept from an earlier session is not served at all."""
+        self.sync_reports()
+        runs = self.store.runs()
+        return runs if self.reports else [run for run in runs if run["id"] != DEVICE_RUN]
+
     def run(self, run_id: str) -> dict:
         if run_id == DEVICE_RUN:
             self.sync_reports()
-        result = next((item for item in self.store.runs() if item["id"] == run_id), None)
+        runs = self.store.runs() if run_id != DEVICE_RUN or self.reports else []
+        result = next((item for item in runs if item["id"] == run_id), None)
         if result is None:
             raise HTTPException(404, "Run not found")
         return result
 
     def runs(self) -> list[dict]:
-        self.sync_reports()
-        return self.store.runs()
+        return self.served()
 
     async def start(self, spec: RunSpec) -> dict:
         run_id = f"nelson-tasman-{uuid.uuid4().hex[:12]}"

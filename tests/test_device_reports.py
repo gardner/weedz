@@ -74,6 +74,7 @@ def test_a_report_becomes_a_review_item_with_its_provenance(tmp_path: Path, inta
         "score_meaning": "bioclip-2/ranking-4/meaning-1",
         "consent_wording": "2026-11",
         "image_consent": True,
+        "location_consent": True,
     }
     assert (photo["photo_license"], photo["observation_license"]) == ("cc-by", "cc-by")
     assert photo["attribution"] == "Aroha"
@@ -90,9 +91,11 @@ def test_the_exact_device_location_is_kept_with_its_accuracy(tmp_path: Path, int
 
 
 def test_a_report_without_a_location_or_time_is_not_given_one(tmp_path: Path, intake: Path) -> None:
-    send(intake, report(location=None, captured_at=None))
+    unshared = {"wording_version": "2026-11", "image": False, "location": False}
+    send(intake, report(location=None, captured_at=None, consent=unshared))
     [photo] = synced(tmp_path, intake)
     assert photo["coordinate_status"] == "missing"
+    assert photo["device"]["location_consent"] is False
     assert photo["latitude"] is None and photo["positional_accuracy_m"] is None
     assert photo["observed_on"] is None
 
