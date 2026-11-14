@@ -1,9 +1,13 @@
 /// The report a device sends once its person approves it: version 1 of the
 /// server's contract (`src/weedz/intake/schema.py`, issue #57).
 ///
-/// Each part refuses, when built, what the server would refuse, so a report
-/// that exists can be sent. The location is exact on purpose (it is what makes
-/// a report useful for science) and always carries its accuracy. It is where
+/// Each part refuses, when built, what the server's schema refuses on its
+/// own. One check depends on the server's clock and is not repeated here: a
+/// capture time more than a day ahead is refused (422).
+/// [Report.withoutCapturedAt] lets such a report be revised.
+///
+/// The location is exact on purpose (it is what makes a report useful for
+/// science) and always carries its accuracy. It is where
 /// the camera was, not the plant.
 library;
 
@@ -277,6 +281,15 @@ final class Report {
     candidate: candidate,
     model: model,
     capturedAt: capturedAt,
+    consent: consent,
+    image: image,
+  );
+
+  Report withoutCapturedAt() => Report(
+    appVersion: appVersion,
+    candidate: candidate,
+    model: model,
+    location: location,
     consent: consent,
     image: image,
   );

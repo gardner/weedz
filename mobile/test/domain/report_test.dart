@@ -139,6 +139,14 @@ void main() {
       expect(report.image, fullReport().image);
     });
 
+    test('withoutCapturedAt drops the capture time and nothing else', () {
+      // So a report the server refuses for a wrong camera clock can be revised.
+      final report = fullReport().withoutCapturedAt();
+      expect(report.capturedAt, isNull);
+      expect(report.location, fullReport().location);
+      expect(report.image, fullReport().image);
+    });
+
     test('withoutImage drops the crop, its consent and its licence', () {
       final report = fullReport().withoutImage();
       expect(report.image, isNull);
