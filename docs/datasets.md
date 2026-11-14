@@ -96,7 +96,7 @@ conventions when implementing their adapters. Pin the exact release at import.
 | [Mapillary](https://help.mapillary.com/hc/en-us/articles/115001770409-CC-BY-SA-license-for-open-data) | Street/roadside imagery, often successive views; local NZ coverage still to measure | Publisher states CC BY-SA for images; platform terms, acquisition, and intended reuse need review | **Roadside candidate:** bounded NZ corridor sample after eligibility and coverage checks |
 | [KartaView](https://kartaview.org/doc) | Street-level imagery; NZ coverage, accessible metadata, and image quality still to inspect | Exact source terms and selected image eligibility not verified here | **Investigate:** alternative roadside corpus; no bulk import assumed |
 | [MAVSD](https://doi.org/10.6084/m9.figshare.28428707.v1) | Chinese UAV RGB images at several angles; 13 semantic categories including invasive goldenrod; pixel masks/polygons | CC BY 4.0; Figshare archive is approximately 15.3 GB | **Supporting:** multi-angle segmentation experiment; acquire only when it answers a measured pilot need |
-| [LINZ imagery](https://github.com/linz/imagery) plus our own field labels | NZ orthorectified geographic imagery; rural surveys typically 20–30 cm; NIR products exist for some surveys; no supplied weed labels | Open imagery; retain the selected collection's actual licence, owner, and attribution | **Supporting:** compare local evidence where resolution/dates allow; later patch mapping with independently reviewed labels |
+| [LINZ imagery](https://github.com/linz/imagery) plus our own field labels | NZ orthorectified geographic imagery; rural surveys typically 20–30 cm; NIR products exist for some surveys; no supplied weed labels | Open imagery; retain the selected collection's actual licence, owner, and attribution | **Assessed ([#34](https://github.com/gardner/weedz/issues/34)): site context only.** 8 of 24 pilot photos fall within a contemporary 0.25 m season, and dates are seasons, not days; it cannot confirm species or place a plant; later patch mapping needs independently reviewed labels |
 | [DOC weed observations](https://www.gbif.org/dataset/d986e335-a2e3-44f0-9606-845e2eb6081d) | NZ occurrence records from 1983–2023; locations may be approximate to 100 m | CC BY 4.0; GBIF/Darwin Core archive | **Supporting:** select survey areas and check taxonomy; no direct image supervision |
 | [DeepWeeds](https://github.com/AlexOlsen/DeepWeeds) | 17,509 field photos from Queensland; eight weed species plus a negative class; image-level labels | Dataset images/annotations: CC BY 4.0; repository code licence is separate | **Optional:** ground-photo classification and transfer experiments |
 | [ImageWeeds v2](https://data.mendeley.com/datasets/8kjcztbjz2/2) | North Dakota aerial and greenhouse/handheld imagery with bounding-box annotations in several formats | CC BY 4.0; Mendeley | **Optional:** box detection, scale variation, and agricultural transfer experiments |
@@ -283,6 +283,78 @@ Export georeferenced score rasters and review polygons with model/release IDs.
 Calculate area in a suitable metric CRS. Measure segmentation and patch recall
 on reviewed sites. False alarms per hectare require a representative, exhaustively
 reviewed area; they cannot be inferred from a handful of sampled points.
+
+**Assessed 14 November 2026 ([#34](https://github.com/gardner/weedz/issues/34)).**
+Can LINZ imagery corroborate or locate the pilot's 24 incidental leads? The
+facts below come from the public `nz-imagery` STAC catalogue and the run
+`nelson-tasman-3e62ad801459`. They are recorded in
+[the assessment summary](../benchmarks/linz-nelson-tasman-assessment.json), which
+lists photo IDs but no coordinates. Reproduce them with
+`uv run python scripts/assess_linz.py`. The script reads collection JSON and
+simplified capture areas only, never rasters.
+
+- **Coverage:** 42 of the 60 candidate collections cover at least one photo.
+  They run from 1980 to 2025, with GSDs from 0.075 to 1 m plus six national 10 m
+  satellite mosaics. Seven are RGBN near-infrared products. All are
+  CC BY 4.0. The licensor is Nelson City Council, Tasman District Council or
+  LINZ/MPI, and the producer is named in each collection. Keep both in any
+  attribution.
+- **Dates are seasons, not days:** collections and tiles carry one flying-season
+  window, encoded as New Zealand midnights. The day a given tile was flown is
+  not published in STAC. Only **8 of 24** photos fall inside a contemporary
+  aerial window: Tasman 0.25 m (RGB and RGBN), 6 December 2024 to
+  27 March 2025. That window is 16 weeks long, so the flight could be up to
+  86 days after the photo.
+- **Four Tasman riverbed photos** lie outside that survey's capture area.
+  Their nearest aerial capture is the 0.1 m Tasman River Valleys Flood survey,
+  198 days later and after the July 2025 floods.
+- **Ten of the 12 Nelson photos have no contemporary capture.** Their nearest
+  is 0.1 m in May 2025, 141 days later. The finest is 0.075 m in December 2025,
+  336 days later. One other Nelson photo falls on the Tasman survey's edge. Two
+  photos, one per region, have no sub-metre capture within a year. Both have
+  about 1.6 km accuracy. Across all photos, the
+  nearest sub-metre capture has a median gap of 141 days.
+- **Resolution:** at 0.25 m a 1 m clump is 4 pixels across and a 3 m clump
+  12 pixels. At 0.075–0.1 m they are 10–40 pixels. A clump can be seen as a
+  shrub-sized blob, but RGB at these scales gives no species identity. Gorse,
+  broom, native shrubs and garden plants look alike from above. Old man's beard
+  is seen only as canopy texture, if at all. Sentinel-scale (10 m) mosaics
+  cannot show a single clump.
+- **An observation point is not a plant point:** positional accuracy is 3 to
+  1,634 m (median 18.5 m). Four photos report none and 9 report more than 20 m.
+  iNaturalist records no camera heading, so the background plant can lie
+  anywhere in that circle or beyond it. Only **11 of 24** photos have an
+  accuracy of 20 m or better. At 0.25 m that is a search circle of up to
+  80 pixels radius, about 180 times the area of a 3 m clump. The imagery's own
+  horizontal error is not in STAC. LDS layer notes give figures such as
+  [±1.2 m at 90% for Tasman 2015–16](https://catalogue.data.govt.nz/dataset/tasman-0-3m-rural-aerial-photos-2015-20164).
+  That is negligible beside the photos' uncertainty.
+- **Two windows were read to check this by eye:**
+  - An 80 m window of Tasman 0.25 m around the Tanguru chafer photo (17 m
+    accuracy, inside the season). The point falls on a house roof with solar
+    panels. The 17 m circle holds a lawn, a farm track, scattered 2–5 m shrubs
+    and native bush edges. Any of those shrubs could be the "background
+    plant", and none can be named.
+  - A 50 m window of the 0.1 m flood survey around the pied stilt photo (6 m
+    accuracy), from the same riverbed visit as the oystercatcher candidate. It
+    shows the channel, bare gravel bars and flood-deposited logs, with no live
+    vegetation in the circle. The flood reworked the riverbed after the photo,
+    so this image can neither confirm nor rule out the vegetation the photo
+    showed.
+
+**Recommendation.** Do not use LINZ imagery to corroborate a lead's species or
+to place a plant point. Its dates are seasonal, its pixels cannot separate
+the watchlist from lookalikes, and most pilot photos are too imprecise to say
+where in the image to look. It is still useful as **site context** for leads
+with public coordinates accurate to about 20 m or better. A reviewer can see
+whether the site is a garden, riverbed, roadside or bush edge, which helps
+judge cultivated or wild status, access and actionability. Pair it with the
+nearest capture's slug and signed day gap from this script. Treat
+captures outside the photo's season as "the site at another time". Do not
+build an aerial lead viewer until a reviewed lead shows that context would have
+changed a decision. Patch mapping still needs field-reviewed polygons with dates
+compatible with the capture, as described above. Exact flight days would have
+to be requested from LINZ or the producer.
 
 ### DOC observations: site selection without a vision head
 
