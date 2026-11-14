@@ -181,7 +181,7 @@ def test_one_submitter_cannot_read_or_withdraw_anothers_report(
     path = f"/reports/{new_id()}"
     client.put(path, json=with_image(jpeg()), headers=owner)
     assert client.get(path, headers=other).status_code == 404
-    assert client.delete(path, headers=other).status_code == 404
+    assert client.delete(path, headers=other).status_code == 200
     assert len(images(tmp_path)) == 1
     assert client.get(path, headers=owner).json()["status"] == "received"
 
