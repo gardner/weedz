@@ -25,7 +25,7 @@ def test_retry_refuses_to_mix_scoring_configurations(tmp_path: Path, monkeypatch
     class FakeScreener:
         metadata = {"revision": "changed"}
 
-    activities.screener = FakeScreener()
+    activities.screeners["bioclip"] = FakeScreener()
     monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
     with pytest.raises(ValueError, match="configuration changed"):
         activities.screen_photos({"run_id": "run"})
@@ -65,7 +65,7 @@ def test_screening_passes_each_photo_original_subject(tmp_path: Path, monkeypatc
             subjects.append(subject)
             return {"similarity": 0.1}
 
-    activities.screener = FakeScreener()
+    activities.screeners["bioclip"] = FakeScreener()
     monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
     activities.screen_photos({"run_id": "run"})
     assert subjects == [f"{photo.original_taxon}, {photo.original_common_name}"]

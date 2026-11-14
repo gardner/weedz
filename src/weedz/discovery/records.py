@@ -21,6 +21,8 @@ class RunSpec(BaseModel):
     limit_per_region: int = Field(default=12, ge=1, le=50)
     controls_per_species: int = Field(default=1, ge=0, le=3)
     before: date = date(2024, 12, 31)
+    # A key of weedz.discovery.inference.MODELS; see issue #14.
+    model: Literal["bioclip", "bioclip-2"] = "bioclip"
     after: date = date(2010, 1, 1)
     # "recent" reproduces the first pilot's newest-first selection; see issue #5.
     sampling: Literal["stratified", "recent"] = "stratified"

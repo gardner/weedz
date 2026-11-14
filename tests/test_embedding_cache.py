@@ -162,12 +162,20 @@ def test_recipe_versions_cover_the_libraries_that_decode_and_resize() -> None:
     }
 
 
-def test_a_different_pinned_model_misses_the_cache(tmp_path: Path, monkeypatch) -> None:
+def test_a_different_pinned_model_misses_the_cache(tmp_path: Path) -> None:
     cache = tmp_path / "cache"
     first, _ = screener(cache)
     first.screen(photo(tmp_path))
-    monkeypatch.setattr(inference, "REVISION", "0" * 40)
-    other, encoder = screener(cache)
+    encoder = CountingEncoder()
+    other = Screener(
+        encoder,
+        zeros,
+        lambda p: p,
+        "hash",
+        cache,
+        preprocessing=PREPROCESSING,
+        model_key="bioclip-2",
+    )
     other.screen(photo(tmp_path))
     assert encoder.image_calls == 1
 

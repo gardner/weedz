@@ -1,0 +1,67 @@
+"""Screening models are declared and pinned, and each run says which one it uses."""
+
+import hashlib
+from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
+from test_discovery import observation
+from test_discovery_inference import FakeEncoder
+
+from weedz.discovery.activities import Activities
+from weedz.discovery.inference import MODELS, Screener
+from weedz.discovery.records import RunSpec
+from weedz.discovery.source import photo_from_observation
+
+
+def test_registry_pins_every_model_to_a_full_revision() -> None:
+    assert {"bioclip", "bioclip-2"} <= set(MODELS)
+    for entry in MODELS.values():
+        assert len(entry["revision"]) == 40
+        assert entry["weights"].endswith((".bin", ".safetensors"))
+    assert MODELS["bioclip"]["revision"].startswith("ce901ab3")
+
+
+def test_metadata_names_the_screening_model() -> None:
+    def make(key: str) -> Screener:
+        return Screener(
+            FakeEncoder(), lambda _i: None, lambda p: p, "hash", preprocessing={}, model_key=key
+        )
+
+    assert make("bioclip-2").metadata["model"] == MODELS["bioclip-2"]["repo"]
+    assert make("bioclip-2").metadata["model_key"] == "bioclip-2"
+    assert make("bioclip").metadata["revision"] == MODELS["bioclip"]["revision"]
+
+
+def test_run_spec_defaults_to_the_original_model_and_rejects_unknown_ones() -> None:
+    assert RunSpec().model == "bioclip"
+    assert RunSpec(model="bioclip-2").model == "bioclip-2"
+    with pytest.raises(ValidationError):
+        RunSpec.model_validate({"model": "resnet"})
+
+
+def test_screening_uses_the_run_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    activities = Activities(tmp_path)
+    activities.store.create_run("run", RunSpec(model="bioclip-2"))
+    photo = photo_from_observation(observation(), "Nelson", "incidental")
+    assert photo is not None
+    photo.image_path = "image.jpg"
+    (tmp_path / photo.image_path).write_bytes(b"image")
+    photo.sha256 = hashlib.sha256(b"image").hexdigest()
+    activities.store.save_photos("run", [photo])
+    loaded: list[str] = []
+
+    class FakeScreener:
+        metadata = {"model_key": "bioclip-2"}
+
+        def screen(self, _path: Path, _subject: str | None = None) -> dict:
+            return {"similarity": 0.1}
+
+    def load(_cache: Path, model: str) -> FakeScreener:
+        loaded.append(model)
+        return FakeScreener()
+
+    monkeypatch.setattr("weedz.discovery.inference.Screener.load", load)
+    monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
+    activities.screen_photos({"run_id": "run"})
+    assert loaded == ["bioclip-2"]

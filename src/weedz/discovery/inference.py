@@ -20,8 +20,21 @@ from weedz.discovery.records import SPECIES
 # Bump when image decoding changes, so cached embeddings are not reused.
 # Window geometry needs no bump: the exact boxes are part of the cache key.
 WINDOW_REVISION = 2
-MODEL = "imageomics/bioclip"
-REVISION = "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c"
+# Declared, pinned screening models; a run records which one scored it (issue #14).
+MODELS: dict[str, dict[str, str]] = {
+    "bioclip": {
+        "repo": "imageomics/bioclip",
+        "revision": "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
+        "weights": "open_clip_pytorch_model.bin",
+        "tokenizer": "ViT-B-16",
+    },
+    "bioclip-2": {
+        "repo": "imageomics/bioclip-2",
+        "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+        "weights": "open_clip_model.safetensors",
+        "tokenizer": "ViT-L-14",
+    },
+}
 LOOKALIKES = [
     "Austroderia toetoe, New Zealand native toetoe grass",
     "Clematis paniculata, New Zealand native clematis vine",
@@ -196,6 +209,7 @@ class Screener:
         cache_dir: Path | None = None,
         *,
         preprocessing: Mapping[str, Any],
+        model_key: str = "bioclip",
     ) -> None:
         """`preprocessing` describes what `transform` does in stable, JSON-serialisable terms.
 
@@ -218,8 +232,9 @@ class Screener:
             json.dumps(preprocessing, sort_keys=True).encode()
         ).hexdigest()
         self.metadata = {
-            "model": MODEL,
-            "revision": REVISION,
+            "model": MODELS[model_key]["repo"],
+            "model_key": model_key,
+            "revision": MODELS[model_key]["revision"],
             "weights_sha256": weights_sha256,
             "device": "cpu",
             "ranking_revision": 4,
@@ -246,34 +261,33 @@ class Screener:
         }
 
     @classmethod
-    def load(cls, cache_dir: Path | None = None) -> "Screener":
+    def load(cls, cache_dir: Path | None = None, model: str = "bioclip") -> "Screener":
         # Heavy libraries are deliberately outside deterministic Temporal workflow imports.
         import open_clip
         import torch
         from huggingface_hub import snapshot_download
 
         torch.set_num_threads(4)
+        entry = MODELS[model]
         path = Path(
             snapshot_download(
-                MODEL,
-                revision=REVISION,
-                allow_patterns=[
-                    "open_clip_config.json",
-                    "open_clip_pytorch_model.bin",
-                ],
+                entry["repo"],
+                revision=entry["revision"],
+                allow_patterns=["open_clip_config.json", entry["weights"]],
             )
         )
-        model, _, transform = open_clip.create_model_and_transforms(f"local-dir:{path}")
-        weights = hashlib.sha256((path / "open_clip_pytorch_model.bin").read_bytes()).hexdigest()
-        tokenizer = open_clip.get_tokenizer("ViT-B-16")
-        preprocessing = {**library_versions(), **open_clip.get_model_preprocess_cfg(model)}
+        encoder, _, transform = open_clip.create_model_and_transforms(f"local-dir:{path}")
+        weights = hashlib.sha256((path / entry["weights"]).read_bytes()).hexdigest()
+        tokenizer = open_clip.get_tokenizer(entry["tokenizer"])
+        preprocessing = {**library_versions(), **open_clip.get_model_preprocess_cfg(encoder)}
         return cls(
-            cast(Encoder, model),
+            cast(Encoder, encoder),
             transform,
             tokenizer,
             weights,
             cache_dir,
             preprocessing=preprocessing,
+            model_key=model,
         )
 
     def encode_text(self, prompts: list[str]) -> Any:
@@ -285,8 +299,8 @@ class Screener:
             return None
         parts = [
             hashlib.sha256(image_bytes).hexdigest(),
-            MODEL,
-            REVISION,  # the pinned config, not just the weights, shapes the encoder
+            self.metadata["model"],
+            self.metadata["revision"],  # the pinned config, not just weights, shapes the encoder
             self.weights_sha256,
             self.preprocessing_sha256,
             json.dumps([list(box) for box in boxes]),

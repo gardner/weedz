@@ -22,7 +22,7 @@ from weedz.discovery.store import Store
 class Activities:
     def __init__(self, root: Path) -> None:
         self.store = Store(root)
-        self.screener: Any = None
+        self.screeners: dict[str, Any] = {}
 
     @activity.defn
     def collect_photos(self, payload: dict) -> dict:
@@ -48,14 +48,17 @@ class Activities:
         run_id = payload["run_id"]
         self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
-        if self.screener is None:
-            self.screener = Screener.load(self.store.root / "embeddings")
-        previous = next(run["model"] for run in self.store.runs() if run["id"] == run_id)
-        if previous and previous != self.screener.metadata:
+        run = next(item for item in self.store.runs() if item["id"] == run_id)
+        key = RunSpec.model_validate(run["spec"]).model
+        if key not in self.screeners:
+            self.screeners[key] = Screener.load(self.store.root / "embeddings", model=key)
+        screener = self.screeners[key]
+        previous = run["model"]
+        if previous and previous != screener.metadata:
             raise ValueError(
                 "Scoring configuration changed; start a new run to preserve provenance"
             )
-        self.store.model(run_id, self.screener.metadata)
+        self.store.model(run_id, screener.metadata)
         photos = self.store.photos(run_id)
         for index, photo in enumerate(photos):
             activity.heartbeat(f"{index}/{len(photos)}")
@@ -63,9 +66,7 @@ class Activities:
             if hashlib.sha256(path.read_bytes()).hexdigest() != photo["sha256"]:
                 raise ValueError(f"Image checksum mismatch: {photo['id']}")
             if not photo["scores"]:
-                self.store.score(
-                    run_id, photo["id"], self.screener.screen(path, subject_label(photo))
-                )
+                self.store.score(run_id, photo["id"], screener.screen(path, subject_label(photo)))
             self.store.status(run_id, "screening", f"Scored {index + 1} of {len(photos)} photos")
         return {"count": len(photos)}
 
