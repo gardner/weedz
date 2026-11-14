@@ -15,11 +15,13 @@ from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
-from weedz.discovery.activities import Activities
+from weedz.discovery.activities import Activities, export
 from weedz.discovery.api import create_app
 from weedz.discovery.occurrences import fetch_snapshot
+from weedz.discovery.outcomes import outcomes, to_markdown
 from weedz.discovery.records import TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
+from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -126,6 +128,19 @@ def references(args: argparse.Namespace) -> None:
     print(f"Wrote reference snapshot {path}")
 
 
+def report(args: argparse.Namespace) -> None:
+    if not (args.pilot_dir / "discovery.sqlite3").is_file():
+        raise SystemExit(f"No pilot store in {args.pilot_dir}")
+    store = Store(args.pilot_dir)
+    if not any(run["id"] == args.run for run in store.runs()):
+        raise SystemExit(f"No run {args.run!r} in {args.pilot_dir}")
+    result = outcomes(export(store, args.run))
+    print(to_markdown(result), end="")
+    if args.json:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+
+
 def parse(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Nelson/Tasman discovery and review")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -172,6 +187,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
         "references", help="Snapshot DOC weed records from GBIF for distance comparison"
     )
     snapshot.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    measures = commands.add_parser(
+        "outcomes", help="Report a run against the pilot success measures (Markdown)"
+    )
+    measures.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    measures.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    measures.add_argument("--json", type=Path, help="Also write the report as JSON here")
     return parser.parse_args(argv)
 
 
@@ -179,5 +200,8 @@ def main(argv: list[str]) -> None:
     args = parse(argv)
     if args.command == "references":
         references(args)
+        return
+    if args.command == "outcomes":
+        report(args)
         return
     asyncio.run(dev(args) if args.command == "dev" else discover(args))
