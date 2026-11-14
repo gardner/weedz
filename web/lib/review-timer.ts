@@ -5,18 +5,24 @@ export const IDLE_LIMIT_MS = 10 * 60_000;
 const TICK_MS = 1_000;
 const ACTIVITY = ["pointerdown", "pointermove", "keydown", "wheel", "scroll"] as const;
 
+/** The time measured on one photo when a decision was sent. */
+export type EffortSnapshot = { seconds: number; measurement: number };
+
 /**
  * Seconds spent actively reviewing the current photo: counted only while the tab is
- * visible and within ten minutes of the last input. Read it with `seconds()` and call
- * `reset()` only once a decision is saved, so a failed save keeps the measured time.
+ * visible and within ten minutes of the last input. Take a `snapshot()` when sending a
+ * decision and `clear()` it only once the save succeeds, so a failed save keeps the
+ * measured time and a slow save never clears time spent on the next photo.
  */
 export function useReviewTimer(photoKey: string) {
   const elapsed = useRef(0);
+  const measurement = useRef(0);
   const lastActivity = useRef(Date.now());
 
   useEffect(() => {
     // A new photo starts a fresh measurement.
     void photoKey;
+    measurement.current++;
     elapsed.current = 0;
     lastActivity.current = Date.now();
   }, [photoKey]);
@@ -38,9 +44,13 @@ export function useReviewTimer(photoKey: string) {
     };
   }, []);
 
-  const seconds = useCallback(() => elapsed.current / 1000, []);
-  const reset = useCallback(() => {
-    elapsed.current = 0;
+  const snapshot = useCallback(
+    (): EffortSnapshot => ({ seconds: elapsed.current / 1000, measurement: measurement.current }),
+    [],
+  );
+  const clear = useCallback((saved: EffortSnapshot) => {
+    // Time counted after the snapshot, or on another photo, belongs to the next decision.
+    if (saved.measurement === measurement.current) elapsed.current -= saved.seconds * 1000;
   }, []);
-  return { seconds, reset };
+  return { snapshot, clear };
 }

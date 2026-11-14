@@ -35,18 +35,29 @@ try {
     coordinate_status: "missing",
     attribution: "Test fixture",
   };
+  const second = { ...photo, id: "second", original_common_name: "Tui" };
   const posted = [];
+  let held = null;
+  const holdNextSave = () => {
+    const gate = Promise.withResolvers();
+    held = gate.promise;
+    return gate.resolve;
+  };
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/api/runs") return route.fulfill({ json: [run] });
+    if (path === "/api/runs") return route.fulfill({ json: [run, { ...run, id: "other" }] });
+    if (path === "/api/runs/other") return route.fulfill({ status: 503, body: "Unavailable" });
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
     if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     if (path.endsWith("/review")) {
       posted.push(route.request().postDataJSON());
+      const gate = held;
+      held = null;
+      if (gate) await gate;
       return route.fulfill({ json: { saved: true } });
     }
     const review_effort = { total_minutes: 12.5, measured_decisions: 3, unmeasured_decisions: 1 };
-    await route.fulfill({ json: { run, photos: [photo], review_effort } });
+    await route.fulfill({ json: { run, photos: [photo, second], review_effort } });
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.getByLabel("Your name").fill("Ana");
@@ -57,8 +68,13 @@ try {
       Object.defineProperty(document, "visibilityState", { configurable: true, get: () => value });
       document.dispatchEvent(new Event("visibilitychange"));
     }, state);
-  const decide = async (label) => {
+  const click = async (label) => {
+    const count = posted.length;
     await page.getByRole("button", { name: label }).click();
+    while (posted.length === count) await new Promise((resolve) => setTimeout(resolve, 20));
+  };
+  const decide = async (label) => {
+    await click(label);
     await page.getByText("Review saved locally.").waitFor();
   };
 
@@ -76,8 +92,27 @@ try {
   await page.mouse.move(20, 20);
   await page.clock.runFor(30 * 60_000);
   await decide("Reject suggestion");
-  const second = posted[1].effort_seconds;
-  assert.ok(second >= 599 && second <= 602, `idle time capped at ten minutes, got ${second}`);
+  const idle = posted[1].effort_seconds;
+  assert.ok(idle >= 599 && idle <= 602, `idle time capped at ten minutes, got ${idle}`);
+
+  // A slow save must not wipe the time already spent on the next photo.
+  const release = holdNextSave();
+  await page.mouse.move(30, 30);
+  await page.clock.runFor(5_000);
+  await click("Unsure");
+  await page.getByRole("button", { name: /Tui/ }).click();
+  await page.clock.runFor(20_000);
+  release();
+  await page.getByText("Review saved locally.").waitFor();
+  await page.clock.runFor(10_000);
+  await click("Reject suggestion");
+  const next = posted[3].effort_seconds;
+  assert.ok(next >= 29 && next <= 32, `next photo keeps its time across a slow save, got ${next}`);
+
+  // Another run's detail must not show this run's review time.
+  await page.getByText("Run & collection settings").click();
+  await page.getByLabel("Saved run").selectOption("other");
+  await page.getByText("No review time yet").waitFor();
   console.log("Review effort counts visible, active time per decision.");
 } finally {
   await browser.close();

@@ -102,8 +102,16 @@ export default function ReviewDesk() {
 
   const effort = useReviewTimer(`${runId}:${active?.id ?? ""}`);
 
+  function switchRun(id: string) {
+    setPhotos([]);
+    setEffortSummary(undefined);
+    setActiveId("");
+    setRunId(id);
+  }
+
   async function save(status: Status, note: string) {
     if (!active) return;
+    const measured = effort.snapshot();
     setSaving(true);
     try {
       await request(`runs/${runId}/photos/${active.id}/review`, {
@@ -113,10 +121,10 @@ export default function ReviewDesk() {
           status,
           note,
           reviewer: reviewer.trim(),
-          effort_seconds: effort.seconds(),
+          effort_seconds: measured.seconds,
         }),
       });
-      effort.reset();
+      effort.clear(measured);
       setNotice("Review saved locally.");
       await refresh();
     } catch (failure) {
@@ -134,9 +142,7 @@ export default function ReviewDesk() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit_per_region: limit, controls_per_species: 1, before }),
       });
-      setPhotos([]);
-      setActiveId("");
-      setRunId(result.id);
+      switchRun(result.id);
       setNotice("Regional run queued. Progress updates automatically.");
     } catch (failure) {
       setError(String(failure));
@@ -249,14 +255,7 @@ export default function ReviewDesk() {
             <div className="settings-grid">
               <label>
                 Saved run
-                <select
-                  value={runId}
-                  onChange={(event) => {
-                    setPhotos([]);
-                    setRunId(event.target.value);
-                    setActiveId("");
-                  }}
-                >
+                <select value={runId} onChange={(event) => switchRun(event.target.value)}>
                   {runs.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.id} · {item.status}
