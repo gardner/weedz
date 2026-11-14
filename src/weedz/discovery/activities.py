@@ -9,6 +9,7 @@ from typing import Any
 
 from temporalio import activity
 
+from weedz.discovery.effort import summarize_effort
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
@@ -88,14 +89,16 @@ def export(store: Store, run_id: str) -> dict:
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
+    photos = store.photos(run_id)
+    history = [
+        dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"])) for photo in photos
+    ]
     return {
         "schema": 1,
         "run": run,
-        "photos": store.photos(run_id),
-        "review_history": [
-            dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"]))
-            for photo in store.photos(run_id)
-        ],
+        "photos": photos,
+        "review_history": history,
+        "review_effort": summarize_effort(photos, history),
         "source_snapshots": {
             path.name: hashlib.sha256(path.read_bytes()).hexdigest()
             for path in snapshots.glob("*.json")

@@ -67,7 +67,14 @@ class ReviewAPI:
 
     def review(self, run_id: str, photo_id: str, decision: Review) -> dict:
         try:
-            self.store.review(run_id, photo_id, decision.status, decision.note, decision.reviewer)
+            self.store.review(
+                run_id,
+                photo_id,
+                decision.status,
+                decision.note,
+                decision.reviewer,
+                decision.effort_seconds,
+            )
         except KeyError as error:
             raise HTTPException(404, "Photo not found") from error
         return {"saved": True}
