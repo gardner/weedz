@@ -73,7 +73,11 @@ export default function AuditPanel({
           id="auditor-name"
           className="reviewer-name"
           value={reviewer}
-          onChange={(event) => onReviewerChange(event.target.value)}
+          onChange={(event) => {
+            // An unsent draft belongs to the previous name; never show it to another auditor.
+            setNote("");
+            onReviewerChange(event.target.value);
+          }}
           maxLength={80}
           autoComplete="name"
         />

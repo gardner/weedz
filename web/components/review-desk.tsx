@@ -421,7 +421,9 @@ export default function ReviewDesk() {
             </section>
             {active && auditing ? (
               <AuditPanel
-                key={`${runId}:audit:${active.id}`}
+                // A save, or another auditor taking over, starts a fresh draft so no
+                // auditor sees an earlier note before answering.
+                key={`${runId}:audit:${active.id}:${auditedBy(active, reviewer)}`}
                 photo={active}
                 runId={runId}
                 summary={auditSummary}

@@ -104,6 +104,7 @@ try {
   const gorse = page.getByRole("button", { name: "Gorse", exact: true });
   assert.equal(await gorse.isDisabled(), true, "an audit needs a reviewer name");
   await page.getByLabel("Your name").fill("Ana");
+  await page.getByLabel("Audit note").fill("Gorse by the fence");
   await gorse.click();
   await page.getByText("Audit saved locally.").waitFor();
   assert.equal(posted.length, 1);
@@ -114,6 +115,12 @@ try {
   // Only the first answer is blind: the photo is now in Ana's ranked queue.
   await expect(gorse).toBeDisabled();
   await page.getByText("Your blind answer is recorded.").waitFor();
+  // The next auditor on this browser must see neither Ana's saved note nor a draft.
+  await expect(page.getByLabel("Audit note")).toHaveValue("");
+  await page.getByLabel("Audit note").fill("Unsent draft");
+  await page.getByLabel("Your name").fill("Ben");
+  await expect(page.getByLabel("Audit note")).toHaveValue("");
+  await page.getByLabel("Your name").fill("Ana");
 
   // Once Ana has audited it, it rejoins her ranked queue, and the audit selection is not
   // carried over.
