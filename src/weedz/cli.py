@@ -21,7 +21,7 @@ def _recall(value: str) -> float:
 
 
 def main() -> None:
-    if len(sys.argv) > 1 and sys.argv[1] in {"dev", "discover"}:
+    if len(sys.argv) > 1 and sys.argv[1] in {"dev", "discover", "references"}:
         from weedz.discovery.cli import main as discovery_main
 
         discovery_main(sys.argv[1:])
