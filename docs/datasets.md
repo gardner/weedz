@@ -42,6 +42,11 @@ outbound path. It admits CC0, CC BY and CC BY-NC, and states why ND,
 share-alike and all-rights-reserved material is linked rather than used. It
 never passes on an obscured point, and nothing is published on a contributor's
 behalf ([sharing, licences and location privacy](local-development.md#sharing-licences-and-location-privacy)).
+Photos people send from the app also carry what they permitted, under a
+versioned [consent text](report-consent.md): specialist review, keeping as
+evidence, sharing with agencies, public sharing and model training are separate
+choices. The reference collection and the sharing policy honour them, so a
+photo without training consent is never training-eligible (#60).
 
 ## What works today
 

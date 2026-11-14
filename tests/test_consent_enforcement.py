@@ -1,0 +1,106 @@
+"""Every place a photo is used honours what its contributor permitted (#60)."""
+
+from typing import Any
+
+import pytest
+from test_reference import note, reasons
+from test_sharing import photo
+
+from weedz.contract import Sample
+from weedz.discovery.sharing import image_use, shareable_photo
+from weedz.reference import examples
+
+WITHDRAWN_AT = "2026-11-14T00:00:00Z"
+
+
+def consented(uses: list[str], withdrawn_at: str | None = None) -> dict[str, Any]:
+    return {"version": "2026-11", "uses": uses, "withdrawn_at": withdrawn_at}
+
+
+def device_sample(uses: list[str], withdrawn_at: str | None = None) -> Sample:
+    return Sample.model_validate(
+        {
+            "id": "device:r1",
+            "source": "device",
+            "source_id": "r1",
+            "snapshot": "intake",
+            "rights": {
+                "media_license": "cc-by",
+                "metadata_license": "cc-by",
+                "attribution": "Photo: Ana via Weedz, CC BY 4.0",
+                "license_source": "docs/report-consent.md#version-2026-11",
+                "consent": consented(uses, withdrawn_at),
+            },
+            "media": {"uri": "reports/images/x.jpg"},
+            "tasks": ["inference"],
+            "annotations": [
+                note(origin="reviewer", author="kim", review="accepted", reviewers=["lee"])
+            ],
+        }
+    )
+
+
+def verdicts(record: Sample) -> dict[str, str]:
+    (example,) = examples([record])
+    return reasons(example)
+
+
+def test_a_photo_without_training_consent_is_never_training_or_evaluation_eligible() -> None:
+    found = verdicts(device_sample(["review", "agencies"]))
+    assert "did not permit" in found["training"]
+    assert "did not permit" in found["evaluation"]
+    assert found["sharing"] == ""
+
+
+def test_training_consent_makes_a_reviewed_photo_training_and_evaluation_eligible() -> None:
+    found = verdicts(device_sample(["review", "training"]))
+    assert found["training"] == found["evaluation"] == ""
+
+
+def test_reference_sharing_needs_agency_sharing_consent() -> None:
+    assert "did not permit" in verdicts(device_sample(["review", "training"]))["sharing"]
+
+
+def test_withdrawal_removes_every_reference_eligibility() -> None:
+    every = ["review", "evidence", "agencies", "public", "training"]
+    found = verdicts(device_sample(every, WITHDRAWN_AT))
+    assert all("Withdrawn" in reason for reason in found.values())
+
+
+def test_review_shows_a_device_photo_only_with_review_consent() -> None:
+    assert image_use(photo(consent=consented(["review"])), "review").action == "show"
+    withdrawn = photo(consent=consented(["review"], WITHDRAWN_AT))
+    assert image_use(withdrawn, "review").action == "link"
+
+
+@pytest.mark.parametrize(
+    ("uses", "action"),
+    [(["review"], "link"), (["review", "training"], "link"), (["review", "agencies"], "include")],
+)
+def test_a_shared_output_includes_a_device_photo_only_with_agency_consent(
+    uses: list[str], action: str
+) -> None:
+    decided = image_use(photo(consent=consented(uses)), "share")
+    assert decided.action == action
+    if action == "link":
+        assert "did not permit" in decided.reason
+
+
+def test_a_licence_the_collection_refuses_is_still_refused_with_consent() -> None:
+    item = photo(photo_license="cc-by-sa", consent=consented(["review", "agencies"]))
+    assert image_use(item, "share").action == "link"
+
+
+def test_attribution_and_the_contributors_limits_travel_with_a_shared_photo() -> None:
+    credit = "Photo: Ana Smith via Weedz, CC BY 4.0"
+    item = photo(
+        photo_license="cc-by", attribution=credit, consent=consented(["review", "agencies"])
+    )
+    shared = shareable_photo(item)["sharing"]
+    assert shared["terms"]["attribution"] == credit
+    assert shared["terms"]["contributor_permits"] == ["agencies", "review"]
+    assert shared["image"]["action"] == "include"
+
+
+def test_sourced_photos_carry_no_contributor_limits() -> None:
+    assert "contributor_permits" not in shareable_photo(photo())["sharing"]["terms"]

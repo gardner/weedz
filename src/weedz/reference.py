@@ -4,7 +4,8 @@ Every annotation on a contract sample becomes one example. Its standing says whe
 is the source's original label, an accepted correction or confirmed suggestion, an
 unresolved or unsuitable case, or not yet reviewed. Its eligibility for training,
 evaluation and sharing is derived from the review outcome, whose label it is, and the
-sharing policy (weedz.discovery.sharing), always with the reason when it is not
+sharing policy (weedz.discovery.sharing), and, for a photo its contributor sent
+directly, the uses they permitted (weedz.consent), always with the reason when it is not
 eligible. Nothing is stored: the collection is re-derived from the append-only review
 history, so it cannot disagree with it. No coordinates are carried; an example says
 only whether its location could be shared, and why not.
@@ -16,6 +17,7 @@ from collections.abc import Iterable
 from datetime import date
 from typing import Any, Literal
 
+from weedz.consent import Permission, refusal
 from weedz.contract import Annotation, Sample
 from weedz.discovery.sampling import season_of
 from weedz.discovery.sharing import ADMITTED, NON_COMMERCIAL, location, not_admitted
@@ -23,6 +25,12 @@ from weedz.reference_gaps import NOT_RECORDED, coverage, gaps
 
 Use = Literal["training", "evaluation", "sharing"]
 USES: tuple[Use, ...] = ("training", "evaluation", "sharing")
+# The permission each use needs from a photo's contributor (docs/report-consent.md).
+NEEDS: dict[Use, Permission] = {
+    "training": "training",
+    "evaluation": "training",
+    "sharing": "agencies",
+}
 Standing = Literal["original", "accepted", "unresolved", "unsuitable", "unreviewed"]
 MEANING = (
     "Every reviewed or recorded label on this collection's photos, with what it is and "
@@ -95,11 +103,25 @@ def _sharing(sample: Sample, note: Annotation) -> str:
     return ""
 
 
-def eligibility(sample: Sample, note: Annotation) -> dict[Use, str]:
-    """Per use, "" when eligible, else why not."""
+def _consented(sample: Sample) -> dict[Use, str]:
+    """Per use, why the photo's contributor did not permit it, or "" (#60)."""
+    given = sample.rights.consent
+    if given is None:
+        return dict.fromkeys(USES, "")
+    return {use: refusal(given.uses, given.withdrawn_at, NEEDS[use]) for use in USES}
+
+
+def _evidence(sample: Sample, note: Annotation) -> dict[Use, str]:
     if reason := _set_aside(note):
         return dict.fromkeys(USES, reason)
     return {"training": "", "evaluation": _evaluation(note), "sharing": _sharing(sample, note)}
+
+
+def eligibility(sample: Sample, note: Annotation) -> dict[Use, str]:
+    """Per use, "" when eligible, else why not: the contributor's consent first, then
+    the label's evidence and the licences."""
+    consented, evidence = _consented(sample), _evidence(sample, note)
+    return {use: consented[use] or evidence[use] for use in USES}
 
 
 def _location(sample: Sample) -> dict[str, Any]:

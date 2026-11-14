@@ -2,17 +2,20 @@
 
 ``reports/reports.sqlite3`` holds each report under its submitter and device-chosen id;
 cleaned crops sit in ``reports/images`` under random names. Both are owner-only.
-Withdrawing a report deletes its image and erases its content, leaving a tombstone of ids
-and times so a retry cannot bring it back. ``secure_delete`` zeroes the erased content in
-the database file too. ``active()`` is where specialist review would read reports (#58).
+Withdrawing a report deletes its image and erases its content, leaving a tombstone of ids,
+times and what was agreed (the consent wording and permitted uses, never the credit name)
+so a retry cannot bring it back and the history shows when consent ended (#60).
+``secure_delete`` zeroes the erased content in the database file too. ``active()`` is
+where specialist review would read reports (#58).
 """
 
+import json
 import os
 import sqlite3
 import uuid
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -25,7 +28,7 @@ SCHEMA = (
     """
 CREATE TABLE IF NOT EXISTS reports(
     submitter INTEGER NOT NULL, report_id TEXT NOT NULL, received_at TEXT NOT NULL,
-    content_sha256 TEXT, body TEXT, image_file TEXT, withdrawn_at TEXT,
+    content_sha256 TEXT, body TEXT, image_file TEXT, withdrawn_at TEXT, consent TEXT,
     PRIMARY KEY(submitter, report_id)
 );
 """
@@ -48,12 +51,24 @@ class Receipt:
     received_at: str
     withdrawn_at: str | None
     image: bool
+    # What the person agreed to, kept after withdrawal: the wording and the photo's uses.
+    consent_version: str
+    uses: list[str]
 
     @classmethod
     def of(cls, row: sqlite3.Row) -> "Receipt":
         status = "withdrawn" if row["withdrawn_at"] else "received"
         image = row["image_file"] is not None
-        return cls(row["report_id"], status, row["received_at"], row["withdrawn_at"], image)
+        agreed = json.loads(row["consent"])
+        return cls(
+            row["report_id"],
+            status,
+            row["received_at"],
+            row["withdrawn_at"],
+            image,
+            agreed["version"],
+            agreed["uses"],
+        )
 
 
 @dataclass(frozen=True)
@@ -127,14 +142,20 @@ class ReportStore:
                 received = _now()
                 name = self._write_image(image) if image else None
                 content = report.model_dump_json(exclude={"image"})
-                row = (submitter, report_id, received, digest, content, name)
-                db.execute("INSERT INTO reports VALUES(?,?,?,?,?,?,NULL)", row)
+                row = (submitter, report_id, received, digest, content, name, agreed(report))
+                db.execute(
+                    "INSERT INTO reports(submitter, report_id, received_at, content_sha256, "
+                    "body, image_file, consent) VALUES(?,?,?,?,?,?,?)",
+                    row,
+                )
         except BaseException:
             # Not committed, so no image is left behind without its report.
             if name:
                 (self.images / name).unlink(missing_ok=True)
             raise
-        return Receipt(report_id, "received", received, None, name is not None), True
+        uses: list[str] = sorted(report.consent.uses)
+        version = report.consent.wording_version
+        return Receipt(report_id, "received", received, None, bool(name), version, uses), True
 
     def withdraw(
         self, submitter: int, report_id: str, before_arrival: bool = False
@@ -163,7 +184,7 @@ class ReportStore:
                 "image_file=NULL WHERE submitter=? AND report_id=?",
                 (withdrawn, submitter, report_id),
             )
-            return Receipt(report_id, "withdrawn", row["received_at"], withdrawn, False)
+            return replace(Receipt.of(row), status="withdrawn", withdrawn_at=withdrawn, image=False)
 
     def active(self) -> list[StoredReport]:
         """Every report received and not withdrawn: unpublished, for review (#58)."""
@@ -216,6 +237,12 @@ class ReportStore:
             os.fsync(folder)
         finally:
             os.close(folder)
+
+
+def agreed(report: ReportContent) -> str:
+    """The non-identifying record of what was agreed: kept even after withdrawal."""
+    consent = report.consent
+    return json.dumps({"version": consent.wording_version, "uses": sorted(consent.uses)})
 
 
 def _row(db: sqlite3.Connection, submitter: int, report_id: str) -> sqlite3.Row | None:

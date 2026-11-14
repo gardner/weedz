@@ -10,7 +10,12 @@ carries its accuracy. Nothing here, or anywhere in the project, publishes to a s
 
 from typing import Any, Literal, NamedTuple
 
+from weedz.consent import Permission, refusal
+
 Use = Literal["review", "share"]
+# The permission each use needs from a photo's contributor (docs/report-consent.md): every
+# outbound path goes to agencies and partners; none publishes.
+NEEDS: dict[Use, Permission] = {"review": "review", "share": "agencies"}
 
 # Photo licences the collection admits (docs/datasets.md, "Project purpose and source
 # reuse"), each with what sharing a photo under it requires.
@@ -93,12 +98,23 @@ def refuse_unadmitted(photo_license: str, observation_license: str) -> None:
             raise ValueError(f"Refused {kind} licence {licence!r}. {not_admitted(licence)}")
 
 
+def contributor_refusal(photo: dict[str, Any], use: Use) -> str:
+    """Why the photo's contributor did not permit this use, or "" (#60). A sourced photo
+    has no consent record and is governed by its licence alone."""
+    given = photo.get("consent")
+    if not given:
+        return ""
+    return refusal(given["uses"], given.get("withdrawn_at"), NEEDS[use])
+
+
 def image_use(photo: dict[str, Any], use: Use) -> ImageUse:
     """Whether the photo may be shown (review) or included (share), or only linked."""
     licence = photo.get("photo_license")
     terms = ADMITTED.get(licence or "")
     if terms is None:
         return ImageUse("link", not_admitted(licence))
+    if refused := contributor_refusal(photo, use):
+        return ImageUse("link", refused)
     return ImageUse("show" if use == "review" else "include", terms)
 
 
@@ -115,7 +131,13 @@ def terms(photo: dict[str, Any]) -> dict[str, Any]:
         "observation_terms": OBSERVATION_TERMS.get(observation_licence)
         or not_admitted(observation_licence),
         "non_commercial": bool({photo_licence, observation_licence} & NON_COMMERCIAL),
-    }
+    } | _contributor_limits(photo)
+
+
+def _contributor_limits(photo: dict[str, Any]) -> dict[str, Any]:
+    """The uses a contributor permitted, so a recipient knows, e.g., not to publish."""
+    given = photo.get("consent")
+    return {"contributor_permits": sorted(given["uses"])} if given else {}
 
 
 def _withheld(photo: dict[str, Any], use: Use) -> str:
