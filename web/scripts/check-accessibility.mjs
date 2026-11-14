@@ -187,6 +187,8 @@ try {
   // Audit referrals with an open one's response form and the new-referral form showing.
   await page.getByRole("button", { name: "Refer for specialist assessment" }).click();
   await page.getByLabel("What is unresolved?").waitFor();
+  // Only the answerer's own judgements can be cited, so answer as their author.
+  await page.getByLabel("Your name").fill("Dr Wiri");
   await page.getByText("Judgements this answer informed").waitFor();
 
   const results = await new AxeBuilder({ page })
@@ -208,6 +210,7 @@ try {
   assert.deepEqual(phoneSummary, [], `Phone-width WCAG violations:\n${phoneSummary.join("\n")}`);
   await page.setViewportSize({ width: 1400, height: 1000 });
 
+  await page.getByLabel("Your name").fill("");
   // Keyboard only: reach the second photo, then decide without a pointer.
   await page.locator(".photo-row").first().focus();
   await page.keyboard.press("Tab");
