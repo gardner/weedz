@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints, field_validator
 
 REGIONS = {"Nelson": 40493, "Tasman": 40494}
 SPECIES = {
@@ -56,3 +56,19 @@ class Review(BaseModel):
     note: str = Field(default="", max_length=4000)
     # Active, visible time on this photo measured by the review app; None when not measured.
     effort_seconds: float | None = Field(default=None, ge=0, le=86_400)
+
+
+class Audit(BaseModel):
+    """A blind answer to "Is any watchlist weed visible?" for an audit-sample photo."""
+
+    finding: str
+    reviewer: ReviewerName
+    note: str = Field(default="", max_length=4000)
+    effort_seconds: float | None = Field(default=None, ge=0, le=86_400)
+
+    @field_validator("finding")
+    @classmethod
+    def known_finding(cls, value: str) -> str:
+        if value not in {*SPECIES, "none", "unsure"}:
+            raise ValueError("Finding must be a watchlist species, 'none' or 'unsure'")
+        return value

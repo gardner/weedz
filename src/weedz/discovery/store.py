@@ -62,6 +62,12 @@ class Store:
                     reviewer TEXT NOT NULL DEFAULT '', effort_seconds REAL,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
+                CREATE TABLE IF NOT EXISTS audits (
+                    id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
+                    finding TEXT NOT NULL, note TEXT NOT NULL, reviewer TEXT NOT NULL,
+                    effort_seconds REAL, created_at TEXT NOT NULL,
+                    FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
+                );
             """)
             # Databases created before reviewer attribution keep their history unattributed.
             add_missing_column(db, "photos", "review_reviewer")
@@ -177,3 +183,42 @@ class Store:
                     (run_id, photo_id),
                 )
             ]
+
+    def audit(
+        self,
+        run_id: str,
+        photo_id: str,
+        finding: str,
+        note: str,
+        reviewer: str,
+        effort_seconds: float | None = None,
+    ) -> None:
+        with self.connect() as db:
+            exists = db.execute(
+                "SELECT 1 FROM photos WHERE run_id=? AND id=?", (run_id, photo_id)
+            ).fetchone()
+            if exists is None:
+                raise KeyError(photo_id)
+            db.execute(
+                "INSERT INTO audits(run_id,photo_id,finding,note,reviewer,effort_seconds,"
+                "created_at) VALUES(?,?,?,?,?,?,?)",
+                (run_id, photo_id, finding, note, reviewer, effort_seconds, now()),
+            )
+
+    def audits(self, run_id: str, photo_id: str) -> list[dict]:
+        with self.connect() as db:
+            return [
+                dict(row)
+                for row in db.execute(
+                    "SELECT * FROM audits WHERE run_id=? AND photo_id=? ORDER BY id",
+                    (run_id, photo_id),
+                )
+            ]
+
+    def latest_audits(self, run_id: str) -> dict[str, str]:
+        """Each photo's most recent audit finding."""
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT photo_id, finding FROM audits WHERE run_id=? ORDER BY id", (run_id,)
+            ).fetchall()
+        return {row["photo_id"]: row["finding"] for row in rows}

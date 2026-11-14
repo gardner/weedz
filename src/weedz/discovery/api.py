@@ -8,8 +8,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from temporalio.client import Client
 
 from weedz.discovery.activities import export, review_history
+from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
-from weedz.discovery.records import TASK_QUEUE, Review, RunSpec
+from weedz.discovery.records import TASK_QUEUE, Audit, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
 
@@ -49,7 +50,10 @@ class ReviewAPI:
         run = self.run(run_id)
         photos = self.store.photos(run_id)
         effort = summarize_effort(photos, review_history(self.store, run_id, photos))
-        return {"run": run, "photos": photos, "review_effort": effort}
+        sample = audit_sample(run_id, photos)
+        audit = summarize_audit(photos, sample, self.store.latest_audits(run_id))
+        photos = [photo | {"audit_sample": photo["id"] in sample} for photo in photos]
+        return {"run": run, "photos": photos, "review_effort": effort, "audit": audit}
 
     def download(self, run_id: str) -> JSONResponse:
         self.run(run_id)
@@ -83,6 +87,17 @@ class ReviewAPI:
             raise HTTPException(404, "Photo not found") from error
         return {"saved": True}
 
+    def audit(self, run_id: str, photo_id: str, answer: Audit) -> dict:
+        photos = self.store.photos(self.run(run_id)["id"])
+        if not any(photo["id"] == photo_id for photo in photos):
+            raise HTTPException(404, "Photo not found")
+        if photo_id not in audit_sample(run_id, photos):
+            raise HTTPException(409, "Only audit-sample photos can be audited")
+        self.store.audit(
+            run_id, photo_id, answer.finding, answer.note, answer.reviewer, answer.effort_seconds
+        )
+        return {"saved": True}
+
     def history(self, run_id: str, photo_id: str) -> list[dict]:
         if not any(photo["id"] == photo_id for photo in self.store.photos(self.run(run_id)["id"])):
             raise HTTPException(404, "Photo not found")
@@ -99,4 +114,5 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.get("/runs/{run_id}/photos/{photo_id}/image")(api.image)
     app.post("/runs/{run_id}/photos/{photo_id}/review")(api.review)
     app.get("/runs/{run_id}/photos/{photo_id}/reviews")(api.history)
+    app.post("/runs/{run_id}/photos/{photo_id}/audit")(api.audit)
     return app
