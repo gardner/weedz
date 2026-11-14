@@ -1,5 +1,6 @@
 """The intake records what each person agreed to, and keeps that record past withdrawal (#60)."""
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -91,3 +92,27 @@ def test_a_retry_listing_the_same_uses_in_another_order_is_the_same_report(
     retry = with_image(crop, uses=["agencies", "review", "training"])
     assert client.put(path, json=first, headers=headers).status_code == 201
     assert client.put(path, json=retry, headers=headers).status_code == 200
+
+
+def test_reports_stored_before_consent_records_stay_readable(tmp_path: Path) -> None:
+    """A photo report stored under the first contract was sent for review, so it is
+    read as permitting review alone; its wording is kept as it was sent."""
+    folder = tmp_path / "reports"
+    folder.mkdir()
+    old = report(consent={"wording_version": "consent-2026-11", "image": True, "licence": "cc0"})
+    with sqlite3.connect(folder / "reports.sqlite3") as db:
+        db.execute(
+            "CREATE TABLE reports(submitter INTEGER NOT NULL, report_id TEXT NOT NULL, "
+            "received_at TEXT NOT NULL, content_sha256 TEXT, body TEXT, image_file TEXT, "
+            "withdrawn_at TEXT, PRIMARY KEY(submitter, report_id))"
+        )
+        db.execute(
+            "INSERT INTO reports VALUES(1, 'old', 't', 'd', ?, NULL, NULL)", (json.dumps(old),)
+        )
+    store = ReportStore(tmp_path)
+    (stored,) = store.active()
+    assert stored.report.consent.uses == frozenset({"review"})
+    assert stored.report.consent.wording_version == "consent-2026-11"
+    receipt = store.receipt(1, "old")
+    assert receipt is not None
+    assert (receipt.consent_version, receipt.uses) == ("consent-2026-11", ["review"])

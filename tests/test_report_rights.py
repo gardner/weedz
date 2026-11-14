@@ -127,9 +127,11 @@ def test_withdrawal_refuses_every_use() -> None:
 
 
 def test_withdrawn_rights_keep_what_was_agreed_and_when_it_ended() -> None:
-    rights = photo_rights(consent(uses=["review", "training"]))
+    rights = photo_rights(consent(uses=["review", "training"], credit="Ana Smith"))
     assert rights is not None
     ended = withdrawn(rights, "2026-11-14T00:00:00Z")
+    assert ended.creator is None
+    assert "Ana" not in ended.model_dump_json()
     assert ended.consent is not None
     assert ended.consent.withdrawn_at == "2026-11-14T00:00:00Z"
     assert ended.consent.uses == frozenset({"review", "training"})

@@ -93,9 +93,8 @@ class ReportStore:
             folder.mkdir(mode=0o700, parents=True, exist_ok=True)
         db = tokens.connect_private(self.path, SCHEMA)
         db.execute("PRAGMA secure_delete=ON")
-        columns = {row["name"] for row in db.execute("PRAGMA table_info(reports)")}
-        if "consent" not in columns:  # a store made before consent was recorded (#60)
-            db.execute("ALTER TABLE reports ADD COLUMN consent TEXT")
+        if not _records_consent(db):
+            _record_consent(db)
         return db
 
     @contextmanager
@@ -204,7 +203,7 @@ class ReportStore:
                 row["submitter"],
                 row["report_id"],
                 row["received_at"],
-                ReportContent.model_validate_json(row["body"]),
+                ReportContent.model_validate_json(row["body"], context={"stored": True}),
                 self._image(row["image_file"]),
             )
             for row in rows
@@ -244,6 +243,31 @@ class ReportStore:
             os.fsync(folder)
         finally:
             os.close(folder)
+
+
+def _records_consent(db: sqlite3.Connection) -> bool:
+    return any(row["name"] == "consent" for row in db.execute("PRAGMA table_info(reports)"))
+
+
+def _record_consent(db: sqlite3.Connection) -> None:
+    """Upgrade a store made before consent was recorded (#60). A photo was then sent for
+    review alone, so its report is read as permitting review and nothing more."""
+    db.execute("BEGIN IMMEDIATE")  # another connection may be upgrading it too
+    if _records_consent(db):
+        db.rollback()
+        return
+    db.execute("ALTER TABLE reports ADD COLUMN consent TEXT")
+    rows = db.execute("SELECT rowid, body FROM reports WHERE body IS NOT NULL").fetchall()
+    for row in rows:
+        body = json.loads(row["body"])
+        consent = body["consent"]
+        consent.setdefault("uses", ["review"] if consent.get("image") else [])
+        agreed = json.dumps({"version": consent["wording_version"], "uses": consent["uses"]})
+        db.execute(
+            "UPDATE reports SET body=?, consent=? WHERE rowid=?",
+            (json.dumps(body), agreed, row["rowid"]),
+        )
+    db.commit()
 
 
 def agreed(report: ReportContent) -> str:

@@ -26,8 +26,10 @@ def photo_rights(given: Consent) -> Rights | None:
 
 
 def withdrawn(rights: Rights, at: str) -> Rights:
-    """The rights once their person withdrew: what was agreed is kept, but permits nothing."""
+    """The rights once their person withdrew: what was agreed is kept, but permits nothing,
+    and the credit name goes, as the consent text promises."""
     if rights.consent is None:
         raise ValueError("Only a contributor's own consent can be withdrawn")
     ended = rights.consent.model_copy(update={"withdrawn_at": at})
-    return rights.model_copy(update={"consent": ended})
+    anonymous = consent.attribution(rights.media_license, None)
+    return rights.model_copy(update={"consent": ended, "creator": None, "attribution": anonymous})

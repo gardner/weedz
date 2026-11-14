@@ -16,6 +16,7 @@ from pydantic import (
     ConfigDict,
     Field,
     StringConstraints,
+    ValidationInfo,
     field_serializer,
     field_validator,
     model_validator,
@@ -90,7 +91,11 @@ class Consent(Part):
 
     @field_validator("wording_version")
     @classmethod
-    def published(cls, version: str) -> str:
+    def published(cls, version: str, info: ValidationInfo) -> str:
+        # A report already stored keeps the wording it was sent under, even one from
+        # before any consent text was published (#60); only intake refuses it.
+        if (info.context or {}).get("stored"):
+            return version
         if version not in VERSIONS:
             raise ValueError(f"Not a published consent wording; expected one of {sorted(VERSIONS)}")
         return version
