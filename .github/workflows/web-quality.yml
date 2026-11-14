@@ -1,0 +1,62 @@
+name: Web Quality
+
+on:
+  pull_request:
+    paths: &web-paths
+      - "web/**"
+      - "scripts/check_file_length.py"
+      - ".github/workflows/web-quality.yml"
+  push:
+    branches: [main]
+    paths: *web-paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 12
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: File length (max 500 lines, web source)
+        working-directory: ${{ github.workspace }}
+        run: >-
+          python3 scripts/check_file_length.py --max-lines 500
+          $(find web/app web/components web/lib web/scripts -type f
+          \( -name '*.ts' -o -name '*.tsx' -o -name '*.mjs' -o -name '*.css' \) | sort)
+
+      - name: Type check, lint and format (tsc + Biome)
+        run: pnpm check
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
