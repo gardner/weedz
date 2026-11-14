@@ -238,3 +238,28 @@ def test_compare_reports_every_arm_and_budget_on_both_queues() -> None:
     assert found["overlap"]["incidental"]["whole_frame|tiles"] == [1, 1]
     assert found["photos"]["i1"]["tiles"]["species"] == "Cortaderia selloana"
     assert found["labels"] == {"independent": 1, "source_subject": 1, "lookalike_photos": 1}
+
+
+def test_contradicting_labels_are_dropped_and_duplicates_kept_once() -> None:
+    examples = [
+        example("Ulex europaeus", "present", True, "clear"),
+        example("Clematis vitalba", "present", True, "found"),
+    ]
+    audits = {"clear": {"ann": "none"}, "found": {"ann": "Clematis vitalba"}}
+    labels = independent_labels(examples, audits, {"clear", "found"})
+    assert Label("clear", "Ulex europaeus", True) not in labels
+    assert Label("clear", "Ulex europaeus", False) not in labels
+    assert Label("clear", "Clematis vitalba", False) in labels
+    assert labels.count(Label("found", "Clematis vitalba", True)) == 1
+
+
+def test_independent_labels_off_the_incidental_queue_are_not_counted() -> None:
+    photos = [
+        {"id": "i1", "cohort": "incidental"},
+        {"id": "r1", "cohort": "reference", "reference_species": "Ulex europaeus"},
+    ]
+    results = {"i1": FRAME_GORSE_TILE_PAMPAS, "r1": FRAME_GORSE_TILE_PAMPAS}
+    found = compare(results, photos, [Label("r1", "Ulex europaeus", True)], [1])
+    assert found["labels"]["independent"] == 0
+    row = found["arms"]["whole_frame"]["incidental"]["budgets"][0]
+    assert row["labelled_present"] == 0 and row["recall"] is None

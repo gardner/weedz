@@ -32,9 +32,11 @@ MEANING = (
     "labelled items only, so unlabelled photos are counted apart, not as false alarms. "
     "None means not measurable (no labels), not zero. Independent labels are reference-"
     "collection examples eligible for evaluation and agreeing blind audits, measured on "
-    "the incidental review queue. Source subject labels are reference photos whose "
-    "subject is the weed, measured on a pooled queue with lookalike photos; they describe "
-    "the subject, not background plants, and a lookalike is not a verified absence."
+    "the incidental review queue and counted only on incidental photos; a species "
+    "labelled both present and absent is left out as unresolved. Source subject labels "
+    "are reference photos whose subject is the weed, measured on a pooled queue with "
+    "lookalike photos; they describe the subject, not background plants, and a "
+    "lookalike is not a verified absence."
 )
 
 
@@ -132,7 +134,11 @@ def independent_labels(
     audits: Mapping[str, Mapping[str, str]],
     sample: Collection[str],
 ) -> list[Label]:
-    """Evaluation-eligible watchlist examples, then agreeing blind audits of the sample."""
+    """Evaluation-eligible watchlist examples and agreeing blind audits of the sample.
+
+    Each (photo, species) is labelled once; one labelled both present and absent (say, an
+    accepted finding and a blind "none") is unresolved and left out, not counted twice.
+    """
     labels = [
         # A pilot sample id is "<source>:<photo id>".
         Label(
@@ -145,7 +151,15 @@ def independent_labels(
     ]
     for photo_id in sorted(set(audits) & set(sample)):
         labels += _audit_labels(photo_id, audits[photo_id].values())
-    return labels
+    return _consistent(labels)
+
+
+def _consistent(labels: list[Label]) -> list[Label]:
+    """Labels once each, in first-seen order, without pairs that contradict themselves."""
+    unique = list(dict.fromkeys(labels))
+    present = {(label.photo_id, label.taxon) for label in unique if label.present}
+    absent = {(label.photo_id, label.taxon) for label in unique if not label.present}
+    return [label for label in unique if (label.photo_id, label.taxon) not in present & absent]
 
 
 def source_labels(photos: Iterable[Mapping[str, Any]]) -> list[Label]:
@@ -194,6 +208,9 @@ def compare(
         photo["id"]: photo["lookalike_of"] for photo in photos if photo["cohort"] == "lookalike"
     }
     subjects = source_labels(photos)
+    # The incidental queue can only reach incidental photos; other labels would deflate
+    # recall and make an unmeasured tier look measured.
+    independent = [label for label in independent if label.photo_id in incidental]
     queues = {arm: ranked({pid: found[arm] for pid, found in picks.items()}) for arm in ARMS}
     review = {
         arm: [item for item in queue if item["photo_id"] in incidental]
