@@ -222,3 +222,26 @@ def test_assess_lists_only_collections_that_cover_an_assessed_photo() -> None:
     assert [item["slug"] for item in report["collections"]] == ["season"]
     assert report["photos"][0]["closest"]["slug"] == "season"
     assert report["summary"]["captured_inside_window"] == 1
+
+
+def test_an_undated_photo_is_kept_with_unknown_timing() -> None:
+    covering = [parsed("season", 0.25, "2024-12-06", "2025-03-27")]
+    aligned = assess.align(photo(observed_on=None), covering)
+    assert aligned["covering"] == 1
+    assert aligned["closest"] is None
+    assert aligned["finest_within_year"] is None
+    assert assess.summarise([aligned])["undated"] == 1
+
+
+def test_a_missing_store_is_an_error_not_an_empty_assessment(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit):
+        assess.main(["--store", str(tmp_path / "absent")])
+    assert not (tmp_path / "absent").exists()
+
+
+def test_a_run_without_assessable_photos_is_an_error(tmp_path: Path) -> None:
+    from weedz.discovery.store import Store
+
+    Store(tmp_path)
+    with pytest.raises(SystemExit):
+        assess.main(["--store", str(tmp_path), "--run", "missing-run"])

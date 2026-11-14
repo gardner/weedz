@@ -293,7 +293,12 @@ lists photo IDs but no coordinates. Reproduce them with
 `uv run python scripts/assess_linz.py`. The script reads collection JSON and
 simplified capture areas only, never rasters. The catalogue is live, so each
 collection's entry records the catalogue's checksums of its collection JSON and
-capture area. A rerun can then show which inputs have changed.
+capture area. A rerun can then show which inputs have changed. The photo
+records come from the local, gitignored pilot store in `data/pilot/`, which the
+screening run creates ([local operation](local-development.md); its source
+manifest checksum is in
+[the screening summary](../benchmarks/nelson-tasman-screening.json)). Without
+that store the script stops with an error rather than reporting zero photos.
 
 - **Coverage:** 43 of the 61 candidate collections cover at least one photo.
   They run from 1980 to 2025, with GSDs from 0.075 to 1 m plus six national 10 m

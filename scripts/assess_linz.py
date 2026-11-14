@@ -147,17 +147,20 @@ def _aerial(item: Json) -> bool:
 
 
 def align(photo: Json, covering: list[Json]) -> Json:
-    observed = date.fromisoformat(photo["observed_on"])
+    """An undated photo keeps its coverage, but its timing is unknown."""
     accuracy = photo.get("positional_accuracy_m")
-    dated = [item for item in covering if _aerial(item) and item["capture_start"]]
-    matches = [_match(item, observed, accuracy) for item in dated]
+    matches = []
+    if photo.get("observed_on"):
+        observed = date.fromisoformat(photo["observed_on"])
+        dated = [item for item in covering if _aerial(item) and item["capture_start"]]
+        matches = [_match(item, observed, accuracy) for item in dated]
     near = [match for match in matches if abs(match["gap_days"]) <= YEAR]
     closest = min(matches, key=lambda m: (abs(m["gap_days"]), m["gsd_m"]), default=None)
     finest = min(near, key=lambda m: (m["gsd_m"], abs(m["gap_days"])), default=None)
     return {
         "id": photo["id"],
         "region": photo["region"],
-        "observed_on": photo["observed_on"],
+        "observed_on": photo.get("observed_on"),
         "positional_accuracy_m": accuracy,
         "covering": len(covering),
         "closest": closest,
@@ -178,6 +181,7 @@ def summarise(aligned: list[Json]) -> Json:
     gaps = [abs(a["closest"]["gap_days"]) for a in aligned if a["closest"]]
     return {
         "photos": len(aligned),
+        "undated": sum(not a["observed_on"] for a in aligned),
         "covered": sum(a["covering"] > 0 for a in aligned),
         "captured_inside_window": sum(
             a["closest"] is not None and a["closest"]["gap_days"] == 0 for a in aligned
@@ -235,7 +239,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--catalog", default=CATALOG)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
+    # Store() would create an empty database; the pilot store is local and gitignored.
+    if not (args.store / "discovery.sqlite3").exists():
+        parser.error(f"no pilot store at {args.store}; see docs/local-development.md")
     photos = assessed_photos(Store(args.store).photos(args.run))
+    if not photos:
+        parser.error(f"run {args.run} has no public-coordinate incidental photos")
     with httpx.Client(timeout=60, headers={"User-Agent": "weedz-assessment"}) as client:
         collections = _collections(client, args.catalog)
     report = {

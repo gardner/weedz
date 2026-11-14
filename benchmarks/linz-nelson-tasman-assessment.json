@@ -9,6 +9,7 @@
   "aerial_max_gsd_m": 1.0,
   "summary": {
     "photos": 24,
+    "undated": 0,
     "covered": 24,
     "captured_inside_window": 8,
     "within_year": 22,
