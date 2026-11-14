@@ -1,21 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { findingName, kindLabels } from "../lib/findings";
 import {
   DIMENSIONS,
   type Dimension,
+  type Judged,
   type NewJudgement,
   NOTE_REQUIRED,
   unavailable,
   valueLabel,
 } from "../lib/judgements";
-import type { Photo } from "../lib/types";
+import { names, type Photo } from "../lib/types";
 
 type Save = (judgement: NewJudgement) => Promise<boolean>;
 
+const SUGGESTION = "suggestion";
+type Plant = { key: string; label: string; judged: Judged };
+
 /**
  * Identity, location usefulness, historical relevance and novelty, each judged and saved
- * on its own so one can be settled while another stays disputed or unassessed.
+ * on its own so one can be settled while another stays disputed or unassessed. Each
+ * judgement is about one plant: the suggested species or a recorded plant.
  */
 export default function JudgementPanel({
   photo,
@@ -28,6 +34,18 @@ export default function JudgementPanel({
   blocked: boolean;
   onSave: Save;
 }) {
+  const suggestion = photo.scores.best_species;
+  const plants: Plant[] = (photo.findings ?? []).map((plant) => ({
+    key: String(plant.id),
+    label: `${kindLabels[plant.kind]}: ${findingName(plant)} (${plant.reviewer})`,
+    judged: plant,
+  }));
+  if (suggestion) {
+    const label = `Suggested: ${names[suggestion] ?? suggestion}`;
+    plants.unshift({ key: SUGGESTION, label, judged: photo });
+  }
+  const [chosen, setChosen] = useState(SUGGESTION);
+  const plant = plants.find(({ key }) => key === chosen) ?? plants[0];
   return (
     <section className="judgements" aria-labelledby="judgements-heading">
       <h3 id="judgements-heading">Separate judgements</h3>
@@ -35,16 +53,41 @@ export default function JudgementPanel({
         Each is saved on its own with your name, and none changes your decision above. Leave a
         dimension unassessed rather than guess.
       </p>
-      {DIMENSIONS.map(({ key }) => (
-        <JudgementRow
-          key={key}
-          dimension={key}
-          photo={photo}
-          reviewer={reviewer}
-          blocked={blocked}
-          onSave={onSave}
-        />
-      ))}
+      {plant ? (
+        <>
+          <label className="judgement-target" htmlFor="judgement-target">
+            Plant being judged
+          </label>
+          <select
+            id="judgement-target"
+            value={plant.key}
+            onChange={(event) => setChosen(event.target.value)}
+          >
+            {plants.map(({ key, label }) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {DIMENSIONS.map(({ key }) => (
+            <JudgementRow
+              // A draft belongs to one plant and one reviewer; either changing starts afresh.
+              key={`${plant.key}:${reviewer.trim()}:${key}`}
+              dimension={key}
+              photo={photo}
+              findingId={plant.key === SUGGESTION ? null : Number(plant.key)}
+              judged={plant.judged}
+              reviewer={reviewer}
+              blocked={blocked}
+              onSave={onSave}
+            />
+          ))}
+        </>
+      ) : (
+        <p className="judgements-intro">
+          Nothing to judge yet: screening has not suggested a plant and none is recorded.
+        </p>
+      )}
     </section>
   );
 }
@@ -52,20 +95,23 @@ export default function JudgementPanel({
 function JudgementRow({
   dimension,
   photo,
+  findingId,
+  judged,
   reviewer,
   blocked,
   onSave,
 }: {
   dimension: Dimension;
   photo: Photo;
+  findingId: number | null;
+  judged: Judged;
   reviewer: string;
   blocked: boolean;
   onSave: Save;
 }) {
   const info = DIMENSIONS.find((item) => item.key === dimension) ?? DIMENSIONS[0];
-  const standing = Object.entries(photo.judgements?.[dimension] ?? {});
-  const own = photo.judgements?.[dimension]?.[reviewer.trim()]?.value;
-  // Derived, not initial state, because the remembered name arrives after mount.
+  const standing = Object.entries(judged.judgements?.[dimension] ?? {});
+  const own = judged.judgements?.[dimension]?.[reviewer.trim()]?.value;
   const [draft, setValue] = useState<string | null>(null);
   const value = draft ?? own ?? "unassessed";
   const [note, setNote] = useState("");
@@ -79,7 +125,7 @@ function JudgementRow({
     <div className="judgement">
       <label htmlFor={id}>{info.label}</label>
       <small id={`${id}-help`}>{info.question}</small>
-      {photo.judgement_disputes?.includes(dimension) && (
+      {judged.judgement_disputes?.includes(dimension) && (
         <p className="judgement-dispute">
           <strong>⚠ Reviewers disagree</strong>
         </p>
@@ -121,7 +167,7 @@ function JudgementRow({
           type="button"
           disabled={blocked || missing}
           onClick={async () => {
-            if (await onSave({ dimension, value, note })) setNote("");
+            if (await onSave({ finding_id: findingId, dimension, value, note })) setNote("");
           }}
         >
           Save {info.label.toLowerCase()}

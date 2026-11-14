@@ -74,7 +74,10 @@ def test_findings_are_appended_with_attribution(tmp_path: Path) -> None:
     assert first["box"] == [1, 2, 30, 40] and first["reviewer"] == "Ana"
     assert second["box"] is None and second["other_taxon"] == "Clematis paniculata"
     assert second["species"] is None and second["note"] == "n" and second["created_at"]
-    assert store.photos("run")[0]["findings"] == [first, second]
+    # In the run detail each recorded plant also carries its own judgements (#18).
+    listed = store.photos("run")[0]["findings"]
+    assert [listed[0] | first, listed[1] | second] == listed
+    assert listed[0]["judgements"]["identity"] == {} and listed[0]["judgement_disputes"] == []
 
 
 def test_api_records_and_lists_findings(tmp_path: Path) -> None:

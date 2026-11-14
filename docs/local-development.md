@@ -185,7 +185,10 @@ intended for local development, not shared public hosting.
 7. **Judge identity, location, history and novelty separately.** Under the
    findings, *Separate judgements* has one row per dimension, each with its own
    value, note and save button. Saving one changes neither the others nor the
-   suggestion decision:
+   suggestion decision. Each judgement is about one plant, chosen under *Plant
+   being judged*: the suggested species, or a recorded plant by its finding id
+   (`finding_id`, null for the suggestion). A photo with no suggestion can only
+   have its recorded plants judged:
 
    | Dimension | Values |
    | --- | --- |
@@ -210,10 +213,11 @@ intended for local development, not shared public hosting.
    timed (`measured_judgements`, `unmeasured_judgements`,
    `minutes_by_judgement_dimension` and `unmeasured_incidental_judgements` in
    `review_effort`). Each reviewer's latest judgement stands. `unassessed`
-   withdraws it, and no judgement means unassessed, never negative. Each photo
-   in the run detail and export carries `judgements` (per dimension, each
-   reviewer's standing value, note and time) and `judgement_disputes` (the
-   dimensions where standing values differ, shown as "Reviewers disagree").
+   withdraws it, and no judgement means unassessed, never negative. In the run
+   detail and export, each photo carries the suggestion's `judgements` (per
+   dimension, each reviewer's standing value, note and time) and
+   `judgement_disputes` (the dimensions where standing values differ, shown as
+   "Reviewers disagree"). Each recorded plant in `findings` carries its own.
    The export's `review_history` carries every judgement event.
    `GET` and `POST /runs/{run}/photos/{photo}/judgements` read and append them.
 
@@ -312,7 +316,9 @@ The findings check records a corrected and a missed plant, drawing one box by
 dragging on the photo and typing another by keyboard, and the accessibility
 check audits the finding form open with a box error showing.
 The judgements check saves identity and a noted verified new locality
-separately, and checks that per-dimension disagreement is shown. It also checks
+separately, then judges a recorded plant apart from the suggestion. It checks
+that per-dimension disagreement is shown and that a draft does not pass to
+another reviewer. It also checks
 that unsupported claims are disabled with a reason. The accessibility check
 audits the judgements with a required-note hint showing.
 The smoke check is read-only against a completed local pilot and verifies filters,

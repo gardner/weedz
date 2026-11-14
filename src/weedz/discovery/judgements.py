@@ -43,6 +43,8 @@ NOTE_REQUIRED = {
 
 
 class Judgement(BaseModel):
+    # The recorded plant (a finding's id) being judged; None judges the suggested species.
+    finding_id: int | None = None
     dimension: Dimension
     value: str
     reviewer: ReviewerName
@@ -102,11 +104,16 @@ def no_judgements() -> dict[str, dict[str, dict]]:
     return {name: {} for name in JUDGEMENTS}
 
 
-def standing_judgements(events: list[Any]) -> dict[str, dict[str, dict[str, dict]]]:
-    """Per photo and dimension, each reviewer's latest judgement (oldest event first)."""
-    standing: dict[str, dict[str, dict[str, dict]]] = {}
+Target = tuple[str, int | None]
+
+
+def standing_judgements(events: list[Any]) -> dict[Target, dict[str, dict[str, dict]]]:
+    """Per judged plant (photo id and finding id, None for the suggestion) and dimension,
+    each reviewer's latest judgement. Events are oldest first."""
+    standing: dict[Target, dict[str, dict[str, dict]]] = {}
     for event in events:
-        by_dimension = standing.setdefault(event["photo_id"], no_judgements())
+        target = (event["photo_id"], event["finding_id"])
+        by_dimension = standing.setdefault(target, no_judgements())
         by_reviewer = by_dimension[event["dimension"]]
         if event["value"] == "unassessed":
             by_reviewer.pop(event["reviewer"], None)
@@ -117,6 +124,12 @@ def standing_judgements(events: list[Any]) -> dict[str, dict[str, dict[str, dict
                 "created_at": event["created_at"],
             }
     return standing
+
+
+def judged(standing: dict[Target, dict[str, dict[str, dict]]], target: Target) -> dict:
+    """A plant's standing judgements and the dimensions where reviewers disagree."""
+    by_dimension = standing.get(target) or no_judgements()
+    return {"judgements": by_dimension, "judgement_disputes": disputes(by_dimension)}
 
 
 def disputes(standing: dict[str, dict[str, dict]]) -> list[str]:

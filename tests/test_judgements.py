@@ -13,20 +13,31 @@ from weedz.discovery.api import create_app
 from weedz.discovery.audit import audit_sample
 from weedz.discovery.judgements import JUDGEMENTS, Judgement
 from weedz.discovery.occurrences import TAXON_KEYS
-from weedz.discovery.records import RunSpec
+from weedz.discovery.records import Finding, RunSpec
 from weedz.discovery.source import photo_from_observation
 from weedz.discovery.store import Store
 
 PUBLIC = {"obscured": False, "geoprivacy": None}
+SCREENED = {"best_species": "Clematis vitalba", "width": 400, "height": 300}
 
 
-def store_with_photo(root: Path, **fields: object) -> tuple[Store, str]:
+def store_with_photo(
+    root: Path, scores: dict | None = SCREENED, **fields: object
+) -> tuple[Store, str]:
     store = Store(root)
     store.create_run("run", RunSpec())
     photo = photo_from_observation(observation() | fields, "Nelson", "incidental")
     assert photo is not None
     store.save_photos("run", [photo])
+    if scores:
+        store.score("run", photo.id, scores)
     return store, photo.id
+
+
+def add_finding(store: Store, photo_id: str, species: str = "Ulex europaeus") -> int:
+    record = {"kind": "addition", "species": species, "reviewer": "Ben"}
+    store.finding("run", photo_id, Finding.model_validate(record))
+    return store.findings("run", photo_id)[-1]["id"]
 
 
 def judgement(**fields: object) -> dict:
@@ -211,3 +222,28 @@ def test_a_judgement_by_someone_who_had_not_audited_unblinds_later_audits(
     store.audit("run", target, "Ulex europaeus", "", "Ana")
     assert store.latest_audits("run") == {}
     assert store.latest_audits("run", blind=False) == {target: {"Ana": "Ulex europaeus"}}
+
+
+def test_a_recorded_plant_is_judged_apart_from_the_suggestion(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path)
+    gorse = add_finding(store, photo_id)
+    save(store, photo_id, dimension="novelty", value="new_in_photo", finding_id=gorse)
+    save(store, photo_id, dimension="novelty", value="already_recorded")
+    [photo] = store.photos("run")
+    assert photo["judgements"]["novelty"]["Ana"]["value"] == "already_recorded"
+    [plant] = photo["findings"]
+    assert plant["judgements"]["novelty"]["Ana"]["value"] == "new_in_photo"
+    assert plant["judgement_disputes"] == [] and photo["judgement_disputes"] == []
+    assert [row["finding_id"] for row in store.judgements("run", photo_id)] == [gorse, None]
+    assert export(store, "run")["photos"][0]["findings"][0]["judgements"] == plant["judgements"]
+
+
+def test_a_judgement_targets_the_suggestion_or_one_of_the_photos_plants(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path, scores=None)
+    client = TestClient(create_app(tmp_path))
+    path = f"/runs/run/photos/{photo_id}/judgements"
+    # Unscreened: there is no suggestion to judge, only recorded plants.
+    assert client.post(path, json=judgement()).status_code == 409
+    plant = add_finding(store, photo_id)
+    assert client.post(path, json=judgement(finding_id=plant)).status_code == 200
+    assert client.post(path, json=judgement(finding_id=plant + 1)).status_code == 404

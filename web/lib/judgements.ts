@@ -5,7 +5,15 @@ export type Dimension = "identity" | "location" | "history" | "novelty";
 /** A reviewer's latest standing judgement on one dimension. */
 export type Standing = { value: string; note: string; created_at: string };
 export type Judgements = Record<Dimension, Record<string, Standing>>;
-export type NewJudgement = { dimension: Dimension; value: string; note: string };
+/** Standing judgements on one plant: the suggestion (on the photo) or a recorded plant. */
+export type Judged = { judgements?: Judgements; judgement_disputes?: Dimension[] };
+/** `finding_id` names the recorded plant judged; null judges the suggested species. */
+export type NewJudgement = {
+  finding_id: number | null;
+  dimension: Dimension;
+  value: string;
+  note: string;
+};
 
 type DimensionInfo = {
   key: Dimension;

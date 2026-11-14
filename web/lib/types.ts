@@ -1,5 +1,5 @@
 import type { Finding } from "./findings";
-import type { Dimension, Judgements } from "./judgements";
+import type { Judged } from "./judgements";
 
 export type Status = "unreviewed" | "confirmed" | "rejected" | "uncertain";
 export type Run = {
@@ -9,7 +9,7 @@ export type Run = {
   created_at: string;
   spec: { limit_per_region: number; controls_per_species: number; before: string };
 };
-export type Photo = {
+export type Photo = Judged & {
   id: string;
   region: string;
   cohort: "incidental" | "reference" | "lookalike";
@@ -42,8 +42,6 @@ export type Photo = {
   encounter_linkable?: boolean;
   reference_comparison?: Record<string, ReferenceComparison>;
   findings?: Finding[];
-  judgements?: Judgements;
-  judgement_disputes?: Dimension[];
   scores: {
     best_species?: string;
     similarity?: number;

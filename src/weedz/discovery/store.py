@@ -9,12 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from weedz.discovery.judgements import (
-    Judgement,
-    disputes,
-    no_judgements,
-    standing_judgements,
-)
+from weedz.discovery.judgements import Judgement, judged, standing_judgements
 from weedz.discovery.records import Finding, Photo, RunSpec
 
 
@@ -118,6 +113,7 @@ class Store:
                 );
                 CREATE TABLE IF NOT EXISTS judgements (
                     id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
+                    finding_id INTEGER REFERENCES findings(id),
                     dimension TEXT NOT NULL, value TEXT NOT NULL, note TEXT NOT NULL,
                     reviewer TEXT NOT NULL, effort_seconds REAL, created_at TEXT NOT NULL,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
@@ -183,15 +179,16 @@ class Store:
             recorded = db.execute(
                 "SELECT * FROM findings WHERE run_id=? ORDER BY id", (run_id,)
             ).fetchall()
-            judged = db.execute(
+            judgements = db.execute(
                 "SELECT * FROM judgements WHERE run_id=? ORDER BY id", (run_id,)
             ).fetchall()
         decisions = reviewer_decisions(events)
-        standing = standing_judgements(judged)
+        standing = standing_judgements(judgements)
         counts = Counter(event["photo_id"] for event in events)
         findings: dict[str, list[dict]] = {}
         for row in recorded:
-            findings.setdefault(row["photo_id"], []).append(finding_row(row))
+            plant = finding_row(row) | judged(standing, (row["photo_id"], row["id"]))
+            findings.setdefault(row["photo_id"], []).append(plant)
         return [
             dict(
                 json.loads(row["record"]),
@@ -203,8 +200,7 @@ class Store:
                 disputed=len(set(decisions.get(row["id"], {}).values())) > 1,
                 review_count=counts[row["id"]],
                 findings=findings.get(row["id"], []),
-                judgements=standing.get(row["id"]) or no_judgements(),
-                judgement_disputes=disputes(standing.get(row["id"], {})),
+                **judged(standing, (row["id"], None)),
             )
             for row in rows
         ]
@@ -324,11 +320,12 @@ class Store:
         """Append a reviewer's judgement on one dimension; never edited or deleted."""
         with self.connect() as db:
             db.execute(
-                "INSERT INTO judgements(run_id,photo_id,dimension,value,note,reviewer,"
-                "effort_seconds,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                "INSERT INTO judgements(run_id,photo_id,finding_id,dimension,value,note,"
+                "reviewer,effort_seconds,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
                 (
                     run_id,
                     photo_id,
+                    record.finding_id,
                     record.dimension,
                     record.value,
                     record.note,

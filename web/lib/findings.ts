@@ -1,9 +1,10 @@
+import type { Judged } from "./judgements";
 import { names } from "./types";
 
 export type FindingKind = "correction" | "addition";
 
 /** A reviewer's corrected or missed plant. Free-text taxa are kept as typed. */
-export type Finding = {
+export type Finding = Judged & {
   id: number;
   kind: FindingKind;
   species: string | null;

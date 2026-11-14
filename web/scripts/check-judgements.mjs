@@ -36,7 +36,25 @@ try {
     // No public location and no reference snapshot: some claims cannot be made.
     coordinate_status: "missing",
     attribution: "Test fixture",
-    findings: [],
+    findings: [
+      {
+        id: 7,
+        kind: "addition",
+        species: "Ulex europaeus",
+        other_taxon: null,
+        box: null,
+        note: "",
+        reviewer: "Ben",
+        created_at: at,
+        judgements: {
+          identity: {},
+          location: {},
+          history: {},
+          novelty: { Ben: { value: "new_in_photo", note: "", created_at: at } },
+        },
+        judgement_disputes: [],
+      },
+    ],
     judgements: {
       identity: {},
       location: {
@@ -99,6 +117,7 @@ try {
   await page.getByText("Judgement saved locally.").waitFor();
   const { effort_seconds, ...first } = posted[0];
   assert.deepEqual(first, {
+    finding_id: null,
     dimension: "identity",
     value: "confirmed",
     note: "Leaflets and achenes visible",
@@ -134,6 +153,24 @@ try {
   // A dated photo can be judged recent or historical evidence.
   const history = page.getByLabel("Historical relevance");
   assert.equal(await history.locator("option[value=historical_evidence]").isDisabled(), false);
+
+  // A recorded plant is judged on its own, so a claim always names what it is about.
+  const target = page.getByLabel("Plant being judged");
+  assert.match(await target.locator("option:checked").textContent(), /Suggested.*Old man's beard/);
+  await target.selectOption("7");
+  assert.match(await section.textContent(), /Ben:\s*Newly noticed in this photo/);
+  assert.doesNotMatch(await location.textContent(), /Reviewers disagree/, "no carry-over");
+  await page.getByLabel("Novelty", { exact: true }).selectOption("already_recorded");
+  await saveNovelty.click();
+  for (let wait = 0; wait < 50 && posted.length < 3; wait++) await page.waitForTimeout(100);
+  assert.equal(posted[2].finding_id, 7);
+  assert.equal(posted[2].value, "already_recorded");
+
+  // A draft belongs to its reviewer: another name starts from their own standing value.
+  await page.getByLabel("Novelty", { exact: true }).selectOption("new_in_photo");
+  await page.getByLabel("Your name").fill("Ben");
+  await page.getByLabel("Your name").fill("Carol");
+  assert.equal(await page.getByLabel("Novelty", { exact: true }).inputValue(), "unassessed");
   console.log("Identity, location, history and novelty are judged and saved separately.");
 } finally {
   await browser.close();

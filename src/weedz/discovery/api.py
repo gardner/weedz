@@ -46,6 +46,16 @@ def check_finding(scores: dict, record: Finding) -> None:
         raise HTTPException(422, "The box extends beyond the image")
 
 
+def check_target(photo: dict, record: Judgement) -> None:
+    """A judgement is about the suggested species or one of this photo's recorded plants."""
+    if record.finding_id is None and not photo["scores"].get("best_species"):
+        raise HTTPException(409, "No suggestion to judge; judge a recorded plant instead")
+    if record.finding_id is not None and not any(
+        plant["id"] == record.finding_id for plant in photo["findings"]
+    ):
+        raise HTTPException(404, "Recorded plant not found on this photo")
+
+
 class ReviewAPI:
     def __init__(self, root: Path, temporal_address: str) -> None:
         self.store = Store(root)
@@ -159,6 +169,7 @@ class ReviewAPI:
 
     def record_judgement(self, run_id: str, photo_id: str, record: Judgement) -> dict:
         _, [photo] = with_references(self.store.root, [self.photo(run_id, photo_id)])
+        check_target(photo, record)
         reason = unsupported(photo, record)
         if reason:
             raise HTTPException(409, reason)
