@@ -194,7 +194,9 @@ found ─► pending ──approve──► approved ──send──► sending
             │  └──── any edit ───┘     no answer │  │ send again: same id, same content
             │                                    ▼  │
             │                                 unanswered ──► withdrawn
-            └──decline──► declined (final; also from approved)
+            │
+            │      sending ──413/415/422──► refused ──revise──► a new pending case, new id
+            └──decline──► declined (final; also from approved and refused)
 ```
 
 - **One report, one decision.** There is no "approve all". Each report is
@@ -255,9 +257,9 @@ JSON over HTTPS, and nothing about it is Flutter-specific.
   | --- | --- | --- |
   | 201, 200 | Receipt: `report_id`, `status`, `received_at`, `withdrawn_at`, `image` | Mark the report received |
   | 401 | The token is missing or revoked | Stop sending and ask the person to re-enrol |
-  | 409 | This id was used for different content | A bug, since approved reports are frozen. Keep it and report it |
+  | 409 | This id was used for different content | Cannot happen, since a sent report is frozen. Treat it as refused and report the bug |
   | 410 | Withdrawn | Mark the report withdrawn |
-  | 413, 415, 422 | Refused as too big or malformed | Keep it, show why, never retry it as is |
+  | 413, 415, 422 | Refused as too big or malformed | Mark it refused and show why. It is never sent again under that id. The person can decline it, or revise it into a new case with a new id |
   | 429 | Over the daily budget | Retry after `Retry-After` |
   | Network error, 5xx | No answer | Mark it unanswered: frozen, since the server may have it. Retry with backoff under the same id, or withdraw |
 

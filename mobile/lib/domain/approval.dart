@@ -27,6 +27,10 @@ enum ApprovalStatus {
   /// again, unchanged under the same id, or withdrawn.
   unanswered,
 
+  /// The server refused it as sent (413, 415 or 422). It is never sent again
+  /// under this id: the person can decline it, or revise it as a new case.
+  refused,
+
   /// The server has it and returned a receipt.
   received,
 
@@ -86,7 +90,7 @@ final class ReportCase {
       _move({ApprovalStatus.pending}, ApprovalStatus.approved, 'approve');
 
   ReportCase decline() => _move(
-    {ApprovalStatus.pending, ApprovalStatus.approved},
+    {ApprovalStatus.pending, ApprovalStatus.approved, ApprovalStatus.refused},
     ApprovalStatus.declined,
     'decline',
   );
@@ -107,6 +111,19 @@ final class ReportCase {
   /// have stored it under [id].
   ReportCase sendFailed() =>
       _move({ApprovalStatus.sending}, ApprovalStatus.unanswered, 'fail');
+
+  ReportCase refused() =>
+      _move({ApprovalStatus.sending}, ApprovalStatus.refused, 'refuse');
+
+  /// A refused report, changed, as a new pending case under a new [id], so
+  /// the refused id never stands for different content.
+  ReportCase revise({required String id, required Report report}) {
+    _expect({ApprovalStatus.refused}, 'revise');
+    if (id == this.id) {
+      throw ArgumentError.value(id, 'id', 'A revision needs a new id');
+    }
+    return ReportCase.found(id: id, report: report);
+  }
 
   ReportCase received() =>
       _move({ApprovalStatus.sending}, ApprovalStatus.received, 'receive');

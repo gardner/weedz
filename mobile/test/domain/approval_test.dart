@@ -107,6 +107,34 @@ void main() {
       expect(unanswered.withdrawn().status, ApprovalStatus.withdrawn);
     });
 
+    test('a refusal (413, 415, 422) is never sent again under its id', () {
+      final refused = sending().refused();
+      expect(refused.status, ApprovalStatus.refused);
+      expect(refused.maySend, isFalse);
+      expect(refused.startSending, throwsStateError);
+      expect(() => refused.edit(fullReport()), throwsStateError);
+      expect(refused.decline().status, ApprovalStatus.declined);
+    });
+
+    test('a refused report is revised as a new case, with a new id', () {
+      const newId = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
+      final revised = sending().refused().revise(
+        id: newId,
+        report: fullReport().withoutImage(),
+      );
+      expect(revised.status, ApprovalStatus.pending);
+      expect(revised.id, newId);
+      expect(revised.report.image, isNull);
+      expect(
+        () => sending().refused().revise(id: id, report: fullReport()),
+        throwsArgumentError,
+      );
+      expect(
+        () => found().revise(id: newId, report: fullReport()),
+        throwsStateError,
+      );
+    });
+
     test('ends with the receipt, after which only withdrawal remains', () {
       final received = sending().received();
       expect(received.status, ApprovalStatus.received);
