@@ -57,3 +57,13 @@ def test_expired_admissions_do_not_keep_old_content_digests(tmp_path: Path) -> N
     assert response.status_code == 201
     with sqlite3.connect(store.path) as db:
         assert db.execute("SELECT COUNT(*) FROM admissions").fetchone() == (0,)
+
+
+def test_pending_upload_can_be_withdrawn_even_at_its_daily_limit(tmp_path: Path) -> None:
+    limits, report_id = Limits(reports_per_day=1), new_id()
+    secret, store = token(tmp_path), ReportStore(tmp_path)
+    store.admit(1, report_id, "pending-digest", False, limits)
+    client = TestClient(create_intake_app(tmp_path, limits))
+    headers = {"Authorization": f"Bearer {secret}"}
+    assert client.delete(f"/reports/{report_id}", headers=headers).status_code == 200
+    assert client.put(f"/reports/{report_id}", json=report(), headers=headers).status_code == 410

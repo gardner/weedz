@@ -52,7 +52,7 @@ class Receipt:
     @classmethod
     def of(cls, row: sqlite3.Row) -> "Receipt":
         status = "withdrawn" if row["withdrawn_at"] else "received"
-        image = row["image_file"] is not None
+        image = not row["withdrawn_at"] and row["image_file"] is not None
         return cls(row["report_id"], status, row["received_at"], row["withdrawn_at"], image)
 
 
@@ -156,31 +156,59 @@ class ReportStore:
         ``before_arrival``, an id not yet received is recorded as withdrawn, so a report
         still on its way is refused when it arrives. Both the device API and the operator
         can record this intent before an upload arrives."""
+        if not self._mark_withdrawal(submitter, report_id, before_arrival, limits):
+            return None
+        return self._erase_withdrawal(submitter, report_id)
+
+    def _mark_withdrawal(
+        self, submitter: int, report_id: str, before_arrival: bool, limits: Limits | None
+    ) -> bool:
+        # Commit the barrier before touching a crop. A crash after this point cannot
+        # leave private report content active, and retries cannot resurrect the id.
         with self._transaction() as db:
             row = _row(db, submitter, report_id)
-            if row is None and before_arrival:
-                # Device-created tombstones cost a new record; trusted operators may
-                # bypass the budget. Existing withdrawals and retries never cost.
+            if row is None:
+                if not before_arrival:
+                    return False
                 if limits is not None:
-                    budget.charge(db, submitter, report_id, False, limits)
+                    budget.charge_withdrawal(db, submitter, report_id, limits)
                 now = _now()
                 db.execute(
                     "INSERT INTO reports VALUES(?,?,?,NULL,NULL,NULL,?)",
                     (submitter, report_id, now, now),
                 )
-                return Receipt(report_id, "withdrawn", now, now, False)
-            if row is None:
-                return None
+            else:
+                db.execute(
+                    "UPDATE reports SET withdrawn_at=COALESCE(withdrawn_at,?) "
+                    "WHERE submitter=? AND report_id=?",
+                    (_now(), submitter, report_id),
+                )
+            budget.finish(db, submitter, report_id)
+        return True
+
+    def _erase_withdrawal(self, submitter: int, report_id: str) -> Receipt:
+        with self._transaction() as db:
+            row = _row(db, submitter, report_id)
+            assert row is not None and row["withdrawn_at"]
             if row["image_file"]:
                 (self.images / row["image_file"]).unlink(missing_ok=True)
-                self._sync_images()  # the deletion is durable before the withdrawal commits
-            withdrawn = row["withdrawn_at"] or _now()
+                self._sync_images()
             db.execute(
-                "UPDATE reports SET withdrawn_at=?, body=NULL, content_sha256=NULL, "
-                "image_file=NULL WHERE submitter=? AND report_id=?",
-                (withdrawn, submitter, report_id),
+                "UPDATE reports SET body=NULL,content_sha256=NULL,image_file=NULL "
+                "WHERE submitter=? AND report_id=?",
+                (submitter, report_id),
             )
-            return Receipt(report_id, "withdrawn", row["received_at"], withdrawn, False)
+            return Receipt(report_id, "withdrawn", row["received_at"], row["withdrawn_at"], False)
+
+    def resume_withdrawals(self) -> None:
+        """Finish physical erasure behind committed withdrawal barriers after a crash."""
+        with closing(self._connect()) as db:
+            pending = db.execute(
+                "SELECT submitter,report_id FROM reports WHERE withdrawn_at IS NOT NULL "
+                "AND (body IS NOT NULL OR content_sha256 IS NOT NULL OR image_file IS NOT NULL)"
+            ).fetchall()
+        for row in pending:
+            self._erase_withdrawal(row["submitter"], row["report_id"])
 
     def active(self) -> list[StoredReport]:
         """Every report received and not withdrawn: unpublished, for review (#58)."""
@@ -200,14 +228,16 @@ class ReportStore:
         ]
 
     def sweep(self) -> None:
-        """Delete crops no report names: left by a crash between writing an image and
-        committing its report. Run at start-up, before any request is taken."""
-        with closing(self._connect()) as db:
+        """Resume withdrawals and remove orphan crops without racing another writer."""
+        self.resume_withdrawals()
+        # receive() writes the crop within its write transaction. This lock keeps a
+        # second process's startup from deleting that not-yet-committed live crop.
+        with self._transaction() as db:
             named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
-        for path in self.images.iterdir():
-            if path.name not in named:
-                path.unlink(missing_ok=True)
-        self._sync_images()
+            for path in self.images.iterdir():
+                if path.name not in named:
+                    path.unlink(missing_ok=True)
+            self._sync_images()
 
     def _image(self, name: str | None) -> Path | None:
         # Withdrawal deletes the file before erasing the row (privacy first), so a failed

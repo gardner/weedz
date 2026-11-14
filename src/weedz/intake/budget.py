@@ -76,6 +76,18 @@ def finish(db: sqlite3.Connection, submitter: int, report_id: str) -> None:
     db.execute("DELETE FROM admissions WHERE submitter=? AND report_id=?", (submitter, report_id))
 
 
+def charge_withdrawal(
+    db: sqlite3.Connection, submitter: int, report_id: str, limits: Limits
+) -> None:
+    """New tombstones cost; an interrupted upload has already paid for its id."""
+    _window(db, submitter, None)
+    reserved = db.execute(
+        "SELECT 1 FROM admissions WHERE submitter=? AND report_id=?", (submitter, report_id)
+    ).fetchone()
+    if reserved is None:
+        charge(db, submitter, report_id, False, limits)
+
+
 def settle(
     db: sqlite3.Connection, submitter: int, report_id: str, image_bytes: int, limits: Limits
 ) -> None:

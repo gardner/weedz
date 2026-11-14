@@ -1,6 +1,8 @@
 """Issue submitter tokens and serve report intake: ``uv run main.py intake ...`` (#57)."""
 
 import argparse
+import math
+import sqlite3
 import uuid
 from pathlib import Path
 
@@ -73,7 +75,19 @@ def serve(args: argparse.Namespace) -> None:
         flush=True,
     )
     # Uvicorn's access log has the method, path and status, never request headers.
-    uvicorn.run(create_intake_app(args.intake_dir.resolve()), host=args.host, port=args.port)
+    limits = Limits(
+        body_idle_seconds=args.body_idle_seconds,
+        body_total_seconds=args.body_total_seconds,
+        sqlite_busy_seconds=args.sqlite_busy_seconds,
+        submitter_wait_seconds=args.submitter_wait_seconds,
+        auth_requests_per_second=args.auth_requests_per_second,
+        auth_burst=args.auth_burst,
+        reports_per_day=args.reports_per_day,
+        image_bytes_per_day=args.image_bytes_per_day,
+    )
+    uvicorn.run(
+        create_intake_app(args.intake_dir.resolve(), limits), host=args.host, port=args.port
+    )
 
 
 def parse(argv: list[str]) -> argparse.Namespace:
@@ -97,6 +111,21 @@ def parse(argv: list[str]) -> argparse.Namespace:
     run = commands.add_parser("serve", help="Serve the intake API")
     run.add_argument("--host", default="127.0.0.1", help="Loopback by default, for a proxy")
     run.add_argument("--port", type=int, default=8300)
+    defaults = Limits()
+    for name in (
+        "body_idle_seconds",
+        "body_total_seconds",
+        "sqlite_busy_seconds",
+        "submitter_wait_seconds",
+        "auth_requests_per_second",
+    ):
+        run.add_argument(
+            "--" + name.replace("_", "-"), type=positive_number, default=getattr(defaults, name)
+        )
+    for name in ("auth_burst", "reports_per_day", "image_bytes_per_day"):
+        run.add_argument(
+            "--" + name.replace("_", "-"), type=positive_integer, default=getattr(defaults, name)
+        )
     for command in commands.choices.values():
         command.add_argument("--intake-dir", type=Path, default=Path("data/intake"))
     return parser.parse_args(argv)
@@ -105,4 +134,26 @@ def parse(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str]) -> None:
     args = parse(argv)
     commands = {"add": add, "list": listing, "revoke": revoke, "withdraw": withdraw, "serve": serve}
-    commands[args.command](args)
+    try:
+        commands[args.command](args)
+    except sqlite3.OperationalError as error:
+        if (getattr(error, "sqlite_errorcode", 0) & 0xFF) not in {
+            sqlite3.SQLITE_BUSY,
+            sqlite3.SQLITE_LOCKED,
+        }:
+            raise
+        raise SystemExit("Intake database busy; retry the operation shortly") from error
+
+
+def positive_number(value: str) -> float:
+    number = float(value)
+    if not math.isfinite(number) or number <= 0:
+        raise argparse.ArgumentTypeError("Must be finite and positive")
+    return number
+
+
+def positive_integer(value: str) -> int:
+    number = int(value)
+    if number <= 0:
+        raise argparse.ArgumentTypeError("Must be positive")
+    return number
