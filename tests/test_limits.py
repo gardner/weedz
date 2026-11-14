@@ -138,4 +138,7 @@ def test_run_detail_and_export_carry_each_photos_limits(tmp_path: Path) -> None:
     assert detailed["limits"]["dates"]["screened"] == detailed["screened_at"][:10]
     exported = export(Store(tmp_path), "run")
     assert exported["photos"][0]["limits"] == detailed["limits"]
-    assert any("search area" in item.lower() for item in exported["limitations"])
+    [stated] = [item for item in exported["limitations"] if "search area" in item.lower()]
+    # Candidates are not confirmed plants, so the export never asserts presence.
+    assert "if a plant is visible" in stated.lower()
+    assert "shows a plant was there" not in stated.lower()

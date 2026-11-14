@@ -185,8 +185,8 @@ def export(store: Store, run_id: str) -> dict:
                 "Each photo's search area is centred on the observation point, never a "
                 "plant point, with a radius of reported accuracy plus a declared "
                 f"{CAMERA_TO_PLANT_ALLOWANCE_M:g} m camera-to-plant allowance; obscured, "
-                "missing or unknown-accuracy locations have none. A photo shows a plant "
-                "was there when photographed, not that it is there now"
+                "missing or unknown-accuracy locations have none. If a plant is visible, "
+                "the photo dates it to when it was photographed, not to now"
             ),
             "Known-record comparison is distance and date only, not a novelty verdict; "
             "no infestation area estimate or external publication performed",
