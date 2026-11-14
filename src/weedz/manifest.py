@@ -1,6 +1,7 @@
 """A JSONL sample manifest: one validated contract sample per line, pinned by SHA-256."""
 
 import hashlib
+import tempfile
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -20,9 +21,10 @@ def write_manifest(path: Path, samples: Iterable[Sample]) -> str:
     """Write the samples atomically and return the manifest's SHA-256."""
     rows = _unique(list(samples))
     content = "".join(sample.model_dump_json() + "\n" for sample in rows).encode("utf-8")
-    temporary = path.with_name(path.name + ".tmp")
-    temporary.write_bytes(content)
-    temporary.replace(path)
+    # A unique temporary file in the same directory, so concurrent writers never share one.
+    with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as out:
+        out.write(content)
+    Path(out.name).replace(path)
     return hashlib.sha256(content).hexdigest()
 
 

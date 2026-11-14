@@ -131,7 +131,11 @@ def _geography(photo: Photo) -> Geography | None:
     return Geography(
         latitude=photo.latitude,
         longitude=photo.longitude,
-        uncertainty_m=photo.positional_accuracy_m,
+        # An obscured point is deliberately displaced; the observer's GPS accuracy would
+        # make it look precise, so its uncertainty stays unknown.
+        uncertainty_m=None
+        if photo.coordinate_status == "obscured"
+        else photo.positional_accuracy_m,
         privacy=photo.coordinate_status,
     )
 

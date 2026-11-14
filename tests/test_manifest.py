@@ -14,7 +14,9 @@ from weedz.manifest import read_manifest, write_manifest
 
 
 def samples() -> list[Sample]:
-    box = annotation(id="a2", supervision="box", box=[1, 2, 30, 40], origin="reviewer")
+    box = annotation(
+        id="a2", supervision="box", box=[1, 2, 30, 40], origin="reviewer", reviewer="Ana"
+    )
     return [
         Sample.model_validate(sample()),
         Sample.model_validate(
@@ -81,3 +83,23 @@ def test_a_manifest_is_byte_identical_whatever_the_hash_seed() -> None:
     }
     assert len(dumps) == 1
     assert json.loads(dumps.pop())["tasks"] == sorted(tasks)
+
+
+def test_mapping_fields_are_written_in_sorted_order(tmp_path: Path) -> None:
+    forward = Sample.model_validate(
+        sample(groups={"a": "1", "b": "2"}, context={"x": "1", "y": "2"})
+    )
+    backward = Sample.model_validate(
+        sample(groups={"b": "2", "a": "1"}, context={"y": "2", "x": "1"})
+    )
+    first = write_manifest(tmp_path / "first.jsonl", [forward])
+    second = write_manifest(tmp_path / "second.jsonl", [backward])
+    assert first == second
+
+
+def test_a_stale_temporary_path_cannot_block_or_clobber_a_write(tmp_path: Path) -> None:
+    path = tmp_path / "manifest.jsonl"
+    (tmp_path / "manifest.jsonl.tmp").mkdir()  # another writer's leftover
+    write_manifest(path, samples())
+    assert len(read_manifest(path)) == len(samples())
+    assert not [p for p in tmp_path.iterdir() if p.name.startswith(".manifest")]

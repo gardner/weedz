@@ -61,7 +61,8 @@ def test_pilot_photos_become_image_samples_without_plant_supervision(tmp_path: P
     assert sample.rights.media_license == "cc-by-nc"
     assert sample.rights.license_source == "https://www.inaturalist.org/observations/100"
     assert sample.geography and sample.geography.privacy == "obscured"
-    assert sample.geography.uncertainty_m == 100
+    # iNaturalist displaces obscured points; the observer's GPS accuracy would look precise.
+    assert sample.geography.uncertainty_m is None
     assert (sample.media.width, sample.media.height, sample.media.sha256) == (400, 300, None)
     assert sample.groups == {"observation": "100"}
     (suggestion,) = sample.annotations

@@ -124,6 +124,8 @@ class Annotation(Contract):
             )
         if self.origin == "model" and not self.model:
             raise ValueError("A model prediction names its model")
+        if self.origin == "reviewer" and not (self.reviewer or "").strip():
+            raise ValueError("A reviewer annotation names its reviewer")
         return self
 
     @model_validator(mode="after")
@@ -166,6 +168,11 @@ class Sample(Contract):
     context: dict[str, str] = {}
     tasks: frozenset[Task]
     annotations: tuple[Annotation, ...] = ()
+
+    @field_serializer("groups", "context")
+    def sorted_mapping(self, mapping: dict[str, str]) -> dict[str, str]:
+        """Sorted, so a manifest's bytes do not depend on how a source built the mapping."""
+        return dict(sorted(mapping.items()))
 
     @field_serializer("tasks")
     def sorted_tasks(self, tasks: frozenset[str]) -> list[str]:
