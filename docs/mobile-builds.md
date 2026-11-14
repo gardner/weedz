@@ -78,7 +78,9 @@ signing secrets without needing Android keys or deployment URLs. The helper's
 embeds an empty development configuration, even if URL variables exist.
 
 This builds an actual signed IPA and uploads the `ios-signing-check` artifact,
-including a README identifying it as an unconfigured signing proof. Deployment-
+including a README identifying it as an unconfigured signing proof. The IPA uses
+App Store distribution signing; physical-device testing requires a separate
+TestFlight distribution step. Deployment-
 dependent features remain unavailable. It is not a production-ready release and
 is not uploaded to a store. Temporary signing files/profile/keychain are always
 cleaned up using the same helper as the production workflow.
