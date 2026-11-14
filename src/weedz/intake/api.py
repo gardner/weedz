@@ -3,7 +3,8 @@
 ``PUT /reports/{id}`` sends an approved report under a device-chosen UUID, so a retry on a
 flaky connection gets the same receipt instead of a duplicate. ``GET`` returns the
 submitter's own receipt and ``DELETE`` withdraws the report. Another submitter's report
-is a 404, the same as a missing one. Nothing here logs or echoes a token.
+is unreadable; withdrawals are scoped to the authenticated submitter.
+Nothing here logs or echoes a token.
 """
 
 import asyncio
@@ -144,10 +145,18 @@ class IntakeAPI:
 
     async def delete(self, report_id: uuid.UUID, request: Request) -> Receipt:
         """Taken in turn with the submitter's uploads, so a withdrawal that arrives while
-        its report is being stored waits for it and withdraws it, rather than missing it."""
+        its report is being stored waits for it. An earlier withdrawal also records intent,
+        so a late upload cannot resurrect it."""
         submitter: int = request.state.submitter
         async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            receipt = await run_in_threadpool(self.store.withdraw, submitter, str(report_id))
+            with refusals():
+                receipt = await run_in_threadpool(
+                    self.store.withdraw,
+                    submitter,
+                    str(report_id),
+                    before_arrival=True,
+                    limits=self.limits,
+                )
         return receipt or receipt_missing()
 
 

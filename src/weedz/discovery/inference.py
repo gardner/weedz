@@ -20,6 +20,9 @@ from weedz.discovery.records import SPECIES
 # Bump when image decoding changes, so cached embeddings are not reused.
 # Window geometry needs no bump: the exact boxes are part of the cache key.
 WINDOW_REVISION = 2
+# How window scores become a photo's margin and top suggestion; bump with any change, as
+# score meanings (#16) and device reports (#57) are declared per ranking revision.
+RANKING_REVISION = 4
 # Declared, pinned screening models; a run records which one scored it (issue #14).
 MODELS: dict[str, dict[str, str]] = {
     "bioclip": {
@@ -54,6 +57,8 @@ SCENES = [
     "bare rock",
 ]
 COMPARISONS = LOOKALIKES + SCENES
+# Every fixed label, watchlist targets first; a photo may add its own original subject.
+LABELS = [f"{name}, {common}" for name, common in SPECIES.items()] + COMPARISONS
 
 
 class Encoder(Protocol):
@@ -231,7 +236,7 @@ class Screener:
         self.transform = transform
         self.tokenizer = tokenizer
         self.model.eval()
-        self.labels = [f"{name}, {common}" for name, common in SPECIES.items()] + COMPARISONS
+        self.labels = list(LABELS)
         self.prompts = [prompt(label) for label in self.labels]
         self.text = self.encode_text(self.prompts)
         self.cache_dir = cache_dir
@@ -245,7 +250,7 @@ class Screener:
             "revision": MODELS[model_key]["revision"],
             "weights_sha256": weights_sha256,
             "device": "cpu",
-            "ranking_revision": 4,
+            "ranking_revision": RANKING_REVISION,
             "prompts": self.prompts,
             "subject_prompt": prompt("<original taxon>, <common name>"),
             "target_count": len(SPECIES),

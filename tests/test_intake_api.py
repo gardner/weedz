@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from intake_helpers import jpeg, new_id, report, with_image
 from PIL import Image, PngImagePlugin
 
+from weedz import tokens
 from weedz.discovery.access import Access
 from weedz.intake.api import create_intake_app
 from weedz.intake.limits import Limits
@@ -87,7 +88,14 @@ def test_different_content_under_a_used_report_id_is_a_conflict(
         report(location={"latitude": -41.27, "longitude": 173.28}),
         report(location={"latitude": -91, "longitude": 173.28, "accuracy_m": 5}),
         report(captured_at="2026-10-01T10:00:00"),
-        report(consent={"wording_version": "2026-11", "image": False, "licence": "cc-by-nd"}),
+        report(
+            consent={
+                "wording_version": "2026-11",
+                "location": True,
+                "image": False,
+                "licence": "cc-by-nd",
+            }
+        ),
         report(app_version="x" * 500),
     ],
 )
@@ -126,8 +134,12 @@ def test_an_image_without_consent_and_licence_is_refused_and_not_stored(
     tmp_path: Path, client: TestClient
 ) -> None:
     headers = auth(tmp_path)
-    unconsented = with_image(jpeg()) | {"consent": {"wording_version": "2026-11", "image": False}}
-    unlicensed = with_image(jpeg()) | {"consent": {"wording_version": "2026-11", "image": True}}
+    unconsented = with_image(jpeg()) | {
+        "consent": {"wording_version": "2026-11", "location": True, "image": False}
+    }
+    unlicensed = with_image(jpeg()) | {
+        "consent": {"wording_version": "2026-11", "location": True, "image": True}
+    }
     for body in (unconsented, unlicensed):
         path = f"/reports/{new_id()}"
         assert client.put(path, json=body, headers=headers).status_code == 422
@@ -137,7 +149,9 @@ def test_an_image_without_consent_and_licence_is_refused_and_not_stored(
 
 
 def test_image_consent_without_an_image_is_refused(tmp_path: Path, client: TestClient) -> None:
-    body = report(consent={"wording_version": "2026-11", "image": True, "licence": "cc0"})
+    body = report(
+        consent={"wording_version": "2026-11", "location": True, "image": True, "licence": "cc0"}
+    )
     assert client.put(f"/reports/{new_id()}", json=body, headers=auth(tmp_path)).status_code == 422
 
 
@@ -181,14 +195,22 @@ def test_one_submitter_cannot_read_or_withdraw_anothers_report(
     path = f"/reports/{new_id()}"
     client.put(path, json=with_image(jpeg()), headers=owner)
     assert client.get(path, headers=other).status_code == 404
-    assert client.delete(path, headers=other).status_code == 404
+    assert client.delete(path, headers=other).status_code == 200
     assert len(images(tmp_path)) == 1
     assert client.get(path, headers=owner).json()["status"] == "received"
 
 
 def test_tokens_are_never_logged_or_echoed(
-    tmp_path: Path, client: TestClient, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    client: TestClient,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # URL-safe secrets can contain underscores, including a one-character suffix.
+    secrets = iter(
+        ("fixed_active_secret_with_underscores_e", "fixed_revoked_secret_with_underscores_e")
+    )
+    monkeypatch.setattr(tokens, "new_secret", lambda: next(secrets))
     submitters = Submitters(tmp_path)
     credential = submitters.issue("Phone")
     revoked = submitters.issue("Old")
@@ -202,11 +224,11 @@ def test_tokens_are_never_logged_or_echoed(
         bodies += [client.get(path, headers=headers).text]
         bodies += [client.delete(path, headers=headers).text]
     for token in (credential.token, revoked.token):
-        secret = token.rsplit("_", 1)[-1]
+        secret = token.split("_", 2)[2]
         assert secret not in caplog.text
         assert all(secret not in body for body in bodies)
         assert secret not in repr(credential)
-    assert secret not in json.dumps(submitters.listing())
+        assert secret not in json.dumps(submitters.listing())
 
 
 def test_each_submitter_has_a_daily_budget_that_withdrawal_does_not_reset(tmp_path: Path) -> None:

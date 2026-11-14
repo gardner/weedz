@@ -225,6 +225,12 @@ found ─► pending ──approve──► approved ──send──► sending
   - the exact location, on a map with its accuracy circle, and as coordinates
     in numbers;
   - the consent wording and the licence they choose for the crop.
+
+- **Explicit location consent.** The version-1 report records
+  `consent.location`, true exactly when it includes the exact point and its
+  accuracy. The approval screen must show that point and accuracy before the
+  person agrees to send it. Removing the location clears this consent
+  independently of image consent (#91).
 - **The person can remove details before approving.** "Remove location" and
   "Don't send the photo" both change the report, so it needs approving again.
   An approved report cannot change silently. Any edit returns it to pending,
@@ -289,10 +295,13 @@ JSON over HTTPS, and nothing about it is Flutter-specific.
 
 - **Receipt:** `GET /reports/{id}`. **Withdraw:** `DELETE /reports/{id}`.
   A report counts as withdrawn only after a `DELETE` receipt or a 410. The
-  server answers a `DELETE` for an id it has not received yet with 404 and
-  keeps no record. So for a report that is `sending` or `unanswered`, the app
-  repeats the `DELETE` after the `PUT` has settled, instead of trusting the
-  404.
+  server records a withdrawal even when it has not received the id yet.
+  A late `PUT` then gets 410, even after a server restart. Withdrawal intent
+  belongs to the authenticated submitter; it cannot affect another device
+  using the same id. New withdrawal ids count toward the daily report
+  budget; an existing report or withdrawal can always be withdrawn again.
+  A 429 requires retrying after `Retry-After`; a network error also requires
+  retrying `DELETE`. Neither confirms withdrawal.
 - **Token storage:** the submitter token lives in
   [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage)
   (the iOS Keychain, with *after first unlock, this device only* so background
@@ -357,12 +366,6 @@ feature that needs it is built.
   shown but left out of the report. Should the person be able to state an
   accuracy or place the point, or confirm a time zone, on the approval screen
   (#54, #56)?
-- **Explicit location consent** ([#91](https://github.com/gardner/weedz/issues/91)).
-  The report is to gain `consent.location`, true exactly when a location is
-  sent, mirroring `consent.image`. When the server accepts it, the Dart
-  `Consent` gains the same field, and `withoutLocation()` sets it to false.
-  Until then the app keeps to the current version-1 schema, which refuses
-  unknown fields.
 - **Contributor-chosen protection** (a follow-up from #61). Should a person be
   able to mark one report as obscured on the phone, for example a photo taken
   at home? It would be opt-in per report, not a default.

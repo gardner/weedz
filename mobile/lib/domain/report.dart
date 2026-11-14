@@ -2,9 +2,9 @@
 /// server's contract (`src/weedz/intake/schema.py`, issue #57).
 ///
 /// Each part refuses, when built, what the server's schema refuses on its
-/// own. One check depends on the server's clock and is not repeated here: a
-/// capture time more than a day ahead is refused (422).
-/// [Report.withoutCapturedAt] lets such a report be revised.
+/// own. Capture times more than a day ahead of the device clock are refused.
+/// The server checks its own clock too; [Report.withoutCapturedAt] lets a
+/// report be revised if the clocks disagree.
 ///
 /// The location is exact on purpose (it is what makes a report useful for
 /// science) and always carries its accuracy. It is where
@@ -174,6 +174,7 @@ final class Consent {
   new({
     required String wordingVersion,
     required this.image,
+    required this.location,
     this.licence,
     String? credit,
   }) : wordingVersion = _checkToken(wordingVersion, 'wordingVersion'),
@@ -205,16 +206,32 @@ final class Consent {
   /// Whether a cropped image may be sent.
   final bool image;
 
+  /// Whether the exact camera location may be sent.
+  final bool location;
+
   /// The crop's licence: present exactly when [image] is true.
   final String? licence;
   final String? credit;
 
-  Consent withoutImage() =>
-      Consent(wordingVersion: wordingVersion, image: false, credit: credit);
+  Consent withoutImage() => Consent(
+    wordingVersion: wordingVersion,
+    image: false,
+    location: location,
+    credit: credit,
+  );
+
+  Consent withoutLocation() => Consent(
+    wordingVersion: wordingVersion,
+    image: image,
+    location: false,
+    licence: licence,
+    credit: credit,
+  );
 
   Map<String, Object?> toJson() => {
     'wording_version': wordingVersion,
     'image': image,
+    'location': location,
     'licence': ?licence,
     'credit': ?credit,
   };
@@ -224,11 +241,13 @@ final class Consent {
       other is Consent &&
       other.wordingVersion == wordingVersion &&
       other.image == image &&
+      other.location == location &&
       other.licence == licence &&
       other.credit == credit;
 
   @override
-  int get hashCode => Object.hash(wordingVersion, image, licence, credit);
+  int get hashCode =>
+      Object.hash(wordingVersion, image, location, licence, credit);
 }
 
 /// A report as sent. Capture time and location may be missing on the device
@@ -243,7 +262,24 @@ final class Report {
     this.capturedAt,
     this.location,
     this.image,
+    DateTime Function()? clock,
   }) : appVersion = _checkToken(appVersion, 'appVersion') {
+    final captured = capturedAt;
+    _check(
+      captured == null ||
+          !captured.isAfter(
+            (clock ?? DateTime.now)().add(const Duration(days: 1)),
+          ),
+      'capturedAt',
+      captured,
+      'Must be no more than one day in the future',
+    );
+    _check(
+      (location != null) == consent.location,
+      'location',
+      location,
+      'A location is sent only with location consent, and consent needs one',
+    );
     _check(
       (image != null) == consent.image,
       'image',
@@ -284,7 +320,7 @@ final class Report {
     candidate: candidate,
     model: model,
     capturedAt: capturedAt,
-    consent: consent,
+    consent: consent.withoutLocation(),
     image: image,
   );
 

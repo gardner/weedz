@@ -148,6 +148,13 @@ uv run main.py intake withdraw --submitter 3 --report <uuid>  # at the person's 
 uv run main.py intake serve --port 8300             # loopback; put HTTPS in front
 ```
 
+The intake contract is still pre-pilot: no upload client has shipped. The
+required `consent.location` field intentionally changes v1 (#91). Use a new or
+empty intake store with this contract. If a development store contains older
+reports, withdraw them deliberately before upgrading or migrate them under an
+explicitly agreed retention policy; coordinates alone must never be converted
+into a claim that location consent was given.
+
 The contract, with every request sending `Authorization: Bearer weedzsub_…`:
 
 - `PUT /reports/{uuid}` takes a version-1 report as JSON
@@ -157,6 +164,10 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   a location without its accuracy, a capture time without a timezone, and
   anything but a declared target taxon are refused with 422. A body over 2 MB
   is refused with 413.
+- `consent.location` is required and must be true exactly when `location` is
+  present. The app shows the exact point and accuracy before approval; a
+  location without consent, or consent without a location, gets 422 and
+  nothing is stored. Removing a location clears its consent.
 - An optional cropped `image` (base64 JPEG, PNG or WebP, at most 1 MB and
   4096×4096 pixels) is accepted only with `consent.image: true` and a licence
   the collection admits (`cc0`, `cc-by` or `cc-by-nc`). Otherwise the report is
@@ -166,7 +177,12 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
 - `GET /reports/{uuid}` returns the submitter's own receipt. `DELETE` withdraws
   the report: its image is deleted and its content erased (zeroed in the
   database file), leaving only ids and times so a retry can't bring it back.
-  Another submitter's report is a 404, the same as a missing one. If a device
+  `GET` for another submitter's report is a 404, the same as a missing one.
+  Device `DELETE` records a tombstone even before an upload arrives, so a late
+  `PUT` gets 410. Creating a new tombstone counts toward the daily report
+  budget (429 means retry after `Retry-After`); withdrawing an existing
+  report or repeating a withdrawal is always allowed. This is scoped to the authenticated submitter, even when
+  another device uses the same report id. If a device
   token is lost or revoked, the operator can withdraw its reports with
   `intake withdraw`. An unknown id is an error. If the report may still be on
   its way, `--not-yet-received` records the withdrawal, so the report is
