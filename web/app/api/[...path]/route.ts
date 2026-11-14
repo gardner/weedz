@@ -5,12 +5,16 @@ const backend = process.env.WEEDZ_API_URL ?? "http://127.0.0.1:8000";
 
 async function forward(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
-  if (path[0] !== "runs" || path.some((part) => !/^[a-zA-Z0-9_-]+$/.test(part))) {
+  if (
+    !["runs", "studies"].includes(path[0]) ||
+    path.some((part) => !/^[a-zA-Z0-9_-]+$/.test(part))
+  ) {
     return Response.json({ detail: "Unknown endpoint" }, { status: 404 });
   }
   try {
     const body = request.method === "POST" ? await request.text() : undefined;
-    if (body && body.length > 10_000) {
+    // A study version carries its whole definition, rationales included.
+    if (body && body.length > (path[0] === "studies" ? 200_000 : 10_000)) {
       return Response.json({ detail: "Request too large" }, { status: 413 });
     }
     const response = await fetch(`${backend}/${path.join("/")}`, {

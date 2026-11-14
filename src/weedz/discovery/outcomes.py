@@ -10,6 +10,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, NamedTuple
 
+from weedz.discovery.agreed_limits import study_summary, with_limit
 from weedz.discovery.limits import search_area_summary
 from weedz.discovery.occurrences import predates
 from weedz.discovery.outcome_novelty import MEANING as JUDGED_MEANING
@@ -28,6 +29,7 @@ from weedz.discovery.outcome_terms import (
 )
 from weedz.discovery.outcome_terms import measure_result as _measure
 from weedz.discovery.referrals import referral_work, summarize_referrals
+from weedz.discovery.study import StudyDefinition
 
 
 def _minutes(seconds: float) -> float:
@@ -430,6 +432,8 @@ def outcomes(export: dict[str, Any]) -> dict[str, Any]:
     study = Study(export)
     run = export["run"]
     references = export.get("references") or {}
+    linked = export.get("study")
+    definition = StudyDefinition.stored(linked["definition"]) if linked else None
     return {
         "schema": 1,
         "run_id": run["id"],
@@ -441,5 +445,6 @@ def outcomes(export: dict[str, Any]) -> dict[str, Any]:
             "site_visit_rule": export["encounters"].get("rule"),
             "reference_as_of": references.get("retrieved_at"),
         },
-        "measures": [measure(study) for measure in MEASURES],
+        "study": study_summary(export, definition),
+        "measures": [with_limit(measure(study), definition) for measure in MEASURES],
     }

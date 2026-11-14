@@ -182,8 +182,25 @@ sample and judge usefulness separately from visibility. "Unknown" in the report
 means unmeasured, not zero: it does not show that the run found nothing, nor that
 it missed nothing. Even once reviews exist, a confirmed review is not a useful
 finding, and "no DOC record within 5 km" describes a sparse reference set, not
-novelty. No success limits have been agreed (#1, #2), so the report gives values
+novelty. No success limits have been agreed (#1), so the report gives values
 and statuses, not pass or fail verdicts.
+
+The product can now record the study itself: question, partner, people, bounds,
+budget, reference records and agreed limits (#2). This run has no study linked,
+because the partner and question decision (#1) is still open. On a copy of the
+pilot data, a *sample* study shows how the report reads once limits exist. It
+records 24 photos and 10 hours, and limits of at least 80 % complete evidence,
+50 % coverage and 2 useful site visits. The report then gives:
+
+- **Evidence completeness: met.** 83.3 % of incidental photos have complete
+  evidence.
+- **Coverage: not comparable.** It is 0 %, a lower bound while all 24 photos
+  wait for review.
+- **Useful yield: not comparable.** Usefulness is not judged yet (#18).
+
+Every other measure says "not agreed", and the budget shows 0 of 10 hours and
+0 of 24 photos used. These limits were invented for the check and are not
+agreed limits.
 
 The next experiment should include independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.

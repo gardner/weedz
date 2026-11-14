@@ -8,6 +8,7 @@ import type { NewLeadEvent } from "../lib/leads";
 import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
+import type { Study } from "../lib/study";
 import {
   type AuditSummary,
   effortNote,
@@ -26,6 +27,7 @@ import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
 import RunSettings from "./run-settings";
+import StudyPanel from "./study-panel";
 
 const REVIEWER_KEY = "weedz-reviewer";
 type Payloads = {
@@ -59,6 +61,7 @@ export default function ReviewDesk() {
   const [references, setReferences] = useState<References>(null);
   const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
   const [auditSummary, setAuditSummary] = useState<AuditSummary>();
+  const [study, setStudy] = useState<Study | null>(null);
   // Each view remembers its own open photo, so one opened in a view never carries into
   // another (an audit photo must not open in the ranked queue) yet a glance at the
   // references returns to the same incidental photo.
@@ -88,6 +91,7 @@ export default function ReviewDesk() {
         setEffortSummary(result.review_effort);
         setAuditSummary(result.audit);
         setReferences(result.references ?? null);
+        setStudy(result.study ?? null);
       }
       setError("");
     } catch (failure) {
@@ -148,6 +152,7 @@ export default function ReviewDesk() {
     setPhotos([]);
     setEffortSummary(undefined);
     setAuditSummary(undefined);
+    setStudy(null);
     setActiveIds({});
     setRunId(id);
   }
@@ -304,6 +309,17 @@ export default function ReviewDesk() {
             onStarted={(id) => {
               switchRun(id);
               setNotice("Regional run queued. Progress updates automatically.");
+            }}
+            onError={setError}
+          />
+          <StudyPanel
+            key={runId}
+            runId={runId}
+            study={study}
+            reviewer={reviewer}
+            onSaved={async (message) => {
+              setNotice(message);
+              await latestRefresh.current();
             }}
             onError={setError}
           />
