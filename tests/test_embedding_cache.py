@@ -5,6 +5,7 @@ from pathlib import Path
 import torch
 from PIL import Image
 from test_discovery_inference import FakeEncoder
+from torchvision.transforms import Compose
 
 from weedz.discovery import inference
 from weedz.discovery.inference import Screener
@@ -23,9 +24,25 @@ def zeros(_image: Image.Image) -> torch.Tensor:
     return torch.zeros(3)
 
 
-def screener(cache: Path | None, weights: str = "hash") -> tuple[Screener, CountingEncoder]:
+PREPROCESSING = {"size": [224, 224], "mean": [0.5, 0.5, 0.5], "interpolation": "bicubic"}
+
+
+def screener(
+    cache: Path | None, weights: str = "hash", preprocessing: dict | None = None
+) -> tuple[Screener, CountingEncoder]:
     encoder = CountingEncoder()
-    return Screener(encoder, zeros, lambda prompts: prompts, weights, cache), encoder
+    recipe = PREPROCESSING if preprocessing is None else preprocessing
+    built = Screener(encoder, zeros, lambda prompts: prompts, weights, cache, preprocessing=recipe)
+    return built, encoder
+
+
+def plain_function_transform() -> Compose:
+    """A fresh plain function per call, so its repr has a new address, as after a restart."""
+
+    def _convert_to_rgb(image: Image.Image) -> Image.Image:
+        return image.convert("RGB")
+
+    return Compose([_convert_to_rgb, zeros])
 
 
 def photo(tmp_path: Path, colour: tuple[int, int, int] = (200, 200, 220)) -> Path:
@@ -77,3 +94,38 @@ def test_unreadable_cache_entries_are_recomputed(tmp_path: Path) -> None:
 def test_metadata_records_the_cache_recipe(tmp_path: Path) -> None:
     cached, _ = screener(tmp_path / "cache")
     assert cached.metadata["embedding_cache"]["window_revision"] == inference.WINDOW_REVISION
+
+
+def test_preprocessing_fingerprint_ignores_transform_object_identity(tmp_path: Path) -> None:
+    first, second = plain_function_transform(), plain_function_transform()
+    assert repr(first) != repr(second)
+    built = [
+        Screener(CountingEncoder(), transform, lambda p: p, "hash", preprocessing=PREPROCESSING)
+        for transform in (first, second)
+    ]
+    assert built[0].preprocessing_sha256 == built[1].preprocessing_sha256
+    assert built[0].metadata == built[1].metadata
+
+
+def test_changed_preprocessing_recipe_misses_the_cache(tmp_path: Path) -> None:
+    cache = tmp_path / "cache"
+    first, _ = screener(cache)
+    first.screen(photo(tmp_path))
+    resized, encoder = screener(cache, preprocessing={**PREPROCESSING, "size": [336, 336]})
+    assert resized.screen(photo(tmp_path))["embedding_cache"] == "miss"
+    assert encoder.image_calls == 1
+
+
+def test_same_count_window_geometry_change_misses_the_cache(tmp_path: Path, monkeypatch) -> None:
+    cache = tmp_path / "cache"
+    first, _ = screener(cache)
+    first.screen(photo(tmp_path))
+    original = inference.region_boxes
+
+    def shifted(width: int, height: int) -> list[tuple[int, int, int, int]]:
+        return [(x0, y0, max(x0 + 1, x1 - 1), y1) for x0, y0, x1, y1 in original(width, height)]
+
+    monkeypatch.setattr(inference, "region_boxes", shifted)
+    moved, encoder = screener(cache)
+    assert moved.screen(photo(tmp_path))["embedding_cache"] == "miss"
+    assert encoder.image_calls == 1

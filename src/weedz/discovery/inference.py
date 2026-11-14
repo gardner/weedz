@@ -6,6 +6,8 @@ segmentation mask or a localized plant boundary. No threshold is calibrated yet.
 
 import hashlib
 import io
+import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -14,7 +16,8 @@ from PIL import Image, ImageOps
 
 from weedz.discovery.records import SPECIES
 
-# Bump when window geometry or image decoding changes, so cached embeddings are not reused.
+# Bump when image decoding changes, so cached embeddings are not reused.
+# Window geometry needs no bump: the exact boxes are part of the cache key.
 WINDOW_REVISION = 1
 MODEL = "imageomics/bioclip"
 REVISION = "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c"
@@ -116,7 +119,14 @@ class Screener:
         tokenizer: Any,
         weights_sha256: str,
         cache_dir: Path | None = None,
+        *,
+        preprocessing: Mapping[str, Any],
     ) -> None:
+        """`preprocessing` describes what `transform` does in stable, JSON-serialisable terms.
+
+        It, not the transform object, keys the embedding cache: transform reprs can embed
+        process-specific memory addresses, which would change the key on every restart.
+        """
         import torch
 
         self.torch = torch
@@ -129,7 +139,9 @@ class Screener:
         self.text = self.encode_text(self.prompts)
         self.cache_dir = cache_dir
         self.weights_sha256 = weights_sha256
-        self.preprocessing_sha256 = hashlib.sha256(repr(transform).encode()).hexdigest()
+        self.preprocessing_sha256 = hashlib.sha256(
+            json.dumps(preprocessing, sort_keys=True).encode()
+        ).hexdigest()
         self.metadata = {
             "model": MODEL,
             "revision": REVISION,
@@ -147,7 +159,7 @@ class Screener:
             "calibrated": False,
             "segmentation": False,
             "embedding_cache": {
-                "key": "sha256(image bytes, weights, preprocessing, window revision)",
+                "key": "sha256(image bytes, weights, preprocessing, window boxes, window revision)",
                 "window_revision": WINDOW_REVISION,
                 "preprocessing_sha256": self.preprocessing_sha256,
             },
@@ -174,19 +186,31 @@ class Screener:
         model, _, transform = open_clip.create_model_and_transforms(f"local-dir:{path}")
         weights = hashlib.sha256((path / "open_clip_pytorch_model.bin").read_bytes()).hexdigest()
         tokenizer = open_clip.get_tokenizer("ViT-B-16")
-        return cls(cast(Encoder, model), transform, tokenizer, weights, cache_dir)
+        preprocessing = {
+            "open_clip": open_clip.__version__,
+            **open_clip.get_model_preprocess_cfg(model),
+        }
+        return cls(
+            cast(Encoder, model),
+            transform,
+            tokenizer,
+            weights,
+            cache_dir,
+            preprocessing=preprocessing,
+        )
 
     def encode_text(self, prompts: list[str]) -> Any:
         with self.torch.inference_mode():
             return self.model.encode_text(self.tokenizer(prompts), normalize=True)
 
-    def cache_path(self, image_bytes: bytes) -> Path | None:
+    def cache_path(self, image_bytes: bytes, boxes: list) -> Path | None:
         if self.cache_dir is None:
             return None
         parts = [
             hashlib.sha256(image_bytes).hexdigest(),
             self.weights_sha256,
             self.preprocessing_sha256,
+            json.dumps([list(box) for box in boxes]),
             str(WINDOW_REVISION),
         ]
         return self.cache_dir / f"{hashlib.sha256('|'.join(parts).encode()).hexdigest()}.npy"
@@ -222,7 +246,9 @@ class Screener:
         with Image.open(io.BytesIO(image_bytes)) as original:
             image = ImageOps.exif_transpose(original).convert("RGB")
         boxes = region_boxes(*image.size)
-        features, cache_state = self.window_features(image, boxes, self.cache_path(image_bytes))
+        features, cache_state = self.window_features(
+            image, boxes, self.cache_path(image_bytes, boxes)
+        )
         with torch.inference_mode():
             scores = (features.to(text.dtype) @ text.T).cpu().numpy()
         result = summarize_scores(scores, boxes, labels, len(SPECIES))
