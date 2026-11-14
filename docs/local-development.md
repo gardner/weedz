@@ -81,7 +81,8 @@ intended for local development, not shared public hosting.
    newest-first query, and runs saved before this option existed are reported
    as `recent`. The export's `corpus_coverage` counts photos by year, season,
    observer and observer-day. Take one eligible photo per observation. Both
-   metadata and photo licences must be CC0, CC BY or CC BY-NC.
+   metadata and photo licences must be CC0, CC BY or CC BY-NC, and the store
+   refuses any other ([sharing](#sharing-licences-and-location-privacy)).
    Preserve query/response snapshots, original subject, attribution and licence
    fields. Download the publisher's `large` image derivative, retain its bytes
    and SHA-256 checksum, and deduplicate source photo IDs within a run. Even
@@ -319,6 +320,127 @@ The six requested references are source-labelled reference evidence, not six
 independent expert-verified segmentation ground truths. Do not report classification
 accuracy or discovery precision from these references alone.
 
+### Define the study
+
+A study records what the runs are for (PRD P01, Journey 1). It holds:
+
+- the discovery question, the partner, and the responsible people by role
+- the regions and historical period, each with its rationale
+- the watchlist and lookalikes, each with its rationale
+- the source collection and how original subjects were selected
+- the review budget, in hours, photos or both
+- the declared reference records
+- an optional agreed limit for each outcome measure
+
+A study only records decisions; it never makes them. Whatever is missing is listed
+under *open decisions*. The study stays `provisional` until the lead marks it
+`agreed`, which needs a question and a partner. The partner and question decision
+itself is issue #1.
+
+Open **Study definition** beside the run settings to view or edit the study. You
+can also use the CLI:
+
+```sh
+uv run main.py study --run nelson-tasman-3e62ad801459                 # show it
+uv run main.py study --run nelson-tasman-3e62ad801459 --file study.json \
+  --author "Your name" --note "Budget agreed" --base-version 2         # record a version
+```
+
+The file is the definition as JSON, with the same fields the API takes; see
+`StudyDefinition` in `src/weedz/discovery/study.py`. Once the run has a study,
+`--base-version` must name the version your file edits. That is the `version` the
+show command printed. If someone has recorded a newer version since, the edit is
+refused.
+
+- **Versions.** Each edit appends a whole new version with its author, time and
+  note. Versions are never edited. An edit based on an older version is refused
+  (409), so two people cannot overwrite each other unseen. This holds in the app,
+  where the form saves against the version it opened, and in the CLI.
+  Saving a form never drops what it cannot show:
+
+  - names the screening no longer covers come back as not yet screened
+  - limits for measures no longer offered are kept, and the server then refuses them by name
+- **Runs.** A study can serve several runs. A run links to one study at a time,
+  and the latest link stands.
+- **Screening terms.** Regions, watchlist species and lookalikes are checked
+  against the screening's code constants (`REGIONS`, `SPECIES`, `LOOKALIKES`).
+  Any other name is refused unless it is marked `"screened": false`, meaning not
+  yet screened. *Differs from the screening* lists every gap: screened species or
+  regions the study leaves out, names not yet screened, declared lookalikes with
+  no rationale, and a run period outside the study period.
+- **Limits.** Each limit has a fixed unit and direction, for example *at least N
+  % of incidental photos reviewed*. `GET /studies/terms` lists them. A limit left
+  out is "not yet agreed", never zero.
+
+The API endpoints are:
+
+- `GET/POST /studies`. A new study may take `run_id` to link it in the same
+  request. If that run already has a study, the request is refused (409).
+- `GET /studies/{id}`: the current version and history.
+- `POST /studies/{id}/versions`
+- `GET/POST /runs/{id}/study`
+
+The run detail and the run export (shareable by default) carry the study now linked,
+at its latest version. Responsible people's names travel with it, as reviewer names
+already do. The completion manifest is written once, when screening completes.
+It records the study linked at that moment, which is usually none, because a
+study is often defined after a run. Use the export for the current study.
+
+### Check the source's suitability
+
+Before reviewing a run, check what its photos can and cannot support (PRD P02,
+P14, Journey 1):
+
+```sh
+uv run main.py suitability --run nelson-tasman-3e62ad801459 --json suitability.json
+```
+
+This prints a Markdown summary of the run's incidental photos. `--json` also
+writes it as JSON. `GET /runs/{id}/suitability` serves the same JSON, the run
+export and completion manifest carry it as `source_suitability`, and the
+**Source suitability** panel in the review app shows it each time it is opened.
+Nothing in it is computed afresh. It composes what the run already records: each
+photo's limits and sharing decision, the site-visit groups, the corpus coverage,
+the reference comparison and the linked study. It covers:
+
+- **Scope:** photos per region against the requested number, and the run's status.
+  A shortfall, an unfinished run or a missing reference snapshot is listed as
+  affected coverage.
+- **Dates:** earliest and latest photo, the query period and the study period.
+  Also photos outside the study period, and those that cannot be placed in it
+  because they are undated, or dated only to a month or year that crosses one of
+  its ends. Gaps are looked for only in the part of the study period the run
+  queried. Years, and seasons that part reaches, that no photo could fall in are
+  listed as unassessed. A month- or year-only date covers every month it spans
+  inside the period. Any part of the study period before or after the query
+  period is stated as not sampled, and its years are never listed as gaps. Gaps
+  are "unknown" when an undated photo could fill any of them, or when the study
+  period lies wholly before or after the query period, so none of it was
+  sampled. A recent (newest-first) run has an open start, so its earlier years
+  are stated as not sampled.
+- **Location quality:** photos with a search area, each reason the rest have none,
+  and the reported accuracy (median and bands, with 20 m or better marked as
+  precise enough for aerial site context).
+- **Permitted uses:** the photo and observation licence mix, non-commercial-only
+  photos, images that may be shared or only linked, and locations that may be
+  shared or are withheld, with the reasons.
+- **Missing information:** photos missing each field, zeros included.
+- **Independence and screening:** site visits and ungrouped photos, and screened
+  and unscreened photos. Also whether the tiles covered every pixel and photos
+  with featureless windows, both "not recorded" for runs scored before these were
+  recorded, plus the original subjects and reviewed and unassessed photos.
+  Visible vegetation is stated as *not measured*.
+- **Comparison with known records:** the snapshot, and photos not compared, with
+  the reasons.
+- **What these photos cannot support:** for each conclusion, the photos and site
+  visits that cannot support it, and why. The conclusions are a field search
+  lead, aerial site context, when a plant was there, the study period, novelty,
+  an independent count, a shared image or location, and any screening
+  suggestion. Without a study period, that check reads "not assessed", not zero.
+
+A photo, area, period or year that was not collected, screened, compared or
+reviewed is unassessed. It is never evidence that no weed is there.
+
 ### Report outcomes against the success measures
 
 ```sh
@@ -334,6 +456,32 @@ Photo sets are counted as independent site visits, and ungrouped photos are kept
 apart. "Unknown" means unmeasured, not zero. A confirmed review shows only that
 the species is visible, not that the finding is useful (#18), and a reference
 distance is not a novelty claim.
+
+Each measure's `limit` compares it with the linked study's agreed limit:
+
+| Verdict | When |
+| --- | --- |
+| `not agreed` | No study is linked, or it agrees no limit for the measure. No verdict is given. |
+| `not comparable` | The measure gives no value in the limit's unit yet, or only a lower bound that does not settle the limit. The reason says which. |
+| `met` / `not met` | Both a limit and a comparable value exist. |
+
+Today only two measures give a comparable value: *evidence completeness* (% of
+incidental photos with complete evidence) and *coverage* (% reviewed). Coverage
+is a lower bound while photos wait for review, so a shortfall stays
+`not comparable` until every photo is reviewed. Usefulness (#18), a detection
+rule (#16) and follow-up judgements are not recorded yet, so the other measures
+cannot be compared.
+
+The report's `study` section gives:
+
+- the study's version and status
+- its open decisions and its differences from the screening
+- **review-budget use**: measured review hours (decisions, findings, judgements,
+  referral actions and blind audits) and photos with a decision or audit,
+  against the budget
+
+Untimed work makes the hours a lower bound. So a budget is reported as `spent`
+for certain, but `within so far` only while some work is untimed.
 
 The *Novel or earlier evidence* measure has two parts, reported side by side.
 Both cover the same plants: confirmed suggestions and recorded watchlist plants.
@@ -361,6 +509,235 @@ The measure is partially measured once either part has something to report,
 and not yet measurable when neither does. Judged levels are reviewer opinions,
 never a first-occurrence claim.
 
+### Review the reference collection
+
+To see a run's reviewed examples as a reference collection (PRD P13, Journey 5), run:
+
+```sh
+uv run main.py reference --run nelson-tasman-3e62ad801459 --json reference.json
+```
+
+This prints a Markdown summary, and `--json` also writes every example. Nothing is
+stored: the collection is re-derived from the review history each time, so it
+cannot disagree with it. Each label on a photo is one example, built from the
+contract samples (`pilot_samples`). An example keeps:
+
+- the photo's original source label
+- its rights and attribution
+- who recorded it, and who reviewed it
+
+It has a **standing**:
+
+- **original:** the source's own label
+- **accepted:** a reviewer's finding, or a screening suggestion, that reviewers accepted
+- **unresolved:** reviewers disagree, or left it unresolved
+- **unsuitable:** rejected on review
+- **unreviewed:** nobody has judged it yet
+
+Its eligibility is stated per use, with the reason whenever it is not eligible:
+
+- **Training:** a present or absent label that was not rejected or left
+  unresolved. This is the contract's `supervises()` rule, plus a suggestion that
+  reviewers accepted.
+- **Evaluation:** a source's original label, or a reviewer's label that someone
+  *other than its author* accepted. An accepted suggestion never counts, because
+  reviewers saw the suggestion.
+- **Sharing:** an original or accepted label whose photo and observation licences
+  the sharing policy admits. Non-commercial terms are flagged.
+
+Coordinates are never included. Each example says only whether its location could
+be shared, or why it is withheld.
+
+Coverage counts photos with an eligible example for each watchlist species and
+each species seen. They are counted by source, label, view, season and region.
+
+Gaps are listed:
+
+- a use with no eligible example
+- no absent (negative) example
+- a source, region, view or season the collection holds with none for the species
+
+A view or season that no eligible example records is listed as unknown, not as a
+gap. Every iNaturalist photo's view is unknown. Growth stage and habitat are
+recorded nowhere, and the report says so. A missing example is a gap in the
+collection. It is never evidence that a weed is absent.
+
+### Prepare a follow-up package
+
+The team decides which leads are worth investigating, and records why (PRD
+Journey 4). A lead is the suggested species, or a recorded plant, on an
+incidental photo.
+
+**Select a lead.** In the review app, the photo's **Follow-up** section selects
+or deselects a lead. Both actions need your name and a reason.
+
+- Selections are appended, never edited. The latest event for a lead stands,
+  and a deselection is a later event, so the history stays visible.
+- Repeating the current state is refused (409): selecting a lead that is
+  already selected, or deselecting one that is not.
+- Selection is not timed review work.
+- A selection by someone who had not audited the photo unblinds later audits,
+  like any other review action.
+- The export's `lead_selections` lists every event.
+- API: `POST /runs/{run}/photos/{photo}/leads`, with `action` (`selected` or
+  `deselected`), `selector`, `reason` and an optional `finding_id`.
+
+**Build the package.**
+
+```sh
+uv run main.py package --run nelson-tasman-3e62ad801459 --out follow-up/
+```
+
+This writes `package.json`, a readable `package.md`, and `photos/` to a new or
+empty folder. With no selections, it says so plainly and writes nothing.
+
+In the app, **Follow-up package ↓** downloads the same files as a zip
+(`GET /runs/{id}/package/archive`). `GET /runs/{id}/package` returns the JSON.
+
+**What each lead carries.** Only selected leads are packaged, never the whole
+queue. Each lead carries:
+
+- **Selection:** who selected it, when and why, and its selection history.
+- **Candidate:** the candidate plant, kept apart from the photo's original
+  subject.
+- **Source:** the source link, observer, attribution, and photo and
+  observation licences.
+- **Review:** each reviewer's decision on the suggestion, and whether they
+  disagree.
+- **Judgements:** for each dimension, a level (the agreed value, `disputed` or
+  `unassessed`), with every opinion and its note.
+- **Limits:**
+  - the search area: its centre is the observation point, never a plant point,
+    and its radius is the reported accuracy plus the 100 m allowance. If there
+    is no search area, the reason is given.
+  - the photo, upload and screening dates
+  - the presence statement: a photo is not current presence
+- **Comparison basis:**
+  - the reference snapshot's file, retrieval date and SHA-256
+  - this plant's distance-only comparison, or why there is none (free-text
+    taxa are never compared)
+  - the judged novelty level
+  - whether a record-relative claim was judged against another snapshot
+- **Referrals** affecting the plant, with their answers.
+- **Site visit:** its site-visit group.
+
+**Location privacy.** Raw coordinates are never copied into a package. An
+obscured or missing location appears only as "not searchable", with its reason.
+
+**Photos.** A photo is included only when its licence is CC0, CC BY or CC BY-NC.
+All three permit sharing with attribution; for CC BY-NC, the package says the
+use must be non-commercial.
+
+- The included file is the run's retained copy, and only while it still matches
+  its recorded SHA-256. Otherwise the lead links to the source and says why.
+- Any other licence gets a source link and the reason the photo was left out.
+- The relevant detail is given as pixel boxes on the photo, not as new crops:
+  the screening window for a suggestion, or the reviewer-drawn extent for a
+  recorded plant.
+- Nothing is published, and no observation is created on anyone's behalf.
+- Each lead's source also carries the observation licence's conditions. The
+  image decision comes from the shared policy
+  ([sharing](#sharing-licences-and-location-privacy)).
+
+**Real-data check.** On a copy of `data/pilot`, run
+`nelson-tasman-3e62ad801459` had no selections, and the command printed "No
+leads are selected for follow-up in this run" and wrote nothing.
+
+After two suggestions were selected on that copy, it wrote two leads (one
+CC BY-NC photo, one CC BY photo). Both had public locations:
+
+- One had a 295 m search area (195 m accuracy), not precise enough for aerial
+  context.
+- The other had a 105 m area (5 m accuracy), precise enough for aerial context.
+
+Neither had a DOC record within 5 km. Both remained unassessed on every
+judgement dimension.
+
+### Sharing, licences and location privacy
+
+One policy, `src/weedz/discovery/sharing.py`, decides what may leave the
+project (PRD P15, P17). Every outbound path uses it: the run export, the
+follow-up package and the image endpoint. It knows two uses:
+
+- `review`: the local review app, on the reviewer's own machine.
+- `share`: anything that leaves that machine, such as the downloaded export
+  or a package.
+
+**Licences.** For each photo the policy states whether the image may be shown
+(review), included (share) or only linked, and why.
+
+| Licence | Review app | Export and package |
+| --- | --- | --- |
+| CC0, CC BY, CC BY-NC | shown | included, with attribution; CC BY-NC for non-commercial use only |
+| ND (`cc-by-nd`, `cc-by-nc-nd`) | not admitted; link | link: only verbatim copies are allowed, and verbatim-only handling is not implemented |
+| SA (`cc-by-sa`, `cc-by-nc-sa`) | not admitted; link | link: share-alike terms for derived material are not yet carried |
+| none (all rights reserved) | not admitted; link | link: the observer's permission is not established |
+
+- Acquisition asks iNaturalist only for the three admitted licences, and
+  checks every photo and observation individually. `Store.save_photos`
+  refuses any other licence, so a new source or cohort cannot add one
+  silently. ND, SA and all-rights-reserved material cannot enter today.
+- `GET /runs/{id}/photos/{photo}/image` serves only admitted photos. Anything
+  else is refused with 403 and the reason, so reviewers still see every photo
+  the collection holds.
+- Attribution and both licences always travel. A photo's `sharing.terms` in
+  the export gives the attribution, observer, source link, photo terms,
+  observation terms (the observation data, such as taxon, date and location,
+  has its own licence), and whether non-commercial use applies.
+- Admitting ND or SA later means changing acquisition and this one table,
+  with the handling the table names.
+
+**Locations.**
+
+- An obscured point is never served, not even to the review app. iNaturalist
+  displaces it on purpose, so passing it on would present an invented
+  location. `coordinate_status` stays `obscured`.
+- For `share`, a public point leaves only with its accuracy. A point of
+  unknown accuracy is withheld, because it would overstate where the photo
+  was taken. The review app still shows it, marked "accuracy not supplied".
+- A point under an observation licence that is not admitted is withheld for
+  `share`, and so is any search area centred on it: in the export and in a
+  package, its `search_area.status` becomes `withheld`, with the reason.
+- Each exported photo's `sharing.location` gives the status, the point that
+  may leave, its accuracy, and the reason anything was withheld.
+
+**The run export is shareable by default.** `GET /runs/{id}/export` (**Export
+evidence ↓**) returns the shareable form. Coordinates follow the location
+rule, each photo has a `sharing` block (`terms`, `image`, `location`), and
+the top-level `sharing` lists the rules. No HTTP endpoint serves raw obscured
+coordinates. The download button is the file people pass on, so the safe form
+is the default. A raw-coordinate route is exactly what would leak once remote
+access (#31) exists. The complete record stays local: the SQLite store and the
+completion manifest in `data/pilot/runs/<id>/manifest.json`. The package, the
+outcome report and the completion manifest compute from that full record, and
+apply their own output rules.
+
+**No publication on anyone's behalf.** Nothing in the project publishes
+photos, observations or identifications to iNaturalist, GBIF or anywhere else.
+The source clients only read. `tests/test_sharing_surface.py` proves that
+every request the iNaturalist and GBIF clients make is a GET, and that no
+module naming those hosts calls a write method. A reviewer who wants a plant
+recorded publicly should ask the observer, or record their own observation.
+
+**Real-data check.** On a copy of `data/pilot`, the shareable export of run
+`nelson-tasman-3e62ad801459` held 30 photos, all public and all admitted:
+
+- 13 CC BY photos under CC BY observations, and 12 CC BY-NC photos under
+  CC BY-NC observations.
+- Two CC BY photos under CC0 observations, two CC0 under CC0, and one CC BY
+  under a CC BY-NC observation.
+
+13 photos carry non-commercial terms. 26 points were given with their
+accuracy. Four public points of unknown accuracy were withheld, though the
+review app still shows them.
+
+With one photo's record then marked obscured on the copy:
+
+- The export and the run detail no longer contained its point.
+- Its image still loaded for review.
+- A package selecting it and a public photo included both CC BY photos, and
+  gave the obscured one as "not searchable".
+
 ## Files and evidence
 
 Everything generated is ignored by Git:
@@ -371,12 +748,14 @@ Everything generated is ignored by Git:
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
 | `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, pinned model, weights, library versions, preprocessing and window geometry; safe to delete |
 | `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
-| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings, judgements and specialist referrals |
+| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings, judgements, specialist referrals and lead selections |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 
 An observation coordinate describes the original observation, not a located weed.
-Obscured/missing coordinates and positional accuracy remain explicit.
+Obscured/missing coordinates and positional accuracy remain explicit. The store
+keeps the source's point. The run detail and export pass on only what the
+[sharing policy](#sharing-licences-and-location-privacy) allows.
 
 ### Location and date limits
 

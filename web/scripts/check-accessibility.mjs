@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
+import { suitability } from "./suitability-fixture.mjs";
 
 // axe leaves very short text (e.g. a "2" count) as "incomplete" and never checks
 // placeholders, so compute WCAG contrast directly for every text node on a solid colour.
@@ -147,6 +148,14 @@ try {
       novelty: {},
     },
     judgement_disputes: ["location"],
+    lead: {
+      suggestion: {
+        selector: "Ana",
+        reason: "Clear leaflets by a stream",
+        created_at: "2026-11-14",
+      },
+      plants: {},
+    },
     referrals: [
       {
         id: 1,
@@ -183,21 +192,81 @@ try {
   });
   const posted = [];
   let photos = [photo("a", "unreviewed"), photo("b", "rejected")];
+  const limit = { measure: "Coverage and review usability", direction: "at least", unit: "%" };
+  const terms = {
+    regions: ["Nelson", "Tasman"],
+    species: { "Ulex europaeus": "Gorse" },
+    lookalikes: [{ name: "Kunzea ericoides", confusable_with: "Ulex europaeus" }],
+    limits: { coverage: limit },
+  };
+  const use = { budget: 40, used: 2, lower_bound: true, state: "within so far" };
+  const study = {
+    id: "study-1",
+    version: 2,
+    author: "Ana",
+    created_at: "2026-11-14T00:00:00+00:00",
+    change_note: "Budget agreed",
+    definition: {
+      status: "provisional",
+      question: "Which gorse sites would the partner visit?",
+      partner: "",
+      people: [{ role: "Coordinator", name: "Ana" }],
+      regions: [{ name: "Nelson", rationale: "Partner's area", screened: true }],
+      period_start: "2010-01-01",
+      period_end: null,
+      period_rationale: "",
+      watchlist: [{ species: "Ulex europaeus", rationale: "", screened: true }],
+      lookalikes: [],
+      source_collection: "",
+      subject_selection: "",
+      review_budget: { hours: 40, photos: null, note: "" },
+      reference_records: [],
+      limits: { coverage: { value: 80, note: "" } },
+    },
+    open_decisions: ["Partner", "Source collection"],
+    differences: ["Tasman is queried by every run but not one of this study's regions"],
+    budget_use: { hours: use, photos: { ...use, budget: null, state: "not set" }, note: "" },
+  };
   await page.route("**/api/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
     if (path === "/api/runs") return route.fulfill({ json: [run] });
+    if (path === "/api/studies/terms") return route.fulfill({ json: terms });
+    if (path.endsWith("/suitability")) return route.fulfill({ json: suitability });
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
     if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     if (path.endsWith("/review")) {
       posted.push(request.postDataJSON());
       return route.fulfill({ json: { saved: true } });
     }
-    await route.fulfill({ json: { run, photos } });
+    await route.fulfill({ json: { run, photos, study } });
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.locator(".photo-row").nth(1).waitFor();
   await page.locator(".run-settings summary").click();
+  // Audit the study as shown, then leave its edit form open for the full audit below.
+  const studyPanel = page.locator(".study-panel");
+  await studyPanel.locator("summary").click();
+  await studyPanel.getByText("Which gorse sites would the partner visit?").waitFor();
+  const shown = await new AxeBuilder({ page }).include(".study-panel").analyze();
+  assert.deepEqual(
+    shown.violations.map((v) => v.id),
+    [],
+    "the study view meets WCAG AA",
+  );
+  assert.deepEqual(await lowContrast(page), [], "study view text meets AA contrast");
+  // Audit the source suitability open; it stays open for the full and phone audits below.
+  const suitabilityPanel = page.locator(".suitability-panel");
+  await suitabilityPanel.locator("summary").click();
+  await suitabilityPanel.getByRole("table").waitFor();
+  const suits = await new AxeBuilder({ page }).include(".suitability-panel").analyze();
+  assert.deepEqual(
+    suits.violations.map((v) => v.id),
+    [],
+    "the source suitability meets WCAG AA",
+  );
+  await studyPanel.getByRole("button", { name: "Edit study" }).click();
+  await studyPanel.getByLabel("Recorded by").waitFor();
   // Audit the finding form open, with its free-text field and a box error showing.
   await page.getByRole("button", { name: "Record a different or missed plant" }).click();
   await page.getByLabel("Species", { exact: true }).selectOption("other");

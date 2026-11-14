@@ -15,6 +15,7 @@ from temporalio import activity
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
+from weedz.discovery.leads import selections
 from weedz.discovery.limits import CAMERA_TO_PLANT_ALLOWANCE_M, with_limits
 from weedz.discovery.lookalikes import summarize_lookalikes
 from weedz.discovery.occurrences import with_references
@@ -22,6 +23,8 @@ from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
+from weedz.discovery.study_store import run_study
+from weedz.discovery.suitability import suitability
 
 
 def while_heartbeating[T](work: Callable[[], T], detail: str, every: float = 20.0) -> T:
@@ -109,6 +112,8 @@ class Activities:
         result = export(self.store, run_id)
         result["run"]["status"] = "completed"
         result["run"]["detail"] = "Screening complete; expert review is pending"
+        # Summarised again, so it reads the run as completed rather than still exporting.
+        result["source_suitability"] = suitability(result)
         destination = self.store.root / "runs" / run_id / "manifest.json"
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_suffix(".tmp")
@@ -141,7 +146,7 @@ def export(store: Store, run_id: str) -> dict:
     snapshots = store.root / "runs" / run_id
     references, photos = with_references(store.root, store.photos(run_id))
     history = review_history(store, run_id, photos)
-    return {
+    result = {
         "schema": 1,
         "run": run,
         "photos": with_limits(with_encounters(photos)),
@@ -160,6 +165,9 @@ def export(store: Store, run_id: str) -> dict:
             store.latest_audits(run_id),
             store.latest_audits(run_id, blind=False),
         ),
+        "lead_selections": selections(store, run_id),
+        # The study this run serves, at its latest version (PRD P01).
+        "study": run_study(store, run_id),
         "audit_history": [
             dict(photo_id=photo["id"], events=store.audits(run_id, photo["id"])) for photo in photos
         ],
@@ -202,8 +210,14 @@ def export(store: Store, run_id: str) -> dict:
                 "a reviewer's decision or judgement. Names are attribution, not identity"
             ),
             (
+                "Leads selected for follow-up are attributed team choices with a reason, "
+                "not verified findings; the follow-up package carries only those selected"
+            ),
+            (
                 "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "
                 "are ungrouped, not counted as independent visits"
             ),
         ],
     }
+    # What the collection can and cannot support, from the parts above (PRD P02, P14).
+    return result | {"source_suitability": suitability(result)}

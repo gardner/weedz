@@ -378,3 +378,9 @@ input[type="date"] {
   align-items: start;
   gap: 20px;
 }
+.export-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}

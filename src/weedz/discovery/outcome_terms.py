@@ -14,8 +14,9 @@ Photos = list[dict[str, Any]]
 MEANING = (
     "How far this run answers each pilot success measure (docs/prd.md). Values are "
     "counts of photos, independent site visits and ungrouped photos that could not be "
-    "grouped; 'unknown' means not measured, not zero. No numeric success limits have "
-    "been agreed yet, so there are no pass or fail verdicts."
+    "grouped; 'unknown' means not measured, not zero. A verdict (met or not met) is "
+    "given only where the run's study records an agreed limit and the run measures a "
+    "comparable value; a limit not agreed, or a value not measured, gives no verdict."
 )
 NO_REVIEWS = "No incidental photo has been reviewed yet."
 USEFULNESS_UNJUDGED = (

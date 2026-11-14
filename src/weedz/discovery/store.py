@@ -10,9 +10,12 @@ from pathlib import Path
 from typing import Any
 
 from weedz.discovery.judgements import Judgement, judged, standing_judgements
+from weedz.discovery.leads import TABLE as LEAD_TABLE
 from weedz.discovery.records import Finding, Photo, RunSpec
 from weedz.discovery.referrals import TABLES as REFERRAL_TABLES
 from weedz.discovery.referrals import Referral, ReferralEvent, with_status
+from weedz.discovery.sharing import refuse_unadmitted
+from weedz.discovery.study import TABLES as STUDY_TABLES
 
 
 def now() -> str:
@@ -46,10 +49,11 @@ def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
 
 # An audit is blind only if it is the auditor's first answer for the photo (after it the
 # photo is released into their ranked queue) and no one reviewed the photo, or recorded a
-# finding, judgement or referral on it (or answered one), before it without having audited
-# it first. The app lets a sampled photo be reviewed only after the reviewer's own audit,
-# so any other earlier review, finding, judgement or referral, such as one made before
-# the sample existed, means the suggestion may have been seen.
+# finding, judgement, referral or lead selection on it (or answered a referral), before
+# it without having audited it first. The app lets a sampled photo be reviewed only after
+# the reviewer's own audit, so any other earlier review, finding, judgement, referral or
+# selection, such as one made before the sample existed, means the suggestion may have
+# been seen.
 AUDITS_BY_BLINDNESS = """
 SELECT a.photo_id, a.reviewer, a.finding FROM audits a
 WHERE a.run_id = ? AND (
@@ -66,6 +70,7 @@ WHERE a.run_id = ? AND (
             UNION ALL SELECT run_id, photo_id, referrer, created_at FROM referrals
             UNION ALL SELECT f.run_id, f.photo_id, e.actor, e.created_at
             FROM referral_events e JOIN referrals f ON f.id = e.referral_id
+            UNION ALL SELECT run_id, photo_id, selector, created_at FROM lead_selections
         ) r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
         AND r.created_at <= a.created_at AND NOT EXISTS (
             SELECT 1 FROM audits own WHERE own.run_id = r.run_id
@@ -126,6 +131,8 @@ class Store:
                 );
             """)
             db.executescript(REFERRAL_TABLES)
+            db.executescript(LEAD_TABLE)
+            db.executescript(STUDY_TABLES)
             # Databases created before reviewer attribution keep their history unattributed.
             add_missing_column(db, "photos", "review_reviewer")
             add_missing_column(db, "reviews", "reviewer")
@@ -169,6 +176,9 @@ class Store:
         ]
 
     def save_photos(self, run_id: str, photos: list[Photo]) -> None:
+        """Save acquired photos; any source's photo under a licence not admitted is refused."""
+        for photo in photos:
+            refuse_unadmitted(photo.photo_license, photo.observation_license)
         with self.connect() as db:
             db.executemany(
                 "INSERT INTO photos(run_id,id,record) VALUES(?,?,?) "

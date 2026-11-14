@@ -1,7 +1,9 @@
 import type { Finding } from "./findings";
 import type { Judged } from "./judgements";
+import type { PhotoLeads } from "./leads";
 import type { Limits } from "./limits";
 import type { Referral } from "./referrals";
+import type { Study } from "./study";
 
 export type Status = "unreviewed" | "confirmed" | "rejected" | "uncertain";
 export type Run = {
@@ -46,6 +48,7 @@ export type Photo = Judged & {
   limits?: Limits;
   findings?: Finding[];
   referrals?: Referral[];
+  lead?: PhotoLeads;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -115,6 +118,7 @@ export type RunDetail = {
   review_effort?: ReviewEffort;
   audit?: AuditSummary;
   references?: References;
+  study?: Study | null;
 };
 
 export type ReviewEffort = {

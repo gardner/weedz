@@ -156,6 +156,40 @@ basis the project lead chose BioCLIP 2 as the default for new runs. Runs saved
 earlier keep the original BioCLIP, and `--model bioclip` still selects it. These
 are small, source-labelled samples, not reviewed accuracy.
 
+### Source suitability
+
+`uv run main.py suitability --run nelson-tasman-3e62ad801459`
+([#6](https://github.com/gardner/weedz/issues/6)) states what the run's
+photos can support before anyone reviews them. On 14 November 2026 it showed
+the following:
+
+- **Scope.** There are 24 incidental photos: 7 independent site visits plus 8
+  ungrouped photos. Each region returned all 12 photos requested.
+- **Dates.** All 24 are from 30 and 31 December 2024. The run sampled newest
+  first, so every earlier date, and the autumn, winter and spring seasons, is
+  unassessed.
+- **Locations.** Twenty photos have a search area. Four report no accuracy, so
+  they have none. Reported accuracy runs from 3 m to 1,634 m (median 18.5 m),
+  and 11 photos are within 20 m.
+- **Permitted uses.** All 24 images may be shared. Ten photos are for
+  non-commercial use only. Four locations are withheld because their accuracy
+  is unknown.
+- **Screening.** All 24 photos are screened. The run predates the record of
+  pixel coverage and featureless windows, so both are "not recorded". Visible
+  vegetation is not measured.
+- **Comparison.** Twenty photos were compared with the DOC snapshot. The four
+  photos without an accuracy were not.
+- **What the photos cannot support:**
+  - a field search lead: 4 photos
+  - aerial site context: 13 photos (3 site visits + 8 ungrouped)
+  - novelty: 4 photos
+  - an independent count: 8 ungrouped photos
+  - a shared location: 4 photos
+  - a study-period conclusion: not assessed, because no study is linked
+
+This is a two-day summer sample. It can support findings about those days,
+but not about other seasons or years.
+
 ### Outcomes against the success measures
 
 On 14 November 2026 the run was read against the PRD's eight success measures
@@ -182,8 +216,25 @@ sample and judge usefulness separately from visibility. "Unknown" in the report
 means unmeasured, not zero: it does not show that the run found nothing, nor that
 it missed nothing. Even once reviews exist, a confirmed review is not a useful
 finding, and "no DOC record within 5 km" describes a sparse reference set, not
-novelty. No success limits have been agreed (#1, #2), so the report gives values
+novelty. No success limits have been agreed (#1), so the report gives values
 and statuses, not pass or fail verdicts.
+
+The product can now record the study itself: question, partner, people, bounds,
+budget, reference records and agreed limits (#2). This run has no study linked,
+because the partner and question decision (#1) is still open. On a copy of the
+pilot data, a *sample* study shows how the report reads once limits exist. It
+records 24 photos and 10 hours, and limits of at least 80 % complete evidence,
+50 % coverage and 2 useful site visits. The report then gives:
+
+- **Evidence completeness: met.** 83.3 % of incidental photos have complete
+  evidence.
+- **Coverage: not comparable.** It is 0 %, a lower bound while all 24 photos
+  wait for review.
+- **Useful yield: not comparable.** Usefulness is not judged yet (#18).
+
+Every other measure says "not agreed", and the budget shows 0 of 10 hours and
+0 of 24 photos used. These limits were invented for the check and are not
+agreed limits.
 
 The next experiment should include independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.

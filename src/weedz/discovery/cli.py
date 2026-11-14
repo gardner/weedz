@@ -11,6 +11,7 @@ from pathlib import Path
 
 import httpx
 import uvicorn
+from pydantic import ValidationError
 from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
@@ -20,10 +21,23 @@ from weedz.discovery.api import create_app
 from weedz.discovery.occurrences import fetch_snapshot
 from weedz.discovery.outcome_report import to_markdown
 from weedz.discovery.outcomes import outcomes
-from weedz.discovery.records import TASK_QUEUE, RunSpec
+from weedz.discovery.package_output import package_contents, write
+from weedz.discovery.package_report import NONE_SELECTED
+from weedz.discovery.records import SPECIES, TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
 from weedz.discovery.store import Store
+from weedz.discovery.study import StudyDefinition, StudyEdit
+from weedz.discovery.study_store import (
+    AlreadyLinked,
+    StaleVersion,
+    create_linked,
+    run_study,
+    save_version,
+)
+from weedz.discovery.suitability_report import to_markdown as suitability_markdown
 from weedz.discovery.workflows import DiscoveryWorkflow
+from weedz.reference import collection
+from weedz.reference_report import to_markdown as reference_markdown
 
 
 async def worker(root: Path, address: str, stack: AsyncExitStack) -> None:
@@ -129,17 +143,103 @@ def references(args: argparse.Namespace) -> None:
     print(f"Wrote reference snapshot {path}")
 
 
-def report(args: argparse.Namespace) -> None:
+def run_store(args: argparse.Namespace) -> Store:
+    """The pilot store holding `args.run`; never creates a store where there is none."""
     if not (args.pilot_dir / "discovery.sqlite3").is_file():
         raise SystemExit(f"No pilot store in {args.pilot_dir}")
     store = Store(args.pilot_dir)
     if not any(run["id"] == args.run for run in store.runs()):
         raise SystemExit(f"No run {args.run!r} in {args.pilot_dir}")
-    result = outcomes(export(store, args.run))
-    print(to_markdown(result), end="")
+    return store
+
+
+def package(args: argparse.Namespace) -> None:
+    """Write the run's follow-up package to a new or empty folder."""
+    store = run_store(args)
+    if args.out.exists() and not args.out.is_dir():
+        raise SystemExit(f"{args.out} is not a folder; choose a new or empty folder")
+    if args.out.exists() and any(args.out.iterdir()):
+        raise SystemExit(f"{args.out} is not empty; choose a new or empty folder")
+    built, photos = package_contents(store, args.run, datetime.now(UTC).isoformat())
+    if not built["leads"]:
+        print(NONE_SELECTED + " Nothing written.")
+        return
+    try:
+        write(built, photos, args.out)
+    except (ValueError, OSError) as error:
+        raise SystemExit(f"Package not written: {error}") from error
+    count = len(built["leads"])
+    print(f"Wrote {count} lead{'s' if count != 1 else ''} for follow-up to {args.out}")
+
+
+def _print(args: argparse.Namespace, result: dict, markdown: str) -> None:
+    """Print the Markdown and, with --json, also write the result there."""
+    print(markdown, end="")
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+
+
+def report(args: argparse.Namespace) -> None:
+    result = outcomes(export(run_store(args), args.run))
+    _print(args, result, to_markdown(result))
+
+
+def suitability(args: argparse.Namespace) -> None:
+    result = export(run_store(args), args.run)["source_suitability"]
+    _print(args, result, suitability_markdown(result))
+
+
+def reference(args: argparse.Namespace) -> None:
+    """The run's reviewed examples as a reference collection, with the watchlist's gaps."""
+    from weedz.adapters import pilot_samples  # imports PIL, needed by this command only
+
+    result = collection(args.run, pilot_samples(run_store(args), args.run), SPECIES)
+    _print(args, result, reference_markdown(result))
+
+
+def _record_study(store: Store, args: argparse.Namespace) -> None:
+    """Record --file as the run's next study version, refusing an edit whose file is based
+    on an older version than the one now standing."""
+    if not args.author:
+        raise SystemExit("Name who records this study version with --author")
+    try:
+        definition = StudyDefinition.model_validate_json(args.file.read_text())
+    except ValidationError as error:
+        raise SystemExit(f"Study not recorded: {error}") from error
+    linked = run_study(store, args.run)
+    if linked and args.base_version is None:
+        raise SystemExit(
+            f"This run's study is at version {linked['version']}. Check your file is based "
+            f"on it, then pass --base-version {linked['version']}"
+        )
+    if not linked and args.base_version:
+        raise SystemExit(
+            "This run has no study yet; record its first version without --base-version"
+        )
+    edit = StudyEdit(
+        definition=definition,
+        author=args.author,
+        base_version=args.base_version or 0,
+        change_note=args.note,
+    )
+    try:
+        if linked:
+            save_version(store, linked["id"], edit)
+        else:
+            # Linked in the same write, so a study someone linked meanwhile is never replaced.
+            create_linked(store, args.run, edit)
+    except (StaleVersion, AlreadyLinked) as error:
+        raise SystemExit(f"Study not recorded: {error}") from error
+
+
+def study(args: argparse.Namespace) -> None:
+    """Show the run's study; with --file, record the file as its next version (a new
+    study linked to the run when it has none)."""
+    store = run_store(args)
+    if args.file:
+        _record_study(store, args)
+    print(json.dumps(run_study(store, args.run), indent=2, ensure_ascii=False))
 
 
 def parse(argv: list[str]) -> argparse.Namespace:
@@ -194,15 +294,50 @@ def parse(argv: list[str]) -> argparse.Namespace:
     measures.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     measures.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     measures.add_argument("--json", type=Path, help="Also write the report as JSON here")
+    suits = commands.add_parser(
+        "suitability", help="Report what a run's photos can and cannot support (Markdown)"
+    )
+    suits.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    suits.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    suits.add_argument("--json", type=Path, help="Also write the summary as JSON here")
+    define = commands.add_parser(
+        "study", help="Show a run's study, or record a new version of it from a JSON file"
+    )
+    define.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    define.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    define.add_argument("--file", type=Path, help="Study definition JSON to record")
+    define.add_argument("--author", help="Who records this version")
+    define.add_argument("--note", default="", help="What changed and why")
+    define.add_argument(
+        "--base-version", type=int, help="The version your file edits (needed once one exists)"
+    )
+    curate = commands.add_parser(
+        "reference",
+        help="Report a run's reviewed examples, their eligible uses and gaps (Markdown)",
+    )
+    curate.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    curate.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    curate.add_argument("--json", type=Path, help="Also write the collection as JSON here")
+    bundle = commands.add_parser(
+        "package", help="Write the follow-up package of a run's selected leads"
+    )
+    bundle.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    bundle.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    bundle.add_argument("--out", type=Path, required=True, help="New or empty folder to write")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str]) -> None:
     args = parse(argv)
-    if args.command == "references":
-        references(args)
-        return
-    if args.command == "outcomes":
-        report(args)
+    reports = {
+        "references": references,
+        "outcomes": report,
+        "suitability": suitability,
+        "reference": reference,
+        "package": package,
+        "study": study,
+    }
+    if args.command in reports:
+        reports[args.command](args)
         return
     asyncio.run(dev(args) if args.command == "dev" else discover(args))

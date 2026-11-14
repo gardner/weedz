@@ -4,9 +4,11 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NewFinding } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
+import type { NewLeadEvent } from "../lib/leads";
 import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
+import type { Study } from "../lib/study";
 import {
   type AuditSummary,
   effortNote,
@@ -25,6 +27,8 @@ import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
 import RunSettings from "./run-settings";
+import StudyPanel from "./study-panel";
+import SuitabilityPanel from "./suitability-panel";
 
 const REVIEWER_KEY = "weedz-reviewer";
 type Payloads = {
@@ -35,6 +39,7 @@ type Payloads = {
   referrals: NewReferral & { referrer: string };
   answered: Closing & { actor: string };
   withdrawn: Closing & { actor: string };
+  leads: NewLeadEvent & { selector: string };
 };
 const SAVED: Record<keyof Payloads, string> = {
   review: "Review saved locally.",
@@ -44,7 +49,10 @@ const SAVED: Record<keyof Payloads, string> = {
   referrals: "Referral saved locally.",
   answered: "Referral answer saved locally.",
   withdrawn: "Referral withdrawal saved locally.",
+  leads: "Follow-up selection saved locally.",
 };
+// Choosing what to follow up is not timed: its time stays with the next timed action.
+const UNTIMED = new Set<keyof Payloads>(["leads"]);
 
 export default function ReviewDesk() {
   const requestGeneration = useRef(0);
@@ -54,6 +62,7 @@ export default function ReviewDesk() {
   const [references, setReferences] = useState<References>(null);
   const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
   const [auditSummary, setAuditSummary] = useState<AuditSummary>();
+  const [study, setStudy] = useState<Study | null>(null);
   // Each view remembers its own open photo, so one opened in a view never carries into
   // another (an audit photo must not open in the ranked queue) yet a glance at the
   // references returns to the same incidental photo.
@@ -83,6 +92,7 @@ export default function ReviewDesk() {
         setEffortSummary(result.review_effort);
         setAuditSummary(result.audit);
         setReferences(result.references ?? null);
+        setStudy(result.study ?? null);
       }
       setError("");
     } catch (failure) {
@@ -143,6 +153,7 @@ export default function ReviewDesk() {
     setPhotos([]);
     setEffortSummary(undefined);
     setAuditSummary(undefined);
+    setStudy(null);
     setActiveIds({});
     setRunId(id);
   }
@@ -154,18 +165,19 @@ export default function ReviewDesk() {
   ) {
     if (!active) return false;
     const measured = effort.snapshot();
+    const timed = !UNTIMED.has(kind);
     setSaving(true);
     try {
       await request(`runs/${runId}/photos/${active.id}/${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...fields,
-          reviewer: reviewer.trim(),
-          effort_seconds: measured.seconds,
-        }),
+        body: JSON.stringify(
+          timed
+            ? { ...fields, reviewer: reviewer.trim(), effort_seconds: measured.seconds }
+            : fields,
+        ),
       });
-      effort.clear(measured);
+      if (timed) effort.clear(measured);
       setNotice(SAVED[kind]);
       await latestRefresh.current();
       return true;
@@ -184,6 +196,7 @@ export default function ReviewDesk() {
   const refer = (referral: NewReferral) => submit("referrals", { ...referral, referrer: name });
   const closeReferral = (id: number, closing: Closing) =>
     submit(closing.action, { ...closing, actor: name }, `referrals/${id}/events`);
+  const selectLead = (event: NewLeadEvent) => submit("leads", { ...event, selector: name });
 
   return (
     <div className="app-shell">
@@ -236,9 +249,14 @@ export default function ReviewDesk() {
               <p>Review possible invasive plants. Keep every finding tied to its source.</p>
             </div>
             {runId && (
-              <a className="button export-button" href={`/api/runs/${runId}/export`}>
-                Export evidence ↓
-              </a>
+              <div className="export-buttons">
+                <a className="button export-button" href={`/api/runs/${runId}/package/archive`}>
+                  Follow-up package ↓
+                </a>
+                <a className="button export-button" href={`/api/runs/${runId}/export`}>
+                  Export evidence ↓
+                </a>
+              </div>
             )}
           </div>
           {error && (
@@ -295,6 +313,18 @@ export default function ReviewDesk() {
             }}
             onError={setError}
           />
+          <StudyPanel
+            key={runId}
+            runId={runId}
+            study={study}
+            reviewer={reviewer}
+            onSaved={async (message) => {
+              setNotice(message);
+              await latestRefresh.current();
+            }}
+            onError={setError}
+          />
+          <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />
           <div className="screening-note">
             <span className="note-icon" aria-hidden="true">
               i
@@ -433,6 +463,7 @@ export default function ReviewDesk() {
                 onSaveJudgement={saveJudgement}
                 onRefer={refer}
                 onCloseReferral={closeReferral}
+                onSelectLead={selectLead}
                 saving={saving}
                 references={references}
                 reviewer={reviewer}
