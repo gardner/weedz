@@ -114,19 +114,26 @@ def _declare(
     }
 
 
-DECLARED: dict[tuple[str, int], dict[str, Any]] = {
-    ("bioclip-2", 4): _declare(
+_FIRST = [
+    _declare(
         "bioclip-2",
         "2957b322090f9cb17ae72c71981c7218a28d81e0",
         4,
         _evidence((6, 6), (1, 24), (30, 39), (3, 39)),
     ),
-    ("bioclip", 4): _declare(
+    _declare(
         "bioclip",
         "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
         4,
         _evidence((6, 6), (5, 24), (32, 39), (17, 39)),
     ),
+]
+# Every declaration ever made, by id. Declarations are never edited or removed: a run
+# keeps the one it was screened under, so a change is a new meaning version.
+DECLARED: dict[str, dict[str, Any]] = {meaning["id"]: meaning for meaning in _FIRST}
+# The declaration a newly screened run is pinned to, per (model_key, ranking_revision).
+CURRENT: dict[tuple[str, int], str] = {
+    (meaning["model_key"], meaning["ranking_revision"]): meaning["id"] for meaning in _FIRST
 }
 
 UNDECLARED: dict[str, Any] = {
@@ -145,16 +152,49 @@ UNDECLARED: dict[str, Any] = {
 }
 
 
-def score_meaning(model: dict[str, Any] | None) -> dict[str, Any]:
-    """The declared meaning of a run's scores, from the model metadata it recorded."""
-    model = model or {}
+def _configuration(model: dict[str, Any]) -> tuple[str, int]:
     # Metadata saved before model choice existed was always the original BioCLIP.
-    key = model.get("model_key", "bioclip")
-    declared = DECLARED.get((key, model.get("ranking_revision", -1)))
-    if (
-        declared is None
-        or model.get("revision") != declared["model_revision"]
-        or model.get("calibrated") is not False
-    ):
+    return model.get("model_key", "bioclip"), model.get("ranking_revision", -1)
+
+
+def _applies(meaning: dict[str, Any] | None, model: dict[str, Any]) -> bool:
+    """Whether a declaration describes the model, checkpoint and ranking that scored a run."""
+    return (
+        meaning is not None
+        and (meaning["model_key"], meaning["ranking_revision"]) == _configuration(model)
+        and model.get("revision") == meaning["model_revision"]
+        and model.get("calibrated") is False
+    )
+
+
+def pin_meaning(saved: dict[str, Any] | None, metadata: dict[str, Any]) -> dict[str, Any]:
+    """The model metadata to record for a run: the screener's, plus its pinned meaning.
+
+    A resumed run keeps the pin it started with (or none, if screened before pinning),
+    and a changed scoring configuration is refused, as mixing scores would be.
+    """
+    if saved:
+        previous = {"model_key": "bioclip"} | saved
+        pinned = previous.pop("score_meaning", None)
+        if previous != metadata:
+            raise ValueError(
+                "Scoring configuration changed; start a new run to preserve provenance"
+            )
+    else:
+        current = CURRENT.get(_configuration(metadata))
+        pinned = current if _applies(DECLARED.get(current or ""), metadata) else None
+    return metadata | ({"score_meaning": pinned} if pinned else {})
+
+
+def score_meaning(model: dict[str, Any] | None) -> dict[str, Any]:
+    """The declared meaning of a run's scores, from the model metadata it recorded.
+
+    A run screened before meanings were pinned has the configuration's first declaration,
+    which was the only one when it was scored.
+    """
+    model = model or {}
+    key, ranking = _configuration(model)
+    declared = DECLARED.get(model.get("score_meaning") or f"{key}/ranking-{ranking}/meaning-1")
+    if declared is None or not _applies(declared, model):
         return copy.deepcopy(UNDECLARED | {"model_key": model.get("model_key")})
     return copy.deepcopy(declared)

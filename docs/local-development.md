@@ -125,7 +125,11 @@ intended for local development, not shared public hosting.
    `benchmarks/model-comparison.json` (a test keeps the numbers equal to the
    benchmark). An operating point may only be chosen on reviewed and
    blind-audited development runs, then fixed as a new meaning version before
-   any final test. Any other configuration, such as runs scored under ranking
+   any final test. Screening pins each run to the declaration current when it
+   started (the run's model metadata records its `score_meaning` id, and a retry
+   keeps it), and declarations are never edited, so a new version never changes
+   an earlier run's meaning. Runs screened before pinning keep their
+   configuration's first declaration. Any other configuration, such as runs scored under ranking
    revisions 2 or 3, is served with "no declared meaning": compare its scores
    only within that run. The review desk shows each species' margin in words
    beside the suggestion, with the declaration behind "What this score means";

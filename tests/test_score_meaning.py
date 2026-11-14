@@ -10,7 +10,7 @@ from test_outcomes_surface import pilot
 from weedz.discovery.activities import export
 from weedz.discovery.api import create_app
 from weedz.discovery.inference import MODELS
-from weedz.discovery.score_meaning import DECLARED, score_meaning
+from weedz.discovery.score_meaning import CURRENT, score_meaning
 from weedz.discovery.store import Store
 
 BENCHMARKS = Path(__file__).parents[1] / "benchmarks"
@@ -83,7 +83,7 @@ def test_meanings_are_returned_as_copies() -> None:
     assert "tampered" not in score_meaning(model())["not_meaning"]
 
 
-@pytest.mark.parametrize("key", sorted({key for key, _ in DECLARED}))
+@pytest.mark.parametrize("key", sorted({key for key, _ in CURRENT}))
 def test_declared_evidence_matches_the_benchmark(key: str) -> None:
     """Every number a declaration cites is the benchmark's, so they cannot drift apart."""
     benchmark = json.loads((BENCHMARKS / "model-comparison.json").read_text())["models"][key]
