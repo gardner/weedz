@@ -139,9 +139,18 @@ def test_comparison_reports_nearest_record_and_nearby_years() -> None:
     assert gorse["nearest"]["year"] == 2015
     assert gorse["within_radius"] == 2
     assert (gorse["earliest_year"], gorse["latest_year"]) == (2003, 2015)
+    assert gorse["undated_within_radius"] == 0
     assert gorse["photo_accuracy_m"] == 8.0
     assert result["Clematis vitalba"]["nearest"] is None
     assert result["Clematis vitalba"]["within_radius"] == 0
+
+
+def test_undated_nearby_records_are_counted_not_dropped() -> None:
+    undated = record(2, -41.2937, 2003) | {"year": None, "event_date": None}
+    gorse = compare(photo(), [record(1, -41.2737, 2015), undated], TAXON_KEYS)["Ulex europaeus"]
+    assert gorse["within_radius"] == 2
+    assert gorse["earliest_year"] == 2015
+    assert gorse["undated_within_radius"] == 1
 
 
 def test_unknown_or_imprecise_photo_locations_are_not_comparable() -> None:
