@@ -4,6 +4,7 @@ from typing import Any
 
 from test_outcomes import photo as base_photo
 
+from weedz.discovery.occurrences import NOT_QUERIED
 from weedz.discovery.sharing import WITHHELD
 from weedz.discovery.suitability import NOT_MEASURED, suitability
 from weedz.discovery.suitability_report import to_markdown
@@ -285,3 +286,16 @@ def test_markdown_states_unknowns_and_never_implies_weed_free() -> None:
     assert "| A field search lead |" in text
     assert "1 site visit + 1 ungrouped photo (2 photos)" in text
     assert "No reference snapshot" in text
+    assert "the snapshot did not query: Clematis vitalba, Cortaderia selloana" in text
+
+
+def test_a_photo_reason_outranks_a_species_the_snapshot_did_not_query() -> None:
+    found = {
+        "Clematis vitalba": {"comparable": False, "reason": NOT_QUERIED},
+        "Ulex europaeus": {"comparable": False, "reason": "Photo location accuracy is unknown"},
+    }
+    compared = suitability(run_export([photo("a", None, reference_comparison=found)]))
+    result = compared["reference_comparison"]
+    assert list(result["not_compared"]) == ["Photo location accuracy is unknown"]
+    # The fixture snapshot queried only gorse; the rest are named, never assumed absent.
+    assert result["not_queried_species"] == ["Clematis vitalba", "Cortaderia selloana"]

@@ -85,6 +85,7 @@ export const suitability = {
   },
   reference_comparison: {
     snapshot: null,
+    not_queried_species: ["Clematis vitalba", "Cortaderia selloana", "Ulex europaeus"],
     compared: tally(0, 0, 0),
     not_compared: { "No reference snapshot to compare against": tally(2, 1, 1) },
   },

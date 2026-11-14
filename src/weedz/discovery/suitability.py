@@ -22,8 +22,9 @@ from weedz.discovery.limits import (
     search_area,
     search_area_summary,
 )
+from weedz.discovery.occurrences import NOT_QUERIED
 from weedz.discovery.outcome_terms import EVIDENCE_FIELDS, Photos, tally
-from weedz.discovery.records import REGIONS, RunSpec
+from weedz.discovery.records import REGIONS, SPECIES, RunSpec
 from weedz.discovery.sampling import SEASONS
 from weedz.discovery.sharing import image_use, location, terms
 from weedz.discovery.study import StudyDefinition, differences
@@ -248,7 +249,7 @@ def screening(photos: Photos) -> dict[str, Any]:
     screened = [p for p in photos if p.get("scores")]
     coverage = _recorded(screened, "coverage_complete")
     featureless = [p["scores"].get("featureless_windows") for p in screened]
-    waiting = [p for p in photos if p.get("review_status", "unreviewed") == "unreviewed"]
+    waiting = {p["id"] for p in photos if p.get("review_status", "unreviewed") == "unreviewed"}
     return {
         "screened": tally(screened),
         "not_screened": tally([p for p in photos if not p.get("scores")]),
@@ -263,8 +264,8 @@ def screening(photos: Photos) -> dict[str, Any]:
         },
         "visible_vegetation": NOT_MEASURED,
         "original_subjects": dict(Counter(map(_subject, photos)).most_common()),
-        "reviewed": tally([p for p in photos if p not in waiting]),
-        "unassessed": tally(waiting),
+        "reviewed": tally([p for p in photos if p["id"] not in waiting]),
+        "unassessed": tally([p for p in photos if p["id"] in waiting]),
     }
 
 
@@ -275,7 +276,9 @@ def _not_compared(photo: Photo) -> str | None:
         return NO_SNAPSHOT
     if any(item["comparable"] for item in found.values()):
         return None
-    return next(iter(found.values()))["reason"]
+    # The photo's own reason applies to every species the snapshot queried.
+    reasons = [item["reason"] for item in found.values()]
+    return next((reason for reason in reasons if reason != NOT_QUERIED), reasons[0])
 
 
 def reference_comparison(export: dict[str, Any], photos: Photos) -> dict[str, Any]:
@@ -285,8 +288,10 @@ def reference_comparison(export: dict[str, Any], photos: Photos) -> dict[str, An
     if references:
         title = (references.get("dataset") or {}).get("title")
         snapshot = {"retrieved_at": references.get("retrieved_at"), "title": title}
+    queried = (references or {}).get("taxon_keys") or {}
     return {
         "snapshot": snapshot,
+        "not_queried_species": [name for name in SPECIES if name not in queried],
         "compared": tally([p for p in photos if reasons[p["id"]] is None]),
         "not_compared": {
             reason: tally([p for p in photos if reasons[p["id"]] == reason])

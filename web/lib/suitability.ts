@@ -71,6 +71,7 @@ export type Suitability = {
   };
   reference_comparison: {
     snapshot: { retrieved_at: string | null; title: string | null } | null;
+    not_queried_species: string[];
     compared: Tally;
     not_compared: Record<string, Tally>;
   };
@@ -155,6 +156,7 @@ export function comparisonLines(comparison: Suitability["reference_comparison"])
   return [
     `Basis: ${basis}`,
     `Compared: ${tallyText(comparison.compared)}`,
+    `Watchlist species the snapshot did not query: ${comparison.not_queried_species.join(", ") || "none"}`,
     ...Object.entries(comparison.not_compared).map(
       ([reason, tally]) => `Not compared, ${reason}: ${tallyText(tally)}`,
     ),

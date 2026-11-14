@@ -146,6 +146,8 @@ def _comparison(comparison: dict[str, Any]) -> list[str]:
         "",
         f"- Basis: {basis}",
         f"- Compared: {_photos(comparison['compared'])}",
+        "- Watchlist species the snapshot did not query: "
+        + (", ".join(comparison["not_queried_species"]) or "none"),
     ]
     return lines + [
         f"- Not compared, {reason}: {_photos(count)}"
