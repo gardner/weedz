@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "app_version": "0.1.0+1",
+  "candidate": {"taxon": "Clematis vitalba", "score": 0.051},
+  "model": {
+    "model_key": "bioclip-2",
+    "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+    "ranking_revision": 4,
+    "score_meaning": "bioclip-2/ranking-4/meaning-1"
+  },
+  "captured_at": "2026-10-02T23:15:42.000Z",
+  "location": {"latitude": -41.2706319, "longitude": 173.2839653, "accuracy_m": 4.7},
+  "consent": {
+    "wording_version": "consent-2026-11",
+    "image": true,
+    "licence": "cc-by",
+    "credit": "A. Contributor"
+  },
+  "image": "/9j/4AAQSkZJRgABAQ=="
+}
