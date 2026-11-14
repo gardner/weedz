@@ -9,6 +9,7 @@ from test_discovery import observation
 
 from weedz.discovery.activities import export
 from weedz.discovery.api import create_app
+from weedz.discovery.audit import audit_sample
 from weedz.discovery.records import Finding, RunSpec
 from weedz.discovery.source import photo_from_observation
 from weedz.discovery.store import Store
@@ -128,3 +129,30 @@ def test_export_carries_findings_and_counts_their_time(tmp_path: Path) -> None:
     assert effort["minutes_by_status"] == {"rejected": 0.5, "addition": 1.5}
     assert effort["unmeasured_decisions"] == 1
     assert any("not segmentation" in line for line in result["limitations"])
+
+
+def sampled_photo(root: Path) -> tuple[Store, str]:
+    store = Store(root)
+    store.create_run("run", RunSpec())
+    records = [
+        photo_from_observation(observation() | {"id": 100 + index}, "Nelson", "incidental")
+        for index in range(8)
+    ]
+    store.save_photos("run", [record for record in records if record is not None])
+    return store, sorted(audit_sample("run", store.photos("run")))[0]
+
+
+def test_a_finding_by_someone_who_had_not_audited_unblinds_later_audits(tmp_path: Path) -> None:
+    store, target = sampled_photo(tmp_path)
+    store.finding("run", target, Finding.model_validate(finding(reviewer="Carol")))
+    store.audit("run", target, "Ulex europaeus", "", "Ana")
+    assert store.latest_audits("run") == {}
+    assert store.latest_audits("run", blind=False) == {target: {"Ana": "Ulex europaeus"}}
+
+
+def test_a_finding_by_someone_who_already_audited_keeps_others_blind(tmp_path: Path) -> None:
+    store, target = sampled_photo(tmp_path)
+    store.audit("run", target, "none", "", "Carol")
+    store.finding("run", target, Finding.model_validate(finding(reviewer="Carol")))
+    store.audit("run", target, "Ulex europaeus", "", "Ana")
+    assert store.latest_audits("run") == {target: {"Carol": "none", "Ana": "Ulex europaeus"}}

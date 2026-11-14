@@ -38,10 +38,10 @@ def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
 
 
 # An audit is blind only if it is the auditor's first answer for the photo (after it the
-# photo is released into their ranked queue) and no one reviewed the photo before it
-# without having audited it first. The app lets a sampled photo be reviewed only after the
-# reviewer's own audit, so any other earlier review, such as one made before the sample
-# existed, means the suggestion may have been seen.
+# photo is released into their ranked queue) and no one reviewed the photo, or recorded a
+# finding on it, before it without having audited it first. The app lets a sampled photo
+# be reviewed only after the reviewer's own audit, so any other earlier review or finding,
+# such as one made before the sample existed, means the suggestion may have been seen.
 AUDITS_BY_BLINDNESS = """
 SELECT a.photo_id, a.reviewer, a.finding FROM audits a
 WHERE a.run_id = ? AND (
@@ -51,7 +51,10 @@ WHERE a.run_id = ? AND (
         AND earlier.id < a.id
     )
     AND NOT EXISTS (
-        SELECT 1 FROM reviews r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
+        SELECT 1 FROM (
+            SELECT run_id, photo_id, reviewer, created_at FROM reviews
+            UNION ALL SELECT run_id, photo_id, reviewer, created_at FROM findings
+        ) r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
         AND r.created_at <= a.created_at AND NOT EXISTS (
             SELECT 1 FROM audits own WHERE own.run_id = r.run_id
             AND own.photo_id = r.photo_id AND own.reviewer = r.reviewer
