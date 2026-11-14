@@ -8,8 +8,11 @@ import torch
 from PIL import Image
 
 from weedz.discovery.inference import (
+    ENCODE_BATCH,
     LETTERBOX,
+    MAX_TILES,
     Screener,
+    covers_every_pixel,
     featureless,
     region_boxes,
     square_view,
@@ -170,3 +173,32 @@ def test_a_uniform_tile_is_featureless_and_a_textured_one_is_not() -> None:
     assert featureless(dark)
     textured = Image.effect_noise((50, 50), 40).convert("RGB")
     assert not featureless(textured)
+
+
+def test_extreme_panoramas_are_capped_and_flagged() -> None:
+    boxes = region_boxes(2048, 10)
+    assert len(boxes) <= 1 + MAX_TILES
+    assert not covers_every_pixel(2048, 10)
+    assert covers_every_pixel(1024, 768)
+
+
+class CountingBatches(FakeEncoder):
+    def __init__(self) -> None:
+        self.batches: list[int] = []
+
+    def encode_image(self, image: torch.Tensor, *, normalize: bool) -> torch.Tensor:
+        self.batches.append(len(image))
+        return super().encode_image(image, normalize=normalize)
+
+
+def test_windows_are_encoded_in_bounded_batches(tmp_path: Path) -> None:
+    path = tmp_path / "tall.jpg"
+    Image.effect_noise((300, 1600), 40).convert("RGB").save(path)
+    encoder = CountingBatches()
+    screener = Screener(
+        encoder, lambda _image: torch.zeros(3), lambda p: p, "hash", preprocessing={}
+    )
+    result = screener.screen(path)
+    assert len(encoder.batches) > 1 and max(encoder.batches) <= ENCODE_BATCH
+    assert sum(encoder.batches) == len(result["window_similarities"])
+    assert result["coverage_complete"] is True

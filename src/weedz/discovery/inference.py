@@ -55,6 +55,9 @@ LETTERBOX = (124, 116, 104)  # neutral pad, close to the model's normalisation m
 # Greyscale standard deviation below which a tile has no visible structure. Pilot tiles
 # showed a clear gap: a black night strip at 0.5, while 95% of tiles were above 12.
 FEATURELESS_STD = 8.0
+# Bounds for degenerate panoramas: tiles per photo, and windows per encoder batch.
+MAX_TILES = 32
+ENCODE_BATCH = 16
 
 
 def _positions(length: int, side: int) -> list[int]:
@@ -64,18 +67,34 @@ def _positions(length: int, side: int) -> list[int]:
     return [round(index * (length - side) / (count - 1)) for index in range(count)]
 
 
+def _thin(positions: list[int], count: int) -> list[int]:
+    step = (len(positions) - 1) / max(1, count - 1)
+    return sorted({positions[round(index * step)] for index in range(count)})
+
+
 def region_boxes(width: int, height: int) -> list[tuple[int, int, int, int]]:
     """The whole frame, then overlapping square tiles that together cover every pixel.
 
     Square tiles survive the model's centre-crop intact, so no edge strip is discarded.
     """
     side = max(1, round(min(width, height) * TILE_FRACTION))
-    tiles = [
-        (x, y, x + side, y + side)
-        for y in _positions(height, side)
-        for x in _positions(width, side)
-    ]
+    xs, ys = _positions(width, side), _positions(height, side)
+    if len(xs) * len(ys) > MAX_TILES:
+        # Degenerate panoramas: evenly thin the long axis; covers_every_pixel reports the gap.
+        if width >= height:
+            xs = _thin(xs, MAX_TILES // len(ys))
+        else:
+            ys = _thin(ys, MAX_TILES // len(xs))
+    tiles = [(x, y, x + side, y + side) for y in ys for x in xs]
     return list(dict.fromkeys([(0, 0, width, height), *tiles]))
+
+
+def covers_every_pixel(width: int, height: int) -> bool:
+    """Whether the tiles alone (not the letterboxed frame) reach every pixel."""
+    seen = np.zeros((height, width), bool)
+    for x1, y1, x2, y2 in region_boxes(width, height)[1:]:
+        seen[y1:y2, x1:x2] = True
+    return bool(seen.all())
 
 
 def square_view(image: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
@@ -261,9 +280,13 @@ class Screener:
                     return self.torch.from_numpy(cached), "hit"
             except (OSError, ValueError, EOFError):
                 pass  # Corrupt or partial entries are recomputed, never trusted.
-        batch = self.torch.stack([self.transform(square_view(image, box)) for box in boxes])
+        chunks = []
         with self.torch.inference_mode():
-            features = self.model.encode_image(batch, normalize=True)
+            for start in range(0, len(boxes), ENCODE_BATCH):
+                views = [square_view(image, box) for box in boxes[start : start + ENCODE_BATCH]]
+                batch = self.torch.stack([self.transform(view) for view in views])
+                chunks.append(self.model.encode_image(batch, normalize=True))
+        features = self.torch.cat(chunks)
         if cache is None:
             return features, "off"
         cache.parent.mkdir(parents=True, exist_ok=True)
@@ -294,6 +317,7 @@ class Screener:
         ]
         result = summarize_scores(scores, boxes, labels, len(SPECIES), eligible)
         result["featureless_windows"] = [index for index, ok in enumerate(eligible) if not ok]
+        result["coverage_complete"] = covers_every_pixel(*image.size)
         result["subject_prompt"] = prompt(subject) if subject else None
         result["embedding_cache"] = cache_state
         result["window_similarities"] = scores.tolist()
