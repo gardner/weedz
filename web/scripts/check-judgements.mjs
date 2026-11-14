@@ -162,6 +162,12 @@ try {
   // A recorded plant is judged on its own, so a claim always names what it is about.
   const target = page.getByLabel("Plant being judged");
   assert.match(await target.locator("option:checked").textContent(), /Suggested.*Old man's beard/);
+  // Plants are numbered as in "Recorded plants", so two alike can be told apart.
+  assert.match(
+    await target.locator("option[value='7']").textContent(),
+    /^Recorded plant 1: Missed plant, Gorse \(Ben\)$/,
+  );
+  assert.match(await page.locator(".recorded-findings li").first().textContent(), /^1\. Missed/);
   await target.selectOption("7");
   const absent = page
     .getByLabel("Novelty", { exact: true })

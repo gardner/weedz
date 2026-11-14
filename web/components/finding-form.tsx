@@ -175,9 +175,12 @@ export function FindingList({ findings }: { findings: Finding[] }) {
     <section className="recorded-findings" aria-label="Recorded plants">
       <h3>Recorded plants</h3>
       <ol>
-        {findings.map((finding) => (
+        {findings.map((finding, index) => (
           <li key={finding.id}>
-            <strong>{kindLabels[finding.kind]}:</strong> {findingName(finding)}
+            <strong>
+              {index + 1}. {kindLabels[finding.kind]}:
+            </strong>{" "}
+            {findingName(finding)}
             {finding.other_taxon && <em> (as typed)</em>} · {finding.reviewer}{" "}
             <time dateTime={finding.created_at}>
               {recordedAt.format(new Date(finding.created_at))}

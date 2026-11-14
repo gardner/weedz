@@ -35,9 +35,10 @@ export default function JudgementPanel({
   onSave: Save;
 }) {
   const suggestion = photo.scores.best_species;
-  const plants: Plant[] = (photo.findings ?? []).map((plant) => ({
+  // Numbered as in the "Recorded plants" list, so plants of the same kind and taxon differ.
+  const plants: Plant[] = (photo.findings ?? []).map((plant, index) => ({
     key: String(plant.id),
-    label: `${kindLabels[plant.kind]}: ${findingName(plant)} (${plant.reviewer})`,
+    label: `Recorded plant ${index + 1}: ${kindLabels[plant.kind]}, ${findingName(plant)} (${plant.reviewer})`,
     taxon: plant.species,
     judged: plant,
   }));
