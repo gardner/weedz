@@ -179,3 +179,13 @@ def test_a_single_file_artefact_records_the_hash_a_bundle_gate_checks(tmp_path: 
     split.write_bytes(b"graph")
     (tmp_path / "visual.onnx.data").write_bytes(b"external weights")
     assert script.artefact_sha256(split) is None, "an artefact in several files ships as none"
+
+
+def test_every_artefact_records_how_it_runs_so_a_bundle_need_not_be_told() -> None:
+    assert set(script.RUNTIME) == set(script.ARTEFACTS)
+    assert script.RUNTIME["fp16"] == {
+        "format": "torch",
+        "precision": "fp16",
+        "input_dtype": "float16",
+    }
+    assert script.RUNTIME["int8"]["input_dtype"] == "float32"

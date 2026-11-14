@@ -48,6 +48,16 @@ ARTEFACTS = {
     "int8": ("onnx", "visual-int8.onnx"),
     "int8-per-channel": ("onnx", "visual-int8-per-channel.onnx"),
 }
+# How each artefact runs, as encode_variant runs it: a bundle reads this from the parity
+# record rather than trusting a publisher to restate it (#59). Torch towers take input in
+# their parameters' dtype.
+RUNTIME = {
+    "fp32": {"format": "torch", "precision": "fp32", "input_dtype": "float32"},
+    "fp16": {"format": "torch", "precision": "fp16", "input_dtype": "float16"},
+    "onnx": {"format": "onnx", "precision": "fp32", "input_dtype": "float32"},
+    "int8": {"format": "onnx", "precision": "int8", "input_dtype": "float32"},
+    "int8-per-channel": {"format": "onnx", "precision": "int8", "input_dtype": "float32"},
+}
 VARIANTS: dict[str, dict[str, str]] = {
     "onnx-fp32": {
         "model": "bioclip-2",
@@ -382,6 +392,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "description": item["description"],
             # The exact bytes measured, so only they can pass the bundle parity gate (#59).
             "artefact_sha256": digest,
+            "runtime": RUNTIME[item["artefact"]],
             "cost": cost,
             "parity": compare(reference, candidate, photos),
         }

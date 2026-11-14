@@ -104,6 +104,7 @@ def test_publishing_is_refused_without_a_passing_parity_record(tmp_path: Path) -
     "override",
     [
         {"artefact_sha256": None},
+        {"runtime": None},
         {"revision": "0" * 40},
         {"thresholds": {"version": 0}},
         {"thresholds": {}},
@@ -127,6 +128,7 @@ def test_the_committed_benchmark_is_refused_until_it_records_artefact_hashes() -
 
 def test_the_manifest_carries_the_preprocessing_the_tower_expects(tmp_path: Path) -> None:
     image = build_manifest(spec(tmp_path))["image_model"]
+    assert image["runtime"] == {"format": "onnx", "precision": "fp16", "input_dtype": "float16"}
     assert image["preprocessing"]["size"] == [224, 224]
     assert image["preprocessing"]["mean"][0] == "0.48145466", "decimal strings, not floats"
     assert "L2" in image["output"]

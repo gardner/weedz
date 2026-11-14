@@ -33,7 +33,7 @@ Version = Annotated[str, StringConstraints(pattern=r"^\d{1,4}\.\d{1,4}\.\d{1,4}$
 INPUT = (
     "Each window (see windows) cut from the photo and letterboxed to a square, then "
     "prepared per preprocessing (open_clip's config; decimals are strings): an RGB "
-    "float32 tensor shaped [batch, 3, height, width]."
+    "tensor of runtime.input_dtype shaped [batch, 3, height, width]."
 )
 OUTPUT = (
     "One embedding per window: L2-normalise it, then take its dot product with every "
@@ -56,9 +56,10 @@ class ParitySource(Spec):
 
 
 class ImageModel(Spec):
+    """The tower file and the parity record that admits it; how it runs (format, precision,
+    input dtype) is read from that record, never declared here."""
+
     path: str
-    format: Token  # e.g. onnx, coreml, tflite
-    precision: Literal["fp32", "fp16", "int8"]
     parity: ParitySource
 
 
@@ -103,11 +104,17 @@ def parity_record(benchmark: Mapping[str, Any], variant: str, model_key: str, sh
         raise ParityRefused(f"{variant} was measured against thresholds version {version}")
     if record["parity"]["passed"] is not True:
         raise ParityRefused(f"{variant} did not pass parity with the reference")
+    _measured_these_bytes(record, variant, sha256)
+    return f"{variant}/thresholds-{version}"
+
+
+def _measured_these_bytes(record: Mapping[str, Any], variant: str, sha256: str) -> None:
     if record.get("artefact_sha256") is None:
         raise ParityRefused(f"{variant} records no artefact SHA-256; re-measure its parity")
     if record["artefact_sha256"] != sha256:
         raise ParityRefused(f"{variant} measured other bytes than the file being published")
-    return f"{variant}/thresholds-{version}"
+    if not isinstance(record.get("runtime"), Mapping):
+        raise ParityRefused(f"{variant} records no runtime (format, precision, input dtype)")
 
 
 def screening_stamp(model_key: str) -> dict[str, Any]:
@@ -152,6 +159,7 @@ def build_manifest(spec: BundleSpec) -> dict[str, Any]:
     source = spec.image_model.parity
     benchmark = json.loads(Path(source.benchmark).read_text())
     parity = parity_record(benchmark, source.variant, spec.model_key, tower["sha256"])
+    runtime = dict(benchmark["variants"][source.variant]["runtime"])
     table, preprocessing = table_parts(Path(spec.text_table), spec.model_key)
     return {
         "schema": SCHEMA,
@@ -168,8 +176,7 @@ def build_manifest(spec: BundleSpec) -> dict[str, Any]:
         "screening": screening_stamp(spec.model_key),
         "image_model": tower
         | {
-            "format": spec.image_model.format,
-            "precision": spec.image_model.precision,
+            "runtime": runtime,
             "model_key": spec.model_key,
             "model_revision": MODELS[spec.model_key]["revision"],
             "parity": parity,

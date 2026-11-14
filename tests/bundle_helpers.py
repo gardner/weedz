@@ -52,6 +52,7 @@ def parity_benchmark(
         "model": model["repo"],
         "revision": model["revision"],
         "artefact_sha256": hashlib.sha256(tower.read_bytes()).hexdigest(),
+        "runtime": {"format": "onnx", "precision": "fp16", "input_dtype": "float16"},
         "parity": {"passed": passed},
     } | override
     path = folder / "parity.json"
@@ -67,8 +68,6 @@ def spec(folder: Path, sequence: int = 1, **override: Any) -> BundleSpec:
         "model_key": "bioclip-2",
         "image_model": {
             "path": str(tower),
-            "format": "onnx",
-            "precision": "fp16",
             "parity": {"benchmark": str(benchmark), "variant": VARIANT},
         },
         "text_table": str(table),
