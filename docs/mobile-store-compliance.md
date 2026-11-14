@@ -36,11 +36,11 @@ Facts that depend on unmerged work are marked **(pending #n)**:
 
 - **#57 / PR #85**: the intake API and report schema version 1.
 - **#61** (merged): exact locations are shared by default, and obscured points
-  never leak. It did **not** add a separate location-consent field. A location is
-  sent only when it is in a report the person approved, after seeing it on the
-  approval screen. They can remove it with "Remove location"
-  ([`docs/mobile.md`](mobile.md)). Explicit location consent is tracked in
-  [#91](https://github.com/gardner/weedz/issues/91).
+  never leak. [#91](https://github.com/gardner/weedz/issues/91) adds explicit
+  `consent.location`, true exactly when a report includes the exact location.
+  The person sees the point and its accuracy on the approval screen before
+  agreeing to send it. "Remove location" also clears that consent
+  ([`docs/mobile.md`](mobile.md)).
 - **#59**: the model bundle format, and what (if anything) the device sends when
   it checks for updates.
 - **[#60](https://github.com/gardner/weedz/issues/60)**: what the project may do
@@ -222,10 +222,10 @@ stores require declarations to be accurate, and ticking both would wrongly
 claim a device ID is collected.
 
 **Consent choices are report content, not product interaction.** Each report
-records the consent wording version, crop consent and the crop's licence (#57).
-In schema v1, the presence of a location records its inclusion; there is no
-separate location-consent field yet
-([#91](https://github.com/gardner/weedz/issues/91)). These are attributes of what the
+records the consent wording version, explicit location and crop consent, and
+the crop's licence (#57, [#91](https://github.com/gardner/weedz/issues/91)).
+`consent.location` must be true exactly when the report includes a location.
+These are attributes of what the
 person chose to publish, like a licence on a post. They go with Other User
 Content (Play: Other user-generated content). They are not Apple's Product
 Interaction or Play's "Other actions", which describe behaviour and usage

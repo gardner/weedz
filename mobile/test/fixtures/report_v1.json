@@ -13,6 +13,7 @@
   "consent": {
     "wording_version": "2026-11",
     "image": true,
+    "location": true,
     "uses": ["review"],
     "licence": "cc-by",
     "credit": "A. Contributor"

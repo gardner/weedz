@@ -259,7 +259,9 @@ def _records_consent(db: sqlite3.Connection) -> bool:
 
 def _record_consent(db: sqlite3.Connection) -> None:
     """Upgrade a store made before consent was recorded (#60). A photo was then sent for
-    review alone, so its report is read as permitting review and nothing more."""
+    review alone, so its report is read as permitting review and nothing more. A location
+    was sent only as part of the report its person approved, so a located report is read
+    as consenting to share that point (#91)."""
     db.execute("BEGIN IMMEDIATE")  # another connection may be upgrading it too
     if _records_consent(db):
         db.rollback()
@@ -270,6 +272,7 @@ def _record_consent(db: sqlite3.Connection) -> None:
         body = json.loads(row["body"])
         consent = body["consent"]
         consent.setdefault("uses", ["review"] if consent.get("image") else [])
+        consent.setdefault("location", body.get("location") is not None)
         agreed = json.dumps({"version": consent["wording_version"], "uses": consent["uses"]})
         db.execute(
             "UPDATE reports SET body=?, consent=? WHERE rowid=?",

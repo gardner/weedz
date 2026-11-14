@@ -20,6 +20,7 @@ def consent(**fields: Any) -> Consent:
     record = {
         "wording_version": "2026-11",
         "image": True,
+        "location": False,
         "uses": ["review"],
         "licence": "cc-by-nc",
     } | fields

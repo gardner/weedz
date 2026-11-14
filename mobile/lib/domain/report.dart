@@ -184,6 +184,7 @@ final class Consent {
   new({
     required this.wordingVersion,
     required this.image,
+    required this.location,
     Set<String> uses = const {},
     this.licence,
     String? credit,
@@ -234,6 +235,9 @@ final class Consent {
   /// Whether a cropped image may be sent.
   final bool image;
 
+  /// Whether the exact camera location may be sent.
+  final bool location;
+
   /// What the photo may be used for: empty exactly when there is no photo.
   final Set<String> uses;
 
@@ -241,12 +245,26 @@ final class Consent {
   final String? licence;
   final String? credit;
 
-  Consent withoutImage() =>
-      Consent(wordingVersion: wordingVersion, image: false, credit: credit);
+  Consent withoutImage() => Consent(
+    wordingVersion: wordingVersion,
+    image: false,
+    location: location,
+    credit: credit,
+  );
+
+  Consent withoutLocation() => Consent(
+    wordingVersion: wordingVersion,
+    image: image,
+    location: false,
+    uses: uses,
+    licence: licence,
+    credit: credit,
+  );
 
   Map<String, Object?> toJson() => {
     'wording_version': wordingVersion,
     'image': image,
+    'location': location,
     'uses': _sortedUses,
     'licence': ?licence,
     'credit': ?credit,
@@ -257,6 +275,7 @@ final class Consent {
       other is Consent &&
       other.wordingVersion == wordingVersion &&
       other.image == image &&
+      other.location == location &&
       _sameUses(other.uses, uses) &&
       other.licence == licence &&
       other.credit == credit;
@@ -265,6 +284,7 @@ final class Consent {
   int get hashCode => Object.hash(
     wordingVersion,
     image,
+    location,
     Object.hashAllUnordered(uses),
     licence,
     credit,
@@ -299,6 +319,12 @@ final class Report {
       'capturedAt',
       captured,
       'Must be no more than one day in the future',
+    );
+    _check(
+      (location != null) == consent.location,
+      'location',
+      location,
+      'A location is sent only with location consent, and consent needs one',
     );
     _check(
       (image != null) == consent.image,
@@ -340,7 +366,7 @@ final class Report {
     candidate: candidate,
     model: model,
     capturedAt: capturedAt,
-    consent: consent,
+    consent: consent.withoutLocation(),
     image: image,
   );
 

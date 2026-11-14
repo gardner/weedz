@@ -112,6 +112,7 @@ def test_reports_stored_before_consent_records_stay_readable(tmp_path: Path) -> 
     store = ReportStore(tmp_path)
     (stored,) = store.active()
     assert stored.report.consent.uses == frozenset({"review"})
+    assert stored.report.consent.location is True
     assert stored.report.consent.wording_version == "consent-2026-11"
     receipt = store.receipt(1, "old")
     assert receipt is not None
