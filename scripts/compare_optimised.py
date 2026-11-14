@@ -330,10 +330,24 @@ def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]
     return {"metadata": screener.metadata, "texts": texts, "pixels": pixels, "folder": folder}
 
 
+def _references_external_data(path: Path) -> bool:
+    """Whether an ONNX graph keeps any tensor in another file, whatever that file is named
+    (the exporter may name it after its temporary output, or after each tensor)."""
+    import onnx
+    from onnx.external_data_helper import uses_external_data
+
+    model = onnx.load(str(path), load_external_data=False)
+    tensors = [*model.graph.initializer]
+    tensors += [a.t for node in model.graph.node for a in node.attribute if a.HasField("t")]
+    return any(uses_external_data(tensor) for tensor in tensors)
+
+
 def artefact_sha256(path: Path) -> str | None:
     """The hash a bundle's parity gate checks (#59), or None for an artefact split across
     files (ONNX external data), which cannot be shipped as one content-addressed file."""
     if any(other != path for other in path.parent.glob(f"{path.name}*")):
+        return None
+    if path.suffix == ".onnx" and _references_external_data(path):
         return None
     return file_sha256(path)
 

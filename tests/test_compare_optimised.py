@@ -189,3 +189,31 @@ def test_every_artefact_records_how_it_runs_so_a_bundle_need_not_be_told() -> No
         "input_dtype": "float16",
     }
     assert script.RUNTIME["int8"]["input_dtype"] == "float32"
+
+
+def test_an_onnx_graph_whose_weights_live_elsewhere_records_no_hash(tmp_path: Path) -> None:
+    """External data written under another name (e.g. the exporter's partial name) is
+    found from the graph's own references, not from file names."""
+    import onnx
+    from onnx import TensorProto, helper, numpy_helper
+
+    weight = numpy_helper.from_array(np.ones((2, 2), dtype=np.float32), "weight")
+    graph = helper.make_graph(
+        [helper.make_node("MatMul", ["pixels", "weight"], ["embedding"])],
+        "tower",
+        [helper.make_tensor_value_info("pixels", TensorProto.FLOAT, [1, 2])],
+        [helper.make_tensor_value_info("embedding", TensorProto.FLOAT, [1, 2])],
+        [weight],
+    )
+    path = tmp_path / "visual.onnx"
+    onnx.save_model(
+        helper.make_model(graph),
+        str(path),
+        save_as_external_data=True,
+        location="visual.partial.onnx.data",
+        size_threshold=0,
+    )
+    assert script.artefact_sha256(path) is None
+    inline = tmp_path / "inline.onnx"
+    onnx.save_model(helper.make_model(graph), str(inline))
+    assert script.artefact_sha256(inline) == hashlib.sha256(inline.read_bytes()).hexdigest()
