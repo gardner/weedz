@@ -27,7 +27,9 @@ def comparison() -> dict[str, Any]:
 
 def test_document_keeps_provenance_and_rounds_per_photo_margins() -> None:
     metadata = {"model": "m", "model_key": "k", "revision": "r", "weights_sha256": "w", "x": 1}
-    found = script.document(comparison(), metadata, {"run": "nelson"}, "2026-11-14")
+    found = script.document(
+        comparison(), metadata, {"run": "nelson"}, "2026-11-14", {"p": "incidental"}
+    )
     assert found["issue"] == "https://github.com/gardner/weedz/issues/12"
     assert found["assessed"] == "2026-11-14"
     assert found["model"] == {key: metadata[key] for key in script.PROVENANCE}
@@ -35,6 +37,7 @@ def test_document_keeps_provenance_and_rounds_per_photo_margins() -> None:
     assert found["inputs"] == {"run": "nelson"}
     assert found["photos"]["p"]["whole_frame"] == {"species": "Ulex europaeus", "margin": 0.012346}
     assert found["photos"]["p"]["tiles"] is None
+    assert found["photos"]["p"]["cohort"] == "incidental"
     assert "not measurable" in found["conclusion"]
 
 

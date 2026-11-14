@@ -672,6 +672,12 @@ This is proposed follow-up work. The only available CLI remains the Leafy Spurge
    independent incidental-plant labels; measure review effort, false alarms,
    missed visible targets, and deduplicated useful discoveries. Do not require
    supervised segmentation before testing the product hypothesis.
+   *Partly done:* the whole-frame versus tile readouts of one BioCLIP 2 screen
+   can be compared at fixed reviewer budgets
+   (`scripts/compare_framing.py`, #12). They meet the same source-labelled
+   references at every budget, but give different incidental queues (3 of the
+   top 5 shared). Independent incidental-plant labels, from blind audits or
+   independently accepted findings, are still needed for a verdict.
 4. **Local retrospective benchmark:** define the weed watchlist and reference
    occurrence records with specialists. Preserve as-of dates and distinguish an
    unlabelled photo, a finding missing from the reference set, earlier available

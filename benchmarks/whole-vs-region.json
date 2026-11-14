@@ -1,0 +1,1336 @@
+{
+  "schema": 1,
+  "assessed": "2026-11-14",
+  "issue": "https://github.com/gardner/weedz/issues/12",
+  "method": "One ranking revision 4 screen per photo (pinned model, CPU), read three ways from the same window similarities: whole frame only, tiles only, and both (what runs use). Each arm ranks photos by best margin; a reviewer budget K is the top K photos. The incidental queue is measured against independent labels (evaluation-eligible reference-collection examples and agreeing blind audits); a pooled queue of incidental, reference and lookalike photos is measured against source subject labels and counts lookalikes reaching the budget as the weed they resemble. Lookalikes are screened without a subject prompt, as in #11; pilot photos with it, as in a run.",
+  "command": "uv run python scripts/compare_framing.py --run nelson-tasman-3e62ad801459 --lookalikes <lookalike dir> --output benchmarks/whole-vs-region.json",
+  "model": {
+    "model": "imageomics/bioclip-2",
+    "model_key": "bioclip-2",
+    "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+    "weights_sha256": "b7b2bf6fbc95799e42630e394cf95803892ab447c1a8ab629dbc82fbeaf7dfef"
+  },
+  "inputs": {
+    "run": "nelson-tasman-3e62ad801459",
+    "pilot_photos": 30,
+    "lookalike_photos": 39
+  },
+  "conclusion": "No independently reviewed background-plant labels exist, so incidental recall and precision are not measurable and this file cannot say whether whole-frame or tile screening finds more useful weeds. The source subject and lookalike measures concern photos whose subject is the plant; they are sanity checks of each arm, not background-plant evidence. Arm overlap shows how much the choice changes what a reviewer would see.",
+  "meaning": "Three readouts of the same window embeddings, each ranking photos by best target margin. At each budget K a reviewer sees the top K photos. 'found' counts labelled-present (photo, species) pairs reached with that species as the suggestion; 'known_false_alarms' counts suggestions on labelled-absent pairs; precision is over labelled items only, so unlabelled photos are counted apart, not as false alarms. None means not measurable (no labels), not zero. Independent labels are reference-collection examples eligible for evaluation and agreeing blind audits, measured on the incidental review queue. Source subject labels are reference photos whose subject is the weed, measured on a pooled queue with lookalike photos; they describe the subject, not background plants, and a lookalike is not a verified absence.",
+  "budgets": [
+    5,
+    10,
+    20
+  ],
+  "labels": {
+    "independent": 0,
+    "source_subject": 6,
+    "lookalike_photos": 39
+  },
+  "arms": {
+    "whole_frame": {
+      "meaning": "Only the letterboxed whole frame may rank a species",
+      "windows_per_photo": 1.0,
+      "incidental": {
+        "queued": 24,
+        "budgets": [
+          {
+            "budget": 5,
+            "reviewed": 5,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 5
+          },
+          {
+            "budget": 10,
+            "reviewed": 10,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 10
+          },
+          {
+            "budget": 20,
+            "reviewed": 20,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 20
+          }
+        ]
+      },
+      "pooled": {
+        "queued": 69,
+        "budgets": [
+          {
+            "budget": 5,
+            "reviewed": 5,
+            "labelled_present": 6,
+            "found": 5,
+            "recall": 0.8333333333333334,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 0,
+            "lookalikes_reached": 0
+          },
+          {
+            "budget": 10,
+            "reviewed": 10,
+            "labelled_present": 6,
+            "found": 6,
+            "recall": 1.0,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 4,
+            "lookalikes_reached": 3
+          },
+          {
+            "budget": 20,
+            "reviewed": 20,
+            "labelled_present": 6,
+            "found": 6,
+            "recall": 1.0,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 14,
+            "lookalikes_reached": 12
+          }
+        ]
+      }
+    },
+    "tiles": {
+      "meaning": "Only square tiles may rank a species; featureless tiles cannot",
+      "windows_per_photo": 6.0,
+      "incidental": {
+        "queued": 24,
+        "budgets": [
+          {
+            "budget": 5,
+            "reviewed": 5,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 5
+          },
+          {
+            "budget": 10,
+            "reviewed": 10,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 10
+          },
+          {
+            "budget": 20,
+            "reviewed": 20,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 20
+          }
+        ]
+      },
+      "pooled": {
+        "queued": 69,
+        "budgets": [
+          {
+            "budget": 5,
+            "reviewed": 5,
+            "labelled_present": 6,
+            "found": 5,
+            "recall": 0.8333333333333334,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 0,
+            "lookalikes_reached": 0
+          },
+          {
+            "budget": 10,
+            "reviewed": 10,
+            "labelled_present": 6,
+            "found": 6,
+            "recall": 1.0,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 4,
+            "lookalikes_reached": 3
+          },
+          {
+            "budget": 20,
+            "reviewed": 20,
+            "labelled_present": 6,
+            "found": 6,
+            "recall": 1.0,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 14,
+            "lookalikes_reached": 9
+          }
+        ]
+      }
+    },
+    "frame_and_tiles": {
+      "meaning": "The whole frame or any non-featureless tile (ranking revision 4)",
+      "windows_per_photo": 7.0,
+      "incidental": {
+        "queued": 24,
+        "budgets": [
+          {
+            "budget": 5,
+            "reviewed": 5,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 5
+          },
+          {
+            "budget": 10,
+            "reviewed": 10,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 10
+          },
+          {
+            "budget": 20,
+            "reviewed": 20,
+            "labelled_present": 0,
+            "found": 0,
+            "recall": null,
+            "known_false_alarms": 0,
+            "precision": null,
+            "unlabelled": 20
+          }
+        ]
+      },
+      "pooled": {
+        "queued": 69,
+        "budgets": [
+          {
+            "budget": 5,
+            "reviewed": 5,
+            "labelled_present": 6,
+            "found": 5,
+            "recall": 0.8333333333333334,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 0,
+            "lookalikes_reached": 0
+          },
+          {
+            "budget": 10,
+            "reviewed": 10,
+            "labelled_present": 6,
+            "found": 6,
+            "recall": 1.0,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 4,
+            "lookalikes_reached": 3
+          },
+          {
+            "budget": 20,
+            "reviewed": 20,
+            "labelled_present": 6,
+            "found": 6,
+            "recall": 1.0,
+            "known_false_alarms": 0,
+            "precision": 1.0,
+            "unlabelled": 14,
+            "lookalikes_reached": 9
+          }
+        ]
+      }
+    }
+  },
+  "overlap": {
+    "incidental": {
+      "whole_frame|tiles": [
+        3,
+        5,
+        17
+      ],
+      "whole_frame|frame_and_tiles": [
+        3,
+        5,
+        17
+      ],
+      "tiles|frame_and_tiles": [
+        5,
+        10,
+        20
+      ]
+    },
+    "pooled": {
+      "whole_frame|tiles": [
+        4,
+        8,
+        14
+      ],
+      "whole_frame|frame_and_tiles": [
+        4,
+        8,
+        14
+      ],
+      "tiles|frame_and_tiles": [
+        5,
+        10,
+        20
+      ]
+    }
+  },
+  "photos": {
+    "inat-250240131-447484684": {
+      "cohort": "reference",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": 0.038943
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": 0.06836
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": 0.06836
+      }
+    },
+    "inat-252250408-451525789": {
+      "cohort": "reference",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": 0.082073
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": 0.096704
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": 0.096704
+      }
+    },
+    "inat-254338658-455546899": {
+      "cohort": "reference",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": 0.065766
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.077093
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.077093
+      }
+    },
+    "inat-256674952-460262550": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.234728
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.214235
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.214235
+      }
+    },
+    "inat-256675033-460262714": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.272277
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.110147
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.110147
+      }
+    },
+    "inat-256675146-460262865": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.211792
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.134784
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.134784
+      }
+    },
+    "inat-256675287-460263038": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.230976
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.068948
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.068948
+      }
+    },
+    "inat-256682298-460279738": {
+      "cohort": "reference",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": 0.030392
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.082204
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.082204
+      }
+    },
+    "inat-256691045-460294362": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.133009
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.013715
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.013715
+      }
+    },
+    "inat-256716592-460347209": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.06915
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.011172
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.011172
+      }
+    },
+    "inat-256727061-460368453": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.217815
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.043522
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.043522
+      }
+    },
+    "inat-256808221-460529900": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.204615
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.052338
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.052338
+      }
+    },
+    "inat-256862582-460640098": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.237364
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.112328
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.112328
+      }
+    },
+    "inat-256863810-460643105": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.154883
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.068906
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.068906
+      }
+    },
+    "inat-256864013-460643540": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.150938
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": 0.00935
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": 0.00935
+      }
+    },
+    "inat-256864136-460643767": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.147878
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.094341
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.094341
+      }
+    },
+    "inat-256864189-460643855": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.187685
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.041927
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.041927
+      }
+    },
+    "inat-256912633-460740779": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.203361
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.163885
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.163885
+      }
+    },
+    "inat-256913086-460741828": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.114787
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.078611
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.078611
+      }
+    },
+    "inat-256918601-460754616": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.210656
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.160653
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.160653
+      }
+    },
+    "inat-257459474-461857745": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.135897
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.108329
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.108329
+      }
+    },
+    "inat-257459539-461857914": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.168447
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.072438
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.072438
+      }
+    },
+    "inat-257459949-461859480": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.140887
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.106953
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.106953
+      }
+    },
+    "inat-257460208-461859096": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.142527
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.128292
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.128292
+      }
+    },
+    "inat-257734181-462389676": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.197395
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.114941
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.114941
+      }
+    },
+    "inat-259114109-465059628": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.208887
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.025626
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.025626
+      }
+    },
+    "inat-309664282-558823763": {
+      "cohort": "reference",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": 0.042111
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.051111
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.051111
+      }
+    },
+    "inat-331872487-602149309": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.213734
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.166214
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.166214
+      }
+    },
+    "inat-331889702-602185404": {
+      "cohort": "incidental",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.139419
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.029053
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.029053
+      }
+    },
+    "inat-82387196-135212551": {
+      "cohort": "reference",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": 0.035946
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.056552
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.056552
+      }
+    },
+    "inat-248320706-443668409": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.046039
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.071827
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.046039
+      }
+    },
+    "inat-244250279-435671170": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.105796
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.107059
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.105796
+      }
+    },
+    "inat-187198926-327322243": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.048353
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.041033
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.041033
+      }
+    },
+    "inat-253709796-454331441": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.072129
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.049315
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.049315
+      }
+    },
+    "inat-249962607-446938032": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.0597
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.003811
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.003811
+      }
+    },
+    "inat-246862510-440788335": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.0449
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.016372
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.016372
+      }
+    },
+    "inat-190982193-334923591": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.023802
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.01977
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.01977
+      }
+    },
+    "inat-139730851-239052175": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.01253
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.011428
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.011428
+      }
+    },
+    "inat-65630163-105666373": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.010566
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.006514
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.006514
+      }
+    },
+    "inat-250532538-448091474": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.040164
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.042255
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.040164
+      }
+    },
+    "inat-247277103-441611371": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.060227
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.03366
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.03366
+      }
+    },
+    "inat-244396298-435933238": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.04791
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.007099
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.007099
+      }
+    },
+    "inat-247709964-442472472": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.107416
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.091865
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.091865
+      }
+    },
+    "inat-231527693-411225849": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.067012
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.064472
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.064472
+      }
+    },
+    "inat-187198392-327321075": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.126388
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.06999
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.06999
+      }
+    },
+    "inat-245883435-438847987": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.095784
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.009605
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.009605
+      }
+    },
+    "inat-231528008-411227230": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.065621
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.007633
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": 0.007633
+      }
+    },
+    "inat-219959153-389384222": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.078892
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.010472
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.010472
+      }
+    },
+    "inat-257222053-461380516": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.021798
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.004051
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.004051
+      }
+    },
+    "inat-253256847-453432683": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.080534
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.005616
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.005616
+      }
+    },
+    "inat-253259673-453438358": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.084098
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.07429
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.07429
+      }
+    },
+    "inat-255478831-457833773": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.079649
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.051795
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.051795
+      }
+    },
+    "inat-254430343-455732460": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.048477
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.028258
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.028258
+      }
+    },
+    "inat-253139746-453206441": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.03966
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.016844
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.016844
+      }
+    },
+    "inat-248036730-443111749": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.008037
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.020779
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.020779
+      }
+    },
+    "inat-258015805-462855390": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Clematis vitalba",
+        "margin": -0.02958
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.007767
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": -0.007767
+      }
+    },
+    "inat-139507599-238625461": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": 0.007788
+      },
+      "tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.024572
+      },
+      "frame_and_tiles": {
+        "species": "Clematis vitalba",
+        "margin": 0.024572
+      }
+    },
+    "inat-251631880-450279483": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.006285
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.010767
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.006285
+      }
+    },
+    "inat-232209542-412517171": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.05956
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.014388
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.014388
+      }
+    },
+    "inat-215417496-380839808": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.051804
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.021194
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.021194
+      }
+    },
+    "inat-256812550-460538839": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.06349
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.047758
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.047758
+      }
+    },
+    "inat-256683175-460279007": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.06355
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.055696
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.055696
+      }
+    },
+    "inat-250980692-448986021": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.056836
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.052788
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.052788
+      }
+    },
+    "inat-258310146-463181089": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.139997
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.012029
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.012029
+      }
+    },
+    "inat-258085684-462989623": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.14597
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.123691
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.123691
+      }
+    },
+    "inat-257323086-461587499": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Cortaderia selloana",
+        "margin": -0.166594
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.093691
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.093691
+      }
+    },
+    "inat-217640521-385046946": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.094745
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.069877
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.069877
+      }
+    },
+    "inat-205725677-363790579": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.062263
+      },
+      "tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.051605
+      },
+      "frame_and_tiles": {
+        "species": "Cortaderia selloana",
+        "margin": -0.051605
+      }
+    },
+    "inat-197951451-348781078": {
+      "cohort": "lookalike",
+      "whole_frame": {
+        "species": "Ulex europaeus",
+        "margin": -0.102344
+      },
+      "tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.058892
+      },
+      "frame_and_tiles": {
+        "species": "Ulex europaeus",
+        "margin": -0.058892
+      }
+    }
+  }
+}

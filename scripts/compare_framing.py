@@ -60,11 +60,15 @@ def _rounded(found: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def document(
-    comparison: dict[str, Any], metadata: dict[str, Any], inputs: dict[str, Any], assessed: str
+    comparison: dict[str, Any],
+    metadata: dict[str, Any],
+    inputs: dict[str, Any],
+    assessed: str,
+    cohorts: dict[str, str],
 ) -> dict[str, Any]:
-    """The benchmark file exactly as committed."""
+    """The benchmark file exactly as committed; each photo with its cohort and arms."""
     photos = {
-        pid: {arm: _rounded(found) for arm, found in arms.items()}
+        pid: {"cohort": cohorts.get(pid)} | {arm: _rounded(found) for arm, found in arms.items()}
         for pid, arms in comparison["photos"].items()
     }
     return {
@@ -115,9 +119,11 @@ def screen_all(args: argparse.Namespace) -> dict[str, Any]:
         store.latest_audits(args.run),
         audit_sample(args.run, pilot),
     )
-    comparison = compare(results, [*pilot, *looks], labels, BUDGETS)
+    photos = [*pilot, *looks]
+    comparison = compare(results, photos, labels, BUDGETS)
     inputs = {"run": args.run, "pilot_photos": len(pilot), "lookalike_photos": len(looks)}
-    return document(comparison, screener.metadata, inputs, date.today().isoformat())
+    cohorts = {photo["id"]: photo["cohort"] for photo in photos}
+    return document(comparison, screener.metadata, inputs, date.today().isoformat(), cohorts)
 
 
 def main(argv: list[str] | None = None) -> None:
