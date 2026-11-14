@@ -154,6 +154,8 @@ try {
   assert.match(await rows.nth(0).textContent(), /Needs specialist/);
   assert.doesNotMatch(await rows.nth(1).textContent(), /Needs specialist/);
 
+  // It ignores the review-status filter: referred photos have usually been reviewed.
+  await page.getByLabel("Filter review status").selectOption("unreviewed");
   // The Needs specialist view lists open referrals, and still holds unaudited photos.
   await page.getByRole("button", { name: "Needs specialist", exact: true }).click();
   await page.getByText("Open referrals, longest waiting first · 1 held for blind audit").waitFor();
@@ -253,6 +255,7 @@ try {
 
   // A closed referral keeps its history and offers no further action.
   await page.getByRole("button", { name: "Incidental photos" }).click();
+  await page.getByLabel("Filter review status").selectOption("all");
   await rows.filter({ hasText: "Blackbird answered" }).click();
   const closed = page.getByRole("region", { name: "Specialist referrals" }).locator(".referral");
   await closed.getByText(/Answered by Dr Wiri.*rephotograph in flower/).waitFor();

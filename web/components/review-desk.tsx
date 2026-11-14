@@ -339,7 +339,7 @@ export default function ReviewDesk() {
                   <option>Nelson</option>
                   <option>Tasman</option>
                 </select>
-                {!auditing && (
+                {!auditing && !specialist && (
                   <select
                     aria-label="Filter review status"
                     value={review}

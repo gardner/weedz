@@ -251,9 +251,9 @@ intended for local development, not shared public hosting.
    other citations are refused (409).
 
    The **Needs specialist** queue view lists photos with open referrals, from
-   every cohort, longest waiting first. It still holds back audit-sample photos
-   you haven't audited, and the blind audit list never shows referrals. Photo
-   rows elsewhere show "Needs specialist".
+   every cohort and any review status, longest waiting first. It still holds
+   back audit-sample photos you haven't audited, and the blind audit list never
+   shows referrals. Photo rows elsewhere show "Needs specialist".
 
    Each photo in the run detail and export carries its `referrals`, each with a
    `status` and its `events`. The export's `review_history` holds the same

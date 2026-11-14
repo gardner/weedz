@@ -24,8 +24,8 @@ export const heldForAudit = (photo: Photo, reviewer: string) =>
 
 /**
  * Photos listed in a view. The audit list uses a neutral order that hides screening rank.
- * Open referrals list longest waiting first, from every cohort, still holding back any
- * sampled photo this reviewer has not audited.
+ * Open referrals list longest waiting first, from every cohort and any review status,
+ * still holding back any sampled photo this reviewer has not audited.
  */
 export function queuePhotos(
   photos: Photo[],
@@ -50,7 +50,8 @@ export function queuePhotos(
         inView(photo) &&
         !heldForAudit(photo, reviewer) &&
         inRegion(photo) &&
-        (review === "all" || photo.review_status === review),
+        // Referred photos have usually been reviewed already, so status never hides one.
+        (view === "specialist" || review === "all" || photo.review_status === review),
     )
     .sort(order);
 }
