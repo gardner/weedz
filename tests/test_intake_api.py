@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from intake_helpers import jpeg, new_id, report, with_image
 from PIL import Image, PngImagePlugin
 
+from weedz import tokens
 from weedz.discovery.access import Access
 from weedz.intake.api import create_intake_app
 from weedz.intake.limits import Limits
@@ -200,8 +201,13 @@ def test_one_submitter_cannot_read_or_withdraw_anothers_report(
 
 
 def test_tokens_are_never_logged_or_echoed(
-    tmp_path: Path, client: TestClient, caplog: pytest.LogCaptureFixture
+    tmp_path: Path,
+    client: TestClient,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # URL-safe secrets can contain underscores, including a one-character suffix.
+    monkeypatch.setattr(tokens, "new_secret", lambda: "fixed_test_secret_with_underscores_e")
     submitters = Submitters(tmp_path)
     credential = submitters.issue("Phone")
     revoked = submitters.issue("Old")
@@ -215,11 +221,11 @@ def test_tokens_are_never_logged_or_echoed(
         bodies += [client.get(path, headers=headers).text]
         bodies += [client.delete(path, headers=headers).text]
     for token in (credential.token, revoked.token):
-        secret = token.rsplit("_", 1)[-1]
+        secret = token.split("_", 2)[2]
         assert secret not in caplog.text
         assert all(secret not in body for body in bodies)
         assert secret not in repr(credential)
-    assert secret not in json.dumps(submitters.listing())
+        assert secret not in json.dumps(submitters.listing())
 
 
 def test_each_submitter_has_a_daily_budget_that_withdrawal_does_not_reset(tmp_path: Path) -> None:
