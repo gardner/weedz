@@ -225,6 +225,12 @@ found ─► pending ──approve──► approved ──send──► sending
   - the exact location, on a map with its accuracy circle, and as coordinates
     in numbers;
   - the consent wording and the licence they choose for the crop.
+
+- **Explicit location consent.** The version-1 report records
+  `consent.location`, true exactly when it includes the exact point and its
+  accuracy. The approval screen must show that point and accuracy before the
+  person agrees to send it. Removing the location clears this consent
+  independently of image consent (#91).
 - **The person can remove details before approving.** "Remove location" and
   "Don't send the photo" both change the report, so it needs approving again.
   An approved report cannot change silently. Any edit returns it to pending,
@@ -360,12 +366,6 @@ feature that needs it is built.
   shown but left out of the report. Should the person be able to state an
   accuracy or place the point, or confirm a time zone, on the approval screen
   (#54, #56)?
-- **Explicit location consent** ([#91](https://github.com/gardner/weedz/issues/91)).
-  The report is to gain `consent.location`, true exactly when a location is
-  sent, mirroring `consent.image`. When the server accepts it, the Dart
-  `Consent` gains the same field, and `withoutLocation()` sets it to false.
-  Until then the app keeps to the current version-1 schema, which refuses
-  unknown fields.
 - **Contributor-chosen protection** (a follow-up from #61). Should a person be
   able to mark one report as obscured on the phone, for example a photo taken
   at home? It would be opt-in per report, not a default.
