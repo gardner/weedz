@@ -42,12 +42,15 @@ export type Photo = {
   };
 };
 
+/** Audit counts only; per-photo findings are in the export, so the audit view stays blind. */
 export type AuditSummary = {
   sampled: number;
   audited: number;
   remaining: number;
   weed_found: number;
-  missed_by_screening: number;
+  found_as_top_suggestion: number;
+  found_not_top_suggestion: number;
+  disputed: number;
 };
 
 export type RunDetail = {

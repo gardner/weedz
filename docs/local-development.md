@@ -98,9 +98,20 @@ intended for local development, not shared public hosting.
    a fixed random quarter of incidental photos, chosen from run and photo ids so
    screening rank plays no part. It hides the suggestion, search window and
    scores, and asks "Is any watchlist weed visible?". Audits are stored apart
-   from suggestion reviews. The run detail and export count audited photos and
-   split any weed found into flagged or missed by screening. With a small sample
-   this bounds, rather than estimates, the miss rate. The
+   from suggestion reviews, and each auditor's latest finding is kept. A photo
+   counts as a found weed if any auditor's latest finding names a species, and
+   photos where auditors' findings differ are counted as disputed. Until it is
+   audited, a sampled photo is held out of the ranked Incidental queue, and
+   each view keeps its own open photo, so nobody sees its suggestion first.
+   This is a workflow guard on a local, unauthenticated stack, not access
+   control: anyone with the API can still read the scores. The run detail gives
+   audit counts and an audited flag per photo; only the export lists findings.
+   There is no calibrated detection threshold yet, so neither gives a hit or
+   miss verdict. For each found weed the export reports the photo's 1-based
+   rank in the incidental queue (by margin, highest first) out of all incidental
+   photos, and whether the found species was the top suggestion shown. With a
+   small sample this bounds, rather than estimates, how often weeds are ranked
+   low. The
    API export includes current decisions, while the completion manifest records
    the state at screening completion.
 

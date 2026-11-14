@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { useReviewTimer } from "../lib/review-timer";
 import {
   type AuditSummary,
@@ -28,8 +29,11 @@ export default function ReviewDesk() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
   const [auditSummary, setAuditSummary] = useState<AuditSummary>();
-  const [activeId, setActiveId] = useState("");
-  const [cohort, setCohort] = useState("incidental");
+  // Each view remembers its own open photo, so one opened in a view never carries into
+  // another (an audit photo must not open in the ranked queue) yet a glance at the
+  // references returns to the same incidental photo.
+  const [activeIds, setActiveIds] = useState<Partial<Record<View, string>>>({});
+  const [cohort, setCohort] = useState<View>("incidental");
   const [region, setRegion] = useState("all");
   const [review, setReview] = useState("all");
   const [error, setError] = useState("");
@@ -96,21 +100,11 @@ export default function ReviewDesk() {
   }, [refresh]);
 
   const auditing = cohort === "audit";
-  const filtered = photos
-    .filter((photo) =>
-      auditing
-        ? photo.audit_sample && (region === "all" || photo.region === region)
-        : photo.cohort === cohort &&
-          (region === "all" || photo.region === region) &&
-          (review === "all" || photo.review_status === review),
-    )
-    // The audit list must not hint at screening rank, so it uses a neutral order.
-    .sort((a, b) =>
-      auditing ? a.id.localeCompare(b.id) : (b.scores.margin ?? -2) - (a.scores.margin ?? -2),
-    );
-  const active = filtered.find((photo) => photo.id === activeId) ?? filtered[0];
+  const filtered = queuePhotos(photos, cohort, region, review);
+  const active = filtered.find((photo) => photo.id === activeIds[cohort]) ?? filtered[0];
   const incidental = photos.filter((photo) => photo.cohort === "incidental");
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
+  const held = incidental.filter(heldForAudit).length;
 
   const effort = useReviewTimer(`${runId}:${auditing ? "audit:" : ""}${active?.id ?? ""}`);
 
@@ -118,7 +112,7 @@ export default function ReviewDesk() {
     setPhotos([]);
     setEffortSummary(undefined);
     setAuditSummary(undefined);
-    setActiveId("");
+    setActiveIds({});
     setRunId(id);
   }
 
@@ -331,27 +325,20 @@ export default function ReviewDesk() {
                 <p>
                   {auditing
                     ? "Fixed random sample · screening rank hidden"
-                    : "Highest relative similarity first"}
+                    : `Highest relative similarity first${held ? ` · ${held} held for blind audit` : ""}`}
                 </p>
               </div>
               <div className="cohort-tabs">
-                <button
-                  type="button"
-                  aria-pressed={cohort === "incidental"}
-                  onClick={() => setCohort("incidental")}
-                >
-                  Incidental photos
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={cohort === "reference"}
-                  onClick={() => setCohort("reference")}
-                >
-                  References
-                </button>
-                <button type="button" aria-pressed={auditing} onClick={() => setCohort("audit")}>
-                  Audit sample
-                </button>
+                {VIEWS.map(([view, label]) => (
+                  <button
+                    type="button"
+                    key={view}
+                    aria-pressed={cohort === view}
+                    onClick={() => setCohort(view)}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
               <div className="queue-filters">
                 <select
@@ -384,7 +371,7 @@ export default function ReviewDesk() {
                     key={photo.id}
                     className={`photo-row ${active?.id === photo.id ? "selected" : ""}`}
                     onClick={() => {
-                      setActiveId(photo.id);
+                      setActiveIds((ids) => ({ ...ids, [cohort]: photo.id }));
                       setNotice("");
                     }}
                     aria-pressed={active?.id === photo.id}

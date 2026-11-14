@@ -17,7 +17,8 @@ try {
     created_at: "2024-12-31",
     spec: { before: "2024-12-31", limit_per_region: 2, controls_per_species: 0 },
   };
-  const photo = (id, sampled) => ({
+  let audited = false;
+  const photo = (id, sampled, margin) => ({
     id,
     region: "Nelson",
     cohort: "incidental",
@@ -30,10 +31,10 @@ try {
     disputed: false,
     review_count: 0,
     audit_sample: sampled,
-    audited: false,
+    audited: sampled && audited,
     scores: {
       best_species: "Cortaderia selloana",
-      margin: 0.04,
+      margin,
       box: [0, 0, 10, 10],
       width: 20,
       height: 20,
@@ -45,7 +46,15 @@ try {
     coordinate_status: "missing",
     attribution: "Test fixture",
   });
-  const audit = { sampled: 1, audited: 0, remaining: 1, weed_found: 0, missed_by_screening: 0 };
+  const summary = () => ({
+    sampled: 1,
+    audited: Number(audited),
+    remaining: Number(!audited),
+    weed_found: Number(audited),
+    found_as_top_suggestion: 0,
+    found_not_top_suggestion: Number(audited),
+    disputed: 0,
+  });
   const posted = [];
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -54,16 +63,26 @@ try {
     if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     if (path.endsWith("/audit")) {
       posted.push(route.request().postDataJSON());
+      audited = true;
       return route.fulfill({ json: { saved: true } });
     }
-    const photos = [photo("sampled", true), photo("other", false)];
-    await route.fulfill({ json: { run, photos, audit } });
+    const photos = [photo("sampled", true, 0.04), photo("other", false, 0.5)];
+    await route.fulfill({ json: { run, photos, audit: summary() } });
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
-  await page.getByRole("button", { name: "Audit sample" }).click();
 
+  // Until it is audited, a sampled photo stays out of the ranked queue, so nobody sees
+  // its suggestion before answering blind.
   const rows = page.locator(".photo-row");
+  const incidentalTab = page.getByRole("button", { name: "Incidental photos" });
+  await page.getByText("Bird other").first().waitFor();
+  assert.equal(await rows.count(), 1, "unaudited sampled photo is held out of the queue");
+  assert.ok(!(await page.locator(".photo-list").textContent()).includes("Bird sampled"));
+  await rows.first().click();
+
+  await page.getByRole("button", { name: "Audit sample" }).click();
   await page.getByText("Is any watchlist weed visible?").waitFor();
+  await rows.first().click();
   assert.equal(await rows.count(), 1, "only sampled photos are listed");
   // Watchlist names appear as answers; the photo's own suggestion and scores must not.
   assert.ok(!(await rows.first().textContent()).includes("Pampas grass"), "row hides suggestion");
@@ -89,7 +108,15 @@ try {
   assert.equal(posted[0].finding, "Ulex europaeus");
   assert.equal(posted[0].reviewer, "Ana");
   assert.equal(typeof posted[0].effort_seconds, "number");
-  console.log("The audit view hides screening output and records a blind finding.");
+  await page.getByText("1 of 1 sampled photos audited").waitFor();
+
+  // Once audited, it rejoins the ranked queue, and the audit selection is not carried over.
+  await incidentalTab.click();
+  await page.locator(".photo-list").getByText("Bird sampled").waitFor();
+  assert.equal(await rows.count(), 2, "audited photo rejoins the queue");
+  const selected = await page.locator(".photo-row.selected").textContent();
+  assert.ok(selected.includes("Bird other"), "switching views resets the open photo");
+  console.log("The audit view stays blind until audited and records a blind finding.");
 } finally {
   await browser.close();
 }
