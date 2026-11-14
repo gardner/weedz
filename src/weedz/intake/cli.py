@@ -37,14 +37,21 @@ def revoke(args: argparse.Namespace) -> None:
 
 def withdraw(args: argparse.Namespace) -> None:
     """For a person whose device token was lost or revoked, at their request."""
-    from weedz.intake.store import ReportStore
+    from weedz.intake.store import ReportStore, Withdrawn
 
     store, report_id = ReportStore(args.intake_dir), str(args.report)
     if args.not_yet_received:
         known = {row["id"] for row in Submitters(args.intake_dir).listing()}
         if args.submitter not in known:
             raise SystemExit(f"No submitter with id {args.submitter}")
-    if store.withdraw(args.submitter, report_id, args.not_yet_received) is None:
+    try:
+        receipt = store.withdraw(args.submitter, report_id, args.not_yet_received)
+    except Withdrawn as error:
+        raise SystemExit(
+            f"Submitter {args.submitter} has already requested deletion of all reports; "
+            "use intake delete-submitter to confirm or resume it."
+        ) from error
+    if receipt is None:
         raise SystemExit(
             f"No report {report_id} from submitter {args.submitter}. Check both ids; if the "
             "report may still be on its way, add --not-yet-received to refuse it on arrival."

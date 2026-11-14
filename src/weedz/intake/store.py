@@ -155,6 +155,8 @@ class ReportStore:
         still on its way is refused when it arrives. Both the device API and the operator
         can record this intent before an upload arrives."""
         with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
             row = _row(db, submitter, report_id)
             if row is None and before_arrival:
                 # Device-created tombstones cost a new record; trusted operators may

@@ -247,3 +247,36 @@ def test_deletion_marker_waits_for_specialist_read_materialization(
         assert len(reading.result()) == 1
         assert erasing.result().status == "deleted"
     assert not ReportStore(tmp_path).active()
+
+
+def test_late_withdrawal_cannot_create_state_after_bulk_erasure(tmp_path: Path) -> None:
+    credential = Submitters(tmp_path).issue("phone")
+    Deletions(tmp_path).delete(credential.id)
+    # Represents an independently authenticated DELETE resumed after bulk completion.
+    with pytest.raises(Withdrawn):
+        ReportStore(tmp_path).withdraw(
+            credential.id, new_id(), before_arrival=True, limits=Limits()
+        )
+    with sqlite3.connect(tmp_path / "reports/reports.sqlite3") as db:
+        assert db.execute("SELECT COUNT(*) FROM reports").fetchone() == (0,)
+        assert db.execute("SELECT COUNT(*) FROM usage").fetchone() == (0,)
+
+
+def test_operator_withdrawal_reports_an_existing_bulk_deletion(tmp_path: Path) -> None:
+    from weedz.intake.cli import main
+
+    credential = Submitters(tmp_path).issue("phone")
+    Deletions(tmp_path).delete(credential.id)
+    with pytest.raises(SystemExit, match="already requested deletion"):
+        main(
+            [
+                "withdraw",
+                "--submitter",
+                str(credential.id),
+                "--report",
+                new_id(),
+                "--not-yet-received",
+                "--intake-dir",
+                str(tmp_path),
+            ]
+        )
