@@ -289,10 +289,10 @@ JSON over HTTPS, and nothing about it is Flutter-specific.
 
 - **Receipt:** `GET /reports/{id}`. **Withdraw:** `DELETE /reports/{id}`.
   A report counts as withdrawn only after a `DELETE` receipt or a 410. The
-  server answers a `DELETE` for an id it has not received yet with 404 and
-  keeps no record. So for a report that is `sending` or `unanswered`, the app
-  repeats the `DELETE` after the `PUT` has settled, instead of trusting the
-  404.
+  server records a withdrawal even when it has not received the id yet.
+  A late `PUT` then gets 410, even after a server restart. Withdrawal intent
+  belongs to the authenticated submitter; it cannot affect another device
+  using the same id. A network error still requires retrying `DELETE`.
 - **Token storage:** the submitter token lives in
   [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage)
   (the iOS Keychain, with *after first unlock, this device only* so background

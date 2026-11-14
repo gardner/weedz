@@ -147,7 +147,7 @@ final class ReportCase {
   ReportCase received() =>
       _move({ApprovalStatus.sending}, ApprovalStatus.received, 'receive');
 
-  /// Confirmed withdrawn: a receipt from `DELETE`, or a 410. A 404 is not
+  /// Confirmed withdrawn: a receipt from `DELETE`, or a 410. A 404 from an older server is not
   /// confirmation while a `PUT` may still be in flight, since the server
   /// stores a late `PUT`. Keep the case and repeat the `DELETE` once the
   /// `PUT` has settled.
