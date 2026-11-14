@@ -76,9 +76,11 @@ def test_area_measurement_needs_known_ground_geometry() -> None:
 def test_predictions_rejected_and_unknown_labels_are_not_supervision() -> None:
     prediction = annotation(origin="model", model="bioclip-2", score=0.3)
     rejected = annotation(review="rejected")
+    # Uncertain, including reviewers disagreeing, is not usable supervision either.
+    uncertain = annotation(review="uncertain")
     unknown = annotation(label="unknown")
     ignored = annotation(label="ignored")
-    for evidence in (prediction, rejected, unknown, ignored):
+    for evidence in (prediction, rejected, uncertain, unknown, ignored):
         with pytest.raises(ValidationError, match="image_classification needs image_class"):
             Sample.model_validate(sample(annotations=[evidence]))
 

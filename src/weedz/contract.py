@@ -144,11 +144,12 @@ class Annotation(Contract):
 
     def supervises(self) -> bool:
         """Evidence a task can rely on: a present or absent label, not a prediction, and not
-        rejected on review. Unknown and ignored labels give a task no target."""
+        rejected or left uncertain (including disputed) on review. Unknown and ignored labels
+        give a task no target."""
         return (
             self.label in {"present", "absent"}
             and self.origin != "model"
-            and self.review != "rejected"
+            and self.review not in {"rejected", "uncertain"}
         )
 
 
