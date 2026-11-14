@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { type Photo, type ReviewEvent, request, statusLabels } from "../lib/types";
 
+/** Stored times are UTC; show them in the reviewer's own time zone and locale. */
+const decidedAt = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+
 /** Attributed decision history for one photo. The parent remounts it after each decision. */
 export default function ReviewHistory({ runId, photo }: { runId: string; photo: Photo }) {
   const [events, setEvents] = useState<ReviewEvent[]>([]);
@@ -32,9 +35,7 @@ export default function ReviewHistory({ runId, photo }: { runId: string; photo: 
           <li key={event.id}>
             <strong>{event.reviewer || "Reviewer not recorded"}</strong>{" "}
             <span>{statusLabels[event.status] ?? event.status}</span>{" "}
-            <time dateTime={event.created_at}>
-              {event.created_at.slice(0, 16).replace("T", " ")}
-            </time>
+            <time dateTime={event.created_at}>{decidedAt.format(new Date(event.created_at))}</time>
             {event.note && <p>{event.note}</p>}
           </li>
         ))}

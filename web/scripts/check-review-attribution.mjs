@@ -9,7 +9,7 @@ const browser = await chromium.launch({
     : {}),
 });
 try {
-  const page = await browser.newPage();
+  const page = await browser.newPage({ timezoneId: "Pacific/Auckland", locale: "en-NZ" });
   const run = {
     id: "run",
     status: "completed",
@@ -40,15 +40,21 @@ try {
       reviewer: "",
       status: "uncertain",
       note: "Before attribution",
-      created_at: "2026-11-12",
+      created_at: "2026-11-12T01:00:00+00:00",
     },
-    { id: 2, reviewer: "Ana", status: "confirmed", note: "Seed heads", created_at: "2026-11-13" },
+    {
+      id: 2,
+      reviewer: "Ana",
+      status: "confirmed",
+      note: "Seed heads",
+      created_at: "2026-11-13T02:30:00+00:00",
+    },
     {
       id: 3,
       reviewer: "Ben",
       status: "rejected",
       note: "Native clematis",
-      created_at: "2026-11-14",
+      created_at: "2026-11-13T20:00:00+00:00",
     },
   ];
   const posted = [];
@@ -76,6 +82,10 @@ try {
   await events.nth(2).waitFor();
   assert.match(await events.nth(0).textContent(), /Reviewer not recorded/);
   assert.match(await events.nth(1).textContent(), /Ana.*Species visible.*Seed heads/s);
+  // 20:00 UTC on 13 Nov is 09:00 on 14 Nov in Nelson (NZDT, UTC+13).
+  const decided = events.nth(2).locator("time");
+  assert.equal(await decided.getAttribute("datetime"), "2026-11-13T20:00:00+00:00");
+  assert.equal(await decided.textContent(), "14 Nov 2026, 9:00 am");
 
   const unsure = page.getByRole("button", { name: "Unsure" });
   assert.equal(await unsure.isDisabled(), true, "a decision needs a reviewer name");
