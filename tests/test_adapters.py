@@ -179,3 +179,11 @@ def test_source_urls_use_forward_slashes_whatever_the_platform() -> None:
     url = source_uri(PureWindowsPath("data", "crop", "train", "present", "1_0.tif"))
     assert url.endswith("/data/crop/train/present/1_0.tif")
     assert "\\" not in url
+
+
+def test_a_pilot_photo_s_creator_is_not_assumed_to_be_the_observer(tmp_path: Path) -> None:
+    store, _photo_id = store_with_photo(tmp_path)
+    (sample,) = pilot_samples(store, "run")
+    # iNaturalist gives only an attribution string; the photographer may not be the observer.
+    assert sample.rights.creator is None
+    assert sample.rights.attribution

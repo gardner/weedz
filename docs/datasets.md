@@ -492,7 +492,7 @@ pipelines.
 | Concern | Version 1 | Not yet |
 | --- | --- | --- |
 | Identity/lineage | `<source>:<source_id>` IDs, snapshot (revision or run), parent ID, original URI, media SHA-256 | Release IDs (#7), retrieval date |
-| Rights | Media and metadata licences kept separately; creator; attribution; where the licence was read | Intended-use eligibility |
+| Rights | Media and metadata licences kept separately; creator when the source names one separately (otherwise the attribution is authoritative); attribution; where the licence was read | Intended-use eligibility |
 | Media | Width/height and format when known | Colour space, dtype, bands, valid-data mask |
 | Taxonomy | The original source label kept as context only; annotation taxon as recorded | Taxon IDs, synonym mapping, regional status |
 | Supervision / label extent | Typed annotations with `present`/`absent`/`unknown`/`ignored` labels, pixel points, boxes and mask URIs | Mask files and ignored-pixel handling; annotation completeness, so a verified target-absent image can count as a detection negative without an invented box |

@@ -60,7 +60,9 @@ class Rights(Contract):
 
     media_license: Text
     metadata_license: Text
-    creator: Text
+    # None when the source gives only an attribution string, which then stays the
+    # authoritative credit; a creator is never guessed from, e.g., the observer account.
+    creator: Text | None = None
     attribution: Text
     license_source: Text
 

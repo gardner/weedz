@@ -188,7 +188,7 @@ def _pilot_sample(run_id: str, row: dict[str, Any], model: dict[str, Any]) -> Sa
         rights=Rights(
             media_license=photo.photo_license,
             metadata_license=photo.observation_license,
-            creator=photo.observer,
+            creator=None,  # iNaturalist's attribution names the photographer
             attribution=photo.attribution,
             license_source=photo.source_url,
         ),
