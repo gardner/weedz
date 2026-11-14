@@ -3,7 +3,8 @@
 A release is a directory holding `samples.jsonl` (the contract manifest) and a small
 `release.json`. Whole groups are assigned to splits before anything is derived from them;
 a release whose groups or parents span splits, or whose splits lack task evidence, is
-refused. Whether the test is still a fresh holdout is recorded and can only advance.
+refused, as is one holding a photo its contributor did not permit for training (#60).
+Whether the test is still a fresh holdout is recorded and can only advance.
 """
 
 import hashlib
@@ -16,6 +17,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
+from weedz.consent import refusal
 from weedz.contract import (
     SCHEMA_VERSION,
     TASK_SUPERVISION,
@@ -308,10 +310,19 @@ def _by_split(
     return by_split
 
 
+def _check_consent(samples: list[Sample]) -> None:
+    """A release trains and tests models, which a contributor must have permitted."""
+    for sample in samples:
+        given = sample.rights.consent
+        if given and (reason := refusal(given.uses, given.withdrawn_at, "training")):
+            raise ValueError(f"Refused {sample.id}: {reason}")
+
+
 def build_release(
     samples: list[Sample], spec: ReleaseSpec, *, recorded_at: str
 ) -> tuple[Release, list[Sample]]:
     """The release record and its samples (sorted by id), or a refusal."""
+    _check_consent(samples)
     assigned = _assign(samples, spec)
     buffer, excluded = (None, {})
     if spec.buffer_m is not None:

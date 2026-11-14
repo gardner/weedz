@@ -62,3 +62,20 @@ def test_withdrawal_keeps_what_was_agreed_but_no_credit_name(tmp_path: Path) -> 
     with sqlite3.connect(tmp_path / "reports" / "reports.sqlite3") as db:
         (credit,) = db.execute("SELECT consent FROM reports").fetchone()
     assert "Ana" not in credit
+
+
+def test_a_store_from_before_consent_records_gains_them(tmp_path: Path) -> None:
+    folder = tmp_path / "reports"
+    folder.mkdir()
+    with sqlite3.connect(folder / "reports.sqlite3") as db:
+        db.execute(
+            "CREATE TABLE reports(submitter INTEGER NOT NULL, report_id TEXT NOT NULL, "
+            "received_at TEXT NOT NULL, content_sha256 TEXT, body TEXT, image_file TEXT, "
+            "withdrawn_at TEXT, PRIMARY KEY(submitter, report_id))"
+        )
+        db.execute("INSERT INTO reports VALUES(1, 'old', 't', NULL, NULL, NULL, 't')")
+    client, headers = setup(tmp_path)
+    assert client.put(f"/reports/{new_id()}", json=report(), headers=headers).status_code == 201
+    old = ReportStore(tmp_path).receipt(1, "old")
+    assert old is not None
+    assert (old.consent_version, old.uses) == (None, [])

@@ -52,14 +52,15 @@ class Receipt:
     withdrawn_at: str | None
     image: bool
     # What the person agreed to, kept after withdrawal: the wording and the photo's uses.
-    consent_version: str
+    # None and [] only for a report stored before consent was recorded (#60).
+    consent_version: str | None
     uses: list[str]
 
     @classmethod
     def of(cls, row: sqlite3.Row) -> "Receipt":
         status = "withdrawn" if row["withdrawn_at"] else "received"
         image = row["image_file"] is not None
-        agreed = json.loads(row["consent"])
+        agreed = json.loads(row["consent"] or '{"version": null, "uses": []}')
         return cls(
             row["report_id"],
             status,
@@ -91,6 +92,9 @@ class ReportStore:
             folder.mkdir(mode=0o700, parents=True, exist_ok=True)
         db = tokens.connect_private(self.path, SCHEMA)
         db.execute("PRAGMA secure_delete=ON")
+        columns = {row["name"] for row in db.execute("PRAGMA table_info(reports)")}
+        if "consent" not in columns:  # a store made before consent was recorded (#60)
+            db.execute("ALTER TABLE reports ADD COLUMN consent TEXT")
         return db
 
     @contextmanager

@@ -45,7 +45,7 @@ behalf ([sharing, licences and location privacy](local-development.md#sharing-li
 Photos people send from the app also carry what they permitted, under a
 versioned [consent text](report-consent.md): specialist review, keeping as
 evidence, sharing with agencies, public sharing and model training are separate
-choices. The reference collection and the sharing policy honour them, so a
+choices. The reference collection, releases and the sharing policy honour them, so a
 photo without training consent is never training-eligible (#60).
 
 ## What works today
