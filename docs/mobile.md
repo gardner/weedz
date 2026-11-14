@@ -226,10 +226,11 @@ found ─► pending ──approve──► approved ──send──► sending
     in numbers;
   - the consent wording and the licence they choose for the crop.
 
-The version-1 report explicitly records `consent.location`, true exactly when
-it includes the exact point and its accuracy. The approval screen must show
-that point and accuracy before the person agrees to send it. Removing the
-location clears this consent independently of image consent (#91).
+- **Explicit location consent.** The version-1 report records
+  `consent.location`, true exactly when it includes the exact point and its
+  accuracy. The approval screen must show that point and accuracy before the
+  person agrees to send it. Removing the location clears this consent
+  independently of image consent (#91).
 - **The person can remove details before approving.** "Remove location" and
   "Don't send the photo" both change the report, so it needs approving again.
   An approved report cannot change silently. Any edit returns it to pending,
