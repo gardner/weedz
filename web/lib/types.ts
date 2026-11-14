@@ -46,9 +46,16 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
   const response = await fetch(`/api/${path}`, { cache: "no-store", ...options });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail ?? `Request failed (${response.status})`);
+    throw new Error(errorMessage(error.detail) ?? `Request failed (${response.status})`);
   }
   return response.json() as Promise<T>;
+}
+
+/** FastAPI validation errors put a list of `{ msg }` objects in `detail`. */
+function errorMessage(detail: unknown): string | undefined {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail) && typeof detail[0]?.msg === "string") return detail[0].msg;
+  return undefined;
 }
 
 export function imageUrl(runId: string, photoId: string) {

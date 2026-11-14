@@ -24,7 +24,13 @@ try {
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.locator(".run-settings summary").click();
   await page.getByLabel("Photographed on or after").fill("2015-01-01");
-  await page.getByRole("button", { name: /Start bounded run/ }).click();
+  const start = page.getByRole("button", { name: /Start bounded run/ });
+  const before = page.getByLabel("Photographed on or before");
+  const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString("en-CA");
+  await before.fill(tomorrow);
+  assert.equal(await start.isDisabled(), true, "a future end date is rejected");
+  await before.fill("2024-12-31");
+  await start.click();
   await page.getByText("Regional run queued").waitFor();
   assert.equal(posted[0].after, "2015-01-01");
   assert.equal(posted[0].sampling, "stratified");

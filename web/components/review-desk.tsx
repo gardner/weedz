@@ -22,6 +22,9 @@ export default function ReviewDesk() {
   const [limit, setLimit] = useState(12);
   const [before, setBefore] = useState("2024-12-31");
   const [after, setAfter] = useState("2010-01-01");
+  // The API rejects periods ending after its local date; set on the client, not at build.
+  const [today, setToday] = useState("");
+  useEffect(() => setToday(new Date().toLocaleDateString("en-CA")), []);
   const run = runs.find((item) => item.id === runId);
 
   const refresh = useCallback(async () => {
@@ -252,6 +255,7 @@ export default function ReviewDesk() {
                 Photographed on or before
                 <input
                   type="date"
+                  max={today || undefined}
                   value={before}
                   onChange={(event) => setBefore(event.target.value)}
                 />
@@ -267,7 +271,9 @@ export default function ReviewDesk() {
                   !before ||
                   !after ||
                   after < "2008-01-01" ||
-                  after > before
+                  after > before ||
+                  !today ||
+                  before > today
                 }
                 onClick={start}
               >
