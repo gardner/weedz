@@ -112,17 +112,20 @@ def prompt(label: str) -> str:
 
 
 def library_versions() -> dict[str, str]:
-    """Versions of the code that decodes, resizes and normalises each window.
+    """Versions of the code that decodes and resizes each window and computes its embedding.
 
-    open_clip describes the transform, but torchvision and Pillow carry it out, so an
-    upgrade to any of them must invalidate cached embeddings and refuse mixed resumes.
+    open_clip describes the transform, torchvision and Pillow carry it out, and torch runs
+    the encoder, so upgrading any of them must invalidate cached embeddings and refuse
+    mixed resumes.
     """
     import open_clip
     import PIL
+    import torch
     import torchvision
 
     return {
         "open_clip": open_clip.__version__,
+        "torch": torch.__version__,
         "torchvision": torchvision.__version__,
         "pillow": PIL.__version__,
     }
@@ -222,6 +225,8 @@ class Screener:
             return None
         parts = [
             hashlib.sha256(image_bytes).hexdigest(),
+            MODEL,
+            REVISION,  # the pinned config, not just the weights, shapes the encoder
             self.weights_sha256,
             self.preprocessing_sha256,
             json.dumps([list(box) for box in boxes]),

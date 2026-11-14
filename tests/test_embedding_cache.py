@@ -149,12 +149,24 @@ def test_cached_embeddings_of_the_wrong_width_are_recomputed(tmp_path: Path) -> 
 def test_recipe_versions_cover_the_libraries_that_decode_and_resize() -> None:
     import open_clip
     import PIL
+    import torch
     import torchvision
 
     from weedz.discovery.inference import library_versions
 
     assert library_versions() == {
         "open_clip": open_clip.__version__,
+        "torch": torch.__version__,
         "torchvision": torchvision.__version__,
         "pillow": PIL.__version__,
     }
+
+
+def test_a_different_pinned_model_misses_the_cache(tmp_path: Path, monkeypatch) -> None:
+    cache = tmp_path / "cache"
+    first, _ = screener(cache)
+    first.screen(photo(tmp_path))
+    monkeypatch.setattr(inference, "REVISION", "0" * 40)
+    other, encoder = screener(cache)
+    other.screen(photo(tmp_path))
+    assert encoder.image_calls == 1
