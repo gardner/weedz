@@ -198,6 +198,33 @@ Count distinct encounters/sites as well as frames. A location identifier alone
 does not provide plant coordinates; obtain permitted location context before
 claiming an actionable occurrence. Keep precise locations private where required.
 
+**Assessed 14 November 2026 ([#8](https://github.com/gardner/weedz/issues/8)).**
+The facts below come from LILA metadata v1.00 and are recorded in
+[the assessment summary](../benchmarks/nz-trailcams-assessment.json). Reproduce
+them with `uv run python scripts/assess_trailcams.py <metadata.json>`; no images
+are downloaded.
+
+- **Size and labels:** 2,453,840 images, all labelled with an animal. Half are
+  mice, and the public subset has no empty frames.
+- **Sites:** 57 projects and 3,127 camera site IDs. Each site repeats one fixed view
+  (median 78 frames, p90 1,218, max 43,835), and 84,091 images come from sites
+  named `unknown`.
+- **Timing:** there are no sequence IDs. 93% of frames are timestamped, mostly
+  2019–2020 with only 2,709 before 2015. Only 33% are between 07:00 and 19:00;
+  442,567 frames from 1,793 sites are between 09:00 and 16:00.
+- **Vegetation:** in one mid-day frame from each of 12 projects, 11 show substantial
+  forest-floor, fern, tussock or grassland vegetation, and one is a low-light
+  infrared frame. That is far more visible vegetation than the pilot's
+  iNaturalist bird photos.
+- **Location:** no coordinates or regions are published. DOC's bucket README offers
+  coordinates on request, rounded to the nearest 10 km.
+
+**Recommendation.** Use this as a detection-development corpus. Sample about one
+frame per site per season, so repetition doesn't dominate, and never bulk-download.
+Do not use it as a source of Nelson/Tasman leads until DOC supplies site locations.
+Even then, 10 km rounding supports neither a field search nor a regional filter.
+Requesting finer site locations is a partner decision.
+
 ### Mapillary/KartaView: incidental roadside vegetation
 
 Verify local coverage and intended-use eligibility first. Preserve capture date,

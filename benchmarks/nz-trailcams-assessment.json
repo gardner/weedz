@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "source": {
+    "name": "Trail Camera Images of New Zealand Animals (LILA BC)",
+    "metadata_url": "https://storage.googleapis.com/public-datasets-lila/nz-trailcams/trail_camera_images_of_new_zealand_animals_1.00.json.zip",
+    "metadata_version": "1.00",
+    "metadata_created": "2023-12-27",
+    "license": "CDLA-Permissive-1.0",
+    "assessed": "2026-11-14"
+  },
+  "issue": "https://github.com/gardner/weedz/issues/8",
+  "command": "uv run python scripts/assess_trailcams.py <metadata.json>",
+  "summary": {
+    "images": 2453840,
+    "projects": 57,
+    "sites": 3127,
+    "unknown_site_images": 84091,
+    "frames_per_site": {
+      "median": 78,
+      "p90": 1218,
+      "max": 43835
+    },
+    "timestamped": 2280269,
+    "daylight_07_19": 753399,
+    "by_year": {
+      "2010": 470,
+      "2011": 296,
+      "2012": 881,
+      "2013": 360,
+      "2014": 702,
+      "2015": 34035,
+      "2016": 28479,
+      "2017": 801,
+      "2018": 71565,
+      "2019": 857966,
+      "2020": 709801,
+      "2021": 180316,
+      "2022": 289304,
+      "2023": 105293
+    },
+    "top_labels": [
+      [
+        "mouse",
+        1223161
+      ],
+      [
+        "possum",
+        166250
+      ],
+      [
+        "rat",
+        134900
+      ],
+      [
+        "robin",
+        107852
+      ],
+      [
+        "cat",
+        94080
+      ],
+      [
+        "stoat",
+        73278
+      ],
+      [
+        "kea",
+        54790
+      ],
+      [
+        "thrush",
+        50188
+      ],
+      [
+        "deer",
+        47277
+      ],
+      [
+        "kiwi",
+        47211
+      ]
+    ]
+  },
+  "visual_sample": {
+    "method": "one stable-hash 09:00-16:00 frame from a known site in each of 12 projects (by project-name hash)",
+    "with_substantial_vegetation": 11,
+    "low_light_infrared": 1,
+    "of": 12
+  },
+  "location": "No coordinates published; DOC provides camera coordinates on request, rounded to the nearest 10 km"
+}
