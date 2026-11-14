@@ -16,6 +16,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 
+from weedz.bundles.parity_gate import validate_parity
 from weedz.bundles.signing import PAYLOAD_TYPE, BundleRejected, verify
 from weedz.bundles.text_table import table_parts
 from weedz.bundles.windows import scoring, windows
@@ -112,8 +113,10 @@ def parity_record(benchmark: Mapping[str, Any], variant: str, model_key: str, sh
         raise ParityRefused(f"{variant} was measured against thresholds version {version}")
     if benchmark["thresholds"].get("limits") != THRESHOLDS["limits"]:
         raise ParityRefused(f"{variant} was judged against other limits than version {version}'s")
-    if record["parity"]["passed"] is not True:
-        raise ParityRefused(f"{variant} did not pass parity with the reference")
+    try:
+        validate_parity(record.get("parity"))
+    except ValueError as error:
+        raise ParityRefused(f"{variant} did not pass parity with the reference: {error}") from error
     _measured_these_bytes(record, variant, sha256)
     return f"{variant}/thresholds-{version}"
 
