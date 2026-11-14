@@ -26,6 +26,7 @@ from weedz.intake.limits import Limits
 from weedz.intake.schema import Report
 from weedz.intake.store import Conflict, Receipt, ReportStore, Withdrawn
 from weedz.intake.submitters import Submitters, require_submitter
+from weedz.intake.throttle import BeforeAuthentication
 from weedz.intake.turns import SubmitterTurns, TurnBusy
 from weedz.intake.workers import finish_in_thread
 
@@ -187,6 +188,9 @@ def create_intake_app(root: Path, limits: Limits | None = None) -> FastAPI:
         openapi_url=None,
         docs_url=None,
         redoc_url=None,
+    )
+    app.add_middleware(
+        BeforeAuthentication, rate=limits.auth_requests_per_second, burst=limits.auth_burst
     )
     api = IntakeAPI(root, limits)
     app.add_exception_handler(sqlite3.OperationalError, database_busy)

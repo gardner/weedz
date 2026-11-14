@@ -90,3 +90,14 @@ def test_cancelling_upload_keeps_its_turn_until_the_worker_finishes(
             pass
 
     asyncio.run(scenario())
+
+
+def test_requests_are_limited_before_authentication_without_retaining_ips(tmp_path: Path) -> None:
+    app = create_intake_app(tmp_path, Limits(auth_requests_per_second=0.01, auth_burst=2))
+    client = TestClient(app)
+    path = f"/reports/{new_id()}"
+    assert client.get(path).status_code == 401
+    assert client.get(path, headers={"Authorization": "Bearer wrong"}).status_code == 401
+    refused = client.get(path)
+    assert refused.status_code == 429
+    assert int(refused.headers["Retry-After"]) > 0
