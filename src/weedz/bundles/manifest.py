@@ -14,11 +14,11 @@ from datetime import date
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 
 from weedz.bundles.signing import PAYLOAD_TYPE, BundleRejected, verify
 from weedz.bundles.text_table import table_parts
-from weedz.discovery import inference
+from weedz.bundles.windows import windows
 from weedz.discovery.inference import COMPARISONS, MODELS, RANKING_REVISION, file_sha256
 from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.parity import THRESHOLDS
@@ -53,6 +53,14 @@ class Spec(BaseModel):
 class ParitySource(Spec):
     benchmark: str  # a parity benchmark JSON, e.g. benchmarks/optimised-model-parity.json
     variant: Token
+
+
+class Runtime(Spec):
+    """How a parity-tested tower ran, as the benchmark recorded it."""
+
+    format: Token  # torch, onnx; later coreml, tflite
+    precision: Literal["fp32", "fp16", "int8"]
+    input_dtype: Literal["float32", "float16"]
 
 
 class ImageModel(Spec):
@@ -113,8 +121,10 @@ def _measured_these_bytes(record: Mapping[str, Any], variant: str, sha256: str) 
         raise ParityRefused(f"{variant} records no artefact SHA-256; re-measure its parity")
     if record["artefact_sha256"] != sha256:
         raise ParityRefused(f"{variant} measured other bytes than the file being published")
-    if not isinstance(record.get("runtime"), Mapping):
-        raise ParityRefused(f"{variant} records no runtime (format, precision, input dtype)")
+    try:
+        Runtime.model_validate(record.get("runtime"))
+    except ValidationError as error:
+        raise ParityRefused(f"{variant} records no valid runtime: {error}") from error
 
 
 def screening_stamp(model_key: str) -> dict[str, Any]:
@@ -135,31 +145,13 @@ def screening_stamp(model_key: str) -> dict[str, Any]:
     }
 
 
-def _whole(value: float) -> int:
-    if value != int(value):
-        raise ValueError(f"{value} is not a whole number; declare it in finer units")
-    return int(value)
-
-
-def windows() -> dict[str, Any]:
-    """The window geometry of this ranking revision, which a device must reproduce."""
-    return {
-        "ranking_revision": RANKING_REVISION,
-        "tile_percent_of_short_side": _whole(inference.TILE_FRACTION * 100),
-        "max_stride_percent_of_tile": _whole(inference.MAX_STRIDE * 100),
-        "max_tiles": inference.MAX_TILES,
-        "letterbox_rgb": list(inference.LETTERBOX),
-        "featureless_greyscale_std_below": _whole(inference.FEATURELESS_STD),
-    }
-
-
 def build_manifest(spec: BundleSpec) -> dict[str, Any]:
     """The manifest for `spec`, refused unless its image tower passed parity."""
     tower = artefact(Path(spec.image_model.path))
     source = spec.image_model.parity
     benchmark = json.loads(Path(source.benchmark).read_text())
     parity = parity_record(benchmark, source.variant, spec.model_key, tower["sha256"])
-    runtime = dict(benchmark["variants"][source.variant]["runtime"])
+    runtime = Runtime.model_validate(benchmark["variants"][source.variant]["runtime"])
     table, preprocessing = table_parts(Path(spec.text_table), spec.model_key)
     return {
         "schema": SCHEMA,
@@ -176,7 +168,7 @@ def build_manifest(spec: BundleSpec) -> dict[str, Any]:
         "screening": screening_stamp(spec.model_key),
         "image_model": tower
         | {
-            "runtime": runtime,
+            "runtime": runtime.model_dump(),
             "model_key": spec.model_key,
             "model_revision": MODELS[spec.model_key]["revision"],
             "parity": parity,

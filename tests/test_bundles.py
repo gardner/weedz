@@ -2,6 +2,7 @@
 
 import base64
 import json
+import math
 from datetime import date
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from weedz.bundles.manifest import (
 )
 from weedz.bundles.signing import public_key_text, sign, verify
 from weedz.bundles.text_table import save_table
-from weedz.discovery.inference import MODELS, RANKING_REVISION
+from weedz.discovery.inference import MODELS, RANKING_REVISION, region_boxes
 from weedz.discovery.records import SPECIES
 
 TODAY = date(2026, 11, 14)
@@ -105,6 +106,8 @@ def test_publishing_is_refused_without_a_passing_parity_record(tmp_path: Path) -
     [
         {"artefact_sha256": None},
         {"runtime": None},
+        {"runtime": {}},
+        {"runtime": {"format": "onnx", "precision": "fp16", "input_dtype": "bfloat17"}},
         {"revision": "0" * 40},
         {"thresholds": {"version": 0}},
         {"thresholds": {}},
@@ -230,3 +233,46 @@ def test_the_device_refuses_an_unknown_schema(tmp_path: Path, key: Ed25519Privat
             installed=0,
             app_version="9.0.0",
         )
+
+
+def test_the_manifest_carries_window_vectors_a_device_must_reproduce(tmp_path: Path) -> None:
+    windows = build_manifest(spec(tmp_path))["windows"]
+    assert "whole frame first" in windows["algorithm"]
+    sizes = {(item["width"], item["height"]) for item in windows["examples"]}
+    assert {(4032, 3024), (3024, 4032), (9000, 1000)} <= sizes, "landscape, portrait, thinned"
+    for item in windows["examples"]:
+        assert item["boxes"] == [list(box) for box in region_boxes(item["width"], item["height"])]
+        assert item["boxes"][0] == [0, 0, item["width"], item["height"]]
+
+
+def _boxes_from_the_written_algorithm(width: int, height: int, w: dict) -> list[list[int]]:
+    """windows["algorithm"] implemented from its text alone, as a device would."""
+    side = max(1, round(min(width, height) * w["tile_percent_of_short_side"] / 100))
+
+    def positions(length: int) -> list[int]:
+        if length <= side:
+            return [0]
+        stride = side * w["max_stride_percent_of_tile"] / 100
+        count = math.ceil((length - side) / stride) + 1
+        return [round(i * (length - side) / (count - 1)) for i in range(count)]
+
+    def thin(found: list[int], keep: int) -> list[int]:
+        step = (len(found) - 1) / max(1, keep - 1)
+        return sorted({found[round(i * step)] for i in range(keep)})
+
+    xs, ys = positions(width), positions(height)
+    if len(xs) * len(ys) > w["max_tiles"]:
+        if width >= height:
+            xs = thin(xs, w["max_tiles"] // len(ys))
+        else:
+            ys = thin(ys, w["max_tiles"] // len(xs))
+    tiles = [(x, y, x + side, y + side) for y in ys for x in xs]
+    return [list(box) for box in dict.fromkeys([(0, 0, width, height), *tiles])]
+
+
+def test_the_written_window_algorithm_reproduces_the_server(tmp_path: Path) -> None:
+    w = build_manifest(spec(tmp_path))["windows"]
+    sizes = [(width, height) for width in range(1, 3000, 97) for height in range(1, 3000, 89)]
+    for width, height in sizes + [(9000, 1000), (1000, 9000), (12000, 300)]:
+        expected = [list(box) for box in region_boxes(width, height)]
+        assert _boxes_from_the_written_algorithm(width, height, w) == expected, (width, height)
