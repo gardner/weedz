@@ -1,0 +1,204 @@
+"""What a bundle manifest says, the parity gate before it is built, and a device's checks.
+
+The watchlist, lookalikes, prompts, window geometry and screening stamp come from the
+code the server screens with, never from hand-written configuration, so a phone cannot be
+told something the server does not do. Only the artefact files, the parity record that
+admits the image tower, and the delivery fields (sequence, expiry, minimum app version)
+come from the bundle spec.
+"""
+
+import json
+import re
+from collections.abc import Mapping, Sequence
+from datetime import date
+from pathlib import Path
+from typing import Annotated, Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+from weedz.bundles.signing import PAYLOAD_TYPE, BundleRejected, verify
+from weedz.bundles.text_table import table_entry
+from weedz.discovery import inference
+from weedz.discovery.inference import COMPARISONS, MODELS, RANKING_REVISION, file_sha256
+from weedz.discovery.lookalikes import LOOKALIKES
+from weedz.discovery.parity import THRESHOLDS
+from weedz.discovery.records import REGIONS, SPECIES
+from weedz.discovery.score_meaning import pin_meaning
+
+__all__ = ["PAYLOAD_TYPE", "BundleRejected", "BundleSpec", "ParityRefused"]
+
+SCHEMA = 1
+Version = Annotated[str, StringConstraints(pattern=r"^\d{1,4}\.\d{1,4}\.\d{1,4}$")]
+Token = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9._-]{0,39}$")]
+
+
+class ParityRefused(ValueError):
+    """An image tower without a passing parity record for exactly its bytes (#52)."""
+
+
+class Spec(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class ParitySource(Spec):
+    benchmark: str  # a parity benchmark JSON, e.g. benchmarks/optimised-model-parity.json
+    variant: Token
+
+
+class ImageModel(Spec):
+    path: str
+    format: Token  # e.g. onnx, coreml, tflite
+    precision: Literal["fp32", "fp16", "int8"]
+    parity: ParitySource
+
+
+class BundleSpec(Spec):
+    """The publisher's choices for one bundle; everything else comes from code."""
+
+    model_key: Literal["bioclip", "bioclip-2"]
+    image_model: ImageModel
+    text_table: str
+    min_app_version: Version
+    # Strictly increasing per published tree; a device refuses anything not newer.
+    sequence: int = Field(ge=1, le=2**53 - 1)
+    # After this day a device stops trusting the bundle until it fetches a newer one.
+    expires: date
+
+
+def artefact(path: Path) -> dict[str, Any]:
+    """A file's content address and size."""
+    return {"sha256": file_sha256(path), "size": path.stat().st_size}
+
+
+def check_artefact(path: Path, entry: Mapping[str, Any]) -> None:
+    """Refuse a downloaded file unless it is exactly the one the manifest lists."""
+    size = path.stat().st_size
+    if size != entry["size"]:
+        raise BundleRejected(f"{path.name}: size {size}, but the manifest lists {entry['size']}")
+    if file_sha256(path) != entry["sha256"]:
+        raise BundleRejected(f"{path.name}: SHA-256 differs from the manifest")
+
+
+def parity_record(benchmark: Mapping[str, Any], variant: str, model_key: str, sha256: str) -> str:
+    """The id of the passing parity record that admits these image-tower bytes."""
+    record = benchmark.get("variants", {}).get(variant)
+    if record is None:
+        raise ParityRefused(f"There is no parity record for variant {variant!r}")
+    model = MODELS[model_key]
+    if (record.get("model"), record.get("revision")) != (model["repo"], model["revision"]):
+        raise ParityRefused(f"{variant} measured another model than pinned {model_key}")
+    version = record["parity"]["thresholds"]["version"]
+    if version != THRESHOLDS["version"]:
+        raise ParityRefused(f"{variant} was measured against thresholds version {version}")
+    if record["parity"]["passed"] is not True:
+        raise ParityRefused(f"{variant} did not pass parity with the reference")
+    if record.get("artefact_sha256") is None:
+        raise ParityRefused(f"{variant} records no artefact SHA-256; re-measure its parity")
+    if record["artefact_sha256"] != sha256:
+        raise ParityRefused(f"{variant} measured other bytes than the file being published")
+    return f"{variant}/thresholds-{version}"
+
+
+def screening_stamp(model_key: str) -> dict[str, Any]:
+    """What a device report's `model` block carries (#57) for scores from this bundle."""
+    model = MODELS[model_key]
+    configuration = {
+        "model_key": model_key,
+        "revision": model["revision"],
+        "ranking_revision": RANKING_REVISION,
+        "calibrated": False,
+    }
+    meaning = pin_meaning(None, configuration)["score_meaning"]
+    return {
+        "model_key": model_key,
+        "revision": model["revision"],
+        "ranking_revision": RANKING_REVISION,
+        "score_meaning": meaning,
+    }
+
+
+def _whole(value: float) -> int:
+    if value != int(value):
+        raise ValueError(f"{value} is not a whole number; declare it in finer units")
+    return int(value)
+
+
+def windows() -> dict[str, Any]:
+    """The window geometry of this ranking revision, which a device must reproduce."""
+    return {
+        "ranking_revision": RANKING_REVISION,
+        "tile_percent_of_short_side": _whole(inference.TILE_FRACTION * 100),
+        "max_stride_percent_of_tile": _whole(inference.MAX_STRIDE * 100),
+        "max_tiles": inference.MAX_TILES,
+        "letterbox_rgb": list(inference.LETTERBOX),
+        "featureless_greyscale_std_below": _whole(inference.FEATURELESS_STD),
+    }
+
+
+def build_manifest(spec: BundleSpec) -> dict[str, Any]:
+    """The manifest for `spec`, refused unless its image tower passed parity."""
+    tower = artefact(Path(spec.image_model.path))
+    source = spec.image_model.parity
+    benchmark = json.loads(Path(source.benchmark).read_text())
+    parity = parity_record(benchmark, source.variant, spec.model_key, tower["sha256"])
+    return {
+        "schema": SCHEMA,
+        "sequence": spec.sequence,
+        "expires": spec.expires.isoformat(),
+        "min_app_version": spec.min_app_version,
+        "region": {"inaturalist_place_ids": dict(REGIONS)},
+        "watchlist": [{"taxon": name, "common_name": common} for name, common in SPECIES.items()],
+        "lookalikes": [
+            {"inaturalist_taxon_id": taxon} | entry for taxon, entry in sorted(LOOKALIKES.items())
+        ],
+        "comparisons": list(COMPARISONS),
+        "windows": windows(),
+        "screening": screening_stamp(spec.model_key),
+        "image_model": tower
+        | {
+            "format": spec.image_model.format,
+            "precision": spec.image_model.precision,
+            "model_key": spec.model_key,
+            "model_revision": MODELS[spec.model_key]["revision"],
+            "parity": parity,
+        },
+        "text_table": table_entry(Path(spec.text_table), spec.model_key),
+    }
+
+
+def _version(text: str) -> tuple[int, ...]:
+    match = re.match(r"^(\d+)\.(\d+)\.(\d+)", text)
+    if match is None:
+        raise BundleRejected(f"{text!r} is not a version like 1.2.3")
+    return tuple(int(part) for part in match.groups())
+
+
+def read_manifest(
+    envelope: Mapping[str, Any],
+    trusted: Sequence[str],
+    *,
+    today: date,
+    installed: int,
+    app_version: str,
+) -> dict[str, Any]:
+    """What a device does before using a bundle: verify, then refuse anything unsafe.
+
+    `installed` is the sequence of the bundle it already has (0 for none): an older or
+    replayed bundle is refused, as is one past its expiry or needing a newer app.
+    """
+    payload = verify(envelope, trusted)
+    try:
+        manifest = json.loads(payload)
+    except ValueError as error:
+        raise BundleRejected("The manifest is not UTF-8 JSON") from error
+    if not isinstance(manifest, dict) or manifest.get("schema") != SCHEMA:
+        raise BundleRejected(f"Unknown manifest schema; this reader knows schema {SCHEMA}")
+    if manifest["sequence"] <= installed:
+        raise BundleRejected(
+            f"Bundle {manifest['sequence']} is older than or the same as installed {installed}"
+        )
+    if _version(app_version) < _version(manifest["min_app_version"]):
+        raise BundleRejected(f"This bundle needs app version {manifest['min_app_version']}")
+    if today > date.fromisoformat(manifest["expires"]):
+        raise BundleRejected(f"The bundle expired on {manifest['expires']}")
+    return manifest

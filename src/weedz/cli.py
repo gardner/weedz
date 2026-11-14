@@ -1,6 +1,7 @@
 """Run with `uv run main.py`; use --offline after the first download."""
 
 import argparse
+import importlib
 import logging
 import math
 import sys
@@ -20,8 +21,11 @@ def _recall(value: str) -> float:
     return target
 
 
-def main() -> None:
-    if len(sys.argv) > 1 and sys.argv[1] in {
+# Commands with their own parser: the module whose main() takes the arguments, and whether
+# those include the command's own name. Imported only when used, as they are heavy.
+TOOLS = {
+    name: ("weedz.discovery.cli", True)
+    for name in (
         "dev",
         "discover",
         "references",
@@ -30,20 +34,25 @@ def main() -> None:
         "reference",
         "study",
         "suitability",
-    }:
-        from weedz.discovery.cli import main as discovery_main
+    )
+} | {
+    "reviewers": ("weedz.discovery.access_cli", False),
+    "bundles": ("weedz.bundles.cli", False),
+    "release": ("weedz.release_cli", False),
+}
 
-        discovery_main(sys.argv[1:])
-        return
-    if len(sys.argv) > 1 and sys.argv[1] == "reviewers":
-        from weedz.discovery.access_cli import main as reviewers_main
 
-        reviewers_main(sys.argv[2:])
-        return
-    if len(sys.argv) > 1 and sys.argv[1] == "release":
-        from weedz.release_cli import main as release_main
+def run_tool(argv: list[str]) -> bool:
+    """Hand a tool command to its own parser; False when argv names none."""
+    if not argv or argv[0] not in TOOLS:
+        return False
+    module, with_name = TOOLS[argv[0]]
+    importlib.import_module(module).main(argv if with_name else argv[1:])
+    return True
 
-        release_main(sys.argv[2:])
+
+def main() -> None:
+    if run_tool(sys.argv[1:]):
         return
     parser = argparse.ArgumentParser(description="Leafy Spurge baseline and offline review map")
     parser.add_argument("command", nargs="?", choices=("fetch", "run"), default="run")
