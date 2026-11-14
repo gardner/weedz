@@ -45,6 +45,10 @@ uv run main.py discover --limit 12 --controls 1 --after 2010-01-01 --before 2024
 target species per region. The date is the observed/photo date cutoff, not an
 upload cutoff. Photos uploaded later can belong to this historical-photo corpus.
 Non-default connections use `discover --api-url` and `--temporal-address`.
+`--lookalikes N` (0–3) also acquires N photos of each declared lookalike taxon per
+region: native clematis, toetoe, broom, mānuka and kānuka. They are screened as
+a separate `lookalike` cohort, and the export's `lookalikes` summary shows how
+often each passes as the weed it resembles.
 
 Stop the development stack with Ctrl+C. Restart with the same `--pilot-dir` to
 resume workflow history and retain photos and decisions. This stack binds its

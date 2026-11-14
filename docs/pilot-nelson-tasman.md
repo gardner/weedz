@@ -34,6 +34,29 @@ positive comparison margin does not establish plant presence. This concrete
 failure argues against automatically accepting these rankings or scaling this
 method as a validated detector.
 
+### Lookalike photos: can screening tell the weed from its lookalike?
+
+On 14 November 2026, 39 source-labelled iNaturalist photos of declared lookalikes
+were screened with the same model and ranking
+([#11](https://github.com/gardner/weedz/issues/11), [summary](../benchmarks/nelson-tasman-lookalikes.json)).
+That was up to three per taxon per region.
+
+| Lookalike | Resembles | Ranked as that weed | Median margin |
+| --- | --- | --- | --- |
+| Toetoe (*Austroderia*) | Pampas | **5 of 6** | +0.044 |
+| *Clematis foetida* | Old man's beard | 2 of 3 | +0.006 |
+| *Clematis forsteri* | Old man's beard | 3 of 6 | −0.002 |
+| Puawhānanga (*C. paniculata*) | Old man's beard | 1 of 6 | −0.013 |
+| Broom, mānuka, kānuka | Gorse | 0 of 18 | −0.049 to −0.091 |
+
+Native toetoe passes as pampas almost every time, even though toetoe is one of
+the comparison prompts, and native clematis often passes as old man's beard.
+Gorse is well separated from its lookalikes in this sample. A pampas or old man's
+beard suggestion therefore cannot distinguish the weed from a native plant. It
+needs botanical review of diagnostic features, such as flowering time, plume
+colour and leaf form, before it counts as a lead. These are small,
+source-labelled samples, not reviewed false-positive rates.
+
 The next experiment should include original-subject taxon prompts as stronger
 comparison labels, independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.
