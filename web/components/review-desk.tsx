@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { NewFinding } from "../lib/findings";
 import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { useReviewTimer } from "../lib/review-timer";
 import {
@@ -24,6 +25,11 @@ import FieldNotes from "./field-notes";
 import RunSettings from "./run-settings";
 
 const REVIEWER_KEY = "weedz-reviewer";
+const SAVED = {
+  review: "Review saved locally.",
+  audit: "Audit saved locally.",
+  findings: "Finding saved locally.",
+};
 
 export default function ReviewDesk() {
   const requestGeneration = useRef(0);
@@ -123,8 +129,8 @@ export default function ReviewDesk() {
     setRunId(id);
   }
 
-  async function submit(kind: "review" | "audit", fields: Record<string, string>) {
-    if (!active) return;
+  async function submit(kind: "review" | "audit" | "findings", fields: object) {
+    if (!active) return false;
     const measured = effort.snapshot();
     setSaving(true);
     try {
@@ -138,16 +144,19 @@ export default function ReviewDesk() {
         }),
       });
       effort.clear(measured);
-      setNotice(kind === "audit" ? "Audit saved locally." : "Review saved locally.");
+      setNotice(SAVED[kind]);
       await latestRefresh.current();
+      return true;
     } catch (failure) {
       setError(String(failure));
+      return false;
     } finally {
       setSaving(false);
     }
   }
   const save = (status: Status, note: string) => submit("review", { status, note });
   const saveAudit = (finding: string, note: string) => submit("audit", { finding, note });
+  const saveFinding = (finding: NewFinding) => submit("findings", finding);
 
   return (
     <div className="app-shell">
@@ -392,6 +401,7 @@ export default function ReviewDesk() {
                 photo={active}
                 runId={runId}
                 onSave={save}
+                onSaveFinding={saveFinding}
                 saving={saving}
                 references={references}
                 reviewer={reviewer}

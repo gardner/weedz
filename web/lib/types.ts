@@ -1,3 +1,5 @@
+import type { Finding } from "./findings";
+
 export type Status = "unreviewed" | "confirmed" | "rejected" | "uncertain";
 export type Run = {
   id: string;
@@ -38,6 +40,7 @@ export type Photo = {
   encounter_size?: number;
   encounter_linkable?: boolean;
   reference_comparison?: Record<string, ReferenceComparison>;
+  findings?: Finding[];
   scores: {
     best_species?: string;
     similarity?: number;
