@@ -67,11 +67,14 @@ it is intended for local development, not shared public hosting.
    a small, recent-first convenience sample, not a random regional survey.
 3. **Screen.** Load [BioCLIP](https://huggingface.co/imageomics/bioclip) at revision
    `ce901ab3c6a913f9e9ef94ce6d27761069f4f01c`; retain the weights checksum.
-   Correct EXIF orientation and convert to RGB. Score the whole image and four
-   overlapping corner windows, each 60% of image width and height, with the
-   checkpoint's image preprocessing. These windows have no measured camera pose
-   or perspective rectification; the model's resize/centre-crop preprocessing can
-   lose detail. This does not establish viewpoint invariance.
+   Correct EXIF orientation and convert to RGB. Score the whole image, letterboxed
+   to a square, and overlapping **square** tiles covering every pixel. Each tile's
+   side is 60% of the short side, with at least 25% overlap. Square inputs survive
+   the checkpoint's resize/centre-crop intact, so no edge strip is discarded.
+   Tiles with no visible structure (greyscale std below 8, such as a black night
+   strip) keep their scores but cannot be the winning window. The windows have no
+   measured camera pose or perspective rectification, and downscaling still loses
+   fine detail. This does not establish viewpoint invariance.
 4. **Rank for inspection.** Compare each target's cosine similarity against the
    strongest comparison prompt in the same window. Comparisons include native
    clematis, toetoe, mānuka, broom, general vegetation, animals, open sky,

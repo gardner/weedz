@@ -52,6 +52,9 @@ class Encoder(Protocol):
 TILE_FRACTION = 0.6
 MAX_STRIDE = 0.75  # at least 25% overlap between neighbouring tiles
 LETTERBOX = (124, 116, 104)  # neutral pad, close to the model's normalisation mean
+# Greyscale standard deviation below which a tile has no visible structure. Pilot tiles
+# showed a clear gap: a black night strip at 0.5, while 95% of tiles were above 12.
+FEATURELESS_STD = 8.0
 
 
 def _positions(length: int, side: int) -> list[int]:
@@ -86,13 +89,24 @@ def square_view(image: Image.Image, box: tuple[int, int, int, int]) -> Image.Ima
     return canvas
 
 
+def featureless(view: Image.Image) -> bool:
+    """No visible structure (e.g. a black night strip), so no plant evidence to rank."""
+    return float(np.asarray(view.convert("L"), dtype=float).std()) < FEATURELESS_STD
+
+
 def summarize_scores(
-    scores: np.ndarray, boxes: list[tuple[int, int, int, int]], labels: list[str], target_count: int
+    scores: np.ndarray,
+    boxes: list[tuple[int, int, int, int]],
+    labels: list[str],
+    target_count: int,
+    eligible: list[bool] | None = None,
 ) -> dict[str, Any]:
+    """Best target-minus-comparison margin per species over the eligible windows."""
+    allowed = np.array(eligible if eligible is not None else [True] * len(boxes))
     results = []
     for index, species in enumerate(labels[:target_count]):
         margins = scores[:, index] - np.max(scores[:, target_count:], axis=1)
-        row = int(np.argmax(margins))
+        row = int(np.argmax(np.where(allowed, margins, -np.inf)))
         score = float(scores[row, index])
         margin = score - float(np.max(scores[row, target_count:]))
         results.append(
@@ -176,7 +190,8 @@ class Screener:
             "regions": "letterboxed whole image and overlapping square tiles covering every pixel",
             "ranking": (
                 "maximum target minus best comparison-label cosine similarity per window; "
-                "comparisons include the photo's original subject"
+                "comparisons include the photo's original subject; featureless tiles "
+                f"(greyscale std < {FEATURELESS_STD:g}) cannot be the winning window"
             ),
             "calibrated": False,
             "segmentation": False,
@@ -273,7 +288,12 @@ class Screener:
         )
         with torch.inference_mode():
             scores = (features.to(text.dtype) @ text.T).cpu().numpy()
-        result = summarize_scores(scores, boxes, labels, len(SPECIES))
+        # The whole frame always counts; featureless tiles keep their scores but cannot win.
+        eligible = [
+            index == 0 or not featureless(image.crop(box)) for index, box in enumerate(boxes)
+        ]
+        result = summarize_scores(scores, boxes, labels, len(SPECIES), eligible)
+        result["featureless_windows"] = [index for index, ok in enumerate(eligible) if not ok]
         result["subject_prompt"] = prompt(subject) if subject else None
         result["embedding_cache"] = cache_state
         result["window_similarities"] = scores.tolist()

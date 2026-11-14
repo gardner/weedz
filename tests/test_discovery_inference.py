@@ -10,6 +10,7 @@ from PIL import Image
 from weedz.discovery.inference import (
     LETTERBOX,
     Screener,
+    featureless,
     region_boxes,
     square_view,
     subject_label,
@@ -153,3 +154,19 @@ def test_a_reference_photo_never_gets_a_subject_comparison() -> None:
 def test_a_taxon_sharing_a_target_prefix_is_still_compared() -> None:
     photo = {"original_taxon": "Ulex europaeusoides", "original_common_name": ""}
     assert subject_label(photo) == "Ulex europaeusoides"
+
+
+def test_featureless_tiles_cannot_win_a_weed_ranking() -> None:
+    boxes = [(0, 0, 100, 100), (0, 0, 60, 60), (40, 40, 100, 100)]
+    scores = np.array([[0.30, 0.2, 0.2, 0.3], [0.50, 0.2, 0.2, 0.3], [0.33, 0.2, 0.2, 0.3]])
+    labels = ["weed A", "weed B", "weed C", "comparison"]
+    result = summarize_scores(scores, boxes, labels, 3, eligible=[True, False, True])
+    assert result["box"] == [40, 40, 100, 100]
+    assert result["margin"] == pytest.approx(0.03)
+
+
+def test_a_uniform_tile_is_featureless_and_a_textured_one_is_not() -> None:
+    dark = Image.new("RGB", (50, 50), (3, 3, 3))
+    assert featureless(dark)
+    textured = Image.effect_noise((50, 50), 40).convert("RGB")
+    assert not featureless(textured)
