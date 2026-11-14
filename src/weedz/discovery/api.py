@@ -11,6 +11,7 @@ from weedz.discovery.activities import export, review_history
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
+from weedz.discovery.judgements import Judgement, unsupported
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.store import Store
@@ -156,6 +157,18 @@ class ReviewAPI:
     def findings(self, run_id: str, photo_id: str) -> list[dict]:
         return self.photo(run_id, photo_id)["findings"]
 
+    def record_judgement(self, run_id: str, photo_id: str, record: Judgement) -> dict:
+        _, [photo] = with_references(self.store.root, [self.photo(run_id, photo_id)])
+        reason = unsupported(photo, record)
+        if reason:
+            raise HTTPException(409, reason)
+        self.store.judgement(run_id, photo_id, record)
+        return {"saved": True}
+
+    def judgements(self, run_id: str, photo_id: str) -> list[dict]:
+        self.photo(run_id, photo_id)
+        return self.store.judgements(run_id, photo_id)
+
 
 def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app = FastAPI(title="Weedz regional review", version="0.2.0")
@@ -170,4 +183,6 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.post("/runs/{run_id}/photos/{photo_id}/audit")(api.audit)
     app.post("/runs/{run_id}/photos/{photo_id}/findings")(api.record_finding)
     app.get("/runs/{run_id}/photos/{photo_id}/findings")(api.findings)
+    app.post("/runs/{run_id}/photos/{photo_id}/judgements")(api.record_judgement)
+    app.get("/runs/{run_id}/photos/{photo_id}/judgements")(api.judgements)
     return app

@@ -9,6 +9,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from weedz.discovery.judgements import (
+    Judgement,
+    disputes,
+    no_judgements,
+    standing_judgements,
+)
 from weedz.discovery.records import Finding, Photo, RunSpec
 
 
@@ -43,9 +49,10 @@ def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
 
 # An audit is blind only if it is the auditor's first answer for the photo (after it the
 # photo is released into their ranked queue) and no one reviewed the photo, or recorded a
-# finding on it, before it without having audited it first. The app lets a sampled photo
-# be reviewed only after the reviewer's own audit, so any other earlier review or finding,
-# such as one made before the sample existed, means the suggestion may have been seen.
+# finding or judgement on it, before it without having audited it first. The app lets a
+# sampled photo be reviewed only after the reviewer's own audit, so any other earlier
+# review, finding or judgement, such as one made before the sample existed, means the
+# suggestion may have been seen.
 AUDITS_BY_BLINDNESS = """
 SELECT a.photo_id, a.reviewer, a.finding FROM audits a
 WHERE a.run_id = ? AND (
@@ -58,6 +65,7 @@ WHERE a.run_id = ? AND (
         SELECT 1 FROM (
             SELECT run_id, photo_id, reviewer, created_at FROM reviews
             UNION ALL SELECT run_id, photo_id, reviewer, created_at FROM findings
+            UNION ALL SELECT run_id, photo_id, reviewer, created_at FROM judgements
         ) r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
         AND r.created_at <= a.created_at AND NOT EXISTS (
             SELECT 1 FROM audits own WHERE own.run_id = r.run_id
@@ -106,6 +114,12 @@ class Store:
                     kind TEXT NOT NULL, species TEXT, other_taxon TEXT, box TEXT,
                     note TEXT NOT NULL, reviewer TEXT NOT NULL, effort_seconds REAL,
                     created_at TEXT NOT NULL,
+                    FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
+                );
+                CREATE TABLE IF NOT EXISTS judgements (
+                    id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
+                    dimension TEXT NOT NULL, value TEXT NOT NULL, note TEXT NOT NULL,
+                    reviewer TEXT NOT NULL, effort_seconds REAL, created_at TEXT NOT NULL,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
             """)
@@ -169,7 +183,11 @@ class Store:
             recorded = db.execute(
                 "SELECT * FROM findings WHERE run_id=? ORDER BY id", (run_id,)
             ).fetchall()
+            judged = db.execute(
+                "SELECT * FROM judgements WHERE run_id=? ORDER BY id", (run_id,)
+            ).fetchall()
         decisions = reviewer_decisions(events)
+        standing = standing_judgements(judged)
         counts = Counter(event["photo_id"] for event in events)
         findings: dict[str, list[dict]] = {}
         for row in recorded:
@@ -185,6 +203,8 @@ class Store:
                 disputed=len(set(decisions.get(row["id"], {}).values())) > 1,
                 review_count=counts[row["id"]],
                 findings=findings.get(row["id"], []),
+                judgements=standing.get(row["id"]) or no_judgements(),
+                judgement_disputes=disputes(standing.get(row["id"], {})),
             )
             for row in rows
         ]
@@ -299,3 +319,31 @@ class Store:
                 (run_id, photo_id),
             ).fetchall()
         return [finding_row(row) for row in rows]
+
+    def judgement(self, run_id: str, photo_id: str, record: Judgement) -> None:
+        """Append a reviewer's judgement on one dimension; never edited or deleted."""
+        with self.connect() as db:
+            db.execute(
+                "INSERT INTO judgements(run_id,photo_id,dimension,value,note,reviewer,"
+                "effort_seconds,created_at) VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    run_id,
+                    photo_id,
+                    record.dimension,
+                    record.value,
+                    record.note,
+                    record.reviewer,
+                    record.effort_seconds,
+                    now(),
+                ),
+            )
+
+    def judgements(self, run_id: str, photo_id: str) -> list[dict]:
+        with self.connect() as db:
+            return [
+                dict(row)
+                for row in db.execute(
+                    "SELECT * FROM judgements WHERE run_id=? AND photo_id=? ORDER BY id",
+                    (run_id, photo_id),
+                )
+            ]

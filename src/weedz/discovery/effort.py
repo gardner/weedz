@@ -1,7 +1,7 @@
-"""Reviewer effort from timed decisions and findings: the cost side of discovery yield.
+"""Reviewer effort from timed decisions, findings and judgements: the cost of discovery.
 
-Only decisions and findings the review app timed are counted. Unmeasured ones are
-reported separately rather than treated as zero effort.
+Only the work the review app timed is counted. Unmeasured work is reported separately
+rather than treated as zero effort.
 """
 
 from collections import defaultdict
@@ -9,11 +9,12 @@ from dataclasses import dataclass, field
 from typing import Any
 
 MEANING = (
-    "Active, visible review time per decision, and per recorded finding (a corrected or "
-    "missed plant), paused after 10 minutes without input. Time spent before a finding "
-    "is saved belongs to that finding, so decision minutes exclude it; totals include "
-    "both. A photo counts as 'confirmed' only when every reviewer's latest decision says "
-    "the suggested species is visible; disputed photos are not counted. It is not a "
+    "Active, visible review time per decision, per recorded finding (a corrected or "
+    "missed plant) and per judgement (identity, location, history or novelty), paused "
+    "after 10 minutes without input. Time spent before a finding or judgement is saved "
+    "belongs to it, so decision minutes exclude it; totals include all three. A photo "
+    "counts as 'confirmed' only when every reviewer's latest decision says the "
+    "suggested species is visible; disputed photos are not counted. It is not a "
     "measure of useful findings, novelty or field value."
 )
 
@@ -36,7 +37,7 @@ class _Tally:
 def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]) -> dict:
     cohort = {photo["id"]: photo["cohort"] for photo in photos}
     findings = {photo["id"]: photo.get("findings", []) for photo in photos}
-    decisions, recorded = _Tally(), _Tally()
+    decisions, recorded, judged = _Tally(), _Tally(), _Tally()
     by_reviewer: dict[str, float] = defaultdict(float)
     incidental = 0.0
     for entry in history:
@@ -44,6 +45,7 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
         for events, key, tally in [
             (entry["events"], "status", decisions),
             (findings.get(entry["photo_id"], []), "kind", recorded),
+            (entry.get("judgements", []), "dimension", judged),
         ]:
             for event in events:
                 seconds = event.get("effort_seconds")
@@ -64,22 +66,27 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
         and photo["review_status"] == "confirmed"
         and not photo["disputed"]
     )
-    untimed = decisions.unmeasured_incidental + recorded.unmeasured_incidental
+    tallies = (decisions, recorded, judged)
+    untimed = sum(tally.unmeasured_incidental for tally in tallies)
     return {
         "meaning": MEANING,
         "measured_decisions": decisions.measured,
         "unmeasured_decisions": decisions.unmeasured,
         "measured_findings": recorded.measured,
         "unmeasured_findings": recorded.unmeasured,
-        "total_minutes": _minutes(sum(decisions.seconds.values()) + sum(recorded.seconds.values())),
+        "measured_judgements": judged.measured,
+        "unmeasured_judgements": judged.unmeasured,
+        "total_minutes": _minutes(sum(sum(tally.seconds.values()) for tally in tallies)),
         "minutes_by_status": decisions.minutes(),
         "minutes_by_finding_kind": recorded.minutes(),
+        "minutes_by_judgement_dimension": judged.minutes(),
         "minutes_by_reviewer": {key: _minutes(value) for key, value in by_reviewer.items()},
         "incidental_minutes": _minutes(incidental),
         "unmeasured_incidental_decisions": decisions.unmeasured_incidental,
         "unmeasured_incidental_findings": recorded.unmeasured_incidental,
+        "unmeasured_incidental_judgements": judged.unmeasured_incidental,
         "confirmed_incidental_photos": confirmed,
-        # Untimed incidental decisions or findings would make the rate look cheaper.
+        # Untimed incidental work would make the rate look cheaper.
         "incidental_minutes_per_confirmed_photo": (
             _minutes(incidental / confirmed) if confirmed and not untimed else None
         ),
