@@ -187,3 +187,18 @@ def test_summary_counts_photos_by_coverage_gap_and_accuracy() -> None:
 def test_only_public_incidental_photos_are_assessed() -> None:
     photos = [photo(), photo(id="r", cohort="reference"), photo(coordinate_status="obscured")]
     assert [p["id"] for p in assess.assessed_photos(photos)] == ["p1"]
+
+
+def test_zero_accuracy_is_a_known_accuracy_not_a_missing_one() -> None:
+    summary = assess.summarise([assess.align(photo(positional_accuracy_m=0.0), [])])
+    assert summary["accuracy_unknown"] == 0
+
+
+def test_assess_lists_only_collections_that_cover_an_assessed_photo() -> None:
+    inside = parsed("season", 0.25, "2024-12-06", "2025-03-27") | {"bands": "rgb"}
+    outside = parsed("elsewhere", 0.25, "2024-12-06", "2025-03-27") | {"bands": "rgb"}
+    far = {"type": "Polygon", "coordinates": [[[50, 50], [60, 50], [60, 60], [50, 50]]]}
+    report = assess.assess([photo()], [(inside, SQUARE), (outside, far)])
+    assert [item["slug"] for item in report["collections"]] == ["season"]
+    assert report["photos"][0]["closest"]["slug"] == "season"
+    assert report["summary"]["captured_inside_window"] == 1

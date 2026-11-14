@@ -163,7 +163,9 @@ def _spread(values: list[float]) -> Json:
 
 
 def summarise(aligned: list[Json]) -> Json:
-    accuracies = [a["positional_accuracy_m"] for a in aligned if a["positional_accuracy_m"]]
+    accuracies = [
+        a["positional_accuracy_m"] for a in aligned if a["positional_accuracy_m"] is not None
+    ]
     gaps = [abs(a["closest"]["gap_days"]) for a in aligned if a["closest"]]
     return {
         "photos": len(aligned),
