@@ -189,13 +189,17 @@ def missed_targets(study: Study) -> dict[str, Any]:
         + ["disputed", "unsure", "not_blind"]
     }
     if not audit["audited"]:
-        reason = f"The blind audit sample ({audit['sampled']} photos) is not yet audited."
+        reason = (
+            f"The blind audit sample ({audit['sampled']} photos) is not yet audited."
+            if audit["sampled"]
+            else "There are no incidental photos to audit."
+        )
         return _measure("missed_visible_targets", NOT_YET, reason, evidence=evidence)
     findings = audit["findings"]
     top = {f["photo_id"] for f in findings if f["top_suggestion"]}
     missed = {f["photo_id"] for f in findings} - top
     evidence["queue_ranks_not_top"] = sorted(
-        f["queue_rank"] for f in findings if f["photo_id"] in missed and "queue_rank" in f
+        f["queue_rank"] for f in findings if f["photo_id"] in missed
     )
     caveats = []
     if audit["remaining"]:

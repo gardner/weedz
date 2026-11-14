@@ -131,6 +131,7 @@ def test_missed_targets_need_an_audit_and_are_partial_while_samples_remain() -> 
     missed = measure(outcomes(export([photo("a", "a")])), "missed_visible_targets")
     assert "not yet audited" in missed["reason"]
     findings = [{"photo_id": "a", "species": "Ulex europaeus", "top_suggestion": False}]
+    findings[0] |= {"queue_rank": 2, "queue_size": 2}
     partial = audit(audited=1, remaining=1, weed_found=1, found_not_top_suggestion=1)
     partial["findings"] = findings
     photos = [photo("a", "v1"), photo("b", "v2")]
@@ -139,6 +140,13 @@ def test_missed_targets_need_an_audit_and_are_partial_while_samples_remain() -> 
     assert missed["value"] == {"photos": 1, "site_visits": 1, "ungrouped_photos": 0}
     assert missed["denominator"] == {"photos": 1}
     assert "1 of 2" in missed["reason"]
+    assert missed["evidence"]["queue_ranks_not_top"] == [2]
+
+
+def test_a_run_without_incidental_photos_has_nothing_to_audit() -> None:
+    empty = audit(sampled=0, remaining=0)
+    missed = measure(outcomes(export([], audit=empty)), "missed_visible_targets")
+    assert missed["reason"] == "There are no incidental photos to audit."
 
 
 def test_a_fully_audited_undisputed_sample_is_measured() -> None:
