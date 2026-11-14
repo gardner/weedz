@@ -326,3 +326,29 @@ def test_minutes_are_unknown_rather_than_zero_when_nothing_was_timed() -> None:
     effort = measure(report, "reviewer_effort_per_useful_finding")["evidence"]
     assert effort["incidental_minutes"] is None
     assert effort["untimed_incidental_decisions"] == 1
+
+
+def test_time_on_recorded_findings_is_reviewer_effort() -> None:
+    added = {"kind": "addition", "species": "Ulex europaeus", "effort_seconds": 60}
+    untimed = {"kind": "correction", "other_taxon": "Toetoe", "effort_seconds": None}
+    photos = [photo("a", "a", review_status="rejected", findings=[added, untimed])]
+    report = outcomes(export(photos, {"a": [event("rejected", 60)]}))
+    effort = measure(report, "reviewer_effort_per_useful_finding")["evidence"]
+    assert effort["incidental_minutes"] == 2.0
+    assert effort["timed_incidental_decisions"] == 1
+    assert effort["timed_incidental_findings"] == 1
+    assert effort["untimed_incidental_findings"] == 1
+    assert measure(report, "false_alarm_workload")["evidence"]["minutes"] == 2.0
+
+
+def test_reviewer_added_watchlist_plants_are_non_blind_missed_evidence() -> None:
+    added = {"kind": "addition", "species": "Ulex europaeus", "effort_seconds": 5}
+    other = {"kind": "addition", "other_taxon": "Toetoe", "effort_seconds": 5}
+    photos = [photo("a", "v1", findings=[added]), photo("b", "v1", findings=[other])]
+    missed = measure(outcomes(export(photos)), "missed_visible_targets")
+    assert missed["status"] == NOT_YET
+    assert missed["evidence"]["reviewer_added_watchlist_plants_not_blind"] == {
+        "photos": 1,
+        "site_visits": 1,
+        "ungrouped_photos": 0,
+    }

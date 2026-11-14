@@ -115,7 +115,7 @@ class Study:
             p for p in self.incidental if p["review_status"] == "confirmed" and not p["disputed"]
         ]
 
-    def events(self, photos: Photos) -> list[dict[str, Any]]:
+    def decisions(self, photos: Photos) -> list[dict[str, Any]]:
         ids = {p["id"] for p in photos}
         return [
             event
@@ -124,9 +124,15 @@ class Study:
             for event in entry["events"]
         ]
 
+    @staticmethod
+    def findings(photos: Photos) -> list[dict[str, Any]]:
+        """Plants reviewers recorded: corrected species and additions the screening missed."""
+        return [finding for p in photos for finding in p.get("findings", [])]
+
     def effort(self, photos: Photos) -> tuple[float | None, int]:
-        """Measured review minutes on these photos, and how many decisions were not timed."""
-        return _timed(self.events(photos))
+        """Measured minutes on these photos' decisions and recorded findings, and how many
+        of those were not timed."""
+        return _timed(self.decisions(photos) + self.findings(photos))
 
     def audit_effort(self) -> tuple[float | None, int]:
         """Measured blind-audit minutes, and how many audit answers were not timed."""
@@ -176,8 +182,11 @@ def useful_yield(study: Study) -> dict[str, Any]:
 
 
 def effort_per_finding(study: Study) -> dict[str, Any]:
-    minutes, untimed = study.effort(study.incidental)
-    timed = len(study.events(study.incidental)) - untimed
+    minutes, _ = study.effort(study.incidental)
+    decisions = study.decisions(study.incidental)
+    findings = study.findings(study.incidental)
+    untimed = sum(event.get("effort_seconds") is None for event in decisions)
+    untimed_findings = sum(f.get("effort_seconds") is None for f in findings)
     audit_minutes, untimed_audits = study.audit_effort()
     return _measure(
         "reviewer_effort_per_useful_finding",
@@ -185,8 +194,10 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
         "No useful finding can be counted until usefulness is judged (#18).",
         evidence={
             "incidental_minutes": minutes,
-            "timed_incidental_decisions": timed,
+            "timed_incidental_decisions": len(decisions) - untimed,
             "untimed_incidental_decisions": untimed,
+            "timed_incidental_findings": len(findings) - untimed_findings,
+            "untimed_incidental_findings": untimed_findings,
             "audit_minutes": audit_minutes,
             "untimed_audit_answers": untimed_audits,
             "confirmed_visible": tally(study.confirmed),
@@ -204,8 +215,15 @@ def missed_targets(study: Study) -> dict[str, Any]:
         for name in ["sampled", "audited", "found_as_top_suggestion", "found_not_top_suggestion"]
         + ["disputed", "unsure", "not_blind"]
     }
+    added = [
+        p
+        for p in study.incidental
+        if any(f["kind"] == "addition" and f.get("species") for f in study.findings([p]))
+    ]
+    # Reviewers saw the suggestion first, so these are not blind and never a miss rate.
+    evidence["reviewer_added_watchlist_plants_not_blind"] = tally(added)
     if not audit["sampled"]:
-        return _measure(key, NOT_YET, "There are no incidental photos to audit.")
+        return _measure(key, NOT_YET, "There are no incidental photos to audit.", evidence=evidence)
     if not audit["audited"]:
         reason = f"The blind audit sample ({audit['sampled']} photos) is not yet audited."
         return _measure(key, NOT_YET, reason, evidence=evidence)

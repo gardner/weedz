@@ -50,6 +50,8 @@
         "incidental_minutes": null,
         "timed_incidental_decisions": 0,
         "untimed_incidental_decisions": 0,
+        "timed_incidental_findings": 0,
+        "untimed_incidental_findings": 0,
         "audit_minutes": null,
         "untimed_audit_answers": 0,
         "confirmed_visible": {
@@ -74,7 +76,12 @@
         "found_not_top_suggestion": 0,
         "disputed": 0,
         "unsure": 0,
-        "not_blind": 0
+        "not_blind": 0,
+        "reviewer_added_watchlist_plants_not_blind": {
+          "photos": 0,
+          "site_visits": 0,
+          "ungrouped_photos": 0
+        }
       },
       "success_condition": "Meets watchlist- and condition-specific limits agreed before the pilot"
     },
