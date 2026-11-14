@@ -119,3 +119,18 @@ def test_a_withdrawal_while_the_body_is_still_arriving_waits_for_it(tmp_path: Pa
 
     assert asyncio.run(scenario()) == (201, 200)
     assert ReportStore(tmp_path).active() == []
+
+
+def test_a_stalled_upload_times_out_instead_of_blocking_the_submitter(tmp_path: Path) -> None:
+    """A phone that drops off mid-upload must not hold up its own retries and withdrawals."""
+    app = create_intake_app(tmp_path, Limits(body_seconds=0.2))
+    secret, path = token(tmp_path), f"/reports/{new_id()}"
+
+    async def scenario() -> tuple[int, int]:
+        never = asyncio.Event()
+        stalled = asyncio.create_task(call(app, "PUT", path, secret, [b'{"sche', never]))
+        await asyncio.sleep(0.05)
+        withdrawal = await asyncio.wait_for(call(app, "DELETE", path, secret, []), 5)
+        return await stalled, withdrawal
+
+    assert asyncio.run(scenario()) == (408, 404)

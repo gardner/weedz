@@ -106,7 +106,11 @@ class IntakeAPI:
         # The body is received under the lock too: a withdrawal sent while it arrives waits,
         # and queued uploads are not buffered, as their bodies are not read until their turn.
         async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            body = await read_body(request, self.limits.max_body_bytes)
+            try:
+                async with asyncio.timeout(self.limits.body_seconds):
+                    body = await read_body(request, self.limits.max_body_bytes)
+            except TimeoutError as error:
+                raise HTTPException(408, "The report took too long to arrive") from error
             # Parsing, image work and SQLite block, so they run off the event loop.
             receipt, created = await run_in_threadpool(self.accept, submitter, str(report_id), body)
         if created:

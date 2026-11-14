@@ -136,10 +136,22 @@ class ReportStore:
             raise
         return Receipt(report_id, "received", received, None, name is not None), True
 
-    def withdraw(self, submitter: int, report_id: str) -> Receipt | None:
-        """Delete the image and erase the content of a submitter's own report."""
+    def withdraw(
+        self, submitter: int, report_id: str, before_arrival: bool = False
+    ) -> Receipt | None:
+        """Delete the image and erase the content of a submitter's own report. With
+        ``before_arrival``, an id not yet received is recorded as withdrawn, so a report
+        still on its way is refused when it arrives (for the operator, who acts from outside
+        the API's per-submitter turns)."""
         with self._transaction() as db:
             row = _row(db, submitter, report_id)
+            if row is None and before_arrival:
+                now = _now()
+                db.execute(
+                    "INSERT INTO reports VALUES(?,?,?,NULL,NULL,NULL,?)",
+                    (submitter, report_id, now, now),
+                )
+                return Receipt(report_id, "withdrawn", now, now, False)
             if row is None:
                 return None
             if row["image_file"]:

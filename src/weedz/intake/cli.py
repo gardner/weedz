@@ -39,9 +39,14 @@ def withdraw(args: argparse.Namespace) -> None:
     """For a person whose device token was lost or revoked, at their request."""
     from weedz.intake.store import ReportStore
 
-    if ReportStore(args.intake_dir).withdraw(args.submitter, str(args.report)) is None:
-        raise SystemExit(f"No report {args.report} from submitter {args.submitter}")
-    print(f"Withdrew report {args.report}: its image is deleted and its content erased.")
+    store, report_id = ReportStore(args.intake_dir), str(args.report)
+    if store.receipt(args.submitter, report_id) is None:
+        print(
+            f"No report {report_id} yet; it is recorded as withdrawn, "
+            "so it is refused if it arrives."
+        )
+    store.withdraw(args.submitter, report_id, before_arrival=True)
+    print(f"Withdrew report {report_id}: any image is deleted and its content erased.")
 
 
 def serve(args: argparse.Namespace) -> None:

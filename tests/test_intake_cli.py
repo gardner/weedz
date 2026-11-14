@@ -97,8 +97,23 @@ def test_an_operator_can_withdraw_a_report_for_a_revoked_device(
     assert "Withdrew" in capsys.readouterr().out
     assert ReportStore(tmp_path).active() == []
     assert list((tmp_path / "reports" / "images").iterdir()) == []
-    with pytest.raises(SystemExit, match="No report"):
-        main(["withdraw", "--submitter", "99", "--report", report_id, *folder])
+
+
+def test_an_operator_withdrawal_before_the_report_arrives_refuses_it_later(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A PUT still in flight when the operator withdraws must not store the report after."""
+    credential = Submitters(tmp_path).issue("Phone")
+    report_id = new_id()
+    folder = ["--intake-dir", str(tmp_path)]
+    main(["withdraw", "--submitter", str(credential.id), "--report", report_id, *folder])
+    assert "refused if it arrives" in capsys.readouterr().out
+    client = TestClient(create_intake_app(tmp_path))
+    headers = {"Authorization": f"Bearer {credential.token}"}
+    late = client.put(f"/reports/{report_id}", json=with_image(jpeg()), headers=headers)
+    assert late.status_code == 410
+    assert ReportStore(tmp_path).active() == []
+    assert list((tmp_path / "reports" / "images").iterdir()) == []
 
 
 def test_the_token_lookup_runs_off_the_event_loop(tmp_path: Path) -> None:
