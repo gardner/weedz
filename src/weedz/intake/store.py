@@ -118,6 +118,16 @@ class ReportStore:
                     raise Conflict from error
             return earlier
 
+    def charge_image_attempt(self, submitter: int, report_id: str, limits: Limits) -> None:
+        """Persist a work charge before decoding, without holding the writer during CPU work."""
+        with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
+            row = _row(db, submitter, report_id)
+            if row is not None and row["withdrawn_at"]:
+                raise Withdrawn
+            budget.charge_image_attempt(db, submitter, report_id, limits)
+
     def refused_admission(self, submitter: int, report_id: str) -> None:
         """A completed decoding refusal still costs; it is not a crash reservation."""
         with self._transaction() as db:

@@ -86,6 +86,7 @@ class Deletions:
                 (row["requested_at"], submitter),
             )
             db.execute("DELETE FROM usage WHERE submitter=?", (submitter,))
+            db.execute("DELETE FROM image_attempts WHERE submitter=?", (submitter,))
             db.execute("DELETE FROM admissions WHERE submitter=?", (submitter,))
             db.execute("DELETE FROM pending_report_erasures WHERE submitter=?", (submitter,))
             # Crashed uploads can leave crops without any committed owner row. Sweep

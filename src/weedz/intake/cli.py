@@ -102,6 +102,7 @@ def serve(args: argparse.Namespace) -> None:
         auth_burst=args.auth_burst,
         reports_per_day=args.reports_per_day,
         image_bytes_per_day=args.image_bytes_per_day,
+        image_attempts_per_day=args.image_attempts_per_day,
     )
     uvicorn.run(
         create_intake_app(args.intake_dir.resolve(), limits), host=args.host, port=args.port
@@ -142,7 +143,7 @@ def parse(argv: list[str]) -> argparse.Namespace:
         run.add_argument(
             "--" + name.replace("_", "-"), type=positive_number, default=getattr(defaults, name)
         )
-    for name in ("auth_burst", "reports_per_day", "image_bytes_per_day"):
+    for name in ("auth_burst", "reports_per_day", "image_bytes_per_day", "image_attempts_per_day"):
         run.add_argument(
             "--" + name.replace("_", "-"), type=positive_integer, default=getattr(defaults, name)
         )

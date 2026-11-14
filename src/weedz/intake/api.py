@@ -151,6 +151,8 @@ class IntakeAPI:
             earlier = self.store.admit(submitter, report_id, digest, bool(upload), self.limits)
             if earlier:
                 return earlier, False
+            if upload is not None:
+                self.store.charge_image_attempt(submitter, report_id, self.limits)
             try:
                 image = cleaned_image(upload, self.limits) if upload else None
             except Exception:

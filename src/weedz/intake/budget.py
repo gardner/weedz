@@ -5,6 +5,9 @@ charged before any image is decoded, whether or not the report is then stored, s
 refused decode still costs the submitter. Withdrawing a report does not refund it. A
 row holds only the submitter, report id, time and stored crop size, and rows are deleted
 once they leave the window, so a crop's size is not kept past the time it is needed.
+
+A separate image-attempt history bounds work on interrupted retries even when a later
+refusal cannot acquire the writer lock. Its id/time rows are pruned on subsequent work.
 """
 
 import sqlite3
@@ -21,6 +24,10 @@ CREATE TABLE IF NOT EXISTS admissions(
     submitter INTEGER NOT NULL, report_id TEXT NOT NULL, content_sha256 TEXT NOT NULL,
     PRIMARY KEY(submitter, report_id)
 );
+CREATE TABLE IF NOT EXISTS image_attempts(
+    submitter INTEGER NOT NULL, report_id TEXT NOT NULL, used_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS image_attempts_submitter_time ON image_attempts(submitter,used_at);
 """
 
 
@@ -69,6 +76,19 @@ def reserve(
         return
     charge(db, submitter, report_id, image, limits)
     db.execute("INSERT INTO admissions VALUES(?,?,?)", (submitter, report_id, digest))
+
+
+def charge_image_attempt(
+    db: sqlite3.Connection, submitter: int, report_id: str, limits: Limits
+) -> None:
+    """Charge imminent image work, including retries whose report admission survived."""
+    db.execute("DELETE FROM image_attempts WHERE used_at<=?", (stamp(_now() - _DAY),))
+    rows = db.execute(
+        "SELECT used_at,0 AS image_bytes FROM image_attempts WHERE submitter=? ORDER BY used_at",
+        (submitter,),
+    ).fetchall()
+    _refuse_unless_fits(rows, 0, limits, count_limit=limits.image_attempts_per_day)
+    db.execute("INSERT INTO image_attempts VALUES(?,?,?)", (submitter, report_id, stamp(_now())))
 
 
 def finish(db: sqlite3.Connection, submitter: int, report_id: str) -> None:
@@ -122,15 +142,16 @@ def _window(db: sqlite3.Connection, submitter: int, leaving_out: int | None) -> 
     ).fetchall()
 
 
-def _refuse_unless_fits(rows: list[sqlite3.Row], image_bytes: int, limits: Limits) -> None:
+def _refuse_unless_fits(
+    rows: list[sqlite3.Row], image_bytes: int, limits: Limits, *, count_limit: int | None = None
+) -> None:
     """Raise OverBudget, saying when enough of the window will have expired for one more
     report with ``image_bytes`` to fit."""
     count, used = len(rows), sum(row["image_bytes"] for row in rows)
+    allowed = limits.reports_per_day if count_limit is None else count_limit
 
     def fits() -> bool:
-        return (
-            count + 1 <= limits.reports_per_day and used + image_bytes <= limits.image_bytes_per_day
-        )
+        return count + 1 <= allowed and used + image_bytes <= limits.image_bytes_per_day
 
     if fits():
         return

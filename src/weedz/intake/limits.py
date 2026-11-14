@@ -26,6 +26,8 @@ class Limits:
     # Per submitter over the last 24 hours, counting withdrawn reports too.
     reports_per_day: int = 100
     image_bytes_per_day: int = 50_000_000
+    # Image-processing attempts include interrupted retries, independently of reports.
+    image_attempts_per_day: int = 200
 
     def __post_init__(self) -> None:
         for name in (

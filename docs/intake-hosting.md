@@ -49,16 +49,26 @@ that physical erasure finished. If the process stops between those steps, the
 report remains logically withdrawn and its receipt exposes no crop. Startup or a
 repeated `DELETE` finishes the physical erasure. A small pending-erasure record
 keeps even unknown-id withdrawals retryable if orphan cleanup fails; it is removed
-only after the writer-locked sweep succeeds. Completed retries skip the sweep. A previously returned specialist
-snapshot cannot be recalled; callers must not cache report content beyond its use.
+only after the writer-locked sweep succeeds. Completed retries skip the sweep.
+A previously returned specialist snapshot cannot be recalled; callers must not cache report content beyond its use.
 
 An upload interrupted after admission can reuse its unexpired daily budget
 reservation only with the same content. Different content under that id gets
 409. Completed decoding refusals still cost budget; repeatedly retrying an invalid
 image is not free. Temporary admission hashes disappear on successful storage,
-refusal, report withdrawal or bulk device deletion, or when their budget window expires during subsequent
-admission. Existing report withdrawals and withdrawal retries remain possible
-when the daily budget is full.
+refusal, report withdrawal or bulk device deletion, or when their budget window
+expires during subsequent admission.
+
+Before every image-processing attempt, including a retry, a separate work allowance
+is charged durably. A failed charge performs no image work; a process crash
+immediately after a charge conservatively spends that attempt. A stored receipt
+retry spends none. Repeated interrupted retries can exhaust this allowance while
+their report reservation remains reusable; retry the same content after
+`Retry-After`. Expired work id/time records are pruned during subsequent work
+charges, and whole-device deletion erases the owner's history.
+
+Existing report withdrawals and withdrawal retries remain possible when the daily
+budgets are full.
 
 ## Configurable pilot limits
 
@@ -75,6 +85,7 @@ agreed phone budgets. `intake serve --help` lists their command-line flags.
 | `--auth-burst` | 200 | Process-wide HTTP request burst before authentication |
 | `--reports-per-day` | 100 | New reports and new withdrawal ids per submitter per rolling day |
 | `--image-bytes-per-day` | 50000000 | Stored crop bytes per submitter per rolling day |
+| `--image-attempts-per-day` | 200 | Image-processing attempts, including interrupted retries, per submitter per rolling day |
 
 A body deadline returns 408. Submitter-lock or database contention returns 503
 with `Retry-After: 1`; clients retry under the same report id. Daily budgets and
