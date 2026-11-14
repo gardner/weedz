@@ -49,9 +49,11 @@ method as a validated detector.
 ### Lookalike photos: can screening tell the weed from its lookalike?
 
 On 14 November 2026, 39 source-labelled iNaturalist photos of declared lookalikes
-were screened with the same model and ranking
+were screened with the pinned BioCLIP and **ranking revision 2**: the whole frame
+plus four corner windows, with no original-subject comparison
 ([#11](https://github.com/gardner/weedz/issues/11), [summary](../benchmarks/nelson-tasman-lookalikes.json)).
-That was up to three per taxon per region.
+That was up to three per taxon per region. The same photos under revision 4 are
+reported in the revision 4 section below. Lookalike confusion rises there.
 
 Every photo has a top suggestion, which is the watchlist species with the largest
 margin, and the review desk shows it whatever the margin's sign. A positive
