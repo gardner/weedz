@@ -401,12 +401,14 @@ For PRD P09, each photo in the run detail and export carries `limits`, computed 
     The obscured point is never shown or used.
 - **Dates** (`limits.dates`):
   - `photographed`, `uploaded` and `screened` are kept distinct. `screened` is
-    the run's start date.
+    when the photo was last scored (the photo's `screened_at`). It is null before
+    screening, and for photos scored before this was recorded.
   - `days_photo_to_upload` and `days_photo_to_screening` give the gaps, and are
     null when a date is unknown.
-  - `current_presence` states that a photo shows the plant was there on its
-    capture date, not that it is there now, or that an undated photo cannot show
-    either.
+  - `current_presence` says that, if the plant is visible, the photo shows it
+    was there on its capture date, not that it is there now. For an undated
+    photo, it says the photo can show neither. It is conditional because a
+    candidate is not a confirmed plant.
 
 The outcomes report uses the same rule:
 

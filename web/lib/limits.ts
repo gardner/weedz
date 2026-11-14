@@ -17,7 +17,8 @@ export type SearchArea = {
 export type PhotoDates = {
   photographed: string | null;
   uploaded: string | null;
-  screened: string;
+  /** When the photo was last scored; null before screening or for runs scored earlier. */
+  screened: string | null;
   days_photo_to_upload: number | null;
   days_photo_to_screening: number | null;
   current_presence: string;
@@ -65,6 +66,8 @@ const after = (days: number | null) =>
 export function dateLines(dates: PhotoDates): string[] {
   return [
     `Uploaded ${dates.uploaded ?? "unknown"}${after(dates.days_photo_to_upload)}`,
-    `Screened ${dates.screened}${after(dates.days_photo_to_screening)}`,
+    dates.screened
+      ? `Screened ${dates.screened}${after(dates.days_photo_to_screening)}`
+      : "Screening date not recorded",
   ];
 }

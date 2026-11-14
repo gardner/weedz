@@ -101,7 +101,7 @@ class ReviewAPI:
         audit = summarize_audit(photos, sample, blind, late)
         del audit["findings"]
         photos = [photo | audit_state(photo["id"], sample, blind, late) for photo in photos]
-        photos = with_limits(with_encounters(photos), run["created_at"])
+        photos = with_limits(with_encounters(photos))
         return {
             "run": run,
             "photos": photos,

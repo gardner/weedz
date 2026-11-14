@@ -144,7 +144,7 @@ def export(store: Store, run_id: str) -> dict:
     return {
         "schema": 1,
         "run": run,
-        "photos": with_limits(with_encounters(photos), run["created_at"]),
+        "photos": with_limits(with_encounters(photos)),
         "references": references,
         "encounters": summarize(photos, encounter_groups(photos)),
         "lookalikes": summarize_lookalikes(photos),

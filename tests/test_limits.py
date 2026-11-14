@@ -31,6 +31,7 @@ def photo(**fields: Any) -> dict[str, Any]:
         "positional_accuracy_m": 12.0,
         "observed_on": "2024-06-01",
         "uploaded_at": "2024-06-03T08:00:00Z",
+        "screened_at": SCREENED_AT,
     } | fields
 
 
@@ -71,7 +72,7 @@ def test_obscured_missing_and_unknown_accuracy_locations_are_not_searchable() ->
 
 
 def test_dates_are_distinct_with_their_gaps_and_no_presumed_presence() -> None:
-    dates = limits(photo(), SCREENED_AT).dates
+    dates = limits(photo()).dates
     assert (dates.photographed, dates.uploaded, dates.screened) == (
         "2024-06-01",
         "2024-06-03",
@@ -81,10 +82,17 @@ def test_dates_are_distinct_with_their_gaps_and_no_presumed_presence() -> None:
     assert dates.days_photo_to_screening == 896
     assert "not that it is there now" in dates.current_presence
     assert "2024-06-01" in dates.current_presence
+    # A candidate is not a confirmed plant, so presence is stated conditionally.
+    assert dates.current_presence.startswith("If the plant is visible")
+
+
+def test_a_photo_not_yet_screened_has_no_screening_date() -> None:
+    dates = limits(photo(screened_at=None)).dates
+    assert (dates.screened, dates.days_photo_to_screening) == (None, None)
 
 
 def test_unknown_dates_stay_unknown() -> None:
-    dates = limits(photo(observed_on=None, uploaded_at=None), SCREENED_AT).dates
+    dates = limits(photo(observed_on=None, uploaded_at=None)).dates
     assert (dates.photographed, dates.uploaded) == (None, None)
     assert (dates.days_photo_to_upload, dates.days_photo_to_screening) == (None, None)
     assert "date unknown" in dates.current_presence.lower()
@@ -120,11 +128,14 @@ def stored_run(root: Path, **fields: object) -> TestClient:
 
 def test_run_detail_and_export_carry_each_photos_limits(tmp_path: Path) -> None:
     client = stored_run(tmp_path)
-    screened = client.get("/runs/run").json()["run"]["created_at"][:10]
+    [unscreened] = client.get("/runs/run").json()["photos"]
+    assert unscreened["limits"]["dates"]["screened"] is None
+    Store(tmp_path).score("run", unscreened["id"], {"best_species": "Ulex europaeus"})
     [detailed] = client.get("/runs/run").json()["photos"]
     assert detailed["limits"]["search_area"]["status"] == "searchable"
     assert detailed["limits"]["search_area"]["radius_m"] == 8 + CAMERA_TO_PLANT_ALLOWANCE_M
-    assert detailed["limits"]["dates"]["screened"] == screened
+    # The screening date is when this photo was scored, not when the run was queued.
+    assert detailed["limits"]["dates"]["screened"] == detailed["screened_at"][:10]
     exported = export(Store(tmp_path), "run")
     assert exported["photos"][0]["limits"] == detailed["limits"]
     assert any("search area" in item.lower() for item in exported["limitations"])

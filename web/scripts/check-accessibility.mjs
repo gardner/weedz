@@ -116,7 +116,8 @@ try {
         screened: "2024-12-31",
         days_photo_to_upload: 1,
         days_photo_to_screening: 1,
-        current_presence: "Shows the plant was there on 2024-12-30, not that it is there now",
+        current_presence:
+          "If the plant is visible, the photo shows it was there on 2024-12-30, not that it is there now",
       },
     },
     attribution: "Test fixture",

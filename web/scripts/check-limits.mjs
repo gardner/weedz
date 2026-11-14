@@ -28,7 +28,8 @@ const dates = {
   screened: "2026-11-14",
   days_photo_to_upload: 2,
   days_photo_to_screening: 896,
-  current_presence: "Shows the plant was there on 2024-06-01, not that it is there now",
+  current_presence:
+    "If the plant is visible, the photo shows it was there on 2024-06-01, not that it is there now",
 };
 const notSearchable = (status, reason) => ({
   status,
@@ -72,7 +73,7 @@ try {
   const undated = {
     photographed: null,
     uploaded: null,
-    screened: "2026-11-14",
+    screened: null,
     days_photo_to_upload: null,
     days_photo_to_screening: null,
     current_presence: "Photo date unknown: it cannot show when the plant was there",
@@ -128,7 +129,7 @@ try {
   const undatedText = await when.textContent();
   assert.match(undatedText, /Photo date unknown/);
   assert.match(undatedText, /Uploaded unknown/);
-  assert.match(undatedText, /Screened 2026-11-14/);
+  assert.match(undatedText, /Screening date not recorded/);
   assert.doesNotMatch(undatedText, /days after/);
 
   await rows.nth(2).click();

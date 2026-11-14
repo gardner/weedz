@@ -52,7 +52,7 @@ class SearchArea(BaseModel):
 class Dates(BaseModel):
     photographed: str | None
     uploaded: str | None
-    screened: str
+    screened: str | None
     days_photo_to_upload: int | None
     days_photo_to_screening: int | None
     current_presence: str
@@ -102,19 +102,22 @@ def _presence(photographed: date | None) -> str:
             "Photo date unknown: it cannot show when the plant was there, "
             "nor whether it is there now"
         )
-    return f"Shows the plant was there on {photographed.isoformat()}, not that it is there now"
+    return (
+        f"If the plant is visible, the photo shows it was there on {photographed.isoformat()}, "
+        "not that it is there now"
+    )
 
 
-def limits(photo: dict[str, Any], screened_at: str) -> Limits:
-    """The photo's search area and dates; `screened_at` is when the run screened it."""
+def limits(photo: dict[str, Any]) -> Limits:
+    """The photo's search area and dates; it was screened when it was last scored."""
     photographed, uploaded = _day(photo.get("observed_on")), _day(photo.get("uploaded_at"))
-    screened = date.fromisoformat(screened_at[:10])
+    screened = _day(photo.get("screened_at"))
     return Limits(
         search_area=search_area(photo),
         dates=Dates(
             photographed=photographed.isoformat() if photographed else None,
             uploaded=uploaded.isoformat() if uploaded else None,
-            screened=screened.isoformat(),
+            screened=screened.isoformat() if screened else None,
             days_photo_to_upload=_days(photographed, uploaded),
             days_photo_to_screening=_days(photographed, screened),
             current_presence=_presence(photographed),
@@ -122,10 +125,8 @@ def limits(photo: dict[str, Any], screened_at: str) -> Limits:
     )
 
 
-def with_limits(photos: list[dict[str, Any]], screened_at: str) -> list[dict[str, Any]]:
-    return [
-        photo | {"limits": limits(photo, screened_at).model_dump(mode="json")} for photo in photos
-    ]
+def with_limits(photos: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [photo | {"limits": limits(photo).model_dump(mode="json")} for photo in photos]
 
 
 def search_area_summary(photos: list[dict[str, Any]]) -> dict[str, int]:
