@@ -4,14 +4,16 @@ from pathlib import Path
 
 import pytest
 
+from weedz import tokens
 from weedz.discovery.access import Access
 from weedz.discovery.access_cli import main
 from weedz.discovery.cli import api_headers, check_binding
 
 
 def test_add_prints_the_token_once_and_list_never_does(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setattr(tokens, "new_secret", lambda: "fixed_cli_secret_with_underscores_a")
     main(["add", "--name", "Ana Smith", "--pilot-dir", str(tmp_path)])
     printed = capsys.readouterr().out
     [token] = [word for word in printed.split() if word.startswith("weedz_")]
@@ -19,7 +21,7 @@ def test_add_prints_the_token_once_and_list_never_does(
     main(["list", "--pilot-dir", str(tmp_path)])
     listing = capsys.readouterr().out
     assert "Ana Smith" in listing
-    assert token.rsplit("_", 1)[-1] not in listing
+    assert token.split("_", 2)[2] not in listing
 
 
 def test_revoke_refuses_the_token_and_reports_unknown_ids(

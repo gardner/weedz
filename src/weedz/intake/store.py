@@ -18,6 +18,8 @@ from pathlib import Path
 
 from weedz import tokens
 from weedz.intake import budget
+from weedz.intake.deletion import SCHEMA as DELETION_SCHEMA
+from weedz.intake.deletion import is_deleting
 from weedz.intake.limits import Limits
 from weedz.intake.schema import Report, ReportContent
 
@@ -30,6 +32,7 @@ CREATE TABLE IF NOT EXISTS reports(
 );
 """
     + budget.SCHEMA
+    + DELETION_SCHEMA
 )
 
 
@@ -101,6 +104,8 @@ class ReportStore:
         having charged it to the submitter's budget. Raises Withdrawn, Conflict or
         OverBudget. ``receive`` then charges the stored crop's exact size."""
         with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
             earlier = _existing(db, submitter, report_id, digest)
             if earlier is None:
                 budget.charge(db, submitter, report_id, has_image, limits)
@@ -120,6 +125,8 @@ class ReportStore:
         name = None
         try:
             with self._transaction() as db:
+                if is_deleting(db, submitter):
+                    raise Withdrawn
                 existing = _existing(db, submitter, report_id, digest)
                 if existing:
                     return existing, False
@@ -148,6 +155,8 @@ class ReportStore:
         still on its way is refused when it arrives. Both the device API and the operator
         can record this intent before an upload arrives."""
         with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
             row = _row(db, submitter, report_id)
             if row is None and before_arrival:
                 # Device-created tombstones cost a new record; trusted operators may
@@ -174,27 +183,42 @@ class ReportStore:
             return Receipt(report_id, "withdrawn", row["received_at"], withdrawn, False)
 
     def active(self) -> list[StoredReport]:
-        """Every report received and not withdrawn: unpublished, for review (#58)."""
-        with closing(self._connect()) as db:
+        """Materialize a specialist snapshot before a deletion marker can commit.
+
+        Already-returned snapshots cannot be revoked; callers must not cache report
+        content past its use or treat an old snapshot as current withdrawal state.
+        """
+        with closing(self._connect()) as db, db:
+            # SELECT alone is autocommit: fetchall would release its read lock before
+            # parsing. An explicit read transaction orders this call before erasure.
+            db.execute("BEGIN")
             rows = db.execute(
-                "SELECT * FROM reports WHERE withdrawn_at IS NULL ORDER BY received_at"
+                "SELECT * FROM reports WHERE withdrawn_at IS NULL AND submitter NOT IN "
+                "(SELECT submitter FROM submitter_deletions) ORDER BY received_at"
             ).fetchall()
-        return [
-            StoredReport(
-                row["submitter"],
-                row["report_id"],
-                row["received_at"],
-                ReportContent.model_validate_json(row["body"]),
-                self._image(row["image_file"]),
-            )
-            for row in rows
-        ]
+            return [
+                StoredReport(
+                    row["submitter"],
+                    row["report_id"],
+                    row["received_at"],
+                    ReportContent.model_validate_json(row["body"]),
+                    self._image(row["image_file"]),
+                )
+                for row in rows
+            ]
 
     def sweep(self) -> None:
-        """Delete crops no report names: left by a crash between writing an image and
-        committing its report. Run at start-up, before any request is taken."""
-        with closing(self._connect()) as db:
-            named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
+        """Delete orphan crops under the upload writer lock, including while workers run."""
+        with self._transaction() as db:
+            self._sweep(db)
+
+    def _sweep(self, db: sqlite3.Connection) -> None:
+        """Sweep within the caller's existing write transaction; never nest transactions.
+
+        Every normal image write holds that same transaction until its report commits,
+        so an unreferenced crop here belongs to an interrupted upload, not a live one.
+        """
+        named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
         for path in self.images.iterdir():
             if path.name not in named:
                 path.unlink(missing_ok=True)
