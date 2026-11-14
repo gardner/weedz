@@ -564,11 +564,13 @@ stored.
   real footprints remain future work.
 - **Refusals.** The release is refused if:
   - a sample did not declare the task, or lacks the split's group
-  - a declared group or a `parent_id` spans splits
+  - a declared group spans splits, or a lineage does. A lineage is a sample,
+    its derivatives and theirs, followed through `parent_id` to the earliest
+    known ancestor.
   - a split is empty
-  - a split lacks task evidence. Point classification needs both present and
-    absent labels in every split, and predictions, rejected labels and
-    uncertain labels never count.
+  - a split lacks task evidence. Point classification needs a single target
+    taxon, with both present and absent labels in every split. Predictions,
+    rejected labels and uncertain labels never count.
 - **What `release.json` records:**
   - the release id, which is derived from the content
   - the contract schema version and the manifest SHA-256
@@ -579,7 +581,10 @@ stored.
 - **Test freshness.** `test_status` is `fresh`, `inspected` or
   `used_for_selection`. Its append-only `test_history` can only advance: a test
   that has been inspected or used for selection is never recorded as fresh
-  again. Status changes do not change the release id.
+  again. Later status changes do not change the release id, but the status at
+  creation is part of it, so a record cannot be edited to restart as fresh.
+  Dropping later history entries can only be detected against an outside copy
+  of `release.json`, for example one kept in version control.
 - **Checks on read.** Reading verifies the manifest checksum, and that the id
   still matches the record and the splits list exactly the manifest's samples.
   Rebuilding from the same inputs gives the same id and manifest bytes.

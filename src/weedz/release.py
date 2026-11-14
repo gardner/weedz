@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 from weedz.contract import (
     SCHEMA_VERSION,
     TASK_SUPERVISION,
+    Annotation,
     Sample,
     Sha256,
     SourceName,
@@ -157,8 +158,11 @@ class Release(Frozen):
         return self
 
     def content_id(self) -> str:
-        """The id implied by the frozen content; test status changes do not alter it."""
+        """The id implied by the frozen content. Later test status changes do not alter it,
+        but the status at creation does, so an edit cannot restart the history as fresh.
+        (Dropping later entries can only be detected against an outside copy of the record.)"""
         content = self.model_dump(mode="json", exclude={"id", "test_status", "test_history"})
+        content["created_test_status"] = self.test_history[0].status
         canonical = json.dumps(content, sort_keys=True, separators=(",", ":"))
         return f"{self.name}-{hashlib.sha256(canonical.encode()).hexdigest()[:12]}"
 
@@ -219,12 +223,29 @@ def _buffer(
     return buffer, excluded
 
 
-def _check_separation(kept: list[Sample], assigned: dict[str, SplitName], keys: list[str]) -> None:
+def _lineage_roots(samples: list[Sample]) -> dict[str, str]:
+    """Each sample's earliest known ancestor (itself when it has none), so a parent, its
+    derivatives and theirs all share one lineage group."""
+    parents = {sample.id: sample.parent_id for sample in samples}
+    roots: dict[str, str] = {}
+    for sample in samples:
+        current, visited = sample.id, {sample.id}
+        while (parent := parents.get(current)) and parent not in visited:
+            current = parent
+            visited.add(parent)
+            if parent not in parents:  # an ancestor outside the release
+                break
+        roots[sample.id] = current
+    return roots
+
+
+def _check_separation(
+    kept: list[Sample], assigned: dict[str, SplitName], keys: list[str], roots: dict[str, str]
+) -> None:
     seen: dict[tuple[str, str], SplitName] = {}
     for sample in kept:
         labelled = [(key, sample.groups[key]) for key in keys if key in sample.groups]
-        if sample.parent_id:
-            labelled.append(("parent", sample.parent_id))
+        labelled.append(("parent", roots[sample.id]))
         for group in labelled:
             first = seen.setdefault(group, assigned[sample.id])
             if first != assigned[sample.id]:
@@ -232,16 +253,28 @@ def _check_separation(kept: list[Sample], assigned: dict[str, SplitName], keys: 
                 raise ValueError(f"{group[0]} {group[1]!r} spans {pair}")
 
 
+def _evidence(task: Task, members: list[Sample]) -> list[Annotation]:
+    needed = TASK_SUPERVISION[task]
+    return [
+        note
+        for sample in members
+        for note in sample.annotations
+        if note.supervises() and note.supervision in needed
+    ]
+
+
+def _check_target(task: Task, kept: list[Sample]) -> None:
+    """An absent label only denies its own taxon, so a binary task needs one target."""
+    taxa = {note.taxon for note in _evidence(task, kept)}
+    if task in BINARY_TASKS and len(taxa) > 1:
+        raise ValueError(f"{task} needs one target taxon, found {sorted(map(str, taxa))}")
+
+
 def _evidence_gap(task: Task, members: list[Sample]) -> str | None:
     needed = TASK_SUPERVISION[task]
     if not needed:
         return None
-    labels = {
-        note.label
-        for sample in members
-        for note in sample.annotations
-        if note.supervises() and note.supervision in needed
-    }
+    labels = {note.label for note in _evidence(task, members)}
     kinds = " or ".join(sorted(needed))
     missing = sorted({"present", "absent"} - labels) if task in BINARY_TASKS else []
     if not labels or missing:
@@ -284,7 +317,9 @@ def build_release(
         buffer, excluded = _buffer(samples, assigned, spec.buffer_m)
     kept = sorted((s for s in samples if s.id not in excluded), key=lambda s: s.id)
     key = spec.split.group_key
-    _check_separation(kept, assigned, list(dict.fromkeys([key, *spec.separate])))
+    keys = list(dict.fromkeys([key, *spec.separate]))
+    _check_separation(kept, assigned, keys, _lineage_roots(samples))
+    _check_target(spec.task, kept)
     by_split = _by_split(kept, assigned, spec)
     snapshots: dict[str, set[str]] = {}
     for sample in kept:

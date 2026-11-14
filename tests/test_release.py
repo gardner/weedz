@@ -333,3 +333,39 @@ def test_a_release_manifest_cannot_point_outside_its_directory(tmp_path: Path) -
     path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="samples.jsonl"):
         read_release(tmp_path / "release")
+
+
+def test_a_parent_and_its_own_derivative_cannot_span_splits() -> None:
+    samples = sites("a", "c", "d")
+    parent = samples[-1].id  # a test sample
+    samples[0] = samples[0].model_copy(update={"parent_id": parent})
+    with pytest.raises(ValueError, match=f"parent '{parent}' spans fit and test"):
+        build_release(samples, spec(), recorded_at=WHEN)
+
+
+def test_a_grandchild_shares_its_root_lineage() -> None:
+    samples = sites("a", "c", "d")
+    root = samples[-1].id
+    samples[2] = samples[2].model_copy(update={"parent_id": root})  # validation child
+    samples[0] = samples[0].model_copy(update={"parent_id": samples[2].id})  # fit grandchild
+    with pytest.raises(ValueError, match=f"parent '{root}' spans"):
+        build_release(samples, spec(), recorded_at=WHEN)
+
+
+def test_binary_evidence_needs_one_target_taxon() -> None:
+    samples = sites("a", "c", "d")
+    other = point("absent", taxon="Ulex europaeus")
+    samples[-1] = samples[-1].model_copy(update={"annotations": (other,)})
+    with pytest.raises(ValueError, match="one target taxon"):
+        build_release(samples, spec(), recorded_at=WHEN)
+
+
+def test_resetting_the_creation_status_to_fresh_is_refused(tmp_path: Path) -> None:
+    write_release(tmp_path, sites("a", "c", "d"), spec(test_status="inspected"), recorded_at=WHEN)
+    path = tmp_path / "release.json"
+    payload = json.loads(path.read_text())
+    payload["test_history"] = [{"status": "fresh", "recorded_at": WHEN, "note": "reset"}]
+    payload["test_status"] = "fresh"
+    path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="does not match its content"):
+        read_release(tmp_path)
