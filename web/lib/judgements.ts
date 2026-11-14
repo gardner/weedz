@@ -85,8 +85,8 @@ export const NOTE_REQUIRED: Record<string, string> = {
 };
 
 type Requirement = (photo: Photo, taxon: string | null) => boolean;
-const located: Requirement = (photo) =>
-  photo.coordinate_status === "public" && photo.latitude != null;
+/** The same search-area rule as the API (weedz.discovery.limits). */
+const located: Requirement = (photo) => photo.limits?.search_area.status === "searchable";
 const dated: Requirement = (photo) => Boolean(photo.observed_on);
 const comparison = (photo: Photo, taxon: string | null) => {
   const found = taxon ? photo.reference_comparison?.[taxon] : undefined;
@@ -104,7 +104,9 @@ const beforeNearbyRecords: Requirement = (photo, taxon) => {
 const UNDATED = "the photo date is unknown";
 const UNCOMPARED = "no reference records were compared for this plant here";
 const REQUIREMENTS: Record<string, [Requirement, string][]> = {
-  "location:usable": [[located, "the observation location is obscured or missing"]],
+  "location:usable": [
+    [located, "the observation location is obscured, missing or of unknown accuracy"],
+  ],
   "history:recent_evidence": [[dated, UNDATED]],
   "history:historical_evidence": [[dated, UNDATED]],
   "novelty:absent_from_references": [
