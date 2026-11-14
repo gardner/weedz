@@ -102,10 +102,12 @@ class IntakeAPI:
         self._submitting: dict[int, asyncio.Lock] = {}
 
     async def put(self, report_id: uuid.UUID, request: Request, response: Response) -> Receipt:
-        body = await read_body(request, self.limits.max_body_bytes)
-        # Parsing, image work and SQLite block, so they run off the event loop.
         submitter: int = request.state.submitter
+        # The body is received under the lock too: a withdrawal sent while it arrives waits,
+        # and queued uploads are not buffered, as their bodies are not read until their turn.
         async with self._submitting.setdefault(submitter, asyncio.Lock()):
+            body = await read_body(request, self.limits.max_body_bytes)
+            # Parsing, image work and SQLite block, so they run off the event loop.
             receipt, created = await run_in_threadpool(self.accept, submitter, str(report_id), body)
         if created:
             response.status_code = 201

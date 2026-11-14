@@ -32,7 +32,7 @@ def clean_image(data: bytes, max_pixels: int) -> bytes:
                 raise ImageRefused(f"The crop has more than {max_pixels} pixels")
             if max(image.size) > JPEG_MAX_SIDE:
                 raise ImageRefused(f"A crop's side is at most {JPEG_MAX_SIDE} pixels")
-            upright = ImageOps.exif_transpose(image).convert("RGB")
+            upright = _flatten(ImageOps.exif_transpose(image))
     except ImageRefused:
         raise
     except Exception as error:  # malformed files fail in many ways inside Pillow
@@ -41,3 +41,11 @@ def clean_image(data: bytes, max_pixels: int) -> bytes:
     out = BytesIO()
     bare.save(out, "JPEG", quality=85)
     return out.getvalue()
+
+
+def _flatten(image: Image.Image) -> Image.Image:
+    """The image as shown, on white: transparent pixels can still hold colour (such as the
+    rest of a masked photo), which dropping the alpha channel would reveal."""
+    rgba = image.convert("RGBA")
+    white = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+    return Image.alpha_composite(white, rgba).convert("RGB")

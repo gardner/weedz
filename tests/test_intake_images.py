@@ -32,6 +32,23 @@ def test_png_text_chunks_are_dropped_and_the_result_is_jpeg() -> None:
         assert (image.format, image.size) == ("JPEG", (20, 10))
 
 
+@pytest.mark.parametrize("fmt", ["PNG", "WEBP"])
+def test_transparent_pixels_never_reveal_what_they_hid(fmt: str) -> None:
+    """Fully transparent pixels can still hold colour; the stored crop shows white there."""
+    out = BytesIO()
+    Image.new("RGBA", (16, 16), (255, 0, 0, 0)).save(out, fmt, lossless=True, exact=True)
+    with Image.open(BytesIO(clean_image(out.getvalue(), max_pixels=10_000))) as image:
+        red, green, blue = image.convert("RGB").getpixel((8, 8))  # type: ignore[misc]
+    assert min(red, green, blue) > 240
+
+
+def test_a_palette_png_with_a_transparent_colour_shows_white_there() -> None:
+    out = BytesIO()
+    Image.new("P", (16, 16), 0).save(out, "PNG", transparency=0)
+    with Image.open(BytesIO(clean_image(out.getvalue(), max_pixels=10_000))) as image:
+        assert min(image.convert("RGB").getpixel((8, 8))) > 240  # type: ignore[arg-type]
+
+
 def test_orientation_is_applied_before_the_metadata_is_dropped() -> None:
     exif = Image.Exif()
     exif[0x0112] = 6  # Orientation: rotate 90 degrees clockwise to display
