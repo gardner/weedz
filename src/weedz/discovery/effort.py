@@ -9,8 +9,9 @@ from typing import Any
 
 MEANING = (
     "Active, visible review time per decision, paused after 10 minutes without input. "
-    "'Confirmed' means a reviewer saw the suggested species; it is not a measure of "
-    "useful findings, novelty or field value."
+    "A photo counts as 'confirmed' only when every reviewer's latest decision says "
+    "the suggested species is visible; disputed photos are not counted. It is not a "
+    "measure of useful findings, novelty or field value."
 )
 
 
@@ -37,10 +38,13 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
             by_reviewer[event["reviewer"] or "not recorded"] += seconds
             if is_incidental:
                 incidental += seconds
+    # Undisputed, so every reviewer's latest decision agrees with the latest status.
     confirmed = sum(
         1
         for photo in photos
-        if photo["cohort"] == "incidental" and photo["review_status"] == "confirmed"
+        if photo["cohort"] == "incidental"
+        and photo["review_status"] == "confirmed"
+        and not photo["disputed"]
     )
     return {
         "meaning": MEANING,

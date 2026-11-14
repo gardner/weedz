@@ -56,7 +56,7 @@ def test_earlier_decisions_read_as_unmeasured_not_zero(tmp_path: Path) -> None:
 
 def test_summary_reports_time_by_status_reviewer_and_confirmed_photo(tmp_path: Path) -> None:
     store, incidental, reference = store_with_photos(tmp_path)
-    store.review("run", incidental, "uncertain", "", "Ana", 60)
+    store.review("run", incidental, "uncertain", "", "Ben", 60)
     store.review("run", incidental, "confirmed", "", "Ben", 120)
     store.review("run", reference, "rejected", "", "Ana", 30)
     store.review("run", reference, "rejected", "", "Ana")
@@ -65,7 +65,7 @@ def test_summary_reports_time_by_status_reviewer_and_confirmed_photo(tmp_path: P
     assert summary["unmeasured_decisions"] == 1
     assert summary["total_minutes"] == 3.5
     assert summary["minutes_by_status"] == {"uncertain": 1.0, "confirmed": 2.0, "rejected": 0.5}
-    assert summary["minutes_by_reviewer"] == {"Ana": 1.5, "Ben": 2.0}
+    assert summary["minutes_by_reviewer"] == {"Ana": 0.5, "Ben": 3.0}
     assert summary["incidental_minutes"] == 3.0
     assert summary["confirmed_incidental_photos"] == 1
     assert summary["incidental_minutes_per_confirmed_photo"] == 3.0
@@ -105,6 +105,18 @@ def test_untimed_incidental_decisions_withhold_the_per_finding_rate(tmp_path: Pa
     summary = export(store, "run")["review_effort"]
     assert summary["confirmed_incidental_photos"] == 2
     assert summary["unmeasured_incidental_decisions"] == 1
+    assert summary["incidental_minutes_per_confirmed_photo"] is None
+
+
+@pytest.mark.parametrize("order", [("confirmed", "rejected"), ("rejected", "confirmed")])
+def test_disputed_photos_are_not_confirmed_whatever_the_order(
+    tmp_path: Path, order: tuple[str, str]
+) -> None:
+    store, incidental, _ = store_with_photos(tmp_path)
+    store.review("run", incidental, order[0], "", "Ana", 60)
+    store.review("run", incidental, order[1], "", "Ben", 60)
+    summary = export(store, "run")["review_effort"]
+    assert summary["confirmed_incidental_photos"] == 0
     assert summary["incidental_minutes_per_confirmed_photo"] is None
 
 

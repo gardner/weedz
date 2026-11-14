@@ -93,6 +93,7 @@ intended for local development, not shared public hosting.
    `review_effort` reports minutes by decision and reviewer, and incidental minutes
    per "Species visible" photo. Untimed earlier decisions are listed as unmeasured,
    never as zero, and any untimed incidental decision withholds the per-photo rate.
+   Photos where reviewers disagree are not counted as "Species visible".
    Confirmation is not a useful-finding measure. The
    API export includes current decisions, while the completion manifest records
    the state at screening completion.
