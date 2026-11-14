@@ -202,3 +202,8 @@ def test_windows_are_encoded_in_bounded_batches(tmp_path: Path) -> None:
     assert len(encoder.batches) > 1 and max(encoder.batches) <= ENCODE_BATCH
     assert sum(encoder.batches) == len(result["window_similarities"])
     assert result["coverage_complete"] is True
+
+
+def test_metadata_does_not_claim_full_coverage_unconditionally() -> None:
+    regions = fake_screener().metadata["regions"]
+    assert "coverage_complete" in regions and str(MAX_TILES) in regions

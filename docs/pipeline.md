@@ -19,7 +19,8 @@ labelled species datasets remain supporting research paths.
 **No. We do not currently use SAM or any other segmentation model.** The regional
 pilot now uses pinned **BioCLIP ViT-B/16** embeddings on CPU for screening, with
 Temporal activities for acquisition, inference and export, and Next.js for review.
-Each image contributes a whole frame and four overlapping windows. Targets and
+Each image contributes a letterboxed whole frame and overlapping square tiles
+that cover every pixel. Targets and
 lookalikes are compared using image/text cosine similarity; no calibrated
 probabilities, species boundaries or novel locality claims are produced.
 See [the operating guide](local-development.md) for the implemented path and limits.

@@ -68,7 +68,9 @@ it is intended for local development, not shared public hosting.
 3. **Screen.** Load [BioCLIP](https://huggingface.co/imageomics/bioclip) at revision
    `ce901ab3c6a913f9e9ef94ce6d27761069f4f01c`; retain the weights checksum.
    Correct EXIF orientation and convert to RGB. Score the whole image, letterboxed
-   to a square, and overlapping **square** tiles covering every pixel. Each tile's
+   to a square, and overlapping **square** tiles covering every pixel (photos that
+   would need more than 32 tiles have their long axis thinned, and the result's
+   `coverage_complete` is false). Each tile's
    side is 60% of the short side, with at least 25% overlap. Square inputs survive
    the checkpoint's resize/centre-crop intact, so no edge strip is discarded.
    Tiles with no visible structure (greyscale std below 8, such as a black night

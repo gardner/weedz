@@ -143,7 +143,7 @@ def summarize_scores(
         "margin": best["margin"],
         "box": best["box"],
         "species": results,
-        "method": "BioCLIP cosine similarity; letterboxed frame + square tiles over every pixel",
+        "method": "BioCLIP cosine similarity; letterboxed frame + overlapping square tiles",
     }
 
 
@@ -206,7 +206,11 @@ class Screener:
             "prompts": self.prompts,
             "subject_prompt": prompt("<original taxon>, <common name>"),
             "target_count": len(SPECIES),
-            "regions": "letterboxed whole image and overlapping square tiles covering every pixel",
+            "regions": (
+                "letterboxed whole image and overlapping square tiles covering every pixel, "
+                f"except photos needing more than {MAX_TILES} tiles, whose long axis is thinned; "
+                "each result's coverage_complete says which"
+            ),
             "ranking": (
                 "maximum target minus best comparison-label cosine similarity per window; "
                 "comparisons include the photo's original subject; featureless tiles "
