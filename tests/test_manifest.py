@@ -137,3 +137,22 @@ def test_writing_never_changes_the_process_umask(
 
     monkeypatch.setattr(os, "umask", forbidden)
     write_manifest(tmp_path / "manifest.jsonl", samples())
+
+
+def test_the_manifest_is_opened_in_binary_mode_where_the_platform_has_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import os
+
+    binary = 0x8000  # Windows' O_BINARY; text mode there would turn "\n" into "\r\n"
+    monkeypatch.setattr(os, "O_BINARY", binary, raising=False)
+    real_open = os.open
+    flags_seen: list[int] = []
+
+    def recording_open(path: object, flags: int, mode: int = 0o777) -> int:
+        flags_seen.append(flags)
+        return real_open(path, flags & ~binary, mode)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(os, "open", recording_open)
+    write_manifest(tmp_path / "manifest.jsonl", samples())
+    assert flags_seen and flags_seen[0] & binary

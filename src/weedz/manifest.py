@@ -26,7 +26,10 @@ def write_manifest(path: Path, samples: Iterable[Sample]) -> str:
     # O_EXCL keeps the temporary file unique per writer; mode 0o666 lets the kernel apply
     # the umask, so nothing reads or changes the process-wide umask.
     temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}")
-    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+    # O_BINARY (Windows only; 0 elsewhere) stops text mode turning "\n" into "\r\n",
+    # which would make the file differ from the checksum returned below.
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
+    descriptor = os.open(temporary, flags, 0o666)
     try:
         with os.fdopen(descriptor, "wb") as out:
             out.write(content)
