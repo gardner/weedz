@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, StringConstraints, field_validator
+from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
 REGIONS = {"Nelson": 40493, "Tasman": 40494}
 SPECIES = {
@@ -12,6 +12,8 @@ SPECIES = {
     "Ulex europaeus": "Gorse",
 }
 TASK_QUEUE = "weedz-discovery-v1"
+# Stratified runs span 2008 to today at most, bounding them to four season queries a year.
+INATURALIST_FOUNDED = date(2008, 1, 1)
 ReviewStatus = Literal["unreviewed", "confirmed", "rejected", "uncertain"]
 
 
@@ -19,6 +21,27 @@ class RunSpec(BaseModel):
     limit_per_region: int = Field(default=12, ge=1, le=50)
     controls_per_species: int = Field(default=1, ge=0, le=3)
     before: date = date(2024, 12, 31)
+    after: date = date(2010, 1, 1)
+    # "recent" reproduces the first pilot's newest-first selection; see issue #5.
+    sampling: Literal["stratified", "recent"] = "stratified"
+
+    @classmethod
+    def from_saved(cls, saved: dict) -> "RunSpec":
+        """Runs saved before stratified sampling existed were newest-first runs."""
+        return cls.model_validate({"sampling": "recent"} | saved)
+
+    @model_validator(mode="after")
+    def stratified_period_is_bounded(self) -> "RunSpec":
+        """Only stratified runs query by period; recent runs ignore `after`."""
+        if self.sampling != "stratified":
+            return self
+        if self.after < INATURALIST_FOUNDED:
+            raise ValueError("The sampling period cannot start before iNaturalist (2008)")
+        if self.after > self.before:
+            raise ValueError("The sampling period must start on or before its end")
+        if self.before > date.today():
+            raise ValueError("The sampling period cannot end in the future")
+        return self
 
 
 class Photo(BaseModel):

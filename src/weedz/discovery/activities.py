@@ -13,7 +13,8 @@ from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
 from weedz.discovery.occurrences import with_references
-from weedz.discovery.records import RunSpec
+from weedz.discovery.records import Photo, RunSpec
+from weedz.discovery.sampling import coverage
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
 
@@ -26,7 +27,7 @@ class Activities:
     @activity.defn
     def collect_photos(self, payload: dict) -> dict:
         run_id = payload["run_id"]
-        spec = RunSpec.model_validate(payload["spec"])
+        spec = RunSpec.from_saved(payload["spec"])
         self.store.create_run(run_id, spec)
         self.store.status(run_id, "acquiring", "Fetching attributed regional photos")
         activity.heartbeat("acquiring")
@@ -108,6 +109,10 @@ def export(store: Store, run_id: str) -> dict:
         "photos": with_encounters(photos),
         "references": references,
         "encounters": summarize(photos, encounter_groups(photos)),
+        "corpus_coverage": coverage(
+            [Photo.model_validate(p) for p in photos if p["cohort"] == "incidental"],
+            RunSpec.from_saved(run["spec"]).sampling,
+        ),
         "review_history": history,
         "review_effort": summarize_effort(photos, history),
         "audit": summarize_audit(

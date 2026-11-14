@@ -101,7 +101,11 @@ async def dev(args: argparse.Namespace) -> None:
 
 async def discover(args: argparse.Namespace) -> None:
     spec = RunSpec(
-        limit_per_region=args.limit, controls_per_species=args.controls, before=args.before
+        limit_per_region=args.limit,
+        controls_per_species=args.controls,
+        before=args.before,
+        after=args.after,
+        sampling=args.sampling,
     )
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(f"{args.api_url}/runs", json=spec.model_dump(mode="json"))
@@ -140,6 +144,13 @@ def main(argv: list[str]) -> None:
         "--controls", type=int, default=1, help="References per species per region (0–3)"
     )
     run.add_argument("--before", default="2024-12-31")
+    run.add_argument("--after", default="2010-01-01", help="Earliest observed date")
+    run.add_argument(
+        "--sampling",
+        choices=["stratified", "recent"],
+        default="stratified",
+        help="Spread across seasons and observers, or reproduce newest-first selection",
+    )
     run.add_argument("--api-url", default="http://127.0.0.1:8000")
     run.add_argument("--temporal-address", default="localhost:7234")
     run.add_argument("--wait", action="store_true")

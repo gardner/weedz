@@ -12,6 +12,7 @@ import httpx
 from PIL import Image
 
 from weedz.discovery.records import REGIONS, SPECIES, Photo, RunSpec
+from weedz.discovery.sampling import season_windows, select_across_strata
 
 LICENSES = {"cc0", "cc-by", "cc-by-nc"}
 HEADERS = {"User-Agent": "Weedz/0.1 (open-source non-commercial conservation research)"}
@@ -130,7 +131,11 @@ class Inaturalist:
                 "order": "desc",
                 "per_page": 100,
             }
-            queries = [("incidental", None, spec.limit_per_region, {"taxon_id": 1})]
+            queries = []
+            if spec.sampling == "stratified":
+                self._stratified(run_id, region, base, spec, photos, progress)
+            else:
+                queries.append(("incidental", None, spec.limit_per_region, {"taxon_id": 1}))
             queries += [
                 ("reference", species, spec.controls_per_species, {"taxon_name": species})
                 for species in SPECIES
@@ -144,6 +149,34 @@ class Inaturalist:
                     result["response"]["results"], photos, region, cohort, species, limit, progress
                 )
         return list(photos.values())
+
+    def _stratified(
+        self,
+        run_id: str,
+        region: str,
+        base: dict,
+        spec: RunSpec,
+        photos: dict[int, Photo],
+        progress: Callable[..., None],
+    ) -> None:
+        """Query each season window, then download only the round-robin sample."""
+        strata: dict[str, list[Photo]] = {}
+        for label, first, last in season_windows(spec.after, spec.before):
+            progress(f"Querying {region}: {label}")
+            snapshot = self.root / "runs" / run_id / f"{region}-animals-{label}.json"
+            window = {"taxon_id": 1, "d1": first.isoformat(), "d2": last.isoformat()}
+            result = self.query(snapshot, base | window)
+            strata[label] = [
+                photo
+                for raw in result["response"]["results"]
+                if (photo := photo_from_observation(raw, region, "incidental")) is not None
+                and photo.photo_id not in photos
+            ]
+        # An outing that crosses the council boundary still counts as one observer-day.
+        incidental = [photo for photo in photos.values() if photo.cohort == "incidental"]
+        for photo in select_across_strata(strata, spec.limit_per_region, incidental):
+            progress(f"Fetching {region}: {photo.id}")
+            photos[photo.photo_id] = self.image(photo)
 
     def _select(
         self,

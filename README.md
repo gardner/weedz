@@ -43,7 +43,7 @@ stack with no account system or public deployment.
 In another terminal, queue the first bounded run, or use the app's collection settings:
 
 ```sh
-uv run main.py discover --limit 12 --controls 1 --before 2024-12-31 --wait
+uv run main.py discover --limit 12 --controls 1 --after 2010-01-01 --before 2024-12-31 --wait
 ```
 
 This requests 12 animal-subject photos per region and one reference per target

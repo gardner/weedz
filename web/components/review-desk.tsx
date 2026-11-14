@@ -21,6 +21,7 @@ import {
 import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
+import RunSettings from "./run-settings";
 
 const REVIEWER_KEY = "weedz-reviewer";
 
@@ -43,9 +44,6 @@ export default function ReviewDesk() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const [limit, setLimit] = useState(12);
-  const [before, setBefore] = useState("2024-12-31");
   const [reviewer, setReviewer] = useState("");
   const run = runs.find((item) => item.id === runId);
 
@@ -151,23 +149,6 @@ export default function ReviewDesk() {
   const save = (status: Status, note: string) => submit("review", { status, note });
   const saveAudit = (finding: string, note: string) => submit("audit", { finding, note });
 
-  async function start() {
-    setStarting(true);
-    try {
-      const result = await request<{ id: string }>("runs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit_per_region: limit, controls_per_species: 1, before }),
-      });
-      switchRun(result.id);
-      setNotice("Regional run queued. Progress updates automatically.");
-    } catch (failure) {
-      setError(String(failure));
-    } finally {
-      setStarting(false);
-    }
-  }
-
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -267,57 +248,17 @@ export default function ReviewDesk() {
               <small>{run?.detail || "Python + Temporal · local CPU screening"}</small>
             </div>
           </div>
-          <details className="run-settings">
-            <summary>
-              Run & collection settings{" "}
-              <span>{run?.created_at.slice(0, 10) ?? "No run yet"} · historical photo study</span>
-            </summary>
-            <div className="settings-grid">
-              <label>
-                Saved run
-                <select value={runId} onChange={(event) => switchRun(event.target.value)}>
-                  {runs.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.id} · {item.status}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Animal photos per region
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={limit}
-                  onChange={(event) => setLimit(Number(event.target.value))}
-                />
-              </label>
-              <label>
-                Photographed on or before
-                <input
-                  type="date"
-                  value={before}
-                  onChange={(event) => setBefore(event.target.value)}
-                />
-              </label>
-              <button
-                type="button"
-                className="primary"
-                disabled={
-                  starting || !Number.isInteger(limit) || limit < 1 || limit > 50 || !before
-                }
-                onClick={start}
-              >
-                {starting ? "Starting…" : "Start bounded run ↗"}
-              </button>
-            </div>
-            <p>
-              Also requests one reference photo for each of three target species in each region.
-              Queries use current council boundaries and eligible CC0, CC BY or CC BY-NC photos and
-              metadata.
-            </p>
-          </details>
+          <RunSettings
+            runs={runs}
+            runId={runId}
+            createdAt={run?.created_at}
+            onSwitch={switchRun}
+            onStarted={(id) => {
+              switchRun(id);
+              setNotice("Regional run queued. Progress updates automatically.");
+            }}
+            onError={setError}
+          />
           <div className="screening-note">
             <span className="note-icon" aria-hidden="true">
               i

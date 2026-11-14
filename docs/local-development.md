@@ -38,7 +38,7 @@ workflow-history link. Both are supplied automatically by `dev`.
 Queue a run from collection settings in the app or a second terminal:
 
 ```sh
-uv run main.py discover --limit 12 --controls 1 --before 2024-12-31 --wait
+uv run main.py discover --limit 12 --controls 1 --after 2010-01-01 --before 2024-12-31 --wait
 ```
 
 `--limit` accepts 1–50 animal photos per region; `--controls` accepts 0–3 per
@@ -59,13 +59,26 @@ intended for local development, not shared public hosting.
    11512. The incidental cohort uses Animalia, research-grade observations,
    photos and a capture-date cutoff. Separate queries request *Clematis vitalba*,
    *Cortaderia selloana* and *Ulex europaeus* reference observations.
-2. **Select and retain.** Take one eligible photo per observation, up to each
-   requested cap, in descending observed-date order from the first 100 results
-   per query. Both metadata and photo licences must be CC0, CC BY or CC BY-NC.
+2. **Select and retain.** By default (`--sampling stratified`), each region's
+   animal photos are queried once per southern-hemisphere season (DJF, MAM, JJA,
+   SON) between `--after` (default 2010-01-01, no earlier than 2008-01-01, when
+   iNaturalist began) and `--before` (no later than today). Up to 100 results per
+   season are taken. The cap is filled round-robin across seasons and years:
+   years are visited in bit-reversed order, so even a small cap reaches both
+   ends and the middle of the period, with seasons rotated so consecutive picks
+   change both. Within a season, photos follow a stable hash order, with at most
+   one photo per observer per day across both regions. The same snapshots
+   therefore always give the same sample, and no single walk or week
+   dominates. `--sampling recent` reproduces the first pilot's single
+   newest-first query, and runs saved before this option existed are reported
+   as `recent`. The export's `corpus_coverage` counts photos by year, season,
+   observer and observer-day. Take one eligible photo per observation. Both
+   metadata and photo licences must be CC0, CC BY or CC BY-NC.
    Preserve query/response snapshots, original subject, attribution and licence
    fields. Download the publisher's `large` image derivative, retain its bytes
-   and SHA-256 checksum, and deduplicate source photo IDs within a run. This is
-   a small, recent-first convenience sample, not a random regional survey.
+   and SHA-256 checksum, and deduplicate source photo IDs within a run. Even
+   stratified, this is a bounded sample, not a random regional survey: within
+   each season the API still returns the newest 100 records.
 3. **Screen.** Load [BioCLIP](https://huggingface.co/imageomics/bioclip) at revision
    `ce901ab3c6a913f9e9ef94ce6d27761069f4f01c`; retain the weights checksum.
    Correct EXIF orientation and convert to RGB. Score the whole image and four
