@@ -73,6 +73,7 @@ const photo = (id, sampled) => ({
     species: [
       { name: "Ulex europaeus", similarity: 0.3, margin: 0.031, box: [0, 0, 10, 10] },
       { name: "Clematis vitalba", similarity: 0.2, margin: -0.042, box: [0, 0, 10, 10] },
+      { name: "Cortaderia selloana", similarity: 0.2, margin: -0.0002, box: [0, 0, 10, 10] },
     ],
   },
   photo_license: "cc0",
@@ -101,6 +102,8 @@ try {
   await notes.getByRole("heading", { name: "Ranking score" }).waitFor();
   await notes.getByText("+0.031 above the strongest comparison label").waitFor();
   await notes.getByText("−0.042 below the strongest comparison label").waitFor();
+  // A near-zero margin keeps its sign rather than reading as level.
+  await notes.getByText("less than 0.001 below the strongest comparison label").waitFor();
   await notes.getByText("BioCLIP 2 · ranking revision 4 · meaning 1").waitFor();
   await page.locator(".screening-note").getByText("BioCLIP 2 ranks").waitFor();
   const details = notes.locator("details.score-meaning");

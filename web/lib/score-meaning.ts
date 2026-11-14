@@ -33,9 +33,10 @@ export function meaningLabel(meaning: ScoreMeaning | undefined): string {
 
 /** A margin in words: how far the weed is above or below the strongest comparison label. */
 export function marginWords(margin: number): string {
+  if (margin === 0) return "0.000, level with the strongest comparison label";
+  const side = margin > 0 ? "above" : "below";
+  // A margin too small to show keeps its sign: it still orders the queue.
+  if (Math.abs(margin) < 0.0005) return `less than 0.001 ${side} the strongest comparison label`;
   const size = Math.abs(margin).toFixed(3);
-  if (size === "0.000") return "0.000, level with the strongest comparison label";
-  return margin > 0
-    ? `+${size} above the strongest comparison label`
-    : `−${size} below the strongest comparison label`;
+  return `${margin > 0 ? "+" : "−"}${size} ${side} the strongest comparison label`;
 }
