@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from weedz.discovery.records import Photo, RunSpec
+from weedz.discovery.records import Finding, Photo, RunSpec
 
 
 def now() -> str:
@@ -94,6 +94,13 @@ class Store:
                     effort_seconds REAL, created_at TEXT NOT NULL,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
+                CREATE TABLE IF NOT EXISTS findings (
+                    id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
+                    kind TEXT NOT NULL, species TEXT, other_taxon TEXT, box TEXT,
+                    note TEXT NOT NULL, reviewer TEXT NOT NULL, effort_seconds REAL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
+                );
             """)
             # Databases created before reviewer attribution keep their history unattributed.
             add_missing_column(db, "photos", "review_reviewer")
@@ -154,6 +161,9 @@ class Store:
             ).fetchall()
         decisions = reviewer_decisions(events)
         counts = Counter(event["photo_id"] for event in events)
+        findings: dict[str, list[dict]] = {}
+        for item in self.findings(run_id):
+            findings.setdefault(item["photo_id"], []).append(item)
         return [
             dict(
                 json.loads(row["record"]),
@@ -164,6 +174,7 @@ class Store:
                 reviewer_decisions=decisions.get(row["id"], {}),
                 disputed=len(set(decisions.get(row["id"], {}).values())) > 1,
                 review_count=counts[row["id"]],
+                findings=findings.get(row["id"], []),
             )
             for row in rows
         ]
@@ -249,3 +260,33 @@ class Store:
         for row in rows:
             findings.setdefault(row["photo_id"], {})[row["reviewer"]] = row["finding"]
         return findings
+
+    def finding(self, run_id: str, photo_id: str, record: Finding) -> None:
+        """Append a reviewer's finding; findings are never edited or deleted."""
+        box = json.dumps(list(record.box)) if record.box else None
+        with self.connect() as db:
+            db.execute(
+                "INSERT INTO findings(run_id,photo_id,kind,species,other_taxon,box,note,"
+                "reviewer,effort_seconds,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (
+                    run_id,
+                    photo_id,
+                    record.kind,
+                    record.species,
+                    record.other_taxon,
+                    box,
+                    record.note,
+                    record.reviewer,
+                    record.effort_seconds,
+                    now(),
+                ),
+            )
+
+    def findings(self, run_id: str, photo_id: str | None = None) -> list[dict]:
+        query = "SELECT * FROM findings WHERE run_id=?"
+        parameters: tuple[str, ...] = (run_id,)
+        if photo_id is not None:
+            query, parameters = f"{query} AND photo_id=?", (run_id, photo_id)
+        with self.connect() as db:
+            rows = db.execute(f"{query} ORDER BY id", parameters).fetchall()
+        return [dict(row, box=row["box"] and json.loads(row["box"])) for row in rows]

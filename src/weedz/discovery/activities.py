@@ -168,6 +168,10 @@ def export(store: Store, run_id: str) -> dict:
         "limitations": [
             "Uncalibrated image/text similarity, not verified detections or probabilities",
             "Windows are search regions, not plant boundaries; no segmentation model used",
+            (
+                "Finding boxes are reviewer-drawn visible extents, not segmentation; other "
+                "taxa are verbatim reviewer text, not matched to a taxonomy"
+            ),
             "Reference photos are separate; animal photos have no background weed ground truth",
             "Observation coordinates locate the observation, not a confirmed weed",
             "Known-record comparison is distance and date only, not a novelty verdict; "

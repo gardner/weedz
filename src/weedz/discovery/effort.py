@@ -1,14 +1,15 @@
-"""Reviewer effort from timed decisions: the cost side of the pilot's discovery yield.
+"""Reviewer effort from timed decisions and findings: the cost side of discovery yield.
 
-Only decisions the review app timed are counted. Unmeasured decisions are reported
-separately rather than treated as zero effort.
+Only decisions and findings the review app timed are counted. Unmeasured ones are
+reported separately rather than treated as zero effort.
 """
 
 from collections import defaultdict
 from typing import Any
 
 MEANING = (
-    "Active, visible review time per decision, paused after 10 minutes without input. "
+    "Active, visible review time per decision or recorded finding (a corrected or "
+    "missed plant, counted under its kind), paused after 10 minutes without input. "
     "A photo counts as 'confirmed' only when every reviewer's latest decision says "
     "the suggested species is visible; disputed photos are not counted. It is not a "
     "measure of useful findings, novelty or field value."
@@ -25,9 +26,11 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
     by_reviewer: dict[str, float] = defaultdict(float)
     incidental = 0.0
     measured = unmeasured = unmeasured_incidental = 0
+    findings = {photo["id"]: photo.get("findings", []) for photo in photos}
     for entry in history:
         is_incidental = cohort.get(entry["photo_id"]) == "incidental"
-        for event in entry["events"]:
+        recorded = [item | {"status": item["kind"]} for item in findings.get(entry["photo_id"], [])]
+        for event in entry["events"] + recorded:
             seconds = event.get("effort_seconds")
             if seconds is None:
                 unmeasured += 1
