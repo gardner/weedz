@@ -1,0 +1,12 @@
+[project]
+name = "weedz-demo-music"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "accelerate>=1.15.0",
+    "diffusers>=0.43.0",
+    "huggingface-hub>=2.4.0",
+    "soundfile>=0.14.0",
+    "torch>=2.15.0",
+    "transformers>=5.23.0",
+]
