@@ -65,3 +65,44 @@ def test_screening_uses_the_run_model(tmp_path: Path, monkeypatch: pytest.Monkey
     monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
     activities.screen_photos({"run_id": "run"})
     assert loaded == ["bioclip-2"]
+
+
+def test_comparison_summarises_pilot_and_lookalike_behaviour() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "compare_models", Path(__file__).parents[1] / "scripts" / "compare_models.py"
+    )
+    assert spec and spec.loader
+    compare = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(compare)
+    rows = [
+        {
+            "cohort": "incidental",
+            "best_species": "Ulex europaeus",
+            "margins": {"Ulex europaeus": 0.1},
+        },
+        {
+            "cohort": "incidental",
+            "best_species": "Ulex europaeus",
+            "margins": {"Ulex europaeus": -0.1},
+        },
+        {
+            "cohort": "reference",
+            "reference_species": "Ulex europaeus",
+            "best_species": "Ulex europaeus",
+            "margins": {"Ulex europaeus": 0.2},
+        },
+        {
+            "cohort": "lookalike",
+            "lookalike_taxon": "Austroderia",
+            "lookalike_of": "Cortaderia selloana",
+            "best_species": "Cortaderia selloana",
+            "margins": {"Cortaderia selloana": 0.03},
+        },
+    ]
+    summary = compare.summarise(rows, seconds=4.0)
+    assert summary["incidental_positive"] == 1
+    assert summary["references_own_target_top"] == [1, 1]
+    assert summary["lookalikes"]["Austroderia"] == {"top": 1, "positive": 1, "of": 1}
+    assert summary["seconds_per_photo"] == 1.0

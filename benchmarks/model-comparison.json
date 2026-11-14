@@ -1,0 +1,1927 @@
+{
+  "schema": 1,
+  "assessed": "2026-11-14",
+  "issue": "https://github.com/gardner/weedz/issues/14",
+  "method": "Same 30 pilot photos (run nelson-tasman-3e62ad801459, with the original-subject comparison as in a real run) and 39 source-labelled lookalike photos (no subject prompt, as in #11), screened with ranking revision 4 (letterboxed frame plus square tiles) by each pinned model on CPU. Source-labelled sanity checks, not accuracy.",
+  "command": "uv run python scripts/compare_models.py --run nelson-tasman-3e62ad801459 --lookalikes <lookalike dir> --output <file>",
+  "models": {
+    "bioclip": {
+      "model": "imageomics/bioclip",
+      "model_key": "bioclip",
+      "revision": "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
+      "weights_sha256": "e380384f0c30d425d8c6c40f24471f9dd497fbdfa734a89c461a94aee95f0ef4",
+      "summary": {
+        "incidental_positive": 5,
+        "incidental_of": 24,
+        "references_own_target_top": [
+          6,
+          6
+        ],
+        "lookalikes": {
+          "Austroderia": {
+            "top": 5,
+            "positive": 6,
+            "of": 6
+          },
+          "Clematis foetida": {
+            "top": 3,
+            "positive": 1,
+            "of": 3
+          },
+          "Clematis forsteri": {
+            "top": 5,
+            "positive": 4,
+            "of": 6
+          },
+          "Clematis paniculata": {
+            "top": 6,
+            "positive": 4,
+            "of": 6
+          },
+          "Cytisus scoparius": {
+            "top": 5,
+            "positive": 0,
+            "of": 6
+          },
+          "Kunzea ericoides": {
+            "top": 4,
+            "positive": 2,
+            "of": 6
+          },
+          "Leptospermum scoparium": {
+            "top": 4,
+            "positive": 0,
+            "of": 6
+          }
+        },
+        "seconds_per_photo": 0.674
+      },
+      "reference_own_target_margins": [
+        0.062953,
+        0.120275,
+        0.13088,
+        0.032094,
+        0.164635,
+        0.0868
+      ],
+      "rows": [
+        {
+          "id": "inat-250240131-447484684",
+          "cohort": "reference",
+          "reference_species": "Ulex europaeus",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.125964,
+            "Cortaderia selloana": -0.093881,
+            "Ulex europaeus": 0.062953
+          }
+        },
+        {
+          "id": "inat-252250408-451525789",
+          "cohort": "reference",
+          "reference_species": "Ulex europaeus",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.071256,
+            "Cortaderia selloana": -0.093736,
+            "Ulex europaeus": 0.120275
+          }
+        },
+        {
+          "id": "inat-254338658-455546899",
+          "cohort": "reference",
+          "reference_species": "Clematis vitalba",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.13088,
+            "Cortaderia selloana": -0.040299,
+            "Ulex europaeus": -0.128273
+          }
+        },
+        {
+          "id": "inat-256674952-460262550",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.092277,
+            "Cortaderia selloana": -0.118371,
+            "Ulex europaeus": -0.107606
+          }
+        },
+        {
+          "id": "inat-256675033-460262714",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.093971,
+            "Cortaderia selloana": -0.059587,
+            "Ulex europaeus": -0.038997
+          }
+        },
+        {
+          "id": "inat-256675146-460262865",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.021271,
+            "Cortaderia selloana": -0.009419,
+            "Ulex europaeus": -0.015613
+          }
+        },
+        {
+          "id": "inat-256675287-460263038",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.041756,
+            "Cortaderia selloana": -0.053099,
+            "Ulex europaeus": -0.025359
+          }
+        },
+        {
+          "id": "inat-256682298-460279738",
+          "cohort": "reference",
+          "reference_species": "Clematis vitalba",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.032094,
+            "Cortaderia selloana": -0.108181,
+            "Ulex europaeus": 0.006683
+          }
+        },
+        {
+          "id": "inat-256691045-460294362",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.066723,
+            "Cortaderia selloana": -0.048356,
+            "Ulex europaeus": -0.056806
+          }
+        },
+        {
+          "id": "inat-256716592-460347209",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.035172,
+            "Cortaderia selloana": 0.020737,
+            "Ulex europaeus": -0.066838
+          }
+        },
+        {
+          "id": "inat-256727061-460368453",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.002025,
+            "Cortaderia selloana": 0.005042,
+            "Ulex europaeus": -0.032101
+          }
+        },
+        {
+          "id": "inat-256808221-460529900",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.033153,
+            "Cortaderia selloana": 0.005367,
+            "Ulex europaeus": -0.028205
+          }
+        },
+        {
+          "id": "inat-256862582-460640098",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.006592,
+            "Cortaderia selloana": 0.105001,
+            "Ulex europaeus": -0.016942
+          }
+        },
+        {
+          "id": "inat-256863810-460643105",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.090144,
+            "Cortaderia selloana": -0.068447,
+            "Ulex europaeus": -0.015425
+          }
+        },
+        {
+          "id": "inat-256864013-460643540",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.085328,
+            "Cortaderia selloana": 0.021583,
+            "Ulex europaeus": -0.030909
+          }
+        },
+        {
+          "id": "inat-256864136-460643767",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.069262,
+            "Cortaderia selloana": -0.069712,
+            "Ulex europaeus": -0.091553
+          }
+        },
+        {
+          "id": "inat-256864189-460643855",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.091382,
+            "Cortaderia selloana": -0.049887,
+            "Ulex europaeus": -0.07069
+          }
+        },
+        {
+          "id": "inat-256912633-460740779",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.066505,
+            "Cortaderia selloana": -0.127042,
+            "Ulex europaeus": -0.093503
+          }
+        },
+        {
+          "id": "inat-256913086-460741828",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.088012,
+            "Cortaderia selloana": -0.072243,
+            "Ulex europaeus": -0.065288
+          }
+        },
+        {
+          "id": "inat-256918601-460754616",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.163329,
+            "Cortaderia selloana": -0.082472,
+            "Ulex europaeus": -0.144214
+          }
+        },
+        {
+          "id": "inat-257459474-461857745",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.072278,
+            "Cortaderia selloana": -0.037187,
+            "Ulex europaeus": -0.057473
+          }
+        },
+        {
+          "id": "inat-257459539-461857914",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.042821,
+            "Cortaderia selloana": -0.00968,
+            "Ulex europaeus": -0.038024
+          }
+        },
+        {
+          "id": "inat-257459949-461859480",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.128061,
+            "Cortaderia selloana": -0.127232,
+            "Ulex europaeus": -0.113632
+          }
+        },
+        {
+          "id": "inat-257460208-461859096",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.198345,
+            "Cortaderia selloana": -0.144419,
+            "Ulex europaeus": -0.177582
+          }
+        },
+        {
+          "id": "inat-257734181-462389676",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.003774,
+            "Cortaderia selloana": -0.034978,
+            "Ulex europaeus": -0.062173
+          }
+        },
+        {
+          "id": "inat-259114109-465059628",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.04563,
+            "Cortaderia selloana": -0.012578,
+            "Ulex europaeus": -0.050349
+          }
+        },
+        {
+          "id": "inat-309664282-558823763",
+          "cohort": "reference",
+          "reference_species": "Cortaderia selloana",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.047763,
+            "Cortaderia selloana": 0.164635,
+            "Ulex europaeus": -0.041834
+          }
+        },
+        {
+          "id": "inat-331872487-602149309",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.029495,
+            "Cortaderia selloana": -0.066397,
+            "Ulex europaeus": -0.050578
+          }
+        },
+        {
+          "id": "inat-331889702-602185404",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.063544,
+            "Cortaderia selloana": -0.066504,
+            "Ulex europaeus": -0.163687
+          }
+        },
+        {
+          "id": "inat-82387196-135212551",
+          "cohort": "reference",
+          "reference_species": "Cortaderia selloana",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.077072,
+            "Cortaderia selloana": 0.0868,
+            "Ulex europaeus": -0.04664
+          }
+        },
+        {
+          "id": "inat-248320706-443668409",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.008872,
+            "Cortaderia selloana": -0.090568,
+            "Ulex europaeus": -0.178056
+          }
+        },
+        {
+          "id": "inat-244250279-435671170",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.054809,
+            "Cortaderia selloana": -0.117114,
+            "Ulex europaeus": -0.181822
+          }
+        },
+        {
+          "id": "inat-187198926-327322243",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.030789,
+            "Cortaderia selloana": -0.053143,
+            "Ulex europaeus": -0.101793
+          }
+        },
+        {
+          "id": "inat-253709796-454331441",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.042943,
+            "Cortaderia selloana": -0.042097,
+            "Ulex europaeus": -0.055048
+          }
+        },
+        {
+          "id": "inat-249962607-446938032",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.028663,
+            "Cortaderia selloana": -0.051172,
+            "Ulex europaeus": -0.074612
+          }
+        },
+        {
+          "id": "inat-246862510-440788335",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.025642,
+            "Cortaderia selloana": -0.044302,
+            "Ulex europaeus": -0.062634
+          }
+        },
+        {
+          "id": "inat-190982193-334923591",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.010023,
+            "Cortaderia selloana": 0.014788,
+            "Ulex europaeus": 0.018513
+          }
+        },
+        {
+          "id": "inat-139730851-239052175",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.022996,
+            "Cortaderia selloana": 0.125725,
+            "Ulex europaeus": -0.058482
+          }
+        },
+        {
+          "id": "inat-65630163-105666373",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": 0.000654,
+            "Cortaderia selloana": 0.135992,
+            "Ulex europaeus": -0.042601
+          }
+        },
+        {
+          "id": "inat-250532538-448091474",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.177731,
+            "Cortaderia selloana": -0.206837,
+            "Ulex europaeus": -0.088143
+          }
+        },
+        {
+          "id": "inat-247277103-441611371",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.180366,
+            "Cortaderia selloana": -0.161741,
+            "Ulex europaeus": -0.087191
+          }
+        },
+        {
+          "id": "inat-244396298-435933238",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.055275,
+            "Cortaderia selloana": -0.012539,
+            "Ulex europaeus": -0.044865
+          }
+        },
+        {
+          "id": "inat-247709964-442472472",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.068685,
+            "Cortaderia selloana": -0.117539,
+            "Ulex europaeus": -0.047776
+          }
+        },
+        {
+          "id": "inat-231527693-411225849",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.079814,
+            "Cortaderia selloana": -0.097127,
+            "Ulex europaeus": -0.018536
+          }
+        },
+        {
+          "id": "inat-187198392-327321075",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.137469,
+            "Cortaderia selloana": -0.117715,
+            "Ulex europaeus": -0.004698
+          }
+        },
+        {
+          "id": "inat-245883435-438847987",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.048246,
+            "Cortaderia selloana": -0.064581,
+            "Ulex europaeus": 0.010586
+          }
+        },
+        {
+          "id": "inat-231528008-411227230",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.031161,
+            "Cortaderia selloana": 0.005018,
+            "Ulex europaeus": -0.009576
+          }
+        },
+        {
+          "id": "inat-219959153-389384222",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.022764,
+            "Cortaderia selloana": -0.047396,
+            "Ulex europaeus": 0.031553
+          }
+        },
+        {
+          "id": "inat-257222053-461380516",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.005571,
+            "Cortaderia selloana": -0.055233,
+            "Ulex europaeus": -0.044922
+          }
+        },
+        {
+          "id": "inat-253256847-453432683",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.003398,
+            "Cortaderia selloana": -0.062035,
+            "Ulex europaeus": -0.029586
+          }
+        },
+        {
+          "id": "inat-253259673-453438358",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.030918,
+            "Cortaderia selloana": -0.106971,
+            "Ulex europaeus": -0.131858
+          }
+        },
+        {
+          "id": "inat-255478831-457833773",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.00954,
+            "Cortaderia selloana": -0.082134,
+            "Ulex europaeus": -0.106058
+          }
+        },
+        {
+          "id": "inat-254430343-455732460",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.087502,
+            "Cortaderia selloana": -0.062225,
+            "Ulex europaeus": -0.100501
+          }
+        },
+        {
+          "id": "inat-253139746-453206441",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.053976,
+            "Cortaderia selloana": 0.0103,
+            "Ulex europaeus": -0.049831
+          }
+        },
+        {
+          "id": "inat-248036730-443111749",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis foetida",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.009489,
+            "Cortaderia selloana": -0.128527,
+            "Ulex europaeus": -0.088319
+          }
+        },
+        {
+          "id": "inat-258015805-462855390",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis foetida",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.043488,
+            "Cortaderia selloana": -0.106407,
+            "Ulex europaeus": -0.055413
+          }
+        },
+        {
+          "id": "inat-139507599-238625461",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis foetida",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.00176,
+            "Cortaderia selloana": -0.032367,
+            "Ulex europaeus": -0.056948
+          }
+        },
+        {
+          "id": "inat-251631880-450279483",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": 0.005119,
+            "Cortaderia selloana": 0.062865,
+            "Ulex europaeus": -0.025915
+          }
+        },
+        {
+          "id": "inat-232209542-412517171",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.023002,
+            "Cortaderia selloana": 0.03578,
+            "Ulex europaeus": -0.06433
+          }
+        },
+        {
+          "id": "inat-215417496-380839808",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.047912,
+            "Cortaderia selloana": 0.014723,
+            "Ulex europaeus": -0.083448
+          }
+        },
+        {
+          "id": "inat-256812550-460538839",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.137487,
+            "Cortaderia selloana": -0.218168,
+            "Ulex europaeus": -0.119341
+          }
+        },
+        {
+          "id": "inat-256683175-460279007",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.084204,
+            "Cortaderia selloana": -0.07304,
+            "Ulex europaeus": -0.067729
+          }
+        },
+        {
+          "id": "inat-250980692-448986021",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.196723,
+            "Cortaderia selloana": -0.142453,
+            "Ulex europaeus": -0.074815
+          }
+        },
+        {
+          "id": "inat-258310146-463181089",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.016648,
+            "Cortaderia selloana": -0.032749,
+            "Ulex europaeus": -0.030835
+          }
+        },
+        {
+          "id": "inat-258085684-462989623",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.10569,
+            "Cortaderia selloana": -0.140381,
+            "Ulex europaeus": -0.120629
+          }
+        },
+        {
+          "id": "inat-257323086-461587499",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.071158,
+            "Cortaderia selloana": -0.112743,
+            "Ulex europaeus": -0.067456
+          }
+        },
+        {
+          "id": "inat-217640521-385046946",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.049851,
+            "Cortaderia selloana": -0.029147,
+            "Ulex europaeus": -0.093888
+          }
+        },
+        {
+          "id": "inat-205725677-363790579",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.040902,
+            "Cortaderia selloana": -0.046693,
+            "Ulex europaeus": -0.023357
+          }
+        },
+        {
+          "id": "inat-197951451-348781078",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.077441,
+            "Cortaderia selloana": -0.130308,
+            "Ulex europaeus": -0.033986
+          }
+        }
+      ]
+    },
+    "bioclip-2": {
+      "model": "imageomics/bioclip-2",
+      "model_key": "bioclip-2",
+      "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+      "weights_sha256": "b7b2bf6fbc95799e42630e394cf95803892ab447c1a8ab629dbc82fbeaf7dfef",
+      "summary": {
+        "incidental_positive": 1,
+        "incidental_of": 24,
+        "references_own_target_top": [
+          6,
+          6
+        ],
+        "lookalikes": {
+          "Austroderia": {
+            "top": 5,
+            "positive": 1,
+            "of": 6
+          },
+          "Clematis foetida": {
+            "top": 3,
+            "positive": 2,
+            "of": 3
+          },
+          "Clematis forsteri": {
+            "top": 4,
+            "positive": 0,
+            "of": 6
+          },
+          "Clematis paniculata": {
+            "top": 5,
+            "positive": 0,
+            "of": 6
+          },
+          "Cytisus scoparius": {
+            "top": 6,
+            "positive": 0,
+            "of": 6
+          },
+          "Kunzea ericoides": {
+            "top": 3,
+            "positive": 0,
+            "of": 6
+          },
+          "Leptospermum scoparium": {
+            "top": 4,
+            "positive": 0,
+            "of": 6
+          }
+        },
+        "seconds_per_photo": 3.124
+      },
+      "reference_own_target_margins": [
+        0.06836,
+        0.096704,
+        0.077093,
+        0.082204,
+        0.051111,
+        0.056552
+      ],
+      "rows": [
+        {
+          "id": "inat-250240131-447484684",
+          "cohort": "reference",
+          "reference_species": "Ulex europaeus",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.083876,
+            "Cortaderia selloana": -0.088126,
+            "Ulex europaeus": 0.06836
+          }
+        },
+        {
+          "id": "inat-252250408-451525789",
+          "cohort": "reference",
+          "reference_species": "Ulex europaeus",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.035304,
+            "Cortaderia selloana": -0.027002,
+            "Ulex europaeus": 0.096704
+          }
+        },
+        {
+          "id": "inat-254338658-455546899",
+          "cohort": "reference",
+          "reference_species": "Clematis vitalba",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.077093,
+            "Cortaderia selloana": -0.023979,
+            "Ulex europaeus": -0.055021
+          }
+        },
+        {
+          "id": "inat-256674952-460262550",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.244466,
+            "Cortaderia selloana": -0.259901,
+            "Ulex europaeus": -0.214235
+          }
+        },
+        {
+          "id": "inat-256675033-460262714",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.110147,
+            "Cortaderia selloana": -0.202733,
+            "Ulex europaeus": -0.135859
+          }
+        },
+        {
+          "id": "inat-256675146-460262865",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.148285,
+            "Cortaderia selloana": -0.158187,
+            "Ulex europaeus": -0.134784
+          }
+        },
+        {
+          "id": "inat-256675287-460263038",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.097821,
+            "Cortaderia selloana": -0.119986,
+            "Ulex europaeus": -0.068948
+          }
+        },
+        {
+          "id": "inat-256682298-460279738",
+          "cohort": "reference",
+          "reference_species": "Clematis vitalba",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.082204,
+            "Cortaderia selloana": -0.055778,
+            "Ulex europaeus": -0.0542
+          }
+        },
+        {
+          "id": "inat-256691045-460294362",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.047129,
+            "Cortaderia selloana": -0.013715,
+            "Ulex europaeus": -0.07374
+          }
+        },
+        {
+          "id": "inat-256716592-460347209",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.011172,
+            "Cortaderia selloana": -0.025274,
+            "Ulex europaeus": -0.038465
+          }
+        },
+        {
+          "id": "inat-256727061-460368453",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.056222,
+            "Cortaderia selloana": -0.043649,
+            "Ulex europaeus": -0.043522
+          }
+        },
+        {
+          "id": "inat-256808221-460529900",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.091492,
+            "Cortaderia selloana": -0.052338,
+            "Ulex europaeus": -0.10533
+          }
+        },
+        {
+          "id": "inat-256862582-460640098",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.130248,
+            "Cortaderia selloana": -0.112328,
+            "Ulex europaeus": -0.13278
+          }
+        },
+        {
+          "id": "inat-256863810-460643105",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.0857,
+            "Cortaderia selloana": -0.068906,
+            "Ulex europaeus": -0.084237
+          }
+        },
+        {
+          "id": "inat-256864013-460643540",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.046704,
+            "Cortaderia selloana": -0.022078,
+            "Ulex europaeus": 0.00935
+          }
+        },
+        {
+          "id": "inat-256864136-460643767",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.094341,
+            "Cortaderia selloana": -0.115916,
+            "Ulex europaeus": -0.146796
+          }
+        },
+        {
+          "id": "inat-256864189-460643855",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.054946,
+            "Cortaderia selloana": -0.043965,
+            "Ulex europaeus": -0.041927
+          }
+        },
+        {
+          "id": "inat-256912633-460740779",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.163885,
+            "Cortaderia selloana": -0.210713,
+            "Ulex europaeus": -0.189904
+          }
+        },
+        {
+          "id": "inat-256913086-460741828",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.123498,
+            "Cortaderia selloana": -0.078611,
+            "Ulex europaeus": -0.079092
+          }
+        },
+        {
+          "id": "inat-256918601-460754616",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.211575,
+            "Cortaderia selloana": -0.178764,
+            "Ulex europaeus": -0.160653
+          }
+        },
+        {
+          "id": "inat-257459474-461857745",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.108329,
+            "Cortaderia selloana": -0.110307,
+            "Ulex europaeus": -0.120773
+          }
+        },
+        {
+          "id": "inat-257459539-461857914",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.127446,
+            "Cortaderia selloana": -0.082734,
+            "Ulex europaeus": -0.072438
+          }
+        },
+        {
+          "id": "inat-257459949-461859480",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.106953,
+            "Cortaderia selloana": -0.15136,
+            "Ulex europaeus": -0.130314
+          }
+        },
+        {
+          "id": "inat-257460208-461859096",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.132143,
+            "Cortaderia selloana": -0.147939,
+            "Ulex europaeus": -0.128292
+          }
+        },
+        {
+          "id": "inat-257734181-462389676",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.12878,
+            "Cortaderia selloana": -0.114941,
+            "Ulex europaeus": -0.132679
+          }
+        },
+        {
+          "id": "inat-259114109-465059628",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.025626,
+            "Cortaderia selloana": -0.048231,
+            "Ulex europaeus": -0.078466
+          }
+        },
+        {
+          "id": "inat-309664282-558823763",
+          "cohort": "reference",
+          "reference_species": "Cortaderia selloana",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.096999,
+            "Cortaderia selloana": 0.051111,
+            "Ulex europaeus": -0.083491
+          }
+        },
+        {
+          "id": "inat-331872487-602149309",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.203756,
+            "Cortaderia selloana": -0.169247,
+            "Ulex europaeus": -0.166214
+          }
+        },
+        {
+          "id": "inat-331889702-602185404",
+          "cohort": "incidental",
+          "reference_species": null,
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.029053,
+            "Cortaderia selloana": -0.072062,
+            "Ulex europaeus": -0.08039
+          }
+        },
+        {
+          "id": "inat-82387196-135212551",
+          "cohort": "reference",
+          "reference_species": "Cortaderia selloana",
+          "lookalike_taxon": null,
+          "lookalike_of": null,
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.078931,
+            "Cortaderia selloana": 0.056552,
+            "Ulex europaeus": -0.093921
+          }
+        },
+        {
+          "id": "inat-248320706-443668409",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.046039,
+            "Cortaderia selloana": -0.156072,
+            "Ulex europaeus": -0.147972
+          }
+        },
+        {
+          "id": "inat-244250279-435671170",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.105796,
+            "Cortaderia selloana": -0.183736,
+            "Ulex europaeus": -0.184668
+          }
+        },
+        {
+          "id": "inat-187198926-327322243",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.041033,
+            "Cortaderia selloana": -0.049332,
+            "Ulex europaeus": -0.058026
+          }
+        },
+        {
+          "id": "inat-253709796-454331441",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.049315,
+            "Cortaderia selloana": -0.098813,
+            "Ulex europaeus": -0.117571
+          }
+        },
+        {
+          "id": "inat-249962607-446938032",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.003811,
+            "Cortaderia selloana": -0.061584,
+            "Ulex europaeus": -0.019002
+          }
+        },
+        {
+          "id": "inat-246862510-440788335",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.060939,
+            "Cortaderia selloana": -0.016372,
+            "Ulex europaeus": -0.040454
+          }
+        },
+        {
+          "id": "inat-190982193-334923591",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.054578,
+            "Cortaderia selloana": 0.01977,
+            "Ulex europaeus": 0.00491
+          }
+        },
+        {
+          "id": "inat-139730851-239052175",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.033521,
+            "Cortaderia selloana": -0.011428,
+            "Ulex europaeus": -0.030576
+          }
+        },
+        {
+          "id": "inat-65630163-105666373",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.006514,
+            "Cortaderia selloana": -0.008569,
+            "Ulex europaeus": -0.052832
+          }
+        },
+        {
+          "id": "inat-250532538-448091474",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.111093,
+            "Cortaderia selloana": -0.137221,
+            "Ulex europaeus": -0.040164
+          }
+        },
+        {
+          "id": "inat-247277103-441611371",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.119547,
+            "Cortaderia selloana": -0.126037,
+            "Ulex europaeus": -0.03366
+          }
+        },
+        {
+          "id": "inat-244396298-435933238",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.086009,
+            "Cortaderia selloana": -0.075739,
+            "Ulex europaeus": -0.007099
+          }
+        },
+        {
+          "id": "inat-247709964-442472472",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.131715,
+            "Cortaderia selloana": -0.151674,
+            "Ulex europaeus": -0.091865
+          }
+        },
+        {
+          "id": "inat-231527693-411225849",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.103858,
+            "Cortaderia selloana": -0.119989,
+            "Ulex europaeus": -0.064472
+          }
+        },
+        {
+          "id": "inat-187198392-327321075",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.1272,
+            "Cortaderia selloana": -0.10497,
+            "Ulex europaeus": -0.06999
+          }
+        },
+        {
+          "id": "inat-245883435-438847987",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.009605,
+            "Cortaderia selloana": -0.070957,
+            "Ulex europaeus": -0.0513
+          }
+        },
+        {
+          "id": "inat-231528008-411227230",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.004243,
+            "Cortaderia selloana": 0.007633,
+            "Ulex europaeus": -0.018968
+          }
+        },
+        {
+          "id": "inat-219959153-389384222",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.02634,
+            "Cortaderia selloana": -0.031249,
+            "Ulex europaeus": -0.010472
+          }
+        },
+        {
+          "id": "inat-257222053-461380516",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.004051,
+            "Cortaderia selloana": -0.052681,
+            "Ulex europaeus": -0.054307
+          }
+        },
+        {
+          "id": "inat-253256847-453432683",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.055197,
+            "Cortaderia selloana": -0.005616,
+            "Ulex europaeus": -0.046532
+          }
+        },
+        {
+          "id": "inat-253259673-453438358",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis paniculata",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.07429,
+            "Cortaderia selloana": -0.159254,
+            "Ulex europaeus": -0.144426
+          }
+        },
+        {
+          "id": "inat-255478831-457833773",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.053141,
+            "Cortaderia selloana": -0.079788,
+            "Ulex europaeus": -0.051795
+          }
+        },
+        {
+          "id": "inat-254430343-455732460",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.028258,
+            "Cortaderia selloana": -0.098089,
+            "Ulex europaeus": -0.077551
+          }
+        },
+        {
+          "id": "inat-253139746-453206441",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis forsteri",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.016844,
+            "Cortaderia selloana": -0.08859,
+            "Ulex europaeus": -0.04678
+          }
+        },
+        {
+          "id": "inat-248036730-443111749",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis foetida",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.020779,
+            "Cortaderia selloana": -0.051359,
+            "Ulex europaeus": -0.083577
+          }
+        },
+        {
+          "id": "inat-258015805-462855390",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis foetida",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": -0.007767,
+            "Cortaderia selloana": -0.051042,
+            "Ulex europaeus": -0.089254
+          }
+        },
+        {
+          "id": "inat-139507599-238625461",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Clematis foetida",
+          "lookalike_of": "Clematis vitalba",
+          "best_species": "Clematis vitalba",
+          "margins": {
+            "Clematis vitalba": 0.024572,
+            "Cortaderia selloana": -0.014274,
+            "Ulex europaeus": 0.007788
+          }
+        },
+        {
+          "id": "inat-251631880-450279483",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.051031,
+            "Cortaderia selloana": -0.006285,
+            "Ulex europaeus": -0.028709
+          }
+        },
+        {
+          "id": "inat-232209542-412517171",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.07248,
+            "Cortaderia selloana": -0.014388,
+            "Ulex europaeus": -0.066838
+          }
+        },
+        {
+          "id": "inat-215417496-380839808",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Austroderia",
+          "lookalike_of": "Cortaderia selloana",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.104744,
+            "Cortaderia selloana": -0.021194,
+            "Ulex europaeus": -0.080859
+          }
+        },
+        {
+          "id": "inat-256812550-460538839",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.120078,
+            "Cortaderia selloana": -0.130619,
+            "Ulex europaeus": -0.047758
+          }
+        },
+        {
+          "id": "inat-256683175-460279007",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.090072,
+            "Cortaderia selloana": -0.083627,
+            "Ulex europaeus": -0.055696
+          }
+        },
+        {
+          "id": "inat-250980692-448986021",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Cytisus scoparius",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.142081,
+            "Cortaderia selloana": -0.141143,
+            "Ulex europaeus": -0.052788
+          }
+        },
+        {
+          "id": "inat-258310146-463181089",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.027715,
+            "Cortaderia selloana": -0.012029,
+            "Ulex europaeus": -0.038305
+          }
+        },
+        {
+          "id": "inat-258085684-462989623",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.147621,
+            "Cortaderia selloana": -0.16658,
+            "Ulex europaeus": -0.123691
+          }
+        },
+        {
+          "id": "inat-257323086-461587499",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Leptospermum scoparium",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.106049,
+            "Cortaderia selloana": -0.093691,
+            "Ulex europaeus": -0.094292
+          }
+        },
+        {
+          "id": "inat-217640521-385046946",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.106612,
+            "Cortaderia selloana": -0.119184,
+            "Ulex europaeus": -0.069877
+          }
+        },
+        {
+          "id": "inat-205725677-363790579",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Cortaderia selloana",
+          "margins": {
+            "Clematis vitalba": -0.067758,
+            "Cortaderia selloana": -0.051605,
+            "Ulex europaeus": -0.062263
+          }
+        },
+        {
+          "id": "inat-197951451-348781078",
+          "cohort": "lookalike",
+          "reference_species": null,
+          "lookalike_taxon": "Kunzea ericoides",
+          "lookalike_of": "Ulex europaeus",
+          "best_species": "Ulex europaeus",
+          "margins": {
+            "Clematis vitalba": -0.091898,
+            "Cortaderia selloana": -0.110092,
+            "Ulex europaeus": -0.058892
+          }
+        }
+      ]
+    }
+  }
+}
