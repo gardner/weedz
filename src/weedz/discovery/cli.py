@@ -148,11 +148,11 @@ def package(args: argparse.Namespace) -> None:
         raise SystemExit(f"{args.out} is not a folder; choose a new or empty folder")
     if args.out.exists() and any(args.out.iterdir()):
         raise SystemExit(f"{args.out} is not empty; choose a new or empty folder")
-    built, files = package_contents(store, args.run, datetime.now(UTC).isoformat())
+    built, photos = package_contents(store, args.run, datetime.now(UTC).isoformat())
     if not built["leads"]:
         print(NONE_SELECTED + " Nothing written.")
         return
-    write(files, args.out)
+    write(built, photos, args.out)
     count = len(built["leads"])
     print(f"Wrote {count} lead{'s' if count != 1 else ''} for follow-up to {args.out}")
 

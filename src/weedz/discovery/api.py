@@ -1,10 +1,12 @@
 """Local review API. Bind to loopback; Next.js proxies requests on the same origin."""
 
+import tempfile
 import uuid
+from collections.abc import Iterator
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from temporalio.client import Client
 
 from weedz.discovery.activities import export, review_history
@@ -136,20 +138,25 @@ class ReviewAPI:
         self.run(run_id)
         return outcomes(export(self.store, run_id))
 
-    def _package(self, run_id: str) -> tuple[dict, dict[str, bytes]]:
-        self.run(run_id)
-        try:
-            return package_contents(self.store, run_id, now())
-        except ValueError as error:
-            raise HTTPException(409, str(error)) from error
-
     def package(self, run_id: str) -> dict:
         """The selected leads only, as JSON; photos are in the archive."""
-        return self._package(run_id)[0]
+        self.run(run_id)
+        return package_contents(self.store, run_id, now())[0]
 
-    def package_archive(self, run_id: str) -> Response:
-        return Response(
-            archive(self._package(run_id)[1]),
+    def package_archive(self, run_id: str) -> StreamingResponse:
+        """The package as a zip, built in a temporary file and streamed, so photos are
+        never all held in memory."""
+        self.run(run_id)
+        package, photos = package_contents(self.store, run_id, now())
+
+        def chunks() -> Iterator[bytes]:
+            with tempfile.TemporaryFile() as spool:
+                archive(package, photos, spool)
+                spool.seek(0)
+                yield from iter(lambda: spool.read(1 << 16), b"")
+
+        return StreamingResponse(
+            chunks(),
             media_type="application/zip",
             headers={"Content-Disposition": f'attachment; filename="{run_id}-follow-up.zip"'},
         )
