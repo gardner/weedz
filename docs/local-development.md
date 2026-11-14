@@ -66,7 +66,8 @@ it is intended for local development, not shared public hosting.
    years are visited in bit-reversed order, so even a small cap reaches both
    ends and the middle of the period, with seasons rotated so consecutive picks
    change both. Within a season, photos follow a stable hash order, with at most
-   one photo per observer per day. The same snapshots therefore always give the same sample, and no single walk or week
+   one photo per observer per day across both regions. The same snapshots
+   therefore always give the same sample, and no single walk or week
    dominates. `--sampling recent` reproduces the first pilot's single
    newest-first query, and runs saved before this option existed are reported
    as `recent`. The export's `corpus_coverage` counts photos by year, season,

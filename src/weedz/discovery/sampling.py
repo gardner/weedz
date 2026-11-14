@@ -8,6 +8,7 @@ so the same snapshots always give the same selection without unseeded API random
 import calendar
 import hashlib
 from collections import Counter
+from collections.abc import Iterable
 from datetime import date
 from typing import Any
 
@@ -69,11 +70,16 @@ def _stratum_order(keys: list[str]) -> list[str]:
     return sorted(keys, key=lambda key: order.get(key, (len(seasons), 0)))
 
 
-def select_across_strata(strata: dict[str, list[Photo]], limit: int) -> list[Photo]:
-    """Round-robin across strata, at most one photo per observer per day."""
+def select_across_strata(
+    strata: dict[str, list[Photo]], limit: int, taken: Iterable[Photo] = ()
+) -> list[Photo]:
+    """Round-robin across strata, at most one photo per observer per day.
+
+    Observer-days already used by `taken` (such as another region's sample) stay used.
+    """
     queues = {key: sorted(strata[key], key=_stable) for key in _stratum_order(list(strata))}
     chosen: list[Photo] = []
-    visits: set[tuple[str, str | None]] = set()
+    visits = {(photo.observer, photo.observed_on) for photo in taken}
     while len(chosen) < limit and any(queues.values()):
         for queue in queues.values():
             while queue:

@@ -102,3 +102,31 @@ def test_every_season_query_is_preceded_by_a_heartbeat(
     queries = [index for index, event in enumerate(events) if event.startswith("query")]
     assert len(queries) == 2 * 9  # two regions, nine season windows
     assert all(events[index - 1].startswith("progress Querying") for index in queries)
+
+
+def test_an_outing_across_the_council_boundary_counts_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(source.time, "sleep", lambda _seconds: None)
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        if request.url.host != "api.inaturalist.org":
+            return httpx.Response(200, content=jpeg())
+        params = request.url.params
+        if params["d1"] != "2023-03-01":
+            return httpx.Response(200, json={"results": []})
+        raw = observation() | {
+            "id": int(params["place_id"]),
+            "observed_on": "2023-04-02",
+            "user": {"login": "jenny"},
+        }
+        raw["photos"] = [raw["photos"][0] | {"id": raw["id"]}]
+        return httpx.Response(200, json={"results": [raw]})
+
+    client = Inaturalist(tmp_path)
+    client.client = httpx.Client(transport=httpx.MockTransport(handle))
+    spec = RunSpec(controls_per_species=0, after=date(2023, 1, 1), before=date(2023, 12, 31))
+    photos = client.collect("run", spec)
+    assert [(p.region, p.observer, p.observed_on) for p in photos] == [
+        ("Nelson", "jenny", "2023-04-02")
+    ]

@@ -172,7 +172,9 @@ class Inaturalist:
                 if (photo := photo_from_observation(raw, region, "incidental")) is not None
                 and photo.photo_id not in photos
             ]
-        for photo in select_across_strata(strata, spec.limit_per_region):
+        # An outing that crosses the council boundary still counts as one observer-day.
+        incidental = [photo for photo in photos.values() if photo.cohort == "incidental"]
+        for photo in select_across_strata(strata, spec.limit_per_region, incidental):
             progress(f"Fetching {region}: {photo.id}")
             photos[photo.photo_id] = self.image(photo)
 
