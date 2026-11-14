@@ -8,9 +8,11 @@ counted as independent. Nothing here is a usefulness, novelty or first-occurrenc
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, NamedTuple
 
 from weedz.discovery.occurrences import predates
+from weedz.discovery.outcome_novelty import MEANING as JUDGED_MEANING
+from weedz.discovery.outcome_novelty import Plant, any_judged, judged_novelty
 from weedz.discovery.outcome_terms import (
     EVIDENCE_FIELDS,
     MEANING,
@@ -99,11 +101,14 @@ class Study:
         photos were untimed."""
         return tuple(_timed(kind(photos))[1] for kind in self.work())
 
-    def watchlist_findings(self) -> list[tuple[dict[str, Any], str]]:
-        """(photo, species) for each confirmed suggestion and recorded watchlist plant."""
-        confirmed = [(p, p["scores"].get("best_species")) for p in self.confirmed]
+    def watchlist_plants(self) -> list[Plant]:
+        """Each confirmed suggestion and recorded watchlist plant, with its judgements."""
+        confirmed = [
+            Plant(p, p["scores"].get("best_species"), None, p.get("judgements") or {})
+            for p in self.confirmed
+        ]
         recorded = [
-            (p, finding["species"])
+            Plant(p, finding["species"], finding.get("id"), finding.get("judgements") or {})
             for p in self.incidental
             for finding in self.findings([p])
             if finding.get("species")
@@ -219,50 +224,71 @@ def missed_targets(study: Study) -> dict[str, Any]:
     )
 
 
-def _comparison(photo: dict[str, Any], species: str) -> dict[str, Any] | None:
+def _comparison(photo: dict[str, Any], species: str | None) -> dict[str, Any] | None:
     found = photo.get("reference_comparison", {}).get(species)
     return found if found and found["comparable"] else None
 
 
-def novel_evidence(study: Study) -> dict[str, Any]:
-    references = study.export.get("references")
-    key = "novel_or_earlier_evidence"
+RECORDS_MEANING = (
+    "The value counts confirmed suggestions and recorded watchlist findings with no "
+    "declared record within the radius, or observed in an earlier year than every record "
+    "within it, as of the snapshot date. The reference set is incomplete, so this is not "
+    "a novelty or first-occurrence claim."
+)
+
+
+class Comparison(NamedTuple):
+    """Why the findings cannot be compared with the records ('' if they can), the
+    comparison's evidence, and its value and denominator once compared."""
+
+    gap: str
+    evidence: dict[str, Any]
+    value: dict[str, int] | None = None
+    denominator: dict[str, int] | None = None
+
+
+def _against_records(candidates: list[Plant], references: dict | None) -> Comparison:
     if not references:
-        reason = "There is no reference snapshot to compare against (`main.py references`)."
-        return _measure(key, NOT_YET, reason)
-    evidence = {
+        gap = "There is no reference snapshot to compare against (`main.py references`)."
+        return Comparison(gap, {})
+    evidence: dict[str, Any] = {
         "reference_as_of": references.get("retrieved_at"),
         "reference_records": references.get("counts", {}),
     }
-    candidates = study.watchlist_findings()
     if not candidates:
-        reason = "There is no confirmed or recorded watchlist finding to compare yet."
-        return _measure(key, NOT_YET, reason, evidence=evidence)
-    compared = [(p, found) for p, species in candidates if (found := _comparison(p, species))]
+        return Comparison(
+            "There is no confirmed or recorded watchlist finding to compare yet.", evidence
+        )
+    compared = [(c.photo, found) for c in candidates if (found := _comparison(c.photo, c.species))]
     evidence["not_compared"] = len(candidates) - len(compared)
     if not compared:
-        reason = "No confirmed finding has a location precise enough to compare."
-        return _measure(key, NOT_YET, reason, evidence=evidence)
-    evidence["radius_m"] = sorted({found["radius_m"] for _, found in compared})
+        return Comparison(
+            "No confirmed finding has a location precise enough to compare.", evidence
+        )
     unrecorded = [p for p, found in compared if found["within_radius"] == 0]
     earlier = [p for p, found in compared if predates(p, found)]
-    evidence["no_record_nearby"] = tally(unrecorded)
-    evidence["earlier_than_nearby_records"] = tally(earlier)
-    reason = (
-        "Counts confirmed suggestions and recorded watchlist findings with no declared "
-        "record within the radius, or observed in an earlier year than every record within "
-        "it, as of the snapshot date. The reference set is incomplete, so this is not a "
-        "novelty or first-occurrence claim "
-        f"(#25). {USEFULNESS_UNJUDGED}"
-    )
-    return _measure(
-        key,
-        PARTIAL,
-        reason,
-        value=tally(unrecorded + earlier),
-        denominator=tally([p for p, _ in compared]),
-        evidence=evidence,
-    )
+    evidence |= {
+        "radius_m": sorted({found["radius_m"] for _, found in compared}),
+        "no_record_nearby": tally(unrecorded),
+        "earlier_than_nearby_records": tally(earlier),
+    }
+    return Comparison("", evidence, tally(unrecorded + earlier), tally([p for p, _ in compared]))
+
+
+def novel_evidence(study: Study) -> dict[str, Any]:
+    """Computed distance and date to the reference records, beside reviewers' judged
+    novelty levels (#18, #25). Neither is a first-occurrence claim."""
+    key = "novel_or_earlier_evidence"
+    references = study.export.get("references")
+    candidates = study.watchlist_plants()
+    records = _against_records(candidates, references)
+    judged = judged_novelty(candidates, (references or {}).get("snapshot_sha256"))
+    evidence = records.evidence | {"watchlist_findings": tally([c.photo for c in candidates])}
+    evidence |= judged
+    if records.gap and not any_judged(judged):
+        return _measure(key, NOT_YET, records.gap, evidence=evidence)
+    reason = " ".join([records.gap or RECORDS_MEANING, JUDGED_MEANING, USEFULNESS_UNJUDGED])
+    return _measure(key, PARTIAL, reason, records.value, records.denominator, evidence)
 
 
 UNTIMED = ["decisions", "findings", "judgements", "referral_actions"]
