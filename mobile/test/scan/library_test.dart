@@ -66,6 +66,46 @@ void main() {
       },
     );
 
+    test('finds photos whose true capture time is part-way through the second '
+        'the plugin reports', () async {
+      // PhotoKit filters on the exact creation date, but photo_manager
+      // reports it truncated to whole seconds.
+      final second = day.add(const Duration(minutes: 5));
+      final exact = {
+        'a': second.add(const Duration(milliseconds: 250)),
+        'b': second.add(const Duration(milliseconds: 750)),
+        'c': second.add(const Duration(milliseconds: 500)),
+      };
+      final assets = [
+        for (final id in exact.keys) asset(id, minutes: 5),
+        asset('old', minutes: 1),
+      ];
+      Future<List<LibraryAsset>> query({
+        DateTime? newest,
+        DateTime? oldest,
+        int? limit,
+      }) async {
+        DateTime when(LibraryAsset a) => exact[a.id] ?? a.createdAt;
+        final hits =
+            assets
+                .where((a) => newest == null || !when(a).isAfter(newest))
+                .where((a) => oldest == null || !when(a).isBefore(oldest))
+                .toList()
+              ..sort((a, b) => when(b).compareTo(when(a)));
+        return limit == null ? hits : hits.take(limit).toList();
+      }
+
+      final seen = <String>[];
+      ScanCursor? cursor;
+      while (true) {
+        final page = await pageOlderThan(cursor, limit: 1, query: query);
+        if (page.isEmpty) break;
+        seen.addAll(page.map((a) => a.id));
+        cursor = page.last.cursor;
+      }
+      expect(seen, ['c', 'b', 'a', 'old']);
+    });
+
     test('is not shifted by photos taken after the scan started', () async {
       final assets = [for (var m = 0; m < 6; m++) asset('p$m', minutes: m)];
       final first = await pageOlderThan(

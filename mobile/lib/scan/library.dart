@@ -129,28 +129,32 @@ typedef CaptureRangeQuery = Future<List<LibraryAsset>> Function({
 
 /// The next page after [cursor], built from capture-time range queries.
 ///
-/// Capture times have one-second resolution, so bursts share them. A page
-/// therefore always holds whole groups of photos with the same capture time,
-/// sorted by id, so the cursor never falls in the middle of an unsorted tie.
-/// A page may be a little longer than [limit] for that reason.
+/// The plugin reports capture times in whole seconds, so bursts share them,
+/// while the platform filters on the exact time. A page therefore always holds
+/// every photo reported in the same second as its last one, sorted by id, so
+/// the cursor never falls in the middle of an unsorted tie. A page may be a
+/// little longer than [limit] for that reason.
 Future<List<LibraryAsset>> pageOlderThan(
   ScanCursor? cursor, {
   required int limit,
   required CaptureRangeQuery query,
 }) async {
+  // Every photo reported as captured in [second]'s whole second.
+  Future<List<LibraryAsset>> sameSecond(DateTime second) => query(
+    oldest: second,
+    newest: second.add(const Duration(milliseconds: 999)),
+  );
+
   final page = <LibraryAsset>[];
   if (cursor != null) {
-    final t = cursor.createdAt;
-    final ties = await query(newest: t, oldest: t);
-    page.addAll(ties.where(cursor.precedes));
+    page.addAll((await sameSecond(cursor.createdAt)).where(cursor.precedes));
   }
   final older = await query(
     newest: cursor?.createdAt.subtract(const Duration(milliseconds: 1)),
     limit: limit,
   );
   if (older.isNotEmpty) {
-    final boundary = older.last.createdAt;
-    final ties = await query(newest: boundary, oldest: boundary);
+    final ties = await sameSecond(older.last.createdAt);
     final ids = {for (final a in ties) a.id};
     page
       ..addAll(older.where((a) => !ids.contains(a.id)))

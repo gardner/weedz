@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Weedz looks through your photos on this phone for likely weeds. Photos are never uploaded; only reports you approve are sent.</string>
+	<string>Weedz looks through your photos on this phone for invasive weeds you may have photographed without noticing. Photos are checked on the phone and are never uploaded unless you approve a report. An approved report includes the exact place the photo was taken.</string>
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
 	<true/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
