@@ -129,6 +129,11 @@ void main() {
         () => sending().refused().revise(id: id, report: fullReport()),
         throwsArgumentError,
       );
+      // The refused content itself is never sent again, under any id.
+      expect(
+        () => sending().refused().revise(id: newId, report: fullReport()),
+        throwsArgumentError,
+      );
       expect(
         () => found().revise(id: newId, report: fullReport()),
         throwsStateError,

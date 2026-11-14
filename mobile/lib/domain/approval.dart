@@ -116,11 +116,19 @@ final class ReportCase {
       _move({ApprovalStatus.sending}, ApprovalStatus.refused, 'refuse');
 
   /// A refused report, changed, as a new pending case under a new [id], so
-  /// the refused id never stands for different content.
+  /// the refused id never stands for different content and the refused
+  /// content is never sent again.
   ReportCase revise({required String id, required Report report}) {
     _expect({ApprovalStatus.refused}, 'revise');
     if (id == this.id) {
       throw ArgumentError.value(id, 'id', 'A revision needs a new id');
+    }
+    if (report == this.report) {
+      throw ArgumentError.value(
+        '<report>',
+        'report',
+        'A revision must change it',
+      );
     }
     return ReportCase.found(id: id, report: report);
   }
