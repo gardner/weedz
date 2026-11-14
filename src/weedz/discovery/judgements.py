@@ -155,6 +155,7 @@ def standing_judgements(events: list[Any]) -> dict[Target, dict[str, dict[str, d
             by_reviewer.pop(event["reviewer"], None)
         else:
             by_reviewer[event["reviewer"]] = {
+                "id": event["id"],
                 "value": event["value"],
                 "note": event["note"],
                 "created_at": event["created_at"],

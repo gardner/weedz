@@ -127,6 +127,7 @@ def review_history(store: Store, run_id: str, photos: list[dict]) -> list[dict]:
             photo_id=photo["id"],
             events=store.reviews(run_id, photo["id"]),
             judgements=store.judgements(run_id, photo["id"]),
+            referrals=photo.get("referrals", []),
         )
         for photo in photos
     ]
@@ -186,6 +187,11 @@ def export(store: Store, run_id: str) -> dict:
                 "Judgements of identity, location, history and novelty are attributed reviewer "
                 "opinions, kept per dimension; no judgement means unassessed, and only a "
                 "noted 'verified_new_locality' claims a new locality"
+            ),
+            (
+                "Referrals ask for specialist assessment with a reason; an answer is the "
+                "named specialist's note, not a verified identification, and never changes "
+                "a reviewer's decision or judgement. Names are attribution, not identity"
             ),
             (
                 "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "

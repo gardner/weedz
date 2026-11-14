@@ -11,86 +11,20 @@ from dataclasses import dataclass
 from typing import Any
 
 from weedz.discovery.occurrences import predates
-
-MEASURED = "measured"
-PARTIAL = "partially measured"
-NOT_YET = "not yet measurable"
-
-Photos = list[dict[str, Any]]
-
-MEANING = (
-    "How far this run answers each pilot success measure (docs/prd.md). Values are "
-    "counts of photos, independent site visits and ungrouped photos that could not be "
-    "grouped; 'unknown' means not measured, not zero. No numeric success limits have "
-    "been agreed yet, so there are no pass or fail verdicts."
+from weedz.discovery.outcome_terms import (
+    EVIDENCE_FIELDS,
+    MEANING,
+    MEASURED,
+    NO_REVIEWS,
+    NOT_YET,
+    PARTIAL,
+    USEFULNESS_UNJUDGED,
+    Photos,
+    plural,
+    tally,
 )
-NO_REVIEWS = "No incidental photo has been reviewed yet."
-USEFULNESS_UNJUDGED = (
-    "A confirmed review records only that the suggested species is visible; whether a "
-    "finding is useful is not judged separately yet (#18)."
-)
-CONDITIONS = {
-    "useful_incidental_yield": (
-        "Useful incidental yield",
-        "Produces leads the partner considers worth investigation, beyond a study "
-        "consisting only of known target observations",
-    ),
-    "reviewer_effort_per_useful_finding": (
-        "Reviewer effort per useful finding",
-        "Fits the partner's agreed review capacity and improves on comparable manual searching",
-    ),
-    "missed_visible_targets": (
-        "Missed visible targets",
-        "Meets watchlist- and condition-specific limits agreed before the pilot",
-    ),
-    "novel_or_earlier_evidence": (
-        "Novel or earlier evidence",
-        "Supports defensible claims of added information rather than unsupported "
-        "first-occurrence claims",
-    ),
-    "false_alarm_workload": (
-        "False-alarm workload",
-        "Does not overwhelm review capacity or erase discovery value",
-    ),
-    "follow_up_usefulness": (
-        "Follow-up usefulness",
-        "Supports specialist assessment, a meaningful site visit, or a justified "
-        "historical record update",
-    ),
-    "evidence_completeness": (
-        "Evidence and review completeness",
-        "Every lead communicates the evidence and limits behind its conclusion",
-    ),
-    "coverage": (
-        "Coverage and review usability",
-        "Users can complete the core journey and explain which evidence remains unassessed",
-    ),
-}
-EVIDENCE_FIELDS: dict[str, Callable[[dict[str, Any]], bool]] = {
-    "source": lambda p: bool(p.get("source_url")),
-    "attribution": lambda p: bool(p.get("attribution")),
-    "licence": lambda p: bool(p.get("photo_license")) and bool(p.get("observation_license")),
-    "date": lambda p: bool(p.get("observed_on")),
-    "location": lambda p: (
-        p.get("coordinate_status") == "public" and p.get("positional_accuracy_m") is not None
-    ),
-    "checksum": lambda p: bool(p.get("sha256")),
-}
-
-
-def tally(photos: Photos) -> dict[str, int]:
-    """Distinct photos, the independent site visits among groupable ones, and those left
-    ungrouped."""
-    photos = list({p["id"]: p for p in photos}.values())
-    return {
-        "photos": len(photos),
-        "site_visits": len({p["encounter_group"] for p in photos if p["encounter_linkable"]}),
-        "ungrouped_photos": sum(not p["encounter_linkable"] for p in photos),
-    }
-
-
-def plural(count: int, noun: str) -> str:
-    return f"{count} {noun}{'' if count == 1 else 's'}"
+from weedz.discovery.outcome_terms import measure_result as _measure
+from weedz.discovery.referrals import referral_work, summarize_referrals
 
 
 def _minutes(seconds: float) -> float:
@@ -139,23 +73,31 @@ class Study:
         """Identity, location, history and novelty judgements on these photos (#18)."""
         return self._history(photos, "judgements")
 
+    def referrals(self, photos: Photos) -> list[dict[str, Any]]:
+        """Requests for specialist assessment on these photos, with their status (#20)."""
+        return self._history(photos, "referrals")
+
+    def referral_work(self, photos: Photos) -> list[dict[str, Any]]:
+        return referral_work(self.referrals(photos))
+
     @staticmethod
     def findings(photos: Photos) -> list[dict[str, Any]]:
         """Plants reviewers recorded: corrected species and additions the screening missed."""
         return [finding for p in photos for finding in p.get("findings", [])]
 
-    def effort(self, photos: Photos) -> tuple[float | None, int]:
-        """Measured minutes on these photos' decisions, recorded findings and judgements,
-        and how many of those were not timed."""
-        work = self.decisions(photos) + self.findings(photos) + self.judgements(photos)
-        return _timed(work)
+    def work(self) -> tuple[Callable[[Photos], list[dict[str, Any]]], ...]:
+        """Each kind of timed review work, in the order `untimed` counts them."""
+        return (self.decisions, self.findings, self.judgements, self.referral_work)
 
-    def untimed(self, photos: Photos) -> tuple[int, int, int]:
-        """How many decisions, recorded findings and judgements on these photos were untimed."""
-        decisions, findings, judgements = (
-            _timed(kind(photos))[1] for kind in (self.decisions, self.findings, self.judgements)
-        )
-        return decisions, findings, judgements
+    def effort(self, photos: Photos) -> tuple[float | None, int]:
+        """Measured minutes on these photos' decisions, recorded findings, judgements and
+        referral actions, and how many of those were not timed."""
+        return _timed([item for kind in self.work() for item in kind(photos)])
+
+    def untimed(self, photos: Photos) -> tuple[int, ...]:
+        """How many decisions, recorded findings, judgements and referral actions on these
+        photos were untimed."""
+        return tuple(_timed(kind(photos))[1] for kind in self.work())
 
     def watchlist_findings(self) -> list[tuple[dict[str, Any], str]]:
         """(photo, species) for each confirmed suggestion and recorded watchlist plant."""
@@ -181,27 +123,6 @@ class Study:
         return [f"{missing} of {len(self.incidental)} incidental photos are not reviewed yet."]
 
 
-def _measure(
-    key: str,
-    status: str,
-    reason: str | None,
-    value: Any = None,
-    denominator: Any = None,
-    evidence: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    name, condition = CONDITIONS[key]
-    return {
-        "key": key,
-        "measure": name,
-        "status": status,
-        "reason": reason,
-        "value": value,
-        "denominator": denominator,
-        "evidence": evidence or {},
-        "success_condition": condition,
-    }
-
-
 def useful_yield(study: Study) -> dict[str, Any]:
     return _measure(
         "useful_incidental_yield",
@@ -220,7 +141,10 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
     decisions = study.decisions(study.incidental)
     findings = study.findings(study.incidental)
     judgements = study.judgements(study.incidental)
-    untimed, untimed_findings, untimed_judgements = study.untimed(study.incidental)
+    referral_actions = study.referral_work(study.incidental)
+    untimed, untimed_findings, untimed_judgements, untimed_referrals = study.untimed(
+        study.incidental
+    )
     audit_minutes, untimed_audits = study.audit_effort()
     return _measure(
         "reviewer_effort_per_useful_finding",
@@ -234,6 +158,8 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
             "untimed_incidental_findings": untimed_findings,
             "timed_incidental_judgements": len(judgements) - untimed_judgements,
             "untimed_incidental_judgements": untimed_judgements,
+            "timed_incidental_referral_actions": len(referral_actions) - untimed_referrals,
+            "untimed_incidental_referral_actions": untimed_referrals,
             "audit_minutes": audit_minutes,
             "untimed_audit_answers": untimed_audits,
             "confirmed_visible": tally(study.confirmed),
@@ -339,6 +265,9 @@ def novel_evidence(study: Study) -> dict[str, Any]:
     )
 
 
+UNTIMED = ["decisions", "findings", "judgements", "referral_actions"]
+
+
 def false_alarms(study: Study) -> dict[str, Any]:
     """Rejected and inconclusive reviews and their time. Every photo shows a top suggestion
     and no rule yet decides which are proposed leads (#16), so this is not a count of
@@ -348,18 +277,14 @@ def false_alarms(study: Study) -> dict[str, Any]:
     rejected = [p for p in study.reviewed if p["review_status"] == "rejected" and not p["disputed"]]
     inconclusive = [p for p in study.reviewed if p["review_status"] == "uncertain" or p["disputed"]]
     minutes, _ = study.effort(rejected + inconclusive)
-    untimed, untimed_findings, untimed_judgements = study.untimed(rejected + inconclusive)
+    counts = study.untimed(rejected + inconclusive)
     caveats = [
         "No rule yet decides which suggestions are proposed leads (#16), so rejected and "
         "inconclusive reviews are reported rather than a false-alarm count.",
         *study.unreviewed_note(),
     ]
-    counts = [untimed, untimed_findings, untimed_judgements]
-    parts = [
-        plural(count, noun)
-        for count, noun in zip(counts, ["decision", "recorded finding", "judgement"], strict=True)
-        if count
-    ]
+    nouns = ["decision", "recorded finding", "judgement", "referral action"]
+    parts = [plural(count, noun) for count, noun in zip(counts, nouns, strict=True) if count]
     if parts:
         listed = parts[-1] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
         verb = "was" if sum(counts) == 1 else "were"
@@ -376,19 +301,39 @@ def false_alarms(study: Study) -> dict[str, Any]:
                 [p for p in rejected + inconclusive if p["scores"].get("margin", 0) > 0]
             ),
             "minutes": minutes,
-            "untimed_decisions": untimed,
-            "untimed_findings": untimed_findings,
-            "untimed_judgements": untimed_judgements,
+            **{f"untimed_{kind}": count for kind, count in zip(UNTIMED, counts, strict=True)},
         },
     )
 
 
-def follow_up(_study: Study) -> dict[str, Any]:
-    reason = (
+def follow_up(study: Study) -> dict[str, Any]:
+    """Specialist referrals on incidental photos (#20). A referral asks for assessment;
+    whether a lead then supports a site visit or record update is not recorded yet."""
+    unrecorded = (
         "Intended users' judgements of whether a lead supports a next step are not "
         "recorded yet (#18, #27)."
     )
-    return _measure("follow_up_usefulness", NOT_YET, reason)
+    referrals = study.referrals(study.incidental)
+    if not referrals:
+        return _measure("follow_up_usefulness", NOT_YET, f"No referrals yet. {unrecorded}")
+    waiting = [
+        p
+        for p in study.incidental
+        if any(item["status"] == "open" for item in study.referrals([p]))
+    ]
+    reason = (
+        "Counts requests for specialist assessment and how soon they were answered; an "
+        f"answer is the specialist's note, not a verified identification. {unrecorded}"
+    )
+    return _measure(
+        "follow_up_usefulness",
+        PARTIAL,
+        reason,
+        evidence={
+            "referrals": summarize_referrals(referrals),
+            "photos_with_open_referrals": tally(waiting),
+        },
+    )
 
 
 def completeness(study: Study) -> dict[str, Any]:
