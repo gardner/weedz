@@ -93,3 +93,26 @@ def test_run_detail_includes_the_effort_summary(tmp_path: Path) -> None:
     store.review("run", photo_id, "rejected", "", "Ana", 90)
     detail = TestClient(create_app(tmp_path)).get("/runs/run").json()
     assert detail["review_effort"]["total_minutes"] == 1.5
+
+
+def test_untimed_incidental_decisions_withhold_the_per_finding_rate(tmp_path: Path) -> None:
+    store, timed, _ = store_with_photos(tmp_path)
+    untimed = photo_from_observation(observation() | {"id": 201}, "Nelson", "incidental")
+    assert untimed is not None
+    store.save_photos("run", [untimed])
+    store.review("run", untimed.id, "confirmed", "", "Ana")
+    store.review("run", timed, "confirmed", "", "Ana", 60)
+    summary = export(store, "run")["review_effort"]
+    assert summary["confirmed_incidental_photos"] == 2
+    assert summary["unmeasured_incidental_decisions"] == 1
+    assert summary["incidental_minutes_per_confirmed_photo"] is None
+
+
+def test_untimed_reference_decisions_keep_the_per_finding_rate(tmp_path: Path) -> None:
+    store, incidental, reference = store_with_photos(tmp_path)
+    store.review("run", incidental, "confirmed", "", "Ana", 60)
+    store.review("run", reference, "rejected", "", "Ana")
+    summary = export(store, "run")["review_effort"]
+    assert summary["unmeasured_decisions"] == 1
+    assert summary["unmeasured_incidental_decisions"] == 0
+    assert summary["incidental_minutes_per_confirmed_photo"] == 1.0

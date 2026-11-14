@@ -23,17 +23,19 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
     by_status: dict[str, float] = defaultdict(float)
     by_reviewer: dict[str, float] = defaultdict(float)
     incidental = 0.0
-    measured = unmeasured = 0
+    measured = unmeasured = unmeasured_incidental = 0
     for entry in history:
+        is_incidental = cohort.get(entry["photo_id"]) == "incidental"
         for event in entry["events"]:
             seconds = event.get("effort_seconds")
             if seconds is None:
                 unmeasured += 1
+                unmeasured_incidental += is_incidental
                 continue
             measured += 1
             by_status[event["status"]] += seconds
             by_reviewer[event["reviewer"] or "not recorded"] += seconds
-            if cohort.get(entry["photo_id"]) == "incidental":
+            if is_incidental:
                 incidental += seconds
     confirmed = sum(
         1
@@ -48,8 +50,10 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
         "minutes_by_status": {key: _minutes(value) for key, value in by_status.items()},
         "minutes_by_reviewer": {key: _minutes(value) for key, value in by_reviewer.items()},
         "incidental_minutes": _minutes(incidental),
+        "unmeasured_incidental_decisions": unmeasured_incidental,
         "confirmed_incidental_photos": confirmed,
+        # Untimed incidental decisions would make the rate look cheaper than it was.
         "incidental_minutes_per_confirmed_photo": (
-            _minutes(incidental / confirmed) if confirmed else None
+            _minutes(incidental / confirmed) if confirmed and not unmeasured_incidental else None
         ),
     }

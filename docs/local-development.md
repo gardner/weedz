@@ -92,7 +92,8 @@ intended for local development, not shared public hosting.
    visible, and it stops counting after 10 minutes without input. The export's
    `review_effort` reports minutes by decision and reviewer, and incidental minutes
    per "Species visible" photo. Untimed earlier decisions are listed as unmeasured,
-   never as zero. Confirmation is not a useful-finding measure. The
+   never as zero, and any untimed incidental decision withholds the per-photo rate.
+   Confirmation is not a useful-finding measure. The
    API export includes current decisions, while the completion manifest records
    the state at screening completion.
 
