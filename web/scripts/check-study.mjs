@@ -77,9 +77,10 @@ try {
   await panel.getByLabel("Discovery question").fill("Which overlooked sites would DOC visit?");
   await panel.getByLabel("Partner", { exact: true }).fill("Example team");
   await panel.getByLabel("Responsible people").fill("Coordinator: Ana\nSpecialist: Dr Wiri");
-  await panel.getByRole("checkbox", { name: "Clematis vitalba" }).check();
+  await panel.getByRole("checkbox", { name: /^Clematis vitalba/ }).check();
   await panel.getByLabel("Why Clematis vitalba").fill("High management value");
   await panel.getByLabel("Not yet screened species").fill("Gunnera tinctoria: Wetland spread");
+  await panel.getByRole("checkbox", { name: /^Clematis paniculata/ }).check();
   await panel.getByLabel("Why Clematis paniculata").fill("Native; flowers alike");
   await panel.getByLabel(/^Coverage and review usability:/).fill("80");
   await panel.getByLabel("Recorded by").fill("Ana");
@@ -115,8 +116,23 @@ try {
   await panel.getByText(/at least 0\.5 h used so far · no budget set/).waitFor();
   await panel.getByText(/Version 1 by Ana/).waitFor();
 
+  // A stored version may name what the screening no longer covers, or a measure since
+  // removed; an edit must carry them rather than silently drop them.
+  study.definition.watchlist.push({
+    species: "Cortaderia selloana",
+    rationale: "Plumes",
+    screened: true,
+  });
+  study.definition.limits.old_measure = { value: 1, note: "" };
+  await panel.getByText(/Cortaderia selloana: Plumes/).waitFor();
+
   // An edit starts from the saved version and is sent as the next one.
   await panel.getByRole("button", { name: "Edit study" }).click();
+  // Someone else saves meanwhile; this edit must still name the version it started from.
+  study = { ...study, version: 5 };
+  await panel.getByText("provisional · version 5").waitFor({ timeout: 10_000 });
+  // A lookalike stays declared when its rationale is cleared.
+  await panel.getByLabel("Why Clematis paniculata").fill("");
   assert.equal(await panel.getByLabel("Partner", { exact: true }).inputValue(), "Example team");
   assert.equal(
     await panel.getByLabel("Why Clematis vitalba").inputValue(),
@@ -135,7 +151,15 @@ try {
   assert.equal(edited.definition.partner, "Second team");
   assert.equal(edited.definition.review_budget.hours, 40);
   assert.equal(edited.change_note, "Partner confirmed");
-  assert.equal(edited.definition.watchlist.length, 2, "the edit keeps the watchlist");
+  assert.deepEqual(edited.definition.watchlist[2], {
+    species: "Cortaderia selloana",
+    rationale: "Plumes",
+    screened: false,
+  });
+  assert.deepEqual(edited.definition.lookalikes, [
+    { taxon: "Clematis paniculata", rationale: "", screened: true },
+  ]);
+  assert.deepEqual(edited.definition.limits.old_measure, { value: 1, note: "" });
 
   // A person written without a role is refused before anything is sent.
   await panel.getByRole("button", { name: "Edit study" }).click();

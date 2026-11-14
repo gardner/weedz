@@ -27,7 +27,7 @@ from weedz.discovery.records import TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
 from weedz.discovery.store import Store
 from weedz.discovery.study import StudyDefinition, StudyEdit
-from weedz.discovery.study_store import link_study, run_study, save_version
+from weedz.discovery.study_store import StaleVersion, link_study, run_study, save_version
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -172,27 +172,41 @@ def report(args: argparse.Namespace) -> None:
         args.json.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
 
 
+def _record_study(store: Store, args: argparse.Namespace) -> None:
+    """Record --file as the run's next study version, refusing an edit whose file is based
+    on an older version than the one now standing."""
+    if not args.author:
+        raise SystemExit("Name who records this study version with --author")
+    try:
+        definition = StudyDefinition.model_validate_json(args.file.read_text())
+    except ValidationError as error:
+        raise SystemExit(f"Study not recorded: {error}") from error
+    linked = run_study(store, args.run)
+    if linked and args.base_version is None:
+        raise SystemExit(
+            f"This run's study is at version {linked['version']}. Check your file is based "
+            f"on it, then pass --base-version {linked['version']}"
+        )
+    edit = StudyEdit(
+        definition=definition,
+        author=args.author,
+        base_version=args.base_version or 0,
+        change_note=args.note,
+    )
+    try:
+        saved = save_version(store, linked["id"] if linked else None, edit)
+    except StaleVersion as error:
+        raise SystemExit(f"Study not recorded: {error}") from error
+    if not linked:
+        link_study(store, args.run, saved["id"], args.author)
+
+
 def study(args: argparse.Namespace) -> None:
     """Show the run's study; with --file, record the file as its next version (a new
     study linked to the run when it has none)."""
     store = run_store(args)
     if args.file:
-        if not args.author:
-            raise SystemExit("Name who records this study version with --author")
-        try:
-            definition = StudyDefinition.model_validate_json(args.file.read_text())
-        except ValidationError as error:
-            raise SystemExit(f"Study not recorded: {error}") from error
-        linked = run_study(store, args.run)
-        edit = StudyEdit(
-            definition=definition,
-            author=args.author,
-            base_version=linked["version"] if linked else 0,
-            change_note=args.note,
-        )
-        saved = save_version(store, linked["id"] if linked else None, edit)
-        if not linked:
-            link_study(store, args.run, saved["id"], args.author)
+        _record_study(store, args)
     print(json.dumps(run_study(store, args.run), indent=2, ensure_ascii=False))
 
 
@@ -256,6 +270,9 @@ def parse(argv: list[str]) -> argparse.Namespace:
     define.add_argument("--file", type=Path, help="Study definition JSON to record")
     define.add_argument("--author", help="Who records this version")
     define.add_argument("--note", default="", help="What changed and why")
+    define.add_argument(
+        "--base-version", type=int, help="The version your file edits (needed once one exists)"
+    )
     bundle = commands.add_parser(
         "package", help="Write the follow-up package of a run's selected leads"
     )

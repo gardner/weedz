@@ -106,7 +106,10 @@ export default function StudyPanel({
   onError: (message: string) => void;
 }) {
   const [terms, setTerms] = useState<StudyTerms>();
-  const [editing, setEditing] = useState(false);
+  // The version an edit started from (null for a new study); undefined when not editing.
+  // Saving names it, so a version saved meanwhile is refused rather than replaced.
+  const [base, setBase] = useState<{ id: string; version: number } | null>();
+  const editing = base !== undefined;
   const [saving, setSaving] = useState(false);
   // Who last recorded a version here, for the next edit when no reviewer name is set.
   const [lastAuthor, setLastAuthor] = useState("");
@@ -125,12 +128,12 @@ export default function StudyPanel({
       });
     setSaving(true);
     try {
-      const edit = { definition, author, base_version: study?.version ?? 0, change_note: note };
+      const edit = { definition, author, base_version: base?.version ?? 0, change_note: note };
       // A new study is linked to this run in the same request.
-      const saved = study
-        ? await post(`studies/${study.id}/versions`, edit)
+      const saved = base
+        ? await post(`studies/${base.id}/versions`, edit)
         : await post("studies", { ...edit, run_id: runId });
-      setEditing(false);
+      setBase(undefined);
       setLastAuthor(author);
       await onSaved(`Study version ${saved.version} saved locally.`);
     } catch (failure) {
@@ -155,7 +158,7 @@ export default function StudyPanel({
           reviewer={reviewer.trim() || lastAuthor}
           saving={saving}
           onSave={save}
-          onCancel={() => setEditing(false)}
+          onCancel={() => setBase(undefined)}
         />
       ) : (
         <>
@@ -167,7 +170,11 @@ export default function StudyPanel({
               limits are not agreed in the product, so outcomes have no verdicts.
             </p>
           )}
-          <button type="button" disabled={!runId || !terms} onClick={() => setEditing(true)}>
+          <button
+            type="button"
+            disabled={!runId || !terms}
+            onClick={() => setBase(study ? { id: study.id, version: study.version } : null)}
+          >
             {study ? "Edit study" : "Record the study"}
           </button>
         </>

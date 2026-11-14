@@ -100,7 +100,7 @@ export type Draft = {
   periodWhy: string;
   species: Record<string, Pick>;
   otherSpecies: string;
-  lookalikes: Record<string, string>;
+  lookalikes: Record<string, Pick>;
   otherLookalikes: string;
   source: string;
   selection: string;
@@ -120,8 +120,11 @@ function picks(names: string[], chosen: (Named & { key: string })[]): Record<str
   );
 }
 
-function unscreened(items: (Named & { key: string })[]): string {
-  return toLines(items.filter((item) => !item.screened).map((item) => [item.key, item.rationale]));
+/** Names the screening does not cover now: those recorded as not yet screened, and any
+ * recorded as screened that the code has since dropped, so an edit never loses them. */
+function unscreened(items: (Named & { key: string })[], known: string[]): string {
+  const other = items.filter((item) => !item.screened || !known.includes(item.key));
+  return toLines(other.map((item) => [item.key, item.rationale]));
 }
 
 export function toDraft(study: StudyDefinition, terms: StudyTerms): Draft {
@@ -129,25 +132,23 @@ export function toDraft(study: StudyDefinition, terms: StudyTerms): Draft {
   const species = study.watchlist.map((item) => ({ ...item, key: item.species }));
   const lookalikes = study.lookalikes.map((item) => ({ ...item, key: item.taxon }));
   const number = (value: number | null) => (value === null ? "" : String(value));
+  const lookalikeNames = terms.lookalikes.map((item) => item.name);
+  // Limits for measures no longer offered are kept, so the server can say so.
+  const limitKeys = [...new Set([...Object.keys(terms.limits), ...Object.keys(study.limits)])];
   return {
     status: study.status,
     question: study.question,
     partner: study.partner,
     people: toLines(study.people.map((person) => [person.role, person.name])),
     regions: picks(terms.regions, regions),
-    otherRegions: unscreened(regions),
+    otherRegions: unscreened(regions, terms.regions),
     periodStart: study.period_start ?? "",
     periodEnd: study.period_end ?? "",
     periodWhy: study.period_rationale,
     species: picks(Object.keys(terms.species), species),
-    otherSpecies: unscreened(species),
-    lookalikes: Object.fromEntries(
-      terms.lookalikes.map(({ name }) => [
-        name,
-        lookalikes.find((item) => item.key === name && item.screened)?.rationale ?? "",
-      ]),
-    ),
-    otherLookalikes: unscreened(lookalikes),
+    otherSpecies: unscreened(species, Object.keys(terms.species)),
+    lookalikes: picks(lookalikeNames, lookalikes),
+    otherLookalikes: unscreened(lookalikes, lookalikeNames),
     source: study.source_collection,
     selection: study.subject_selection,
     hours: number(study.review_budget.hours),
@@ -155,7 +156,7 @@ export function toDraft(study: StudyDefinition, terms: StudyTerms): Draft {
     budgetNote: study.review_budget.note,
     references: toLines(study.reference_records.map((item) => [item.name, item.note])),
     limits: Object.fromEntries(
-      Object.keys(terms.limits).map((key) => [
+      limitKeys.map((key) => [
         key,
         { value: number(study.limits[key]?.value ?? null), note: study.limits[key]?.note ?? "" },
       ]),
@@ -207,12 +208,11 @@ export function fromDraft(draft: Draft): StudyDefinition | string {
       rationale,
       screened,
     })),
-    lookalikes: [
-      ...Object.entries(draft.lookalikes)
-        .filter(([, why]) => why.trim())
-        .map(([taxon, why]) => ({ taxon, rationale: why.trim(), screened: true })),
-      ...otherLookalikes.map(([taxon, rationale]) => ({ taxon, rationale, screened: false })),
-    ],
+    lookalikes: chosen(draft.lookalikes, otherLookalikes).map(([taxon, rationale, screened]) => ({
+      taxon,
+      rationale,
+      screened,
+    })),
     source_collection: draft.source.trim(),
     subject_selection: draft.selection.trim(),
     review_budget: {

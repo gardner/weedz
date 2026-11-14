@@ -177,6 +177,11 @@ class ReviewAPI:
         """A new study, linked to its run in the same request so none is left unlinked."""
         if edit.run_id:
             self.run(edit.run_id)
+            linked = run_study(self.store, edit.run_id)
+            if linked:
+                raise HTTPException(
+                    409, f"This run already has study {linked['id']}; reload and edit it"
+                )
         saved = self._save_study(None, edit)
         if edit.run_id:
             link_study(self.store, edit.run_id, saved["id"], edit.author)

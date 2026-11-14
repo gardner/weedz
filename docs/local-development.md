@@ -343,15 +343,23 @@ can also use the CLI:
 ```sh
 uv run main.py study --run nelson-tasman-3e62ad801459                 # show it
 uv run main.py study --run nelson-tasman-3e62ad801459 --file study.json \
-  --author "Your name" --note "Budget agreed"                          # record a version
+  --author "Your name" --note "Budget agreed" --base-version 2         # record a version
 ```
 
 The file is the definition as JSON, with the same fields the API takes; see
-`StudyDefinition` in `src/weedz/discovery/study.py`.
+`StudyDefinition` in `src/weedz/discovery/study.py`. Once the run has a study,
+`--base-version` must name the version your file edits. That is the `version` the
+show command printed. If someone has recorded a newer version since, the edit is
+refused.
 
 - **Versions.** Each edit appends a whole new version with its author, time and
   note. Versions are never edited. An edit based on an older version is refused
-  (409), so two people cannot overwrite each other unseen.
+  (409), so two people cannot overwrite each other unseen. This holds in the app,
+  where the form saves against the version it opened, and in the CLI.
+  Saving a form never drops what it cannot show:
+
+  - names the screening no longer covers come back as not yet screened
+  - limits for measures no longer offered are kept, and the server then refuses them by name
 - **Runs.** A study can serve several runs. A run links to one study at a time,
   and the latest link stands.
 - **Screening terms.** Regions, watchlist species and lookalikes are checked
@@ -364,11 +372,19 @@ The file is the definition as JSON, with the same fields the API takes; see
   % of incidental photos reviewed*. `GET /studies/terms` lists them. A limit left
   out is "not yet agreed", never zero.
 
-API: `GET/POST /studies` (a new study may take `run_id` to link it in the same
-request), `GET /studies/{id}` (current version and history),
-`POST /studies/{id}/versions`, and `GET/POST /runs/{id}/study`. The run detail,
-the run export (shareable by default) and the completion manifest carry the linked
-study. Responsible people's names travel with it, as reviewer names already do.
+The API endpoints are:
+
+- `GET/POST /studies`. A new study may take `run_id` to link it in the same
+  request. If that run already has a study, the request is refused (409).
+- `GET /studies/{id}`: the current version and history.
+- `POST /studies/{id}/versions`
+- `GET/POST /runs/{id}/study`
+
+The run detail and the run export (shareable by default) carry the study now linked,
+at its latest version. Responsible people's names travel with it, as reviewer names
+already do. The completion manifest is written once, when screening completes.
+It records the study linked at that moment, which is usually none, because a
+study is often defined after a run. Use the export for the current study.
 
 ### Report outcomes against the success measures
 

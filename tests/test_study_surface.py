@@ -52,6 +52,11 @@ def test_a_new_study_can_be_linked_to_its_run_in_one_request(tmp_path: Path) -> 
     created = client.post("/studies", json=body() | {"run_id": "run"}).json()
     linked = client.get("/runs/run/study").json()
     assert (linked["id"], linked["linked_by"]) == (created["id"], "Ana")
+    # Someone else recorded this run's study first: a second new one is refused, not relinked.
+    again = client.post("/studies", json=body("Ben") | {"run_id": "run"})
+    assert again.status_code == 409
+    assert created["id"] in again.json()["detail"]
+    assert len(client.get("/studies").json()) == 1
 
 
 def test_api_refuses_an_unscreened_species_without_the_mark(tmp_path: Path) -> None:
@@ -89,7 +94,13 @@ def test_cli_records_a_version_links_it_and_shows_it(
     first = json.loads(capsys.readouterr().out)
     assert (first["version"], first["linked_by"]) == (1, "Ana")
     source.write_text(json.dumps(definition(partner="Changed")))
-    cli.main([*args, "--file", str(source), "--author", "Ben", "--note", "New partner"])
+    edit = [*args, "--file", str(source), "--author", "Ben", "--note", "New partner"]
+    # An edit names the version its file is based on, so it cannot replace a newer one.
+    with pytest.raises(SystemExit, match="--base-version 1"):
+        cli.main(edit)
+    with pytest.raises(SystemExit, match="version 1, not 0"):
+        cli.main([*edit, "--base-version", "0"])
+    cli.main([*edit, "--base-version", "1"])
     capsys.readouterr()
     cli.main(args)
     shown = json.loads(capsys.readouterr().out)

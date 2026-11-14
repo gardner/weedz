@@ -9,7 +9,7 @@ import {
   toDraft,
 } from "../lib/study";
 
-type Picks = "regions" | "species";
+type Picks = "regions" | "species" | "lookalikes";
 
 /** Edit a study as a whole new version: every field the study records, in one form. */
 export default function StudyForm({
@@ -141,17 +141,13 @@ export default function StudyForm({
         <legend>Watchlist and lookalikes</legend>
         {choices("species", Object.keys(terms.species), terms.species)}
         {text("Not yet screened species", "otherSpecies", "One per line, as Species: why", 2)}
-        {terms.lookalikes.map(({ name, confusable_with }) => (
-          <label key={name}>
-            Why {name} (looks like {confusable_with})
-            <input
-              value={draft.lookalikes[name] ?? ""}
-              onChange={(event) =>
-                set({ lookalikes: { ...draft.lookalikes, [name]: event.target.value } })
-              }
-            />
-          </label>
-        ))}
+        {choices(
+          "lookalikes",
+          terms.lookalikes.map((item) => item.name),
+          Object.fromEntries(
+            terms.lookalikes.map((item) => [item.name, `looks like ${item.confusable_with}`]),
+          ),
+        )}
         {text("Not yet screened lookalikes", "otherLookalikes", "One per line, as Taxon: why", 2)}
       </fieldset>
       <fieldset>
