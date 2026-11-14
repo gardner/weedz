@@ -116,6 +116,9 @@ def test_occurrence_supervision_needs_a_real_location() -> None:
         ({"supervision": "surveyed_point", "point": [400, 10]}, "inside the image"),
         ({"supervision": "surveyed_point"}, "point"),
         ({"supervision": "unlabelled"}, "unlabelled"),
+        ({"taxon": None}, "taxon"),
+        ({"taxon": "  "}, "taxon"),
+        ({"origin": "model", "model": "  "}, "model"),
     ],
 )
 def test_geometry_must_fit_its_supervision(fields: dict[str, Any], message: str) -> None:

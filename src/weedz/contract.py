@@ -96,7 +96,7 @@ class Annotation(Contract):
 
     id: Text
     supervision: Supervision
-    taxon: str | None = None
+    taxon: Text | None = None
     label: Literal["present", "absent", "unknown", "ignored"] = "unknown"
     point: tuple[Pixels, Pixels] | None = None
     box: tuple[Pixels, Pixels, Pixels, Pixels] | None = None
@@ -106,7 +106,7 @@ class Annotation(Contract):
     reviewer: str | None = None
     recorded_at: str | None = None
     note: str = ""
-    model: str | None = None
+    model: Text | None = None
     score: float | None = None
 
     @model_validator(mode="after")
@@ -122,10 +122,16 @@ class Annotation(Contract):
             raise ValueError(
                 f"Only surveyed_point supervision has a point, and it needs one, not {kind}"
             )
-        if kind == "unlabelled" and (self.taxon or self.label != "unknown"):
-            raise ValueError("An unlabelled annotation names no taxon and no label")
         if self.origin == "model" and not self.model:
             raise ValueError("A model prediction names its model")
+        return self
+
+    @model_validator(mode="after")
+    def label_names_its_taxon(self) -> "Annotation":
+        if self.supervision == "unlabelled" and (self.taxon or self.label != "unknown"):
+            raise ValueError("An unlabelled annotation names no taxon and no label")
+        if self.label in {"present", "absent"} and not self.taxon:
+            raise ValueError("A present or absent label names the taxon it refers to")
         return self
 
     def supervises(self) -> bool:
