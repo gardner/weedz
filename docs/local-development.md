@@ -181,8 +181,31 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   crop sizes) are deleted once they leave the window.
 
 Reports are kept in `data/intake/reports/` (owner-only), apart from the
-discovery evidence. Nothing serves them to reviewers or publishes them yet:
-`ReportStore.active()` is where specialist review would read them (issue #58).
+discovery evidence. Nothing publishes them.
+
+### Reviewing device reports
+
+Start the review stack with `uv run main.py dev --intake-dir data/intake` and
+approved reports appear as the **device-reports** run, in a "Device reports"
+view (issue #58). Each is labelled as a device report. It shows the submitter
+by number (never the operator's label), the app version, the screening model
+stamp and score meaning, the consent wording, and the licence chosen on the
+phone. Its exact location is shown with the device's accuracy. Reports are
+grouped into site visits (same submitter, capture date and nearby point),
+compared with the reference snapshot, and can be judged, referred, and selected
+as leads for a follow-up package, like incidental photos. They are their own
+cohort, so they never change an iNaturalist run's counts.
+
+- A crop is copied into the review store only with image consent. Without
+  consent, no image is shown, packaged or exported.
+- Exports and packages give a report's point only under the licence the person
+  chose. A report sent without image consent has no licence, so its point
+  stays in review.
+- The run syncs with intake on every request. After a withdrawal, the report
+  leaves the queue at the next request. Its image copy is deleted and its
+  location, capture time and credit are erased. Past reviews and judgements
+  stay in the append-only history.
+
 Hosting, accounts and enrolment, the retention period, and whether images are
 uploaded at all are the project owner's decisions; see issues #55 and #57.
 

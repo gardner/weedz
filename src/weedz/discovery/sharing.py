@@ -61,6 +61,14 @@ SHARING = [
 ]
 
 
+# Device reports (#58): an image exists only with the person's consent, and only until
+# they withdraw the report.
+NO_IMAGE_CONSENT = "No image: the person who sent this report did not consent to share it"
+WITHDRAWN_REPORT = (
+    "Withdrawn by the person who sent it: its image is deleted and its details erased"
+)
+
+
 class ImageUse(NamedTuple):
     action: Literal["show", "include", "link"]
     reason: str
@@ -95,6 +103,11 @@ def refuse_unadmitted(photo_license: str, observation_license: str) -> None:
 
 def image_use(photo: dict[str, Any], use: Use) -> ImageUse:
     """Whether the photo may be shown (review) or included (share), or only linked."""
+    device = photo.get("device")
+    if photo.get("withdrawn_at"):
+        return ImageUse("link", WITHDRAWN_REPORT)
+    if device and not device["image_consent"]:
+        return ImageUse("link", NO_IMAGE_CONSENT)
     licence = photo.get("photo_license")
     terms = ADMITTED.get(licence or "")
     if terms is None:

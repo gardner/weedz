@@ -124,7 +124,7 @@ async def dev(args: argparse.Namespace) -> None:
         )
         server = uvicorn.Server(
             uvicorn.Config(
-                create_app(root, address, args.access),
+                create_app(root, address, args.access, args.intake_dir),
                 # Only the review app talks to the API, so it never leaves this computer.
                 host="127.0.0.1",
                 port=args.api_port,
@@ -287,6 +287,11 @@ def parse(argv: list[str]) -> argparse.Namespace:
     )
     local.add_argument(
         "--web-host", default="127.0.0.1", help="Review app address (non-loopback needs tokens)"
+    )
+    local.add_argument(
+        "--intake-dir",
+        type=Path,
+        help="Review approved device reports received here (uv run main.py intake serve)",
     )
     run = commands.add_parser("discover", help="Queue a bounded historical regional run")
     run.add_argument(

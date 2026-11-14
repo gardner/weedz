@@ -14,6 +14,8 @@ from weedz.discovery.access import Access, require_reviewer, session
 from weedz.discovery.activities import export, review_history
 from weedz.discovery.agreed_limits import study_budget
 from weedz.discovery.audit import audit_sample, summarize_audit
+from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
+from weedz.discovery.device_reports import sync
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.judgements import Judgement, unsupported
@@ -39,6 +41,10 @@ from weedz.discovery.study_store import (
     versions,
 )
 from weedz.discovery.workflows import DiscoveryWorkflow
+from weedz.intake.store import ReportStore
+
+# Cohorts whose photos were taken by people out looking, so they can lead to follow-up.
+LEAD_COHORTS = {"incidental", "device"}
 
 
 def audit_state(photo_id: str, sample: set[str], *audits: dict[str, dict[str, str]]) -> dict:
@@ -78,24 +84,34 @@ def check_target(photo: dict, finding_id: int | None, verb: str = "judge") -> No
 
 
 def check_lead(photo: dict, record: LeadEvent) -> None:
-    """Only the suggestion or a recorded plant on an incidental photo can be a lead."""
-    if photo["cohort"] != "incidental":
-        raise HTTPException(409, "Only incidental photos can be leads")
+    """Only the suggestion or a recorded plant on an incidental photo or a device report
+    can be a lead."""
+    if photo["cohort"] not in LEAD_COHORTS:
+        raise HTTPException(409, "Only incidental photos and device reports can be leads")
     check_target(photo, record.finding_id, "select")
 
 
 class ReviewAPI:
-    def __init__(self, root: Path, temporal_address: str) -> None:
+    def __init__(self, root: Path, temporal_address: str, intake_dir: Path | None = None) -> None:
         self.store = Store(root)
         self.temporal_address = temporal_address
+        self.reports = ReportStore(intake_dir) if intake_dir else None
+
+    def sync_reports(self) -> None:
+        """Bring device reports up to date, so a withdrawal applies to this request (#58)."""
+        if self.reports:
+            sync(self.store, self.reports)
 
     def run(self, run_id: str) -> dict:
+        if run_id == DEVICE_RUN:
+            self.sync_reports()
         result = next((item for item in self.store.runs() if item["id"] == run_id), None)
         if result is None:
             raise HTTPException(404, "Run not found")
         return result
 
     def runs(self) -> list[dict]:
+        self.sync_reports()
         return self.store.runs()
 
     async def start(self, spec: RunSpec) -> dict:
@@ -117,7 +133,10 @@ class ReviewAPI:
 
     def detail(self, run_id: str) -> dict:
         run = self.run(run_id)
-        references, photos = with_references(self.store.root, self.store.photos(run_id))
+        listed = self.store.photos(run_id)
+        # Withdrawn device reports leave the queue; their history stays in the export.
+        current = [photo for photo in listed if not photo.get("withdrawn_at")]
+        references, photos = with_references(self.store.root, current)
         history = review_history(self.store, run_id, photos)
         effort = summarize_effort(photos, history)
         study = run_study(self.store, run_id)
@@ -152,6 +171,7 @@ class ReviewAPI:
             "references": references,
             "study": study,
             "score_meaning": score_meaning(run["model"]),
+            "withdrawn_reports": len(listed) - len(current),
         }
 
     def download(self, run_id: str) -> JSONResponse:
@@ -359,9 +379,11 @@ def create_app(
     root: Path,
     temporal_address: str = "localhost:7234",
     access: Literal["local", "tokens"] = "local",
+    intake_dir: Path | None = None,
 ) -> FastAPI:
     """In "local" mode names are self-declared; in "tokens" mode every request needs a
-    reviewer's invite token and records carry that reviewer's name (issue #31)."""
+    reviewer's invite token and records carry that reviewer's name (issue #31). With an
+    ``intake_dir``, approved device reports are reviewed in their own run (issue #58)."""
     locked = access == "tokens"
     app = FastAPI(
         title="Weedz regional review",
@@ -371,7 +393,7 @@ def create_app(
         openapi_url=None if locked else "/openapi.json",
     )
     app.get("/session")(session)
-    api = ReviewAPI(root, temporal_address)
+    api = ReviewAPI(root, temporal_address, intake_dir)
     app.get("/runs")(api.runs)
     app.post("/runs", status_code=202)(api.start)
     app.get("/runs/{run_id}")(api.detail)
