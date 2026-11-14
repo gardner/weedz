@@ -37,14 +37,21 @@ def revoke(args: argparse.Namespace) -> None:
 
 def withdraw(args: argparse.Namespace) -> None:
     """For a person whose device token was lost or revoked, at their request."""
-    from weedz.intake.store import ReportStore
+    from weedz.intake.store import ReportStore, Withdrawn
 
     store, report_id = ReportStore(args.intake_dir), str(args.report)
     if args.not_yet_received:
         known = {row["id"] for row in Submitters(args.intake_dir).listing()}
         if args.submitter not in known:
             raise SystemExit(f"No submitter with id {args.submitter}")
-    if store.withdraw(args.submitter, report_id, args.not_yet_received) is None:
+    try:
+        receipt = store.withdraw(args.submitter, report_id, args.not_yet_received)
+    except Withdrawn as error:
+        raise SystemExit(
+            f"Submitter {args.submitter} has already requested deletion of all reports; "
+            "use intake delete-submitter to confirm or resume it."
+        ) from error
+    if receipt is None:
         raise SystemExit(
             f"No report {report_id} from submitter {args.submitter}. Check both ids; if the "
             "report may still be on its way, add --not-yet-received to refuse it on arrival."
@@ -52,6 +59,19 @@ def withdraw(args: argparse.Namespace) -> None:
     print(
         f"Withdrew report {report_id}: any image is deleted and its content erased, and it "
         "is refused if it arrives again."
+    )
+
+
+def delete_submitter(args: argparse.Namespace) -> None:
+    """After verifying a deletion request against the operator's enrollment records."""
+    from weedz.intake.deletion import Deletions
+
+    if args.id not in {row["id"] for row in Submitters(args.intake_dir).listing()}:
+        raise SystemExit(f"No submitter with id {args.id}")
+    Deletions(args.intake_dir).delete(args.id)
+    print(
+        f"Deleted reports and revoked submitter {args.id}; report/deletion id-time records "
+        "and credential records remain (see docs/device-deletion.md)."
     )
 
 
@@ -87,6 +107,8 @@ def parse(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Record the withdrawal even if the report has not arrived, so it is refused",
     )
+    delete = commands.add_parser("delete-submitter", help="Erase all reports and revoke a device")
+    delete.add_argument("--id", type=int, required=True)
     run = commands.add_parser("serve", help="Serve the intake API")
     run.add_argument("--host", default="127.0.0.1", help="Loopback by default, for a proxy")
     run.add_argument("--port", type=int, default=8300)
@@ -97,5 +119,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str]) -> None:
     args = parse(argv)
-    commands = {"add": add, "list": listing, "revoke": revoke, "withdraw": withdraw, "serve": serve}
+    commands = {
+        "add": add,
+        "list": listing,
+        "revoke": revoke,
+        "withdraw": withdraw,
+        "delete-submitter": delete_submitter,
+        "serve": serve,
+    }
     commands[args.command](args)
