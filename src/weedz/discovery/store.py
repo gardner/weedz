@@ -14,6 +14,7 @@ from weedz.discovery.leads import TABLE as LEAD_TABLE
 from weedz.discovery.records import Finding, Photo, RunSpec
 from weedz.discovery.referrals import TABLES as REFERRAL_TABLES
 from weedz.discovery.referrals import Referral, ReferralEvent, with_status
+from weedz.discovery.sharing import refuse_unadmitted
 
 
 def now() -> str:
@@ -173,6 +174,9 @@ class Store:
         ]
 
     def save_photos(self, run_id: str, photos: list[Photo]) -> None:
+        """Save acquired photos; any source's photo under a licence not admitted is refused."""
+        for photo in photos:
+            refuse_unadmitted(photo.photo_license, photo.observation_license)
         with self.connect() as db:
             db.executemany(
                 "INSERT INTO photos(run_id,id,record) VALUES(?,?,?) "

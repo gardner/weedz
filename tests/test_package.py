@@ -8,13 +8,14 @@ from test_discovery import observation
 from test_judgements import PUBLIC, add_finding, load_references, nearby, save, store_with_photo
 from test_leads import select
 from test_referrals import refer
+from test_sharing_surface import force_licence
 
 from weedz.discovery.activities import export
 from weedz.discovery.judgements import Judgement
 from weedz.discovery.leads import selections
 from weedz.discovery.package import follow_up_package
 from weedz.discovery.package_report import to_markdown
-from weedz.discovery.records import Finding, Photo
+from weedz.discovery.records import Finding
 from weedz.discovery.source import photo_from_observation
 from weedz.discovery.store import Store
 
@@ -191,13 +192,17 @@ def test_an_image_is_packaged_only_when_its_licence_permits(tmp_path: Path) -> N
     assert image["included"] is True and image["file"] == f"photos/{photo_id}.jpg"
     assert "non-commercial" in image["terms"]
     assert image["detail"][0]["box"] == WINDOW
-    saved = Photo.model_validate(store.photos("run")[0])
-    store.save_photos("run", [saved.model_copy(update={"photo_license": "cc-by-nd"})])
+    force_licence(store, photo_id, "cc-by-nd")
     image = only_lead(store)["image"]
     assert image["included"] is False and image["file"] is None
     assert "link" in image["terms"].lower()
+    assert "no-derivatives" in image["terms"]
     lead = only_lead(store)
     assert lead["source"]["url"].startswith("https://www.inaturalist.org/observations/")
+    # The observation's own licence conditions travel too, not only its code.
+    assert "non-commercial" in lead["source"]["observation_terms"]
+    package = package_of(store)
+    assert lead["source"]["observation_terms"] in to_markdown(package)
     assert lead["source"]["attribution"] == "Example observer (CC BY-NC 4.0)"
 
 

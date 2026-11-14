@@ -4,8 +4,8 @@ Built from a run export and its lead selections (PRD P12, Journey 4). Only selec
 are included, never the whole queue. Each lead keeps its source, attribution and licences,
 its reviewers' opinions and disagreement, its search area or why there is none, its dates,
 its comparison basis and the reason it was selected. Raw coordinates are never copied: a
-location appears only as a search area centred on a public observation point. A photo is
-packaged only when its licence permits redistribution; otherwise the lead links to it.
+location appears only as a search area centred on a public observation point. Whether a
+photo is packaged or linked is the sharing policy's decision (weedz.discovery.sharing).
 """
 
 from typing import Any
@@ -14,17 +14,8 @@ from weedz.discovery.judgements import JUDGEMENTS, disputes, judged_taxon
 from weedz.discovery.leads import selected_leads
 from weedz.discovery.outcome_novelty import RECORD_RELATIVE, level
 from weedz.discovery.records import SPECIES
+from weedz.discovery.sharing import image_use, terms
 
-# Licences the collection accepts, all of which permit sharing the photo with attribution.
-REDISTRIBUTABLE = {
-    "cc0": "CC0: no rights reserved; attribution kept as a courtesy",
-    "cc-by": "CC BY: share with the attribution shown",
-    "cc-by-nc": "CC BY-NC: share with the attribution shown, for non-commercial use only",
-}
-LINK_ONLY = (
-    "Not included: the photo licence ({licence}) does not clearly permit redistribution "
-    "here, so follow the source link to view it"
-)
 WINDOW = "Screening window: where the model looked, a search region, not a plant boundary"
 EXTENT = "Reviewer-drawn visible extent of this plant"
 UNCOMPARED = (
@@ -48,13 +39,14 @@ READING = [
 
 
 def image(photo: dict[str, Any], detail: list[dict[str, Any]]) -> dict[str, Any]:
-    """The photo when its licence permits redistribution, else a pointer to the source."""
-    terms = REDISTRIBUTABLE.get(photo["photo_license"])
+    """The photo when the sharing policy lets it be included, else a pointer to the source."""
+    decided = image_use(photo, "share")
+    included = decided.action == "include"
     return {
-        "included": terms is not None,
-        "file": f"photos/{photo['id']}.jpg" if terms else None,
+        "included": included,
+        "file": f"photos/{photo['id']}.jpg" if included else None,
         "sha256": photo.get("sha256") or None,
-        "terms": terms or LINK_ONLY.format(licence=photo["photo_license"] or "none"),
+        "terms": decided.reason,
         "source_url": photo["source_url"],
         "detail": detail,
     }
@@ -129,7 +121,11 @@ def _referrals(photo: dict[str, Any], finding_id: int | None) -> list[dict[str, 
 
 def _source(photo: dict[str, Any]) -> dict[str, Any]:
     keys = ("observer", "attribution", "photo_license", "observation_license")
-    return {"url": photo["source_url"], **{key: photo[key] for key in keys}}
+    return {
+        "url": photo["source_url"],
+        **{key: photo[key] for key in keys},
+        "observation_terms": terms(photo)["observation_terms"],
+    }
 
 
 def _event(event: dict[str, Any]) -> dict[str, Any]:

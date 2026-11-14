@@ -21,6 +21,7 @@ from weedz.discovery.outcomes import outcomes
 from weedz.discovery.package_output import archive, package_contents
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
+from weedz.discovery.sharing import image_use, shareable_export, with_location
 from weedz.discovery.store import Store, now
 from weedz.discovery.workflows import DiscoveryWorkflow
 
@@ -116,7 +117,8 @@ class ReviewAPI:
             | {"lead": leads.get(photo["id"], no_leads())}
             for photo in photos
         ]
-        photos = with_limits(with_encounters(photos))
+        # Obscured points are never served, even to the local review app.
+        photos = [with_location(photo, "review") for photo in with_limits(with_encounters(photos))]
         return {
             "run": run,
             "photos": photos,
@@ -126,9 +128,11 @@ class ReviewAPI:
         }
 
     def download(self, run_id: str) -> JSONResponse:
+        """The shareable export: no obscured point, and each photo's terms stated. The
+        full record stays local, in the store and the completion manifest."""
         self.run(run_id)
         return JSONResponse(
-            export(self.store, run_id),
+            shareable_export(export(self.store, run_id)),
             headers={
                 "Content-Disposition": f'attachment; filename="{run_id}.json"',
             },
@@ -170,6 +174,9 @@ class ReviewAPI:
 
     def image(self, run_id: str, photo_id: str) -> FileResponse:
         photo = self.photo(run_id, photo_id)
+        allowed = image_use(photo, "review")
+        if allowed.action != "show":
+            raise HTTPException(403, allowed.reason)
         path = (self.store.root / photo["image_path"]).resolve()
         if not path.is_relative_to(self.store.root / "images") or not path.is_file():
             raise HTTPException(404, "Image not available")
