@@ -106,3 +106,10 @@ def test_comparison_summarises_pilot_and_lookalike_behaviour() -> None:
     assert summary["references_own_target_top"] == [1, 1]
     assert summary["lookalikes"]["Austroderia"] == {"top": 1, "positive": 1, "of": 1}
     assert summary["seconds_per_photo"] == 1.0
+
+
+def test_discover_accepts_a_model() -> None:
+    from weedz.discovery import cli as discovery_cli
+
+    assert discovery_cli.parse(["discover", "--model", "bioclip-2"]).model == "bioclip-2"
+    assert discovery_cli.parse(["discover"]).model == "bioclip"

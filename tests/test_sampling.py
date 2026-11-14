@@ -123,6 +123,7 @@ def test_discover_sends_the_sampling_period(monkeypatch: pytest.MonkeyPatch) -> 
         after="2015-01-01",
         sampling="recent",
         lookalikes=0,
+        model="bioclip",
         api_url="http://api",
         temporal_address="",
         wait=False,

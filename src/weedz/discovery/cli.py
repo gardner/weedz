@@ -107,6 +107,7 @@ async def discover(args: argparse.Namespace) -> None:
         after=args.after,
         sampling=args.sampling,
         lookalikes_per_taxon=args.lookalikes,
+        model=args.model,
     )
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(f"{args.api_url}/runs", json=spec.model_dump(mode="json"))
@@ -160,6 +161,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
         type=int,
         default=0,
         help="Lookalike photos per declared lookalike taxon per region (0–3)",
+    )
+    run.add_argument(
+        "--model",
+        choices=["bioclip", "bioclip-2"],
+        default="bioclip",
+        help="Pinned screening model (see benchmarks/model-comparison.json)",
     )
     snapshot = commands.add_parser(
         "references", help="Snapshot DOC weed records from GBIF for distance comparison"
