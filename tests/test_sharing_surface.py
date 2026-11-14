@@ -21,10 +21,12 @@ from weedz.discovery.store import Store
 SOURCE = Path(__file__).parents[1] / "src" / "weedz"
 
 
-def force_licence(store: Store, photo_id: str, licence: str | None) -> None:
+def force_licence(
+    store: Store, photo_id: str, licence: str | None, field: str = "photo_license"
+) -> None:
     """Store a record the way an older or other tool might have, past the store's check."""
     saved = Photo.model_validate(next(p for p in store.photos("run") if p["id"] == photo_id))
-    record = saved.model_copy(update={"photo_license": licence or ""}).model_dump_json()
+    record = saved.model_copy(update={field: licence or ""}).model_dump_json()
     with sqlite3.connect(store.root / "discovery.sqlite3") as db:
         db.execute("UPDATE photos SET record=? WHERE id=?", (record, photo_id))
 

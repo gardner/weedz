@@ -151,7 +151,13 @@ def with_location(photo: dict[str, Any], use: Use) -> dict[str, Any]:
     kept = photo | {"latitude": allowed.latitude, "longitude": allowed.longitude}
     area = (photo.get("limits") or {}).get("search_area") or {}
     if allowed.withheld and area.get("centre") is not None:
-        hidden = area | {"centre": None, "radius_m": None, "site_context": False}
+        hidden = area | {
+            "status": "withheld",
+            "reason": allowed.withheld,
+            "centre": None,
+            "radius_m": None,
+            "site_context": False,
+        }
         kept["limits"] = photo["limits"] | {"search_area": hidden}
     return kept
 

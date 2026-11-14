@@ -234,3 +234,17 @@ def test_a_selection_newer_than_the_export_is_left_for_the_next_package(
     assert [(lead["photo_id"], lead["finding_id"]) for lead in package["leads"]] == [
         (photo_id, None)
     ]
+
+
+def test_a_lead_never_carries_a_point_the_sharing_policy_withholds(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path, SCREENED, **PUBLIC)
+    select(store, photo_id)
+    assert only_lead(store)["limits"]["search_area"]["centre"] == [-41.2, 173.3]
+    force_licence(store, photo_id, "cc-by-nd", field="observation_license")
+    area = only_lead(store)["limits"]["search_area"]
+    assert area["status"] == "withheld"
+    assert area["centre"] is None and area["radius_m"] is None
+    assert "observation licence" in area["reason"]
+    markdown = to_markdown(package_of(store))
+    assert "173.3" not in markdown
+    assert "not searchable" in markdown

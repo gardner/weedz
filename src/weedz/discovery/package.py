@@ -14,7 +14,7 @@ from weedz.discovery.judgements import JUDGEMENTS, disputes, judged_taxon
 from weedz.discovery.leads import selected_leads
 from weedz.discovery.outcome_novelty import RECORD_RELATIVE, level
 from weedz.discovery.records import SPECIES
-from weedz.discovery.sharing import image_use, terms
+from weedz.discovery.sharing import image_use, terms, with_location
 
 WINDOW = "Screening window: where the model looked, a search region, not a plant boundary"
 EXTENT = "Reviewer-drawn visible extent of this plant"
@@ -176,7 +176,8 @@ def follow_up_package(
     export: dict[str, Any], events: list[dict[str, Any]], generated_at: str
 ) -> dict[str, Any]:
     """The run's selected leads, in the order first selected, with how to read them."""
-    photos = {photo["id"]: photo for photo in export["photos"]}
+    # Leads leave the reviewer's machine, so they carry only what the policy lets leave.
+    photos = {photo["id"]: with_location(photo, "share") for photo in export["photos"]}
     run = export["run"]
     return {
         "schema": 1,

@@ -496,7 +496,8 @@ follow-up package and the image endpoint. It knows two uses:
   unknown accuracy is withheld, because it would overstate where the photo
   was taken. The review app still shows it, marked "accuracy not supplied".
 - A point under an observation licence that is not admitted is withheld for
-  `share`, and so is any search area centred on it.
+  `share`, and so is any search area centred on it: in the export and in a
+  package, its `search_area.status` becomes `withheld`, with the reason.
 - Each exported photo's `sharing.location` gives the status, the point that
   may leave, its accuracy, and the reason anything was withheld.
 

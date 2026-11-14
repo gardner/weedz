@@ -150,6 +150,8 @@ def test_a_withheld_point_takes_its_search_area_centre_along() -> None:
     shared = shareable_export({"photos": [item]})["photos"][0]
     assert shared["limits"]["search_area"]["centre"] is None
     assert shared["limits"]["search_area"]["radius_m"] is None
+    assert shared["limits"]["search_area"]["status"] == "withheld"
+    assert "observation licence" in shared["limits"]["search_area"]["reason"]
     assert shared["limits"]["dates"] == {}
     kept = shareable_export({"photos": [photo(limits={"search_area": area})]})["photos"][0]
     assert kept["limits"]["search_area"]["centre"] == (-41.27, 173.28)
