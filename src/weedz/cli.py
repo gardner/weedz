@@ -35,6 +35,11 @@ def main() -> None:
 
         discovery_main(sys.argv[1:])
         return
+    if len(sys.argv) > 1 and sys.argv[1] == "reviewers":
+        from weedz.discovery.access_cli import main as reviewers_main
+
+        reviewers_main(sys.argv[2:])
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "release":
         from weedz.release_cli import main as release_main
 
