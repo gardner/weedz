@@ -11,7 +11,7 @@
     "start": "next start --hostname 127.0.0.1 --port 3001",
     "check": "tsc --noEmit && biome check .",
     "smoke": "node scripts/smoke.mjs",
-    "test": "node scripts/check-request-order.mjs && node scripts/check-review-attribution.mjs && node scripts/check-review-effort.mjs && node scripts/check-audit.mjs && node scripts/check-audit-timer.mjs && node scripts/check-site-visits.mjs"
+    "test": "node scripts/check-request-order.mjs && node scripts/check-review-attribution.mjs && node scripts/check-review-effort.mjs && node scripts/check-audit.mjs && node scripts/check-audit-timer.mjs && node scripts/check-site-visits.mjs && node scripts/check-references.mjs"
   },
   "dependencies": {
     "next": "^16.4.6",

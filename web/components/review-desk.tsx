@@ -10,6 +10,7 @@ import {
   imageUrl,
   names,
   type Photo,
+  type References,
   type ReviewEffort,
   type Run,
   type RunDetail,
@@ -28,6 +29,7 @@ export default function ReviewDesk() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [runId, setRunId] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [references, setReferences] = useState<References>(null);
   const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
   const [auditSummary, setAuditSummary] = useState<AuditSummary>();
   // Each view remembers its own open photo, so one opened in a view never carries into
@@ -61,6 +63,7 @@ export default function ReviewDesk() {
         setPhotos(result.photos);
         setEffortSummary(result.review_effort);
         setAuditSummary(result.audit);
+        setReferences(result.references ?? null);
       }
       setError("");
     } catch (failure) {
@@ -449,6 +452,7 @@ export default function ReviewDesk() {
                 runId={runId}
                 onSave={save}
                 saving={saving}
+                references={references}
                 reviewer={reviewer}
                 onReviewerChange={changeReviewer}
               />

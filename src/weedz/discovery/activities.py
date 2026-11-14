@@ -12,6 +12,7 @@ from temporalio import activity
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
+from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
@@ -99,12 +100,13 @@ def export(store: Store, run_id: str) -> dict:
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
-    photos = store.photos(run_id)
+    references, photos = with_references(store.root, store.photos(run_id))
     history = review_history(store, run_id, photos)
     return {
         "schema": 1,
         "run": run,
         "photos": with_encounters(photos),
+        "references": references,
         "encounters": summarize(photos, encounter_groups(photos)),
         "review_history": history,
         "review_effort": summarize_effort(photos, history),
@@ -131,7 +133,8 @@ def export(store: Store, run_id: str) -> dict:
             "Windows are search regions, not plant boundaries; no segmentation model used",
             "Reference photos are separate; animal photos have no background weed ground truth",
             "Observation coordinates locate the observation, not a confirmed weed",
-            "No novelty comparison, infestation area estimate or external publication performed",
+            "Known-record comparison is distance and date only, not a novelty verdict; "
+            "no infestation area estimate or external publication performed",
             "Site-visit groups link photos by observer, date and distance; not the same plant",
             (
                 "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "

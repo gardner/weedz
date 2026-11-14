@@ -11,6 +11,7 @@ from weedz.discovery.activities import export, review_history
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
+from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import TASK_QUEUE, Audit, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
@@ -54,7 +55,7 @@ class ReviewAPI:
 
     def detail(self, run_id: str) -> dict:
         run = self.run(run_id)
-        photos = self.store.photos(run_id)
+        references, photos = with_references(self.store.root, self.store.photos(run_id))
         effort = summarize_effort(photos, review_history(self.store, run_id, photos))
         sample = audit_sample(run_id, photos)
         blind, late = self.store.latest_audits(run_id), self.store.latest_audits(run_id, False)
@@ -64,7 +65,13 @@ class ReviewAPI:
         del audit["findings"]
         photos = [photo | audit_state(photo["id"], sample, blind, late) for photo in photos]
         photos = with_encounters(photos)
-        return {"run": run, "photos": photos, "review_effort": effort, "audit": audit}
+        return {
+            "run": run,
+            "photos": photos,
+            "review_effort": effort,
+            "audit": audit,
+            "references": references,
+        }
 
     def download(self, run_id: str) -> JSONResponse:
         self.run(run_id)
