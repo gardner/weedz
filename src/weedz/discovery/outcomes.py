@@ -89,6 +89,13 @@ def _minutes(seconds: float) -> float:
     return round(seconds / 60, 2)
 
 
+def _timed(events: list[dict[str, Any]]) -> tuple[float | None, int]:
+    """Minutes across timed events (None if none was timed) and the count left untimed."""
+    seconds = [event.get("effort_seconds") for event in events]
+    timed = [s for s in seconds if s is not None]
+    return (_minutes(sum(timed)) if timed else None), seconds.count(None)
+
+
 @dataclass(frozen=True)
 class Study:
     export: dict[str, Any]
@@ -118,11 +125,14 @@ class Study:
         ]
 
     def effort(self, photos: Photos) -> tuple[float | None, int]:
-        """Measured minutes on these photos (None if nothing was timed), and how many
-        decisions were not timed."""
-        seconds = [event.get("effort_seconds") for event in self.events(photos)]
-        timed = [s for s in seconds if s is not None]
-        return (_minutes(sum(timed)) if timed else None), seconds.count(None)
+        """Measured review minutes on these photos, and how many decisions were not timed."""
+        return _timed(self.events(photos))
+
+    def audit_effort(self) -> tuple[float | None, int]:
+        """Measured blind-audit minutes, and how many audit answers were not timed."""
+        return _timed(
+            [event for entry in self.export.get("audit_history", []) for event in entry["events"]]
+        )
 
     def unreviewed_note(self) -> list[str]:
         missing = len(self.incidental) - len(self.reviewed)
@@ -168,6 +178,7 @@ def useful_yield(study: Study) -> dict[str, Any]:
 def effort_per_finding(study: Study) -> dict[str, Any]:
     minutes, untimed = study.effort(study.incidental)
     timed = len(study.events(study.incidental)) - untimed
+    audit_minutes, untimed_audits = study.audit_effort()
     return _measure(
         "reviewer_effort_per_useful_finding",
         NOT_YET,
@@ -176,6 +187,8 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
             "incidental_minutes": minutes,
             "timed_incidental_decisions": timed,
             "untimed_incidental_decisions": untimed,
+            "audit_minutes": audit_minutes,
+            "untimed_audit_answers": untimed_audits,
             "confirmed_visible": tally(study.confirmed),
         },
     )
@@ -198,9 +211,7 @@ def missed_targets(study: Study) -> dict[str, Any]:
     findings = audit["findings"]
     top = {f["photo_id"] for f in findings if f["top_suggestion"]}
     missed = {f["photo_id"] for f in findings} - top
-    evidence["queue_ranks_not_top"] = sorted(
-        f["queue_rank"] for f in findings if f["photo_id"] in missed
-    )
+    evidence["found_queue_ranks"] = sorted({f["queue_rank"] for f in findings})
     caveats = []
     if audit["remaining"]:
         caveats.append(f"{audit['audited']} of {audit['sampled']} sampled photos audited.")

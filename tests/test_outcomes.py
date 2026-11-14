@@ -140,7 +140,7 @@ def test_missed_targets_need_an_audit_and_are_partial_while_samples_remain() -> 
     assert missed["value"] == {"photos": 1, "site_visits": 1, "ungrouped_photos": 0}
     assert missed["denominator"] == {"photos": 1}
     assert "1 of 2" in missed["reason"]
-    assert missed["evidence"]["queue_ranks_not_top"] == [2]
+    assert missed["evidence"]["found_queue_ranks"] == [2]
 
 
 def test_a_run_without_incidental_photos_has_nothing_to_audit() -> None:
@@ -266,6 +266,14 @@ def test_markdown_shows_every_measure_and_never_prints_unknown_as_zero() -> None
     assert "not yet measurable" in text
     assert "1 site visit + 1 ungrouped photo" in text
     assert "| Useful incidental yield | not yet measurable | unknown |" in text
+
+
+def test_audit_time_is_reviewer_effort_too() -> None:
+    audits = [{"photo_id": "a", "events": [{"effort_seconds": 120}, {"effort_seconds": None}]}]
+    report = outcomes(export([photo("a", "a")], audit_history=audits))
+    effort = measure(report, "reviewer_effort_per_useful_finding")["evidence"]
+    assert effort["audit_minutes"] == 2.0
+    assert effort["untimed_audit_answers"] == 1
 
 
 def test_minutes_are_unknown_rather_than_zero_when_nothing_was_timed() -> None:

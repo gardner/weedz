@@ -50,6 +50,8 @@
         "incidental_minutes": null,
         "timed_incidental_decisions": 0,
         "untimed_incidental_decisions": 0,
+        "audit_minutes": null,
+        "untimed_audit_answers": 0,
         "confirmed_visible": {
           "photos": 0,
           "site_visits": 0,
