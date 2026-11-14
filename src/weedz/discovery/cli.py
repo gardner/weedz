@@ -233,6 +233,11 @@ def reference(args: argparse.Namespace) -> None:
     """The run's reviewed examples as a reference collection, with the watchlist's gaps."""
     from weedz.adapters import pilot_samples  # imports PIL, needed by this command only
 
+    if args.run == DEVICE_RUN:
+        raise SystemExit(
+            "Device reports are not reference examples: their consent and licence are "
+            "per report, and the reference collection does not carry them"
+        )
     result = collection(args.run, pilot_samples(run_store(args), args.run), SPECIES)
     _print(args, result, reference_markdown(result))
 
@@ -377,7 +382,7 @@ def parse(argv: list[str]) -> argparse.Namespace:
     bundle.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     bundle.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     bundle.add_argument("--out", type=Path, required=True, help="New or empty folder to write")
-    for command in (measures, suits, define, curate, bundle):
+    for command in (measures, suits, define, bundle):
         command.add_argument(
             "--intake-dir", type=Path, help=f"Report intake folder, needed for --run {DEVICE_RUN}"
         )

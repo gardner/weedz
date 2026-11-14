@@ -152,3 +152,40 @@ def test_a_report_withdrawn_before_it_arrives_never_enters_review(tmp_path: Path
     with pytest.raises(HTTPException, match="410"):
         IntakeAPI(intake, Limits()).accept(1, report_id, json.dumps(report()).encode())
     assert synced(tmp_path, intake) == []
+
+
+def test_a_crop_no_row_names_is_deleted_on_the_next_sync(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A crash after a withdrawal's erase, before its crop was deleted, is recovered."""
+    intake = tmp_path / "intake"
+    report_id = send(intake, with_image(jpeg()))
+    [photo] = synced(tmp_path, intake)
+    crop = tmp_path / "pilot" / photo["image_path"]
+    kept = crop.read_bytes()
+    ReportStore(intake).withdraw(1, report_id)
+    synced(tmp_path, intake)
+    crop.write_bytes(kept)  # as if the process died before deleting it
+    stray = crop.with_name("device-9-unknown.jpg")
+    stray.write_bytes(kept)
+    synced(tmp_path, intake)
+    assert list(crop.parent.iterdir()) == []
+
+
+def test_the_device_run_claims_no_historical_query(tmp_path: Path) -> None:
+    intake = tmp_path / "intake"
+    send(intake, report())
+    client = TestClient(create_app(tmp_path / "pilot", intake_dir=intake))
+    assert client.get(f"/runs/{RUN_ID}").json()["run"]["spec"] == {}
+    suitability = client.get(f"/runs/{RUN_ID}/suitability")
+    assert suitability.status_code == 200
+    assert "requested photos" not in suitability.text
+
+
+def test_device_reports_are_not_offered_as_reference_examples(tmp_path: Path) -> None:
+    intake, pilot = tmp_path / "intake", tmp_path / "pilot"
+    send(intake, report())
+    synced(tmp_path, intake)
+    command = ["reference", "--run", RUN_ID, "--pilot-dir", str(pilot)]
+    with pytest.raises(SystemExit, match="not reference examples"):
+        cli.main(command)

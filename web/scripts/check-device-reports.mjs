@@ -162,6 +162,9 @@ try {
   // Without image consent there is no image to request, only the reason.
   await rows.nth(1).click();
   await evidence.getByText("did not consent to share it").first().waitFor();
+  // No crop was sent, so none is described as approved and sent.
+  await evidence.getByText("Device report · no crop to show").waitFor();
+  assert.equal(await evidence.getByText("crop approved and sent").count(), 0);
   assert.equal(await page.locator(".image-stage img, .image-stage svg image").count(), 0);
   assert.equal(await evidence.getByText("Open full image").count(), 0);
   assert.equal(await evidence.getByText("Aroha").count(), 0);

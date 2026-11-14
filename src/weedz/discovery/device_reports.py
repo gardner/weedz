@@ -16,6 +16,7 @@ judgements, referrals and lead events made on it still read sensibly.
 import hashlib
 import json
 import os
+import time
 import uuid
 from io import BytesIO
 from pathlib import Path
@@ -24,12 +25,14 @@ from typing import Literal
 from PIL import Image
 from pydantic import BaseModel
 
-from weedz.discovery.records import SPECIES, RunSpec
+from weedz.discovery.records import SPECIES
 from weedz.discovery.store import Store, now
 from weedz.intake.store import ReportStore, StoredReport
 
 RUN_ID = "device-reports"
 IMAGES = "images/device"
+# A temporary crop older than this is left from a failed write, not one in progress.
+STALE_WRITE_SECONDS = 600
 NO_CREDIT = "Device report (no credit given)"
 
 
@@ -229,6 +232,34 @@ def _withdraw(store: Store, identifier: str, record: dict) -> None:
         (store.root / record["image_path"]).unlink(missing_ok=True)
 
 
+def _sweep(store: Store) -> None:
+    """Delete crops no current row names, such as one left by a crash between a
+    withdrawal's erase and its deletion. A crop is written only after its row, so a live
+    one is never swept; one swept as it was written is copied again next sync. A
+    temporary file is left while a write may still be using it."""
+    folder = store.root / IMAGES
+    if not folder.is_dir():
+        return
+    with store.connect() as db:
+        rows = db.execute("SELECT record FROM photos WHERE run_id=?", (RUN_ID,))
+        named = {json.loads(row["record"])["image_path"] for row in rows}
+    stale = time.time() - STALE_WRITE_SECONDS
+    for path in folder.iterdir():
+        if path.suffix == ".tmp" and path.stat().st_mtime > stale:
+            continue
+        if f"{IMAGES}/{path.name}" not in named:
+            path.unlink(missing_ok=True)
+
+
+def _create_run(store: Store) -> None:
+    """The device run, without a query spec: it is not a bounded historical query."""
+    with store.connect() as db:
+        db.execute(
+            "INSERT OR IGNORE INTO runs(id,created_at,spec,status) VALUES(?,?,?,?)",
+            (RUN_ID, now(), "{}", "receiving"),
+        )
+
+
 def _withdrawn(reports: ReportStore, record: dict) -> bool:
     """Whether intake says the person withdrew it. A report merely missing, as from a
     wrong or empty intake folder, is left alone rather than erased."""
@@ -247,7 +278,7 @@ def _private(store: Store) -> None:
 
 def sync(store: Store, reports: ReportStore) -> None:
     """Bring the device run up to date with intake: add new reports, erase withdrawn ones."""
-    store.create_run(RUN_ID, RunSpec())
+    _create_run(store)
     _private(store)
     active = {item_id(stored): stored for stored in reports.active()}
     with store.connect() as db:
@@ -265,5 +296,6 @@ def sync(store: Store, reports: ReportStore) -> None:
         elif identifier not in active and _withdrawn(reports, record):
             _withdraw(store, identifier, record)
             withdrawn += 1
+    _sweep(store)
     detail = f"{len(active)} reports in review · {withdrawn} withdrawn"
     store.status(RUN_ID, "receiving", detail)

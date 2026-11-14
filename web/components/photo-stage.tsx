@@ -57,7 +57,9 @@ export default function PhotoStage({
 
   const caption =
     photo.cohort === "device"
-      ? "Device report · crop approved and sent from a phone"
+      ? hasImage(photo)
+        ? "Device report · crop approved and sent from a phone"
+        : "Device report · no crop to show"
       : photo.cohort === "lookalike"
         ? `Lookalike photo · ${photo.lookalike_taxon}, resembles ${names[photo.lookalike_of ?? ""] ?? photo.lookalike_of}`
         : photo.cohort === "reference"
