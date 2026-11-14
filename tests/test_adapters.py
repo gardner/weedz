@@ -169,3 +169,13 @@ def test_disagreeing_reviewers_leave_the_suggestion_uncertain_and_name_both(tmp_
     (sample,) = pilot_samples(store, "run")
     suggestion = next(a for a in sample.annotations if a.id == "suggestion")
     assert (suggestion.review, suggestion.reviewer) == ("uncertain", "Ana; Ben")
+
+
+def test_source_urls_use_forward_slashes_whatever_the_platform() -> None:
+    from pathlib import PureWindowsPath
+
+    from weedz.adapters import source_uri
+
+    url = source_uri(PureWindowsPath("data", "crop", "train", "present", "1_0.tif"))
+    assert url.endswith("/data/crop/train/present/1_0.tif")
+    assert "\\" not in url

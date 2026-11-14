@@ -1,6 +1,6 @@
 """Read-only adapters from existing collections into the common sample contract."""
 
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 
 from PIL import Image
@@ -23,6 +23,11 @@ LEAFY_SPURGE_RIGHTS = Rights(
 )
 
 
+def source_uri(relative: PurePath) -> str:
+    """The pinned upstream URL; URLs always use '/', whatever the local path separator."""
+    return f"{HUGGING_FACE}/resolve/{REVISION}/{relative.as_posix()}"
+
+
 def leafy_spurge_samples(root: Path) -> list[Sample]:
     """Each surveyed point as a sample, after verifying the pinned source checksums.
 
@@ -32,7 +37,8 @@ def leafy_spurge_samples(root: Path) -> list[Sample]:
     files = verify_dataset(root)["files"]
     samples = []
     for row in read_observations(root):
-        relative = str(row.image_path.relative_to(root.resolve()))
+        relative_path = row.image_path.relative_to(root.resolve())
+        relative = str(relative_path)  # the checksum record's native-path key
         with Image.open(row.image_path) as image:
             width, height = image.size
             image_format = image.format
@@ -52,7 +58,7 @@ def leafy_spurge_samples(root: Path) -> list[Sample]:
                 snapshot=REVISION,
                 rights=LEAFY_SPURGE_RIGHTS,
                 media=Media(
-                    uri=f"{HUGGING_FACE}/resolve/{REVISION}/{relative}",
+                    uri=source_uri(relative_path),
                     sha256=files[relative],
                     width=width,
                     height=height,
