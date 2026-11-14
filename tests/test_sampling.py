@@ -1,6 +1,6 @@
 """The corpus spreads across years, seasons and observers, reproducibly."""
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from pydantic import ValidationError
@@ -168,3 +168,11 @@ def test_stratified_runs_start_no_earlier_than_inaturalist() -> None:
     with pytest.raises(ValidationError):
         RunSpec(after=date(2007, 12, 31))
     assert RunSpec(sampling="recent", after=date(1995, 1, 1)).after == date(1995, 1, 1)
+
+
+def test_stratified_runs_cannot_end_in_the_future() -> None:
+    assert RunSpec(before=date.today()).before == date.today()
+    with pytest.raises(ValidationError):
+        RunSpec(before=date.today() + timedelta(days=1))
+    with pytest.raises(ValidationError):
+        RunSpec(after=date(2008, 1, 1), before=date(9999, 12, 31))

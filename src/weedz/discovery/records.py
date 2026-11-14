@@ -12,7 +12,7 @@ SPECIES = {
     "Ulex europaeus": "Gorse",
 }
 TASK_QUEUE = "weedz-discovery-v1"
-# The earliest useful start: bounds stratified runs to four season queries per year since.
+# Stratified runs span 2008 to today at most, bounding them to four season queries a year.
 INATURALIST_FOUNDED = date(2008, 1, 1)
 ReviewStatus = Literal["unreviewed", "confirmed", "rejected", "uncertain"]
 
@@ -39,6 +39,8 @@ class RunSpec(BaseModel):
             raise ValueError("The sampling period cannot start before iNaturalist (2008)")
         if self.after > self.before:
             raise ValueError("The sampling period must start on or before its end")
+        if self.before > date.today():
+            raise ValueError("The sampling period cannot end in the future")
         return self
 
 

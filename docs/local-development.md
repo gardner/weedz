@@ -61,13 +61,12 @@ it is intended for local development, not shared public hosting.
 2. **Select and retain.** By default (`--sampling stratified`), each region's
    animal photos are queried once per southern-hemisphere season (DJF, MAM, JJA,
    SON) between `--after` (default 2010-01-01, no earlier than 2008-01-01, when
-   iNaturalist began) and `--before`. Up to 100 results per season are taken.
-   The cap is filled round-robin across seasons and years: years are visited in
-   bit-reversed order, so even a small cap reaches both ends and the middle of
-   the period, with seasons rotated so consecutive picks change both. Within a
-   season, photos follow a stable hash order, with at most one photo per
-   observer per day. The same
-   snapshots therefore always give the same sample, and no single walk or week
+   iNaturalist began) and `--before` (no later than today). Up to 100 results per
+   season are taken. The cap is filled round-robin across seasons and years:
+   years are visited in bit-reversed order, so even a small cap reaches both
+   ends and the middle of the period, with seasons rotated so consecutive picks
+   change both. Within a season, photos follow a stable hash order, with at most
+   one photo per observer per day. The same snapshots therefore always give the same sample, and no single walk or week
    dominates. `--sampling recent` reproduces the first pilot's single
    newest-first query, and runs saved before this option existed are reported
    as `recent`. The export's `corpus_coverage` counts photos by year, season,
