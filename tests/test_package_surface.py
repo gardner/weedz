@@ -82,9 +82,37 @@ def test_a_photo_changed_after_checking_is_never_written(tmp_path: Path) -> None
     (tmp_path / "images" / "101.jpg").write_bytes(b"changed since it was checked")
     with pytest.raises(ValueError, match="changed"):
         archive(package, photos, io.BytesIO())
+    out = tmp_path / "out"
     with pytest.raises(ValueError, match="changed"):
-        write(package, photos, tmp_path / "out")
-    assert not list((tmp_path / "out").rglob("*.jpg"))
+        write(package, photos, out)
+    # Nothing is left that could pass for a package, and the same folder can be retried.
+    assert not out.exists()
+    assert sorted(p.name for p in tmp_path.iterdir() if p.is_dir()) == ["images"]
+
+
+def test_a_failed_cli_package_leaves_the_folder_ready_for_a_retry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from weedz.discovery import cli as module
+
+    selected_store(tmp_path)
+    out = tmp_path / "package"
+    out.mkdir()
+    checked = module.package_contents
+
+    def then_deleted(*args: object) -> object:
+        result = checked(*args)  # type: ignore[arg-type]
+        (tmp_path / "images" / "101.jpg").unlink()
+        return result
+
+    monkeypatch.setattr(module, "package_contents", then_deleted)
+    argv = ["package", "--run", "run", "--pilot-dir", str(tmp_path), "--out", str(out)]
+    with pytest.raises(SystemExit, match="101.jpg"):
+        cli.main(argv)
+    assert out.is_dir() and not list(out.iterdir())
+    monkeypatch.undo()
+    cli.main(argv)  # the photo is now missing, so the lead links to it instead
+    assert (out / "package.json").is_file() and not (out / "photos").exists()
 
 
 def test_the_api_serves_the_package_and_its_archive(tmp_path: Path) -> None:

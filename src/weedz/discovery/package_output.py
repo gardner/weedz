@@ -6,6 +6,8 @@ memory together, so a package of many large photos stays cheap to build.
 
 import hashlib
 import json
+import shutil
+import tempfile
 import zipfile
 from pathlib import Path
 from typing import IO, Any, NamedTuple
@@ -89,22 +91,31 @@ def archive(package: dict[str, Any], photos: dict[str, Retained], target: IO[byt
                 _copy_verified(photo, entry)
 
 
-def write(package: dict[str, Any], photos: dict[str, Retained], destination: Path) -> None:
-    """Write the package under `destination`, refusing any path that would leave it."""
-    inside = destination.resolve()
-    targets = {name: (inside / name).resolve() for name in photos}
-    if any(not target.is_relative_to(inside) for target in targets.values()):
-        raise ValueError(f"A package file would be written outside {destination}")
-    inside.mkdir(parents=True, exist_ok=True)
-    for name, content in texts(package).items():
-        (inside / name).write_bytes(content)
+def _fill(folder: Path, package: dict[str, Any], photos: dict[str, Retained]) -> None:
+    """Copy and verify every photo, then write the texts that describe them."""
     for name, photo in photos.items():
-        targets[name].parent.mkdir(parents=True, exist_ok=True)
-        partial = targets[name].with_name(targets[name].name + ".partial")
-        try:
-            with partial.open("wb") as handle:
-                _copy_verified(photo, handle)
-        except ValueError:
-            partial.unlink()
-            raise
-        partial.replace(targets[name])
+        target = folder / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("wb") as handle:
+            _copy_verified(photo, handle)
+    for name, content in texts(package).items():
+        (folder / name).write_bytes(content)
+
+
+def write(package: dict[str, Any], photos: dict[str, Retained], destination: Path) -> None:
+    """Write the package to `destination`, a new or empty folder, all or nothing: it is
+    built in a sibling folder and moved into place only once every photo verifies, so a
+    failure never leaves a package whose JSON promises a photo it lacks."""
+    inside = destination.resolve()
+    if any(not (inside / name).resolve().is_relative_to(inside) for name in photos):
+        raise ValueError(f"A package file would be written outside {destination}")
+    inside.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=f".{inside.name}-", dir=inside.parent))
+    try:
+        _fill(staging, package, photos)
+        if inside.exists():
+            inside.rmdir()  # only an empty folder; anything in it is refused here
+        staging.rename(inside)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise

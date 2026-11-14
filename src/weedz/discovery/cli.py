@@ -154,8 +154,8 @@ def package(args: argparse.Namespace) -> None:
         return
     try:
         write(built, photos, args.out)
-    except ValueError as error:
-        raise SystemExit(str(error)) from error
+    except (ValueError, OSError) as error:
+        raise SystemExit(f"Package not written: {error}") from error
     count = len(built["leads"])
     print(f"Wrote {count} lead{'s' if count != 1 else ''} for follow-up to {args.out}")
 
