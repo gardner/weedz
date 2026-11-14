@@ -48,8 +48,9 @@ Non-default connections use `discover --api-url` and `--temporal-address`.
 
 Stop the development stack with Ctrl+C. Restart with the same `--pilot-dir` to
 resume workflow history and retain photos and decisions. This stack binds its
-services locally and provides no authentication or multi-user reviewer identity;
-it is intended for local development, not shared public hosting.
+services locally and provides no authentication. Reviewers type their name, which is
+recorded with each decision as attribution, not verified identity. The stack is
+intended for local development, not shared public hosting.
 
 ## What the workflow actually does
 
@@ -85,7 +86,10 @@ it is intended for local development, not shared public hosting.
 5. **Export and review.** Write a reproducible run manifest, then mark screening
    completed. Next.js exposes sources, windows, dates, location uncertainty,
    reference separation, filters and decisions. Confirm/reject/uncertain decisions
-   and notes append local review history; activity retries preserve them. The
+   and notes append local review history with the reviewer's name; activity
+   retries preserve them. When reviewers' latest decisions differ, the photo is
+   marked "Reviewers disagree" with each person's decision. Decisions saved before
+   attribution existed show "Reviewer not recorded". The
    API export includes current decisions, while the completion manifest records
    the state at screening completion.
 

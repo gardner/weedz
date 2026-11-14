@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from collections import Counter
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -13,6 +14,25 @@ from weedz.discovery.records import Photo, RunSpec
 
 def now() -> str:
     return datetime.now(UTC).isoformat()
+
+
+def add_missing_column(db: sqlite3.Connection, table: str, column: str) -> None:
+    if column not in {row["name"] for row in db.execute(f"PRAGMA table_info({table})")}:
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
+
+
+def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
+    """Each attributed reviewer's latest standing decision, per photo."""
+    decisions: dict[str, dict[str, str]] = {}
+    for event in events:
+        by_reviewer = decisions.setdefault(event["photo_id"], {})
+        if not event["reviewer"]:
+            continue
+        if event["status"] == "unreviewed":
+            by_reviewer.pop(event["reviewer"], None)
+        else:
+            by_reviewer[event["reviewer"]] = event["status"]
+    return decisions
 
 
 class Store:
@@ -31,14 +51,19 @@ class Store:
                     run_id TEXT NOT NULL REFERENCES runs(id), id TEXT NOT NULL,
                     record TEXT NOT NULL, scores TEXT NOT NULL DEFAULT '{}',
                     review_status TEXT NOT NULL DEFAULT 'unreviewed',
-                    review_note TEXT NOT NULL DEFAULT '', PRIMARY KEY(run_id, id)
+                    review_note TEXT NOT NULL DEFAULT '',
+                    review_reviewer TEXT NOT NULL DEFAULT '', PRIMARY KEY(run_id, id)
                 );
                 CREATE TABLE IF NOT EXISTS reviews (
                     id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
                     status TEXT NOT NULL, note TEXT NOT NULL, created_at TEXT NOT NULL,
+                    reviewer TEXT NOT NULL DEFAULT '',
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
             """)
+            # Databases created before reviewer attribution keep their history unattributed.
+            add_missing_column(db, "photos", "review_reviewer")
+            add_missing_column(db, "reviews", "reviewer")
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -87,12 +112,22 @@ class Store:
             rows = db.execute(
                 "SELECT * FROM photos WHERE run_id=? ORDER BY id", (run_id,)
             ).fetchall()
+            events = db.execute(
+                "SELECT photo_id, reviewer, status FROM reviews WHERE run_id=? ORDER BY id",
+                (run_id,),
+            ).fetchall()
+        decisions = reviewer_decisions(events)
+        counts = Counter(event["photo_id"] for event in events)
         return [
             dict(
                 json.loads(row["record"]),
                 scores=json.loads(row["scores"]),
                 review_status=row["review_status"],
                 review_note=row["review_note"],
+                review_reviewer=row["review_reviewer"],
+                reviewer_decisions=decisions.get(row["id"], {}),
+                disputed=len(set(decisions.get(row["id"], {}).values())) > 1,
+                review_count=counts[row["id"]],
             )
             for row in rows
         ]
@@ -104,19 +139,21 @@ class Store:
                 (json.dumps(scores), run_id, photo_id),
             )
 
-    def review(self, run_id: str, photo_id: str, status: str, note: str) -> None:
+    def review(self, run_id: str, photo_id: str, status: str, note: str, reviewer: str) -> None:
         if status not in {"unreviewed", "confirmed", "rejected", "uncertain"}:
             raise ValueError("Unknown review status")
         with self.connect() as db:
             cursor = db.execute(
-                "UPDATE photos SET review_status=?, review_note=? WHERE run_id=? AND id=?",
-                (status, note, run_id, photo_id),
+                "UPDATE photos SET review_status=?, review_note=?, review_reviewer=? "
+                "WHERE run_id=? AND id=?",
+                (status, note, reviewer, run_id, photo_id),
             )
             if cursor.rowcount != 1:
                 raise KeyError(photo_id)
             db.execute(
-                "INSERT INTO reviews(run_id,photo_id,status,note,created_at) VALUES(?,?,?,?,?)",
-                (run_id, photo_id, status, note, now()),
+                "INSERT INTO reviews(run_id,photo_id,status,note,created_at,reviewer) "
+                "VALUES(?,?,?,?,?,?)",
+                (run_id, photo_id, status, note, now(), reviewer),
             )
 
     def reviews(self, run_id: str, photo_id: str) -> list[dict]:

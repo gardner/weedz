@@ -25,6 +25,10 @@ export type Photo = {
   coordinate_status: string;
   review_status: Status;
   review_note: string;
+  review_reviewer: string;
+  reviewer_decisions: Record<string, Status>;
+  disputed: boolean;
+  review_count: number;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -34,6 +38,21 @@ export type Photo = {
     height?: number;
     species?: { name: string; similarity: number; margin: number; box: number[] }[];
   };
+};
+
+export type ReviewEvent = {
+  id: number;
+  reviewer: string;
+  status: Status;
+  note: string;
+  created_at: string;
+};
+
+export const statusLabels: Record<Status, string> = {
+  unreviewed: "Needs review",
+  confirmed: "Species visible",
+  rejected: "Rejected",
+  uncertain: "Uncertain",
 };
 
 export const names: Record<string, string> = {

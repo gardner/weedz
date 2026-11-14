@@ -67,10 +67,15 @@ class ReviewAPI:
 
     def review(self, run_id: str, photo_id: str, decision: Review) -> dict:
         try:
-            self.store.review(run_id, photo_id, decision.status, decision.note)
+            self.store.review(run_id, photo_id, decision.status, decision.note, decision.reviewer)
         except KeyError as error:
             raise HTTPException(404, "Photo not found") from error
         return {"saved": True}
+
+    def history(self, run_id: str, photo_id: str) -> list[dict]:
+        if not any(photo["id"] == photo_id for photo in self.store.photos(self.run(run_id)["id"])):
+            raise HTTPException(404, "Photo not found")
+        return self.store.reviews(run_id, photo_id)
 
 
 def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
@@ -82,4 +87,5 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.get("/runs/{run_id}/export")(api.download)
     app.get("/runs/{run_id}/photos/{photo_id}/image")(api.image)
     app.post("/runs/{run_id}/photos/{photo_id}/review")(api.review)
+    app.get("/runs/{run_id}/photos/{photo_id}/reviews")(api.history)
     return app

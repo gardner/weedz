@@ -78,13 +78,13 @@ def test_activity_retry_does_not_duplicate_or_erase_reviews(tmp_path: Path) -> N
     photo = photo_from_observation(observation(), "Nelson", "incidental")
     assert isinstance(photo, Photo)
     store.save_photos("run-1", [photo])
-    store.review("run-1", photo.id, "uncertain", "Need a flowering view")
+    store.review("run-1", photo.id, "uncertain", "Need a flowering view", "Ana")
     store.save_photos("run-1", [photo])
     photos = store.photos("run-1")
     assert len(photos) == 1
     assert photos[0]["review_status"] == "uncertain"
     assert len(store.reviews("run-1", photo.id)) == 1
-    store.review("run-1", photo.id, "rejected", "Native lookalike")
+    store.review("run-1", photo.id, "rejected", "Native lookalike", "Ana")
     assert len(store.reviews("run-1", photo.id)) == 2
 
 
@@ -92,9 +92,9 @@ def test_unknown_review_cannot_create_a_phantom_photo(tmp_path: Path) -> None:
     store = Store(tmp_path)
     store.create_run("run-1", RunSpec())
     with pytest.raises(KeyError):
-        store.review("run-1", "missing", "confirmed", "")
+        store.review("run-1", "missing", "confirmed", "", "Ana")
     with pytest.raises(ValueError):
-        store.review("run-1", "missing", "invented", "")
+        store.review("run-1", "missing", "invented", "", "Ana")
 
 
 def test_each_run_owns_its_review_and_control_label(tmp_path: Path) -> None:
@@ -104,5 +104,5 @@ def test_each_run_owns_its_review_and_control_label(tmp_path: Path) -> None:
     for run_id in ["first", "second"]:
         store.create_run(run_id, RunSpec())
         store.save_photos(run_id, [photo])
-    store.review("first", photo.id, "confirmed", "Visible in crop")
+    store.review("first", photo.id, "confirmed", "Visible in crop", "Ana")
     assert store.photos("second")[0]["review_status"] == "unreviewed"
