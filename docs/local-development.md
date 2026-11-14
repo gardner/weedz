@@ -81,7 +81,8 @@ intended for local development, not shared public hosting.
    newest-first query, and runs saved before this option existed are reported
    as `recent`. The export's `corpus_coverage` counts photos by year, season,
    observer and observer-day. Take one eligible photo per observation. Both
-   metadata and photo licences must be CC0, CC BY or CC BY-NC.
+   metadata and photo licences must be CC0, CC BY or CC BY-NC, and the store
+   refuses any other ([sharing](#sharing-licences-and-location-privacy)).
    Preserve query/response snapshots, original subject, attribution and licence
    fields. Download the publisher's `large` image derivative, retain its bytes
    and SHA-256 checksum, and deduplicate source photo IDs within a run. Even
@@ -434,8 +435,9 @@ use must be non-commercial.
   the screening window for a suggestion, or the reviewer-drawn extent for a
   recorded plant.
 - Nothing is published, and no observation is created on anyone's behalf.
-- Broader sharing rules, such as other licences and the run export's own
-  sharing, are tracked in #28.
+- Each lead's source also carries the observation licence's conditions. The
+  image decision comes from the shared policy
+  ([sharing](#sharing-licences-and-location-privacy)).
 
 **Real-data check.** On a copy of `data/pilot`, run
 `nelson-tasman-3e62ad801459` had no selections, and the command printed "No
@@ -450,6 +452,90 @@ CC BY-NC photo, one CC BY photo). Both had public locations:
 
 Neither had a DOC record within 5 km. Both remained unassessed on every
 judgement dimension.
+
+### Sharing, licences and location privacy
+
+One policy, `src/weedz/discovery/sharing.py`, decides what may leave the
+project (PRD P15, P17). Every outbound path uses it: the run export, the
+follow-up package and the image endpoint. It knows two uses:
+
+- `review`: the local review app, on the reviewer's own machine.
+- `share`: anything that leaves that machine, such as the downloaded export
+  or a package.
+
+**Licences.** For each photo the policy states whether the image may be shown
+(review), included (share) or only linked, and why.
+
+| Licence | Review app | Export and package |
+| --- | --- | --- |
+| CC0, CC BY, CC BY-NC | shown | included, with attribution; CC BY-NC for non-commercial use only |
+| ND (`cc-by-nd`, `cc-by-nc-nd`) | not admitted; link | link: only verbatim copies are allowed, and verbatim-only handling is not implemented |
+| SA (`cc-by-sa`, `cc-by-nc-sa`) | not admitted; link | link: share-alike terms for derived material are not yet carried |
+| none (all rights reserved) | not admitted; link | link: the observer's permission is not established |
+
+- Acquisition asks iNaturalist only for the three admitted licences, and
+  checks every photo and observation individually. `Store.save_photos`
+  refuses any other licence, so a new source or cohort cannot add one
+  silently. ND, SA and all-rights-reserved material cannot enter today.
+- `GET /runs/{id}/photos/{photo}/image` serves only admitted photos. Anything
+  else is refused with 403 and the reason, so reviewers still see every photo
+  the collection holds.
+- Attribution and both licences always travel. A photo's `sharing.terms` in
+  the export gives the attribution, observer, source link, photo terms,
+  observation terms (the observation data, such as taxon, date and location,
+  has its own licence), and whether non-commercial use applies.
+- Admitting ND or SA later means changing acquisition and this one table,
+  with the handling the table names.
+
+**Locations.**
+
+- An obscured point is never served, not even to the review app. iNaturalist
+  displaces it on purpose, so passing it on would present an invented
+  location. `coordinate_status` stays `obscured`.
+- For `share`, a public point leaves only with its accuracy. A point of
+  unknown accuracy is withheld, because it would overstate where the photo
+  was taken. The review app still shows it, marked "accuracy not supplied".
+- A point under an observation licence that is not admitted is withheld for
+  `share`, and so is any search area centred on it.
+- Each exported photo's `sharing.location` gives the status, the point that
+  may leave, its accuracy, and the reason anything was withheld.
+
+**The run export is shareable by default.** `GET /runs/{id}/export` (**Export
+evidence ↓**) returns the shareable form. Coordinates follow the location
+rule, each photo has a `sharing` block (`terms`, `image`, `location`), and
+the top-level `sharing` lists the rules. No HTTP endpoint serves raw obscured
+coordinates. The download button is the file people pass on, so the safe form
+is the default. A raw-coordinate route is exactly what would leak once remote
+access (#31) exists. The complete record stays local: the SQLite store and the
+completion manifest in `data/pilot/runs/<id>/manifest.json`. The package, the
+outcome report and the completion manifest compute from that full record, and
+apply their own output rules.
+
+**No publication on anyone's behalf.** Nothing in the project publishes
+photos, observations or identifications to iNaturalist, GBIF or anywhere else.
+The source clients only read. `tests/test_sharing_surface.py` proves that
+every request the iNaturalist and GBIF clients make is a GET, and that no
+module naming those hosts calls a write method. A reviewer who wants a plant
+recorded publicly should ask the observer, or record their own observation.
+
+**Real-data check.** On a copy of `data/pilot`, the shareable export of run
+`nelson-tasman-3e62ad801459` held 30 photos, all public and all admitted:
+
+- 13 CC BY photos under CC BY observations, and 12 CC BY-NC photos under
+  CC BY-NC observations.
+- Two CC BY photos under CC0 observations, two CC0 under CC0, and one CC BY
+  under a CC BY-NC observation.
+
+13 photos carry non-commercial terms. 26 points were given with their
+accuracy. Four public points of unknown accuracy were withheld, though the
+review app still shows them.
+
+With one photo's record then marked obscured on the copy:
+
+- The export and the run detail no longer contained its point.
+- Its image still loaded for review.
+- A package selecting it and a public photo included both CC BY photos, and
+  gave the obscured one as "not searchable".
 
 ## Files and evidence
 
@@ -466,7 +552,9 @@ Everything generated is ignored by Git:
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 
 An observation coordinate describes the original observation, not a located weed.
-Obscured/missing coordinates and positional accuracy remain explicit.
+Obscured/missing coordinates and positional accuracy remain explicit. The store
+keeps the source's point. The run detail and export pass on only what the
+[sharing policy](#sharing-licences-and-location-privacy) allows.
 
 ### Location and date limits
 

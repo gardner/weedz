@@ -37,6 +37,11 @@ open-source code does not change upstream asset licences. Consider other licence
 types according to the intended use; exclude all-rights-reserved material unless
 permission is established. A bounded Nelson/Tasman iNaturalist collection is now
 downloaded alongside the Leafy Spurge baseline; see [local operation](local-development.md).
+One policy (`src/weedz/discovery/sharing.py`) applies these rules to every
+outbound path. It admits CC0, CC BY and CC BY-NC, and states why ND,
+share-alike and all-rights-reserved material is linked rather than used. It
+never passes on an obscured point, and nothing is published on a contributor's
+behalf ([sharing, licences and location privacy](local-development.md#sharing-licences-and-location-privacy)).
 
 ## What works today
 
