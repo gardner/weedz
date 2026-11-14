@@ -8,9 +8,10 @@ policies several times a year.
 
 This document covers what the Flutter app (Android and iOS, decided in
 [#50](https://github.com/gardner/weedz/issues/50)) must declare to Apple and
-Google, and why. The app's architecture will be described in `docs/mobile.md`,
-and its code will live in `mobile/` **(pending #50; neither exists yet)**. This
-file only covers what the stores and the NZ Privacy Act require of that design.
+Google, and why. The app's architecture is described in
+[`docs/mobile.md`](mobile.md), and its scaffold and domain layer live in
+[`mobile/`](../mobile/). This file only covers what the stores and the NZ Privacy
+Act require of that design.
 
 ## What the app does, for the purposes of review
 
@@ -35,10 +36,11 @@ Facts that depend on unmerged work are marked **(pending #n)**:
 
 - **#57 / PR #85**: the intake API and report schema version 1.
 - **#61** (merged): exact locations are shared by default, and obscured points
-  never leak. It did **not** add a separate location-consent field. A location is
-  sent only when it is in a report the person approved, after seeing it on the
-  approval screen. They can remove it with "Remove location" (`docs/mobile.md`,
-  pending #50).
+  never leak. [#91](https://github.com/gardner/weedz/issues/91) adds explicit
+  `consent.location`, true exactly when a report includes the exact location.
+  The person sees the point and its accuracy on the approval screen before
+  agreeing to send it. "Remove location" also clears that consent
+  ([`docs/mobile.md`](mobile.md)).
 - **#59**: the model bundle format, and what (if anything) the device sends when
   it checks for updates.
 - **[#60](https://github.com/gardner/weedz/issues/60)**: what the project may do
@@ -83,7 +85,7 @@ updates since 31 August 2026.
 | `INTERNET` | Yes | Upload approved reports and download the model bundle. | — (normal permission) |
 | `READ_MEDIA_VIDEO`, `READ_MEDIA_AUDIO` | **No, explicitly removed** | Flutter media plugins may add these through manifest merge. Remove them with `tools:node="remove"` and check the merged manifest, because Play asks for a declaration for every media permission present. | — |
 | `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` / `ACCESS_BACKGROUND_LOCATION` | **No** | As on iOS, location comes from photo metadata. Keeping these out also keeps the app out of Play's location-permissions policy. | — |
-| `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_MEDIA_PROCESSING` | **Only if WorkManager proves too slow** | The default is WorkManager with `requiresCharging` and `requiresDeviceIdle` constraints, plus the in-app scan. `docs/mobile.md` (pending #50) keeps a `mediaProcessing` foreground service as the option for long scans. If it ships, Play needs a foreground-service-type declaration in the Console, with a video of the visible notification, and Android 15+ limits `mediaProcessing` to 6 hours in 24. | Notification: "Checking your photos for weeds on this phone. Nothing is uploaded." |
+| `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_MEDIA_PROCESSING` | **Only if WorkManager proves too slow** | The default is WorkManager with `requiresCharging` and `requiresDeviceIdle` constraints, plus the in-app scan. [`docs/mobile.md`](mobile.md) keeps a `mediaProcessing` foreground service as the option for long scans. If it ships, Play needs a foreground-service-type declaration in the Console, with a video of the visible notification, and Android 15+ limits `mediaProcessing` to 6 hours in 24. | Notification: "Checking your photos for weeds on this phone. Nothing is uploaded." |
 | `POST_NOTIFICATIONS` | Optional, later | Only to say "3 possible weeds are ready to review" after a background scan. Asked for when the person turns that on, not at first launch. | "Weedz can tell you when a background check finds a possible weed for you to review." |
 | `CAMERA` | No (not in v1) | — | — |
 
@@ -96,8 +98,13 @@ same thing through 5.1.1(ii) and 5.1.5. One onboarding flow serves both:
 
 1. **Screen 1, "How Weedz works."** Your photos are checked on this phone. Nothing
    is uploaded automatically. You approve each report.
-2. **Screen 2, "What a report shares"** (shown before any photo permission). If you
-   approve a report, Weedz sends the suspected weed, the model that suggested it,
+2. **Screen 2, "Photo locations and what a report shares"** (shown before any
+   photo permission, and again immediately before an `ACCESS_MEDIA_LOCATION`
+   request if it is requested separately). Weedz reads the location saved in
+   every photo it scans, on this phone, so it can prepare a report of where a
+   weed was seen. This includes photos that never become reports. These locations
+   stay on your phone unless you approve a report. If you approve a report,
+   Weedz sends the suspected weed, the model that suggested it,
    when the photo was taken, and **the exact place the photo was taken, with its
    accuracy**. Exact places are what make a weed report useful. A photo crop is
    sent only if you tick "include photo" on that report and choose a licence.
@@ -215,8 +222,10 @@ stores require declarations to be accurate, and ticking both would wrongly
 claim a device ID is collected.
 
 **Consent choices are report content, not product interaction.** Each report
-records the consent wording version, whether a location and a crop are
-included, and the crop's licence (#57, #61). These are attributes of what the
+records the consent wording version, explicit location and crop consent, and
+the crop's licence (#57, [#91](https://github.com/gardner/weedz/issues/91)).
+`consent.location` must be true exactly when the report includes a location.
+These are attributes of what the
 person chose to publish, like a licence on a post. They go with Other User
 Content (Play: Other user-generated content). They are not Apple's Product
 Interaction or Play's "Other actions", which describe behaviour and usage
@@ -234,7 +243,7 @@ identity. Choosing "Not linked" would understate it.
 
 **Tracking: No.** There is no ATT prompt and no `NSPrivacyTracking`.
 
-## Apple privacy manifest (`ios/Runner/PrivacyInfo.xcprivacy`, draft)
+## Apple privacy manifest (`mobile/ios/Runner/PrivacyInfo.xcprivacy`, draft)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -405,9 +414,10 @@ Settle this when #59 is designed.
 - **Recommended either way**, because it costs little and removes the question:
   a **"Delete my data"** action in settings that withdraws every report sent from
   this device and then asks the server to revoke the token. A web form (or a
-  documented email address) does the same for a lost phone, through the operator's
-  `intake withdraw`. **Gap**: #57 has per-report withdrawal but no "withdraw all and
-  revoke myself" endpoint. Track this as follow-up work on the intake API.
+  documented email address) should offer an equivalent operator procedure for a
+  lost phone. **Gap**: #57 has per-report withdrawal but no "withdraw all and
+  revoke myself" endpoint. Track this in
+  [#101](https://github.com/gardner/weedz/issues/101).
 - The store listing and privacy policy describe what remains after withdrawal: a
   tombstone of ids and received and withdrawn times, so a retry can't bring a
   report back (#57).
