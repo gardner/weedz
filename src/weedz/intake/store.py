@@ -18,6 +18,8 @@ from pathlib import Path
 
 from weedz import tokens
 from weedz.intake import budget
+from weedz.intake.deletion import SCHEMA as DELETION_SCHEMA
+from weedz.intake.deletion import is_deleting
 from weedz.intake.limits import Limits
 from weedz.intake.schema import Report, ReportContent
 
@@ -30,6 +32,7 @@ CREATE TABLE IF NOT EXISTS reports(
 );
 """
     + budget.SCHEMA
+    + DELETION_SCHEMA
 )
 
 
@@ -101,6 +104,8 @@ class ReportStore:
         having charged it to the submitter's budget. Raises Withdrawn, Conflict or
         OverBudget. ``receive`` then charges the stored crop's exact size."""
         with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
             earlier = _existing(db, submitter, report_id, digest)
             if earlier is None:
                 budget.charge(db, submitter, report_id, has_image, limits)
@@ -120,6 +125,8 @@ class ReportStore:
         name = None
         try:
             with self._transaction() as db:
+                if is_deleting(db, submitter):
+                    raise Withdrawn
                 existing = _existing(db, submitter, report_id, digest)
                 if existing:
                     return existing, False
@@ -169,7 +176,8 @@ class ReportStore:
         """Every report received and not withdrawn: unpublished, for review (#58)."""
         with closing(self._connect()) as db:
             rows = db.execute(
-                "SELECT * FROM reports WHERE withdrawn_at IS NULL ORDER BY received_at"
+                "SELECT * FROM reports WHERE withdrawn_at IS NULL AND submitter NOT IN "
+                "(SELECT submitter FROM submitter_deletions) ORDER BY received_at"
             ).fetchall()
         return [
             StoredReport(

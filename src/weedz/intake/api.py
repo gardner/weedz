@@ -18,7 +18,9 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 
+from weedz import tokens
 from weedz.intake.budget import OverBudget
+from weedz.intake.deletion import Deletions
 from weedz.intake.images import ImageRefused, clean_image
 from weedz.intake.limits import Limits
 from weedz.intake.schema import Report
@@ -160,14 +162,31 @@ def create_intake_app(root: Path, limits: Limits | None = None) -> FastAPI:
     is documented in the repository, not advertised by the public endpoint."""
     app = FastAPI(
         title="Weedz report intake",
-        dependencies=[Depends(require_submitter(Submitters(root)))],
         openapi_url=None,
         docs_url=None,
         redoc_url=None,
     )
     api = IntakeAPI(root, limits or Limits())
+    deletions = Deletions(root)
+    deletions.resume()
     api.store.sweep()
-    app.put("/reports/{report_id}")(api.put)
-    app.get("/reports/{report_id}")(api.get)
-    app.delete("/reports/{report_id}")(api.delete)
+    authenticated = [Depends(require_submitter(Submitters(root)))]
+
+    def delete_submitter(request: Request) -> dict[str, str | None]:
+        submitter = request.state.submitter
+        # A revoked secret can only resume an erasure already requested while active.
+        if (
+            not deletions.started(submitter)
+            and Submitters(root).submitter(tokens.bearer(request)) is None
+        ):
+            raise HTTPException(401, "Send an active submitter token")
+        return deletions.delete(submitter).as_dict()
+
+    app.delete(
+        "/submitter",
+        dependencies=[Depends(require_submitter(Submitters(root), allow_revoked=True))],
+    )(delete_submitter)
+    app.put("/reports/{report_id}", dependencies=authenticated)(api.put)
+    app.get("/reports/{report_id}", dependencies=authenticated)(api.get)
+    app.delete("/reports/{report_id}", dependencies=authenticated)(api.delete)
     return app

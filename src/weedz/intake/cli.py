@@ -55,6 +55,16 @@ def withdraw(args: argparse.Namespace) -> None:
     )
 
 
+def delete_submitter(args: argparse.Namespace) -> None:
+    """After verifying a deletion request against the operator's enrollment records."""
+    from weedz.intake.deletion import Deletions
+
+    if args.id not in {row["id"] for row in Submitters(args.intake_dir).listing()}:
+        raise SystemExit(f"No submitter with id {args.id}")
+    Deletions(args.intake_dir).delete(args.id)
+    print(f"Deleted reports and revoked submitter {args.id}; only id/time tombstones remain.")
+
+
 def serve(args: argparse.Namespace) -> None:
     import uvicorn
 
@@ -87,6 +97,8 @@ def parse(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Record the withdrawal even if the report has not arrived, so it is refused",
     )
+    delete = commands.add_parser("delete-submitter", help="Erase all reports and revoke a device")
+    delete.add_argument("--id", type=int, required=True)
     run = commands.add_parser("serve", help="Serve the intake API")
     run.add_argument("--host", default="127.0.0.1", help="Loopback by default, for a proxy")
     run.add_argument("--port", type=int, default=8300)
@@ -97,5 +109,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str]) -> None:
     args = parse(argv)
-    commands = {"add": add, "list": listing, "revoke": revoke, "withdraw": withdraw, "serve": serve}
+    commands = {
+        "add": add,
+        "list": listing,
+        "revoke": revoke,
+        "withdraw": withdraw,
+        "delete-submitter": delete_submitter,
+        "serve": serve,
+    }
     commands[args.command](args)
