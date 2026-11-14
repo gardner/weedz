@@ -320,6 +320,56 @@ The six requested references are source-labelled reference evidence, not six
 independent expert-verified segmentation ground truths. Do not report classification
 accuracy or discovery precision from these references alone.
 
+### Define the study
+
+A study records what the runs are for (PRD P01, Journey 1). It holds:
+
+- the discovery question, the partner, and the responsible people by role
+- the regions and historical period, each with its rationale
+- the watchlist and lookalikes, each with its rationale
+- the source collection and how original subjects were selected
+- the review budget, in hours, photos or both
+- the declared reference records
+- an optional agreed limit for each outcome measure
+
+A study only records decisions; it never makes them. Whatever is missing is listed
+under *open decisions*. The study stays `provisional` until the lead marks it
+`agreed`, which needs a question and a partner. The partner and question decision
+itself is issue #1.
+
+Open **Study definition** beside the run settings to view or edit the study. You
+can also use the CLI:
+
+```sh
+uv run main.py study --run nelson-tasman-3e62ad801459                 # show it
+uv run main.py study --run nelson-tasman-3e62ad801459 --file study.json \
+  --author "Your name" --note "Budget agreed"                          # record a version
+```
+
+The file is the definition as JSON, with the same fields the API takes; see
+`StudyDefinition` in `src/weedz/discovery/study.py`.
+
+- **Versions.** Each edit appends a whole new version with its author, time and
+  note. Versions are never edited. An edit based on an older version is refused
+  (409), so two people cannot overwrite each other unseen.
+- **Runs.** A study can serve several runs. A run links to one study at a time,
+  and the latest link stands.
+- **Screening terms.** Regions, watchlist species and lookalikes are checked
+  against the screening's code constants (`REGIONS`, `SPECIES`, `LOOKALIKES`).
+  Any other name is refused unless it is marked `"screened": false`, meaning not
+  yet screened. *Differs from the screening* lists every gap: screened species or
+  regions the study leaves out, names not yet screened, declared lookalikes with
+  no rationale, and a run period outside the study period.
+- **Limits.** Each limit has a fixed unit and direction, for example *at least N
+  % of incidental photos reviewed*. `GET /studies/terms` lists them. A limit left
+  out is "not yet agreed", never zero.
+
+API: `GET/POST /studies` (a new study may take `run_id` to link it in the same
+request), `GET /studies/{id}` (current version and history),
+`POST /studies/{id}/versions`, and `GET/POST /runs/{id}/study`. The run detail,
+the run export (shareable by default) and the completion manifest carry the linked
+study. Responsible people's names travel with it, as reviewer names already do.
+
 ### Report outcomes against the success measures
 
 ```sh
@@ -335,6 +385,32 @@ Photo sets are counted as independent site visits, and ungrouped photos are kept
 apart. "Unknown" means unmeasured, not zero. A confirmed review shows only that
 the species is visible, not that the finding is useful (#18), and a reference
 distance is not a novelty claim.
+
+Each measure's `limit` compares it with the linked study's agreed limit:
+
+| Verdict | When |
+| --- | --- |
+| `not agreed` | No study is linked, or it agrees no limit for the measure. No verdict is given. |
+| `not comparable` | The measure gives no value in the limit's unit yet, or only a lower bound that does not settle the limit. The reason says which. |
+| `met` / `not met` | Both a limit and a comparable value exist. |
+
+Today only two measures give a comparable value: *evidence completeness* (% of
+incidental photos with complete evidence) and *coverage* (% reviewed). Coverage
+is a lower bound while photos wait for review, so a shortfall stays
+`not comparable` until every photo is reviewed. Usefulness (#18), a detection
+rule (#16) and follow-up judgements are not recorded yet, so the other measures
+cannot be compared.
+
+The report's `study` section gives:
+
+- the study's version and status
+- its open decisions and its differences from the screening
+- **review-budget use**: measured review hours (decisions, findings, judgements,
+  referral actions and blind audits) and photos with a decision or audit,
+  against the budget
+
+Untimed work makes the hours a lower bound. So a budget is reported as `spent`
+for certain, but `within so far` only while some work is untimed.
 
 The *Novel or earlier evidence* measure has two parts, reported side by side.
 Both cover the same plants: confirmed suggestions and recorded watchlist plants.
