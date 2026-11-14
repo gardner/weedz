@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from weedz.discovery.records import Photo, RunSpec
+from weedz.discovery.records import Finding, Photo, RunSpec
 
 
 def now() -> str:
@@ -21,6 +21,10 @@ def add_missing_column(
 ) -> None:
     if column not in {row["name"] for row in db.execute(f"PRAGMA table_info({table})")}:
         db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def finding_row(row: sqlite3.Row) -> dict[str, Any]:
+    return dict(row, box=row["box"] and json.loads(row["box"]))
 
 
 def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
@@ -38,10 +42,10 @@ def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
 
 
 # An audit is blind only if it is the auditor's first answer for the photo (after it the
-# photo is released into their ranked queue) and no one reviewed the photo before it
-# without having audited it first. The app lets a sampled photo be reviewed only after the
-# reviewer's own audit, so any other earlier review, such as one made before the sample
-# existed, means the suggestion may have been seen.
+# photo is released into their ranked queue) and no one reviewed the photo, or recorded a
+# finding on it, before it without having audited it first. The app lets a sampled photo
+# be reviewed only after the reviewer's own audit, so any other earlier review or finding,
+# such as one made before the sample existed, means the suggestion may have been seen.
 AUDITS_BY_BLINDNESS = """
 SELECT a.photo_id, a.reviewer, a.finding FROM audits a
 WHERE a.run_id = ? AND (
@@ -51,7 +55,10 @@ WHERE a.run_id = ? AND (
         AND earlier.id < a.id
     )
     AND NOT EXISTS (
-        SELECT 1 FROM reviews r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
+        SELECT 1 FROM (
+            SELECT run_id, photo_id, reviewer, created_at FROM reviews
+            UNION ALL SELECT run_id, photo_id, reviewer, created_at FROM findings
+        ) r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
         AND r.created_at <= a.created_at AND NOT EXISTS (
             SELECT 1 FROM audits own WHERE own.run_id = r.run_id
             AND own.photo_id = r.photo_id AND own.reviewer = r.reviewer
@@ -92,6 +99,13 @@ class Store:
                     id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
                     finding TEXT NOT NULL, note TEXT NOT NULL, reviewer TEXT NOT NULL,
                     effort_seconds REAL, created_at TEXT NOT NULL,
+                    FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
+                );
+                CREATE TABLE IF NOT EXISTS findings (
+                    id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
+                    kind TEXT NOT NULL, species TEXT, other_taxon TEXT, box TEXT,
+                    note TEXT NOT NULL, reviewer TEXT NOT NULL, effort_seconds REAL,
+                    created_at TEXT NOT NULL,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
             """)
@@ -152,8 +166,14 @@ class Store:
                 "SELECT photo_id, reviewer, status FROM reviews WHERE run_id=? ORDER BY id",
                 (run_id,),
             ).fetchall()
+            recorded = db.execute(
+                "SELECT * FROM findings WHERE run_id=? ORDER BY id", (run_id,)
+            ).fetchall()
         decisions = reviewer_decisions(events)
         counts = Counter(event["photo_id"] for event in events)
+        findings: dict[str, list[dict]] = {}
+        for row in recorded:
+            findings.setdefault(row["photo_id"], []).append(finding_row(row))
         return [
             dict(
                 json.loads(row["record"]),
@@ -164,6 +184,7 @@ class Store:
                 reviewer_decisions=decisions.get(row["id"], {}),
                 disputed=len(set(decisions.get(row["id"], {}).values())) > 1,
                 review_count=counts[row["id"]],
+                findings=findings.get(row["id"], []),
             )
             for row in rows
         ]
@@ -249,3 +270,32 @@ class Store:
         for row in rows:
             findings.setdefault(row["photo_id"], {})[row["reviewer"]] = row["finding"]
         return findings
+
+    def finding(self, run_id: str, photo_id: str, record: Finding) -> None:
+        """Append a reviewer's finding; findings are never edited or deleted."""
+        box = json.dumps(list(record.box)) if record.box else None
+        with self.connect() as db:
+            db.execute(
+                "INSERT INTO findings(run_id,photo_id,kind,species,other_taxon,box,note,"
+                "reviewer,effort_seconds,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (
+                    run_id,
+                    photo_id,
+                    record.kind,
+                    record.species,
+                    record.other_taxon,
+                    box,
+                    record.note,
+                    record.reviewer,
+                    record.effort_seconds,
+                    now(),
+                ),
+            )
+
+    def findings(self, run_id: str, photo_id: str) -> list[dict]:
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT * FROM findings WHERE run_id=? AND photo_id=? ORDER BY id",
+                (run_id, photo_id),
+            ).fetchall()
+        return [finding_row(row) for row in rows]

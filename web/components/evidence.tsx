@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/findings";
 import {
   imageUrl,
   names,
@@ -12,12 +12,15 @@ import {
   siteVisitSummary,
   statusLabels,
 } from "../lib/types";
+import { FindingForm, FindingList } from "./finding-form";
+import PhotoStage from "./photo-stage";
 import ReviewHistory from "./review-history";
 
 export default function Evidence({
   photo,
   runId,
   onSave,
+  onSaveFinding,
   saving,
   references,
   reviewer,
@@ -25,7 +28,8 @@ export default function Evidence({
 }: {
   photo: Photo;
   runId: string;
-  onSave: (status: Status, note: string) => Promise<void>;
+  onSave: (status: Status, note: string) => Promise<unknown>;
+  onSaveFinding: (finding: NewFinding) => Promise<boolean>;
   saving: boolean;
   references: References;
   reviewer: string;
@@ -38,8 +42,14 @@ export default function Evidence({
   const [draft, setNote] = useState<string | null>(null);
   const note = draft ?? ownNote;
   const [windowVisible, setWindowVisible] = useState(true);
+  const [recording, setRecording] = useState(false);
+  const [box, setBox] = useState<BoxDraft>(EMPTY_BOX);
   const { scores } = photo;
-  const [x1, y1, x2, y2] = scores.box ?? [0, 0, 0, 0];
+  const parsedBox = parseBox(box, scores.width, scores.height);
+  function toggleRecording(open: boolean) {
+    setRecording(open);
+    setBox(EMPTY_BOX);
+  }
   const target = scores.best_species ?? "Pending screening";
   const blocked = saving || !reviewer.trim();
   return (
@@ -66,45 +76,14 @@ export default function Evidence({
           </ul>
         </div>
       )}
-      <div className="image-stage">
-        {scores.width && scores.height ? (
-          <svg
-            viewBox={`0 0 ${scores.width} ${scores.height}`}
-            role="img"
-            aria-label={`Source photo of ${photo.original_common_name || photo.original_taxon}; highlighted search window`}
-          >
-            <title>Original photo with an optional model search window</title>
-            <image href={imageUrl(runId, photo.id)} width={scores.width} height={scores.height} />
-            {windowVisible && scores.box && (
-              <rect
-                x={x1}
-                y={y1}
-                width={x2 - x1}
-                height={y2 - y1}
-                fill="rgba(241,204,106,.06)"
-                stroke="#f1cc6a"
-                strokeWidth={Math.max(scores.width / 260, 2)}
-                strokeDasharray="12 6"
-              />
-            )}
-          </svg>
-        ) : (
-          <Image
-            src={imageUrl(runId, photo.id)}
-            alt={`Original observation of ${photo.original_taxon}`}
-            width={1024}
-            height={1024}
-            unoptimized
-          />
-        )}
-        <span className="image-caption">
-          {photo.cohort === "lookalike"
-            ? `Lookalike photo · ${photo.lookalike_taxon}, resembles ${names[photo.lookalike_of ?? ""] ?? photo.lookalike_of}`
-            : photo.cohort === "reference"
-              ? "Reference photo · kept outside discovery results"
-              : "Animal-subject photo · background plants unlabelled"}
-        </span>
-      </div>
+      <PhotoStage
+        photo={photo}
+        runId={runId}
+        windowVisible={windowVisible}
+        drawing={recording}
+        draft={recording ? parsedBox.box : null}
+        onDraw={(drawn) => setBox(drawn.map(String) as BoxDraft)}
+      />
       <div className="image-tools">
         <label>
           <input
@@ -222,6 +201,29 @@ export default function Evidence({
           Saved locally with review history. “Visible” records a reviewer decision about this image;
           it does not establish a new weed locality.
         </small>
+      </div>
+      <div className="finding-section">
+        <button
+          type="button"
+          aria-expanded={recording}
+          aria-controls={recording ? "finding-form" : undefined}
+          onClick={() => toggleRecording(!recording)}
+        >
+          Record a different or missed plant
+        </button>
+        {recording && (
+          <FindingForm
+            photo={photo}
+            box={box}
+            parsedBox={parsedBox}
+            onBoxChange={setBox}
+            blocked={blocked}
+            onSave={async (finding) => {
+              if (await onSaveFinding(finding)) toggleRecording(false);
+            }}
+          />
+        )}
+        <FindingList findings={photo.findings ?? []} />
       </div>
       <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />
     </article>
