@@ -8,9 +8,9 @@ policies several times a year.
 
 This document covers what the Flutter app (Android and iOS, decided in
 [#50](https://github.com/gardner/weedz/issues/50)) must declare to Apple and
-Google, and why. The app's architecture is described in `docs/mobile.md` and
-its code lives in `mobile/`. This file only covers what the stores and the NZ
-Privacy Act require of that design.
+Google, and why. The app's architecture will be described in `docs/mobile.md`,
+and its code will live in `mobile/` **(pending #50; neither exists yet)**. This
+file only covers what the stores and the NZ Privacy Act require of that design.
 
 ## What the app does, for the purposes of review
 
@@ -182,8 +182,22 @@ screening of the library is **not** collected. Approved reports are.
 | User Content: **Photos or Videos** | Yes (optional) | Yes | No | App Functionality | A cropped image, only when the person ticks "include photo" for that report. |
 | User Content: **Other User Content** | Yes | Yes | No | App Functionality | The report itself: suspected taxon, score, capture time, consent choices. |
 | Contact Info: **Name** | Yes (optional) | Yes | No | App Functionality | The optional credit name. Remove this row if #60 drops credit names. |
-| Identifiers: **User ID** | Yes | Yes | No | App Functionality | The per-device submitter token (`weedzsub_…`). The server keeps only a hash, but it links reports to one submitter. |
+| Identifiers: **User ID** | Yes | Yes | No | App Functionality | The submitter token (`weedzsub_…`). The server keeps only a hash, but it links reports to one submitter. |
 | Identifiers: Device ID | No | — | — | — | No IDFA, IDFV or hardware IDs are sent. |
+
+**Why the submitter token is a User ID, not a Device ID.** The token is installed
+on one device, but it is not a device identifier. It is not derived from the
+hardware or the OS, and the device doesn't generate it. An operator issues it
+to an enrolled participant from the CLI (#57). The operator knows who the
+participant is, and can revoke the token or withdraw that participant's
+reports. That makes it an assigned account-level ID. Apple's User ID covers
+an "assigned user ID", and Play's User IDs covers identifiers that "relate to
+an identifiable person, such as an account ID". Apple's Device ID and Play's
+Device or other IDs are meant for advertising IDs, IDFV, IMEI, Android ID and
+similar, none of which are sent. If enrolment ever becomes anonymous
+self-service, so that no one can link the token to a person, review this
+choice. Declaring both categories is always acceptable, because over-declaring
+is never a violation.
 | Diagnostics, Usage Data, Contacts, Health, Financial, Browsing, Search | No | — | — | — | Re-check if a crash reporter or analytics is ever added. None are planned. |
 
 Apple has no "scientific research" purpose. App Functionality is the closest fit,
@@ -329,8 +343,12 @@ preparing reports, is not collected and is not declared as such.
 | Location: **Precise location** | **Yes** | **See note** | Yes: per report, the person chooses | No | App functionality | Exact EXIF coordinates and accuracy of the photo. |
 | Photos and videos: **Photos** | Yes | See note | Yes | No | App functionality | Cropped image only, with consent and a licence. |
 | Personal info: **Name** | Yes | See note | Yes | No | App functionality | Optional credit name. |
-| Personal info: **User IDs** | Yes | No | No | No | App functionality, Fraud prevention, security and compliance | Submitter token: authentication, revocation, per-submitter abuse limits. |
-| App activity: **Other user-generated content** | Yes | See note | No | No | App functionality | The report: taxon, score, capture time, model ids, consent. |
+| Personal info: **User IDs** | Yes | No | Yes: sent only with an approved report | No | App functionality, Fraud prevention, security and compliance | Submitter token: authentication, revocation, per-submitter abuse limits. See the Apple section for why this is not a device ID. |
+| App activity: **Other user-generated content** | Yes | See note | Yes: sent only when a report is approved | No | App functionality | The report: taxon, score, capture time, model ids, consent. |
+
+Every row is **optional** in Play's sense. A person can scan, browse
+candidates and use the app indefinitely without approving a report. Nothing
+leaves the device until they approve one.
 | App info and performance | No | — | — | — | — | No crash or analytics SDK. Re-check if one is added. |
 | Device or other IDs | No | — | — | — | — | — |
 
@@ -426,7 +444,7 @@ privacy principles (IPPs). IPP 3A (notice when information is collected
 indirectly) has applied since 1 May 2026. It also follows Apple 5.1.1(i) and
 Play's User Data policy.
 
-1. **Who we are** (IPP 3(1)(f)): the publisher's legal name and address, and the
+1. **Who we are** (IPP 3(1)(d)): the publisher's legal name and address, and the
    privacy officer's contact (s 201). **[Decision: publisher entity, contact.]**
 2. **What the app does on your phone and never collects** (IPP 1, IPP 4): the whole
    library is read and screened on the device, and EXIF location and time are read
@@ -449,7 +467,7 @@ Play's User Data policy.
    under the licence you chose.
 6. **Overseas** (IPP 12): where data is hosted, and the safeguards. **[Decision:
    hosting region.]**
-7. **Voluntary** (IPP 3(1)(d), (e)): every report is optional, and so is every
+7. **Voluntary, and what happens if you decline** (IPP 3(1)(f)): every report is optional, and so is every
    photo crop. Declining photo access still lets you check single photos.
 8. **How long we keep it** (IPP 9): reports and crops for **[decision: retention
    period]**. Withdrawal deletes the crop and erases the report's content at once,
@@ -514,8 +532,10 @@ Play's User Data policy.
 **Google Play**
 
 - [ ] `targetSdkVersion` 36.
-- [ ] Merged manifest checked: no `READ_MEDIA_VIDEO`, `READ_MEDIA_AUDIO`, location or
-      foreground-service permissions.
+- [ ] Merged manifest checked: no `READ_MEDIA_VIDEO`, `READ_MEDIA_AUDIO`,
+      `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION` or
+      foreground-service permissions. `ACCESS_MEDIA_LOCATION` **stays**: it is how the
+      app reads a photo's GPS.
 - [ ] Photo and video permissions declaration submitted with the justification and
       video. The picker-only flavour is ready if it is refused.
 - [ ] `ACCESS_MEDIA_LOCATION` and `setRequireOriginal()` tested on Android 10, 13, 14 and 16.
