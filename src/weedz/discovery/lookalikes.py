@@ -22,7 +22,8 @@ MEANING = (
     "Source-labelled lookalike photos screened like any other photo. "
     "'top_suggestion' counts photos whose top suggestion (what the review desk shows, "
     "whatever its margin) is the weed they resemble; 'positive_confusable_margin' counts "
-    "photos where that weed also beat every comparison label. "
+    "photos where that weed beat every comparison label, whatever the top suggestion; "
+    "the two counts are independent. "
     "This is not a reviewed false-positive rate."
 )
 

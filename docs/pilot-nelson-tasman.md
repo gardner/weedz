@@ -56,10 +56,11 @@ That was up to three per taxon per region. The same photos under revision 4 are
 reported in the revision 4 section below. Lookalike confusion rises there.
 
 Every photo has a top suggestion, which is the watchlist species with the largest
-margin, and the review desk shows it whatever the margin's sign. A positive
-margin means that weed also beat every comparison label.
+margin, and the review desk shows it whatever the margin's sign. The positive
+margin column is counted independently: that weed beat every comparison label,
+whichever weed was on top.
 
-| Lookalike | Resembles | Top suggestion is that weed | Also a positive margin | Median margin |
+| Lookalike | Resembles | Top suggestion is that weed | Positive margin for that weed | Median margin |
 | --- | --- | --- | --- | --- |
 | Toetoe (*Austroderia*) | Pampas | 6 of 6 | **5 of 6** | +0.044 |
 | *Clematis foetida* | Old man's beard | 3 of 3 | 2 of 3 | +0.006 |

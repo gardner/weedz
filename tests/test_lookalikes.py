@@ -137,3 +137,14 @@ def test_lookalike_photos_are_not_given_their_own_taxon_as_a_comparison() -> Non
 
     photo = {"cohort": "lookalike", "original_taxon": "Austroderia richardii"}
     assert subject_label(photo) is None
+
+
+def test_positive_margin_counts_whatever_the_top_suggestion_is() -> None:
+    photo = screened(
+        "Cortaderia selloana",
+        "Ulex europaeus",
+        {"Ulex europaeus": 0.10, "Cortaderia selloana": 0.05},
+    )
+    toetoe = summarize_lookalikes([photo])["by_taxon"]["Austroderia"]
+    assert (toetoe["top_suggestion"], toetoe["positive_confusable_margin"]) == (0, 1)
+    assert "whatever the top suggestion" in summarize_lookalikes([photo])["meaning"]
