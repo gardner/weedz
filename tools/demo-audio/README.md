@@ -1,0 +1,35 @@
+# Breeze demo narration
+
+This isolated uv environment keeps the desktop screening environment unchanged.
+The user confirmed that the demonstration is non-commercial and selected Breeze.
+No Kokoro dependency or audio is used in the production path.
+
+Breeze model revision: `3e28c5151381a722f1d8661b4118c298caa77aa4`.
+Inference source: https://github.com/breezeblue-ai/breeze-tts at
+`daa6cb2efe5471f09369229f322d20bb956cb3c3`.
+Read the model's [research/non-commercial license](https://huggingface.co/BreezeBlue/Breeze-TTS-2/blob/main/LICENSE).
+The generic voice description does not clone a real person.
+
+Download the pinned checkpoint (including its bundled audio tokenizer) with
+Hugging Face Hub, clone/check out the source revision, and keep both outside Git.
+Then, from the Weedz repository root:
+
+```sh
+uv sync --project tools/demo-audio --locked
+uv run --project tools/demo-audio python tools/demo-audio/main.py \
+  --source /path/to/breeze-tts \
+  --model /path/to/breeze-checkpoint \
+  --text-file /path/to/narration.txt \
+  --output /path/to/artifacts/narration-v1.wav
+```
+
+The runner uses GPU 0, an eager-compatible path, a fixed seed and a documented
+female voice instruction. It records text, model/source revisions, settings and
+package versions beside each WAV. Existing outputs are never overwritten.
+Large model files and generated audio/video must remain outside the repository.
+
+The upstream `qwen-tts` dependency currently requires Transformers 4.57.3 and
+Hugging Face Hub below 1. The lockfile records those compatible transitive
+requirements; dependencies were resolved with `uv add` rather than changing the
+main project's newer libraries. PyTorch/CUDA availability was checked on the
+local RTX 5090 before generating the first intro sample.
