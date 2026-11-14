@@ -56,11 +56,21 @@ try {
       posted.push(route.request().postDataJSON());
       return route.fulfill({ json: { saved: true } });
     }
-    await route.fulfill({ json: { run, photos: [photo] } });
+    // Time measured only on findings still counts as review time.
+    const review_effort = {
+      total_minutes: 1.5,
+      measured_decisions: 0,
+      unmeasured_decisions: 0,
+      measured_findings: 1,
+      unmeasured_findings: 1,
+    };
+    await route.fulfill({ json: { run, photos: [photo], review_effort } });
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.evaluate(() => localStorage.removeItem("weedz-reviewer"));
   await page.reload();
+
+  await page.getByText("1.5 min measured review time · 1 finding not timed").waitFor();
 
   // Recorded findings are listed with their reviewer and free text kept as typed.
   const recorded = page.locator(".recorded-findings li");

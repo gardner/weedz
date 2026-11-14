@@ -162,3 +162,16 @@ def test_a_finding_by_someone_who_already_audited_keeps_others_blind(tmp_path: P
     store.finding("run", target, Finding.model_validate(finding(reviewer="Carol")))
     store.audit("run", target, "Ulex europaeus", "", "Ana")
     assert store.latest_audits("run") == {target: {"Carol": "none", "Ana": "Ulex europaeus"}}
+
+
+def test_untimed_findings_are_counted_apart_from_untimed_decisions(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path)
+    store.review("run", photo_id, "confirmed", "", "Ana", 60)
+    effort = export(store, "run")["review_effort"]
+    assert effort["incidental_minutes_per_confirmed_photo"] == 1.0
+    store.finding("run", photo_id, Finding.model_validate(finding()))
+    effort = export(store, "run")["review_effort"]
+    assert effort["unmeasured_incidental_decisions"] == 0
+    assert effort["unmeasured_incidental_findings"] == 1
+    # The rate would understate the cost, so it is withheld.
+    assert effort["incidental_minutes_per_confirmed_photo"] is None

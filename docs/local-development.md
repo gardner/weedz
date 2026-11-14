@@ -176,7 +176,9 @@ intended for local development, not shared public hosting.
    stays dashed). Each photo in the run detail and export carries its
    `findings`. Time spent before a finding is saved belongs to that finding:
    `review_effort` totals include it, and it is reported apart from decisions
-   (`minutes_by_finding_kind`, `measured_findings`, `unmeasured_findings`).
+   (`minutes_by_finding_kind`, `measured_findings`, `unmeasured_findings`,
+   `unmeasured_incidental_findings`). An untimed incidental finding also
+   withholds the per-photo rate.
    `GET` and `POST /runs/{run}/photos/{photo}/findings` read and append them.
    A box is a reviewer's outline, not a segmentation, and nothing can be edited
    or withdrawn yet.

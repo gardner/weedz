@@ -114,13 +114,26 @@ export type ReviewEffort = {
   total_minutes: number;
   measured_decisions: number;
   unmeasured_decisions: number;
+  measured_findings?: number;
+  unmeasured_findings?: number;
 };
 
+const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+
+/** Measured time on decisions and findings; untimed ones are listed, never counted as zero. */
 export function effortNote(effort: ReviewEffort | undefined): string {
-  if (!effort?.measured_decisions && !effort?.unmeasured_decisions) return "No review time yet";
-  const untimed = effort.unmeasured_decisions;
-  const note = `${effort.total_minutes} min measured review time`;
-  return untimed ? `${note} · ${untimed} decision${untimed === 1 ? "" : "s"} not timed` : note;
+  const untimed = [
+    [effort?.unmeasured_decisions ?? 0, "decision"],
+    [effort?.unmeasured_findings ?? 0, "finding"],
+  ] as const;
+  const timed = (effort?.measured_decisions ?? 0) + (effort?.measured_findings ?? 0);
+  if (!effort || (!timed && untimed.every(([count]) => !count))) return "No review time yet";
+  return [
+    `${effort.total_minutes} min measured review time`,
+    ...untimed
+      .filter(([count]) => count)
+      .map(([count, noun]) => `${plural(count, noun)} not timed`),
+  ].join(" · ");
 }
 
 export type ReviewEvent = {

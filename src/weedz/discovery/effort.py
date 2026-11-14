@@ -27,6 +27,7 @@ class _Tally:
     seconds: dict[str, float] = field(default_factory=lambda: defaultdict(float))
     measured: int = 0
     unmeasured: int = 0
+    unmeasured_incidental: int = 0
 
     def minutes(self) -> dict[str, float]:
         return {key: _minutes(value) for key, value in self.seconds.items()}
@@ -38,7 +39,6 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
     decisions, recorded = _Tally(), _Tally()
     by_reviewer: dict[str, float] = defaultdict(float)
     incidental = 0.0
-    unmeasured_incidental = 0
     for entry in history:
         is_incidental = cohort.get(entry["photo_id"]) == "incidental"
         for events, key, tally in [
@@ -49,7 +49,7 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
                 seconds = event.get("effort_seconds")
                 if seconds is None:
                     tally.unmeasured += 1
-                    unmeasured_incidental += is_incidental
+                    tally.unmeasured_incidental += is_incidental
                     continue
                 tally.measured += 1
                 tally.seconds[event[key]] += seconds
@@ -64,6 +64,7 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
         and photo["review_status"] == "confirmed"
         and not photo["disputed"]
     )
+    untimed = decisions.unmeasured_incidental + recorded.unmeasured_incidental
     return {
         "meaning": MEANING,
         "measured_decisions": decisions.measured,
@@ -75,11 +76,11 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
         "minutes_by_finding_kind": recorded.minutes(),
         "minutes_by_reviewer": {key: _minutes(value) for key, value in by_reviewer.items()},
         "incidental_minutes": _minutes(incidental),
-        # Untimed decisions or findings on incidental photos.
-        "unmeasured_incidental_decisions": unmeasured_incidental,
+        "unmeasured_incidental_decisions": decisions.unmeasured_incidental,
+        "unmeasured_incidental_findings": recorded.unmeasured_incidental,
         "confirmed_incidental_photos": confirmed,
-        # Untimed incidental decisions would make the rate look cheaper than it was.
+        # Untimed incidental decisions or findings would make the rate look cheaper.
         "incidental_minutes_per_confirmed_photo": (
-            _minutes(incidental / confirmed) if confirmed and not unmeasured_incidental else None
+            _minutes(incidental / confirmed) if confirmed and not untimed else None
         ),
     }
