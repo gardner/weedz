@@ -415,9 +415,10 @@ Settle this when #59 is designed.
   a **"Delete my data"** action in settings that withdraws every report sent from
   this device and then asks the server to revoke the token. A web form (or a
   documented email address) should offer an equivalent operator procedure for a
-  lost phone. **Gap**: #57 has per-report withdrawal but no "withdraw all and
-  revoke myself" endpoint. Track this in
-  [#101](https://github.com/gardner/weedz/issues/101).
+  lost phone. The [device-deletion contract](device-deletion.md) describes
+  `DELETE /submitter`, retry confirmation, retained records and the operator
+  `intake delete-submitter` procedure (#101). The settings action and public
+  contact route remain pre-submission work.
 - The store listing and privacy policy describe what remains after withdrawal: a
   tombstone of ids and received and withdrawn times, so a retry can't bring a
   report back (#57).
@@ -552,7 +553,7 @@ Play's User Data policy.
 - [ ] Per-report approval shows the exact map point and accuracy, with a "Remove
       location" control and separate photo consent (#56).
 - [ ] "Delete my data" in settings and a web or email deletion route, with the intake
-      endpoint for bulk withdrawal and self-revocation added.
+      [bulk withdrawal and self-revocation contract](device-deletion.md) integrated.
 - [ ] Reviewer notes and a demo: how to get a test token, a sample photo library with a
       known weed, and a screen recording.
 - [ ] Content rating questionnaires done in both consoles.

@@ -164,3 +164,34 @@ def test_deletion_finishes_while_an_authenticated_upload_is_decoding(
         assert upload.result().status_code == 410
     assert not ReportStore(tmp_path).active()
     assert not list((tmp_path / "reports/images").iterdir())
+
+
+def test_another_process_cannot_store_after_the_deletion_barrier(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    credential = Submitters(tmp_path).issue("phone")
+    Deletions(tmp_path).begin(credential.id)
+    script = """
+import json, sys
+from pathlib import Path
+from weedz.intake.store import ReportStore, Withdrawn
+from weedz.intake.schema import Report
+from weedz.intake.limits import Limits
+store = ReportStore(Path(sys.argv[1]))
+try:
+    store.receive(int(sys.argv[2]), sys.argv[3], Report.model_validate_json(sys.stdin.read()),
+                  "digest", None, Limits())
+except Withdrawn:
+    sys.exit(0)
+sys.exit(1)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(tmp_path), str(credential.id), new_id()],
+        input=json.dumps(report()),
+        text=True,
+        capture_output=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr
+    assert not ReportStore(tmp_path).active()
