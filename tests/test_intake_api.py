@@ -309,8 +309,12 @@ def test_a_crop_is_flushed_to_disk_before_its_report_is_committed(
         real(descriptor)
 
     monkeypatch.setattr("weedz.intake.store.os.fsync", record)
-    client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=auth(tmp_path))
+    headers, path = auth(tmp_path), f"/reports/{new_id()}"
+    client.put(path, json=with_image(jpeg()), headers=headers)
     assert len(flushed) >= 2  # the file, and the folder that names it
+    flushed.clear()
+    client.delete(path, headers=headers)
+    assert len(flushed) == 1  # the folder, so the deletion survives a power cut
 
 
 def test_crops_orphaned_by_a_crash_are_deleted_when_the_intake_starts(

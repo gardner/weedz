@@ -156,6 +156,7 @@ class ReportStore:
                 return None
             if row["image_file"]:
                 (self.images / row["image_file"]).unlink(missing_ok=True)
+                self._sync_images()  # the deletion is durable before the withdrawal commits
             withdrawn = row["withdrawn_at"] or _now()
             db.execute(
                 "UPDATE reports SET withdrawn_at=?, body=NULL, content_sha256=NULL, "
@@ -189,6 +190,7 @@ class ReportStore:
         for path in self.images.iterdir():
             if path.name not in named:
                 path.unlink(missing_ok=True)
+        self._sync_images()
 
     def _image(self, name: str | None) -> Path | None:
         # Withdrawal deletes the file before erasing the row (privacy first), so a failed
@@ -204,12 +206,16 @@ class ReportStore:
             out.flush()
             os.fsync(out.fileno())
         # Durable before the report naming it commits, so a 201 never names a lost crop.
+        self._sync_images()
+        return name
+
+    def _sync_images(self) -> None:
+        """Make files written to, or deleted from, the images folder survive a power cut."""
         folder = os.open(self.images, os.O_RDONLY)
         try:
             os.fsync(folder)
         finally:
             os.close(folder)
-        return name
 
 
 def _row(db: sqlite3.Connection, submitter: int, report_id: str) -> sqlite3.Row | None:
