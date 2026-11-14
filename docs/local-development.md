@@ -131,6 +131,61 @@ Hosting, the domain and any single sign-on provider are the project owner's
 decisions; see issue #31. The sharing rules are unchanged: obscured coordinates
 are never served in either mode, and nothing is published on anyone's behalf.
 
+### Reports from devices
+
+A future phone app (its platform is issue #50) sends only the reports a person
+has approved on the phone. The server side of that (issue #57) is a separate
+API, never mounted on the review API. Each device is a *submitter*, a different
+principal from a reviewer: its token is `weedzsub_<id>_<secret>`, kept hashed in
+`data/intake/submitters.sqlite3`. A reviewer token is never accepted for
+intake, and a submitter token never works on the review API.
+
+```sh
+uv run main.py intake add --label "Pilot phone 1"   # prints the token once
+uv run main.py intake list                          # never shows tokens
+uv run main.py intake revoke --id 3                 # its reports are kept
+uv run main.py intake withdraw --submitter 3 --report <uuid>  # at the person's request
+uv run main.py intake serve --port 8300             # loopback; put HTTPS in front
+```
+
+The contract, with every request sending `Authorization: Bearer weedzsub_…`:
+
+- `PUT /reports/{uuid}` takes a version-1 report as JSON
+  (`src/weedz/intake/schema.py`). The device generates the UUID, so a retry
+  returns the same receipt (200, or 201 the first time). Different content
+  under a used id gets 409, and a withdrawn id gets 410. Unknown fields, NaN,
+  a location without its accuracy, a capture time without a timezone, and
+  anything but a declared target taxon are refused with 422. A body over 2 MB
+  is refused with 413.
+- An optional cropped `image` (base64 JPEG, PNG or WebP, at most 1 MB and
+  4096×4096 pixels) is accepted only with `consent.image: true` and a licence
+  the collection admits (`cc0`, `cc-by` or `cc-by-nc`). Otherwise the report is
+  refused and nothing is stored. The server keeps only the pixels, re-encoded
+  as a fresh JPEG, so EXIF (including GPS and camera serials), XMP, ICC
+  profiles and comments never reach storage.
+- `GET /reports/{uuid}` returns the submitter's own receipt. `DELETE` withdraws
+  the report: its image is deleted and its content erased (zeroed in the
+  database file), leaving only ids and times so a retry can't bring it back.
+  Another submitter's report is a 404, the same as a missing one. If a device
+  token is lost or revoked, the operator can withdraw its reports with
+  `intake withdraw`. An unknown id is an error. If the report may still be on
+  its way, `--not-yet-received` records the withdrawal, so the report is
+  refused (410) if it arrives.
+- One submitter's uploads and withdrawals are handled one at a time. A body
+  that stops arriving for 30 seconds gets 408, so a phone that drops off
+  mid-upload doesn't hold up its own retries or withdrawals. A slow but steady
+  upload is never cut off.
+- Each submitter may send 100 reports and 50 MB of images per rolling 24 hours,
+  including withdrawn reports and crops refused after decoding. Past that, the
+  server answers 429 with `Retry-After`. Usage records (ids, times and stored
+  crop sizes) are deleted once they leave the window.
+
+Reports are kept in `data/intake/reports/` (owner-only), apart from the
+discovery evidence. Nothing serves them to reviewers or publishes them yet:
+`ReportStore.active()` is where specialist review would read them (issue #58).
+Hosting, accounts and enrolment, the retention period, and whether images are
+uploaded at all are the project owner's decisions; see issues #55 and #57.
+
 ## What the workflow actually does
 
 1. **Acquire bronze.** Query iNaturalist's Nelson council area **40493** and

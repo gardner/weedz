@@ -10,7 +10,7 @@ from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from test_review_attribution import store_with_photo
 
-from weedz.discovery import access
+from weedz import tokens
 from weedz.discovery.access import ATTRIBUTION_FIELDS, Access
 from weedz.discovery.api import create_app
 from weedz.discovery.records import ReviewerName
@@ -84,7 +84,7 @@ def test_hashes_are_compared_in_constant_time(
         calls.append((a, b))
         return a == b
 
-    monkeypatch.setattr(access.hmac, "compare_digest", compare)
+    monkeypatch.setattr(tokens.hmac, "compare_digest", compare)
     invite = Access(tmp_path).invite("Ana")
     assert Access(tmp_path).reviewer(invite.token) == "Ana"
     assert Access(tmp_path).reviewer(f"weedz_{invite.id}_wrong") is None
