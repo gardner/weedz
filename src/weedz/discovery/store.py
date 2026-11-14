@@ -37,6 +37,32 @@ def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
     return decisions
 
 
+# An audit is blind only if it is the auditor's first answer for the photo (after it the
+# photo is released into their ranked queue) and no one reviewed the photo before it
+# without having audited it first. The app lets a sampled photo be reviewed only after the
+# reviewer's own audit, so any other earlier review, such as one made before the sample
+# existed, means the suggestion may have been seen.
+AUDITS_BY_BLINDNESS = """
+SELECT a.photo_id, a.reviewer, a.finding FROM audits a
+WHERE a.run_id = ? AND (
+    NOT EXISTS (
+        SELECT 1 FROM audits earlier WHERE earlier.run_id = a.run_id
+        AND earlier.photo_id = a.photo_id AND earlier.reviewer = a.reviewer
+        AND earlier.id < a.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM reviews r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
+        AND r.created_at <= a.created_at AND NOT EXISTS (
+            SELECT 1 FROM audits own WHERE own.run_id = r.run_id
+            AND own.photo_id = r.photo_id AND own.reviewer = r.reviewer
+            AND own.created_at < r.created_at
+        )
+    )
+) = ?
+ORDER BY a.id
+"""
+
+
 class Store:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
@@ -60,6 +86,12 @@ class Store:
                     id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
                     status TEXT NOT NULL, note TEXT NOT NULL, created_at TEXT NOT NULL,
                     reviewer TEXT NOT NULL DEFAULT '', effort_seconds REAL,
+                    FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
+                );
+                CREATE TABLE IF NOT EXISTS audits (
+                    id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
+                    finding TEXT NOT NULL, note TEXT NOT NULL, reviewer TEXT NOT NULL,
+                    effort_seconds REAL, created_at TEXT NOT NULL,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
             """)
@@ -177,3 +209,43 @@ class Store:
                     (run_id, photo_id),
                 )
             ]
+
+    def audit(
+        self,
+        run_id: str,
+        photo_id: str,
+        finding: str,
+        note: str,
+        reviewer: str,
+        effort_seconds: float | None = None,
+    ) -> None:
+        with self.connect() as db:
+            exists = db.execute(
+                "SELECT 1 FROM photos WHERE run_id=? AND id=?", (run_id, photo_id)
+            ).fetchone()
+            if exists is None:
+                raise KeyError(photo_id)
+            db.execute(
+                "INSERT INTO audits(run_id,photo_id,finding,note,reviewer,effort_seconds,"
+                "created_at) VALUES(?,?,?,?,?,?,?)",
+                (run_id, photo_id, finding, note, reviewer, effort_seconds, now()),
+            )
+
+    def audits(self, run_id: str, photo_id: str) -> list[dict]:
+        with self.connect() as db:
+            return [
+                dict(row)
+                for row in db.execute(
+                    "SELECT * FROM audits WHERE run_id=? AND photo_id=? ORDER BY id",
+                    (run_id, photo_id),
+                )
+            ]
+
+    def latest_audits(self, run_id: str, blind: bool = True) -> dict[str, dict[str, str]]:
+        """Each auditor's latest blind (or, with `blind=False`, later) finding per photo."""
+        with self.connect() as db:
+            rows = db.execute(AUDITS_BY_BLINDNESS, (run_id, blind)).fetchall()
+        findings: dict[str, dict[str, str]] = {}
+        for row in rows:
+            findings.setdefault(row["photo_id"], {})[row["reviewer"]] = row["finding"]
+        return findings

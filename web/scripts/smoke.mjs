@@ -27,13 +27,17 @@ try {
   await page.locator(".photo-row").first().waitFor({ timeout: 30_000 });
   const result = await (await page.request.get(`${origin}/api/runs/${run.id}`)).json();
   const animalCount = result.photos.filter((photo) => photo.cohort === "incidental").length;
+  // With no reviewer name in a fresh browser, every audit-sample photo is held out of the
+  // ranked queue until that reviewer has audited it.
+  const queued = result.photos.filter(
+    (photo) => photo.cohort === "incidental" && !photo.audit_sample,
+  );
   const references = result.photos.filter((photo) => photo.cohort === "reference").length;
-  assert.equal(await page.locator(".photo-row").count(), animalCount);
+  assert.equal(await page.locator(".photo-row").count(), queued.length);
   await page.getByLabel("Filter region").selectOption("Nelson");
   assert.equal(
     await page.locator(".photo-row").count(),
-    result.photos.filter((photo) => photo.cohort === "incidental" && photo.region === "Nelson")
-      .length,
+    queued.filter((photo) => photo.region === "Nelson").length,
   );
   await page.getByLabel("Filter region").selectOption("all");
   await page.getByRole("button", { name: "References", exact: true }).click();

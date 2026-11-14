@@ -9,6 +9,7 @@ from typing import Any
 
 from temporalio import activity
 
+from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
@@ -105,6 +106,15 @@ def export(store: Store, run_id: str) -> dict:
         "photos": photos,
         "review_history": history,
         "review_effort": summarize_effort(photos, history),
+        "audit": summarize_audit(
+            photos,
+            audit_sample(run_id, photos),
+            store.latest_audits(run_id),
+            store.latest_audits(run_id, blind=False),
+        ),
+        "audit_history": [
+            dict(photo_id=photo["id"], events=store.audits(run_id, photo["id"])) for photo in photos
+        ],
         "source_snapshots": {
             path.name: hashlib.sha256(path.read_bytes()).hexdigest()
             for path in snapshots.glob("*.json")

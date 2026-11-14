@@ -96,7 +96,35 @@ intended for local development, not shared public hosting.
    per "Species visible" photo. Untimed earlier decisions are listed as unmeasured,
    never as zero, and any untimed incidental decision withholds the per-photo rate.
    Photos where reviewers disagree are not counted as "Species visible".
-   Confirmation is not a useful-finding measure. The
+   Confirmation is not a useful-finding measure. The **Audit sample** view lists
+   a fixed random quarter of incidental photos, chosen from run and photo ids so
+   screening rank plays no part. It hides the suggestion, search window and
+   scores, and asks "Is any watchlist weed visible?". Audits are stored apart
+   from suggestion reviews, and each auditor's blind finding is kept. A photo
+   counts as a found weed if any auditor's blind finding names a species, and
+   photos where auditors' findings differ are counted as disputed. A sampled
+   photo is held out of each reviewer's ranked Incidental queue until that
+   reviewer has audited it (with no name entered, every sampled photo is held),
+   and each view keeps its own open photo, so no auditor sees its suggestion
+   first. This is a workflow guard on a local, unauthenticated stack, not access
+   control: names are not verified and anyone with the API can still read the
+   scores. An audit counts as blind only if it is that auditor's first answer
+   for the photo, and nobody reviewed the photo before it without having audited
+   it first. The app lets a sampled photo be reviewed only after the reviewer's
+   own audit, so any other earlier review (for example, one made before the
+   audit sample existed) means the suggestion may have been seen. Other audits
+   are left out of the findings and reported as `not_blind`, and the audit view
+   disables the answers once you have audited a photo. Simply opening a photo is
+   not recorded, so viewing outside this workflow cannot be detected. The
+   sample itself comes from run and photo ids, so it is fixed from the moment a
+   run starts. The run detail gives audit counts and who
+   audited each photo; only the export lists findings.
+   There is no calibrated detection threshold yet, so neither gives a hit or
+   miss verdict. For each found weed the export reports the photo's 1-based
+   rank in the incidental queue (by margin, highest first) out of all incidental
+   photos, and whether the found species was the top suggestion shown. With a
+   small sample this bounds, rather than estimates, how often weeds are ranked
+   low. The
    API export includes current decisions, while the completion manifest records
    the state at screening completion.
 
