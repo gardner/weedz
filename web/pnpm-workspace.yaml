@@ -1,0 +1,7 @@
+# pnpm refuses packages published less than a day ago (minimumReleaseAge).
+# Playwright is trusted to install at once; the test package pulls in the
+# other two.
+minimumReleaseAgeExclude:
+  - "@playwright/test"
+  - playwright
+  - playwright-core

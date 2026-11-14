@@ -38,7 +38,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
 
@@ -55,8 +55,19 @@ jobs:
       - name: Type check, lint and format (tsc + Biome)
         run: pnpm check
 
-      - name: Test
-        run: pnpm test
-
       - name: Build
         run: pnpm build
+
+      - name: Install Playwright Chromium (for the browser regression test)
+        run: pnpm exec playwright install --with-deps --only-shell chromium
+
+      # The test drives the built app in a browser and mocks its API, so only
+      # the Next server runs (not the Python API). Its log is shown on failure.
+      - name: Test
+        run: |
+          pnpm start > "$RUNNER_TEMP/next.log" 2>&1 &
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null http://127.0.0.1:3001 && break
+            sleep 1
+          done
+          pnpm test || { cat "$RUNNER_TEMP/next.log"; exit 1; }

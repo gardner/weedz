@@ -17,6 +17,11 @@ updates:
       # react-dom throws "Incompatible React versions" unless it matches react.
       react:
         patterns: ["react", "react-dom"]
+    ignore:
+      # Types must match the Node runtime (.nvmrc), or code can type-check
+      # against APIs that Node doesn't have. Bump both together.
+      - dependency-name: "@types/node"
+        versions: [">=27"]
 
   # Python dependencies are managed with uv (uv.lock). Dependabot cannot
   # update uv.lock, so upgrade deliberately with: uv lock --upgrade
