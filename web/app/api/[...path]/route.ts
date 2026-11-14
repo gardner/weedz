@@ -18,7 +18,8 @@ async function forward(request: NextRequest, context: { params: Promise<{ path: 
       headers: { "Content-Type": "application/json" },
       body,
       cache: "no-store",
-      signal: AbortSignal.timeout(30_000),
+      // A follow-up package archive is built in full before it is sent; give it longer.
+      signal: AbortSignal.timeout(path.at(-1) === "archive" ? 300_000 : 30_000),
     });
     const headers = new Headers({
       "Content-Type": response.headers.get("Content-Type") ?? "application/json",

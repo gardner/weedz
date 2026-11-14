@@ -231,3 +231,15 @@ def test_the_archive_refuses_a_photo_deleted_after_checking(
     monkeypatch.setattr(api, "package_contents", then_deleted)
     response = TestClient(create_app(tmp_path)).get("/runs/run/package/archive")
     assert response.status_code == 409
+
+
+def test_a_photo_that_cannot_be_read_is_linked_not_packaged(tmp_path: Path) -> None:
+    store, _photo_id = selected_store(tmp_path)
+    retained = tmp_path / "images" / "101.jpg"
+    retained.chmod(0)
+    try:
+        package, photos = package_contents(store, "run", "2026-11-14")
+    finally:
+        retained.chmod(0o644)
+    assert photos == {}
+    assert "could not be read" in package["leads"][0]["image"]["terms"]

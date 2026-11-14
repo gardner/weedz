@@ -18,6 +18,7 @@ from weedz.discovery.package_report import to_markdown
 from weedz.discovery.store import Store
 
 MISSING = "Not included: no retained copy of this photo; follow the source link to view it"
+UNREADABLE = "Not included: the retained copy could not be read; follow the source link to view it"
 CHANGED = (
     "Not included: the retained copy no longer matches its recorded checksum; follow the "
     "source link to view it"
@@ -49,8 +50,11 @@ def _retained(root: Path, photo: dict[str, Any]) -> Retained | str:
     path = (root / photo["image_path"]).resolve()
     if not photo["image_path"] or not path.is_relative_to(root / "images") or not path.is_file():
         return MISSING
-    with path.open("rb") as handle:
-        digest = hashlib.file_digest(handle, "sha256").hexdigest()
+    try:
+        with path.open("rb") as handle:
+            digest = hashlib.file_digest(handle, "sha256").hexdigest()
+    except OSError:
+        return UNREADABLE
     return Retained(path, digest) if digest == photo["sha256"] else CHANGED
 
 
@@ -87,7 +91,10 @@ def archive(package: dict[str, Any], photos: dict[str, Retained], target: IO[byt
         for name, content in texts(package).items():
             bundle.writestr(name, content)
         for name, photo in photos.items():
-            with bundle.open(name, "w") as entry:
+            # JPEGs are already compressed; storing them keeps large packages quick.
+            entry_info = zipfile.ZipInfo(name)
+            entry_info.compress_type = zipfile.ZIP_STORED
+            with bundle.open(entry_info, "w", force_zip64=True) as entry:
                 _copy_verified(photo, entry)
 
 
