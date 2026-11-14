@@ -4,7 +4,9 @@ import argparse
 import uuid
 from pathlib import Path
 
+from weedz.intake.limits import Limits
 from weedz.intake.submitters import Submitters
+from weedz.intake.turns import SubmitterTurns, TurnBusy
 
 
 def add(args: argparse.Namespace) -> None:
@@ -44,7 +46,12 @@ def withdraw(args: argparse.Namespace) -> None:
         known = {row["id"] for row in Submitters(args.intake_dir).listing()}
         if args.submitter not in known:
             raise SystemExit(f"No submitter with id {args.submitter}")
-    if store.withdraw(args.submitter, report_id, args.not_yet_received) is None:
+    try:
+        with SubmitterTurns(args.intake_dir).take(args.submitter, Limits().submitter_wait_seconds):
+            receipt = store.withdraw(args.submitter, report_id, args.not_yet_received)
+    except TurnBusy as error:
+        raise SystemExit("Submitter busy; retry the withdrawal shortly") from error
+    if receipt is None:
         raise SystemExit(
             f"No report {report_id} from submitter {args.submitter}. Check both ids; if the "
             "report may still be on its way, add --not-yet-received to refuse it on arrival."

@@ -17,7 +17,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
@@ -27,6 +26,8 @@ from weedz.intake.limits import Limits
 from weedz.intake.schema import Report
 from weedz.intake.store import Conflict, Receipt, ReportStore, Withdrawn
 from weedz.intake.submitters import Submitters, require_submitter
+from weedz.intake.turns import SubmitterTurns, TurnBusy
+from weedz.intake.workers import finish_in_thread
 
 
 async def read_body(request: Request, limit: int, idle_seconds: float) -> bytes:
@@ -97,6 +98,10 @@ def refusals() -> Iterator[None]:
         raise HTTPException(410, "This report was withdrawn") from error
     except Conflict as error:
         raise HTTPException(409, "This report id was used for a different report") from error
+    except TurnBusy as error:
+        raise HTTPException(
+            503, "The submitter is busy; retry shortly", headers={"Retry-After": "1"}
+        ) from error
     except OverBudget as error:
         headers = {"Retry-After": str(error.retry_after)}
         raise HTTPException(429, str(error), headers=headers) from error
@@ -108,25 +113,26 @@ class IntakeAPI:
     def __init__(self, root: Path, limits: Limits) -> None:
         self.store = ReportStore(root, limits.sqlite_busy_seconds)
         self.limits = limits
-        # Each submitter's uploads and withdrawals are taken in turn, so the budget is checked
-        # against every earlier report before any image is decoded, and a withdrawal never
-        # slips between checking and storing a report. Waiting is on the event loop, so queued
-        # requests hold no worker thread. (One server process, as ``intake serve`` runs.)
-        self._submitting: dict[int, asyncio.Lock] = {}
+        self.turns = SubmitterTurns(root)
 
     async def put(self, report_id: uuid.UUID, request: Request, response: Response) -> Receipt:
         submitter: int = request.state.submitter
         # The body is received under the lock too: a withdrawal sent while it arrives waits,
         # and queued uploads are not buffered, as their bodies are not read until their turn.
-        async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            limits = self.limits
-            try:
-                async with asyncio.timeout(limits.body_total_seconds):
-                    body = await read_body(request, limits.max_body_bytes, limits.body_idle_seconds)
-            except TimeoutError as error:
-                raise HTTPException(408, "The report took too long to arrive") from error
-            # Parsing, image work and SQLite block, so they run off the event loop.
-            receipt, created = await run_in_threadpool(self.accept, submitter, str(report_id), body)
+        with refusals():
+            async with self.turns.wait(submitter, self.limits.submitter_wait_seconds):
+                limits = self.limits
+                try:
+                    async with asyncio.timeout(limits.body_total_seconds):
+                        body = await read_body(
+                            request, limits.max_body_bytes, limits.body_idle_seconds
+                        )
+                except TimeoutError as error:
+                    raise HTTPException(408, "The report took too long to arrive") from error
+                # Parsing, image work and SQLite block, so they run off the event loop.
+                receipt, created = await finish_in_thread(
+                    self.accept, submitter, str(report_id), body
+                )
         if created:
             response.status_code = 201
         return receipt
@@ -154,15 +160,16 @@ class IntakeAPI:
         its report is being stored waits for it. An earlier withdrawal also records intent,
         so a late upload cannot resurrect it."""
         submitter: int = request.state.submitter
-        async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            with refusals():
-                receipt = await run_in_threadpool(
+        with refusals():
+            async with self.turns.wait(submitter, self.limits.submitter_wait_seconds):
+                receipt = await finish_in_thread(
                     self.store.withdraw,
                     submitter,
                     str(report_id),
                     before_arrival=True,
                     limits=self.limits,
                 )
+
         return receipt or receipt_missing()
 
 

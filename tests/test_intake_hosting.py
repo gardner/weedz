@@ -3,15 +3,18 @@
 import asyncio
 import json
 import sqlite3
+import threading
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
-from intake_helpers import new_id, report
+from intake_helpers import jpeg, new_id, report, with_image
 from test_intake_concurrency import call, token
 
 from weedz.intake.api import create_intake_app
 from weedz.intake.limits import Limits
 from weedz.intake.store import ReportStore
+from weedz.intake.turns import SubmitterTurns, TurnBusy
 
 
 def test_a_steady_body_still_has_a_total_deadline(tmp_path: Path) -> None:
@@ -44,3 +47,46 @@ def test_auth_database_contention_returns_a_retryable_response(tmp_path: Path) -
         response = TestClient(app).get(f"/reports/{new_id()}", headers=headers)
         assert response.status_code == 503
         assert response.headers["Retry-After"] == "1"
+
+
+def test_cancelling_upload_keeps_its_turn_until_the_worker_finishes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    decoding, release = threading.Event(), threading.Event()
+
+    def slow(data: bytes, max_pixels: int) -> bytes:
+        decoding.set()
+        assert release.wait(5)
+        return jpeg()
+
+    monkeypatch.setattr("weedz.intake.api.clean_image", slow)
+    app = create_intake_app(tmp_path)
+    secret = token(tmp_path)
+
+    async def scenario() -> None:
+        upload = asyncio.create_task(
+            call(
+                app,
+                "PUT",
+                f"/reports/{new_id()}",
+                secret,
+                [json.dumps(with_image(jpeg())).encode()],
+            )
+        )
+        try:
+            while not decoding.is_set():
+                await asyncio.sleep(0.01)
+            upload.cancel()
+            await asyncio.sleep(0.02)
+            assert not upload.done(), "Cancellation must not abandon a mutating worker"
+            with pytest.raises(TurnBusy), SubmitterTurns(tmp_path).take(1, 0.02):
+                pass
+        finally:
+            release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await upload
+        with SubmitterTurns(tmp_path).take(1, 0.1):
+            pass
+
+    asyncio.run(scenario())
