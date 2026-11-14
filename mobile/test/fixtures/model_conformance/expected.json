@@ -1,0 +1,314 @@
+{
+  "schema": 1,
+  "featureless_std_below": 8.0,
+  "cases": [
+    {
+      "source": "orientation-6.jpg",
+      "exif_orientation": 6,
+      "upright": "orientation-6-upright.png",
+      "upright_size": [
+        12,
+        8
+      ],
+      "windows": [
+        {
+          "box": [
+            0,
+            0,
+            12,
+            8
+          ],
+          "square": "orientation-6-window-0.png",
+          "greyscale_population_std": "51.05183572170109",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            0,
+            0,
+            5,
+            5
+          ],
+          "square": "orientation-6-window-1.png",
+          "greyscale_population_std": "23.692564234375308",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            4,
+            0,
+            9,
+            5
+          ],
+          "square": "orientation-6-window-2.png",
+          "greyscale_population_std": "23.773127686528753",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            7,
+            0,
+            12,
+            5
+          ],
+          "square": "orientation-6-window-3.png",
+          "greyscale_population_std": "23.671890503295252",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            0,
+            3,
+            5,
+            8
+          ],
+          "square": "orientation-6-window-4.png",
+          "greyscale_population_std": "23.71517657534938",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            4,
+            3,
+            9,
+            8
+          ],
+          "square": "orientation-6-window-5.png",
+          "greyscale_population_std": "23.671890503295256",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            7,
+            3,
+            12,
+            8
+          ],
+          "square": "orientation-6-window-6.png",
+          "greyscale_population_std": "23.773127686528753",
+          "featureless": false,
+          "eligible": true
+        }
+      ]
+    },
+    {
+      "source": "std-7.png",
+      "exif_orientation": 1,
+      "upright": "std-7-upright.png",
+      "upright_size": [
+        10,
+        10
+      ],
+      "windows": [
+        {
+          "box": [
+            0,
+            0,
+            10,
+            10
+          ],
+          "square": "std-7-window-0.png",
+          "greyscale_population_std": "7.0",
+          "featureless": true,
+          "eligible": true
+        },
+        {
+          "box": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "square": "std-7-window-1.png",
+          "greyscale_population_std": "7.0",
+          "featureless": true,
+          "eligible": false
+        },
+        {
+          "box": [
+            4,
+            0,
+            10,
+            6
+          ],
+          "square": "std-7-window-2.png",
+          "greyscale_population_std": "7.0",
+          "featureless": true,
+          "eligible": false
+        },
+        {
+          "box": [
+            0,
+            4,
+            6,
+            10
+          ],
+          "square": "std-7-window-3.png",
+          "greyscale_population_std": "7.0",
+          "featureless": true,
+          "eligible": false
+        },
+        {
+          "box": [
+            4,
+            4,
+            10,
+            10
+          ],
+          "square": "std-7-window-4.png",
+          "greyscale_population_std": "7.0",
+          "featureless": true,
+          "eligible": false
+        }
+      ]
+    },
+    {
+      "source": "std-8.png",
+      "exif_orientation": 1,
+      "upright": "std-8-upright.png",
+      "upright_size": [
+        10,
+        10
+      ],
+      "windows": [
+        {
+          "box": [
+            0,
+            0,
+            10,
+            10
+          ],
+          "square": "std-8-window-0.png",
+          "greyscale_population_std": "8.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "square": "std-8-window-1.png",
+          "greyscale_population_std": "8.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            4,
+            0,
+            10,
+            6
+          ],
+          "square": "std-8-window-2.png",
+          "greyscale_population_std": "8.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            0,
+            4,
+            6,
+            10
+          ],
+          "square": "std-8-window-3.png",
+          "greyscale_population_std": "8.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            4,
+            4,
+            10,
+            10
+          ],
+          "square": "std-8-window-4.png",
+          "greyscale_population_std": "8.0",
+          "featureless": false,
+          "eligible": true
+        }
+      ]
+    },
+    {
+      "source": "std-9.png",
+      "exif_orientation": 1,
+      "upright": "std-9-upright.png",
+      "upright_size": [
+        10,
+        10
+      ],
+      "windows": [
+        {
+          "box": [
+            0,
+            0,
+            10,
+            10
+          ],
+          "square": "std-9-window-0.png",
+          "greyscale_population_std": "9.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "square": "std-9-window-1.png",
+          "greyscale_population_std": "9.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            4,
+            0,
+            10,
+            6
+          ],
+          "square": "std-9-window-2.png",
+          "greyscale_population_std": "9.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            0,
+            4,
+            6,
+            10
+          ],
+          "square": "std-9-window-3.png",
+          "greyscale_population_std": "9.0",
+          "featureless": false,
+          "eligible": true
+        },
+        {
+          "box": [
+            4,
+            4,
+            10,
+            10
+          ],
+          "square": "std-9-window-4.png",
+          "greyscale_population_std": "9.0",
+          "featureless": false,
+          "eligible": true
+        }
+      ]
+    }
+  ]
+}
