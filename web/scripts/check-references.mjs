@@ -71,7 +71,27 @@ try {
   await page.locator(".photo-row").nth(2).click();
   await known.getByText("Not compared: Not queried in this reference snapshot").waitFor();
   assert.doesNotMatch(await known.textContent(), /No DOC record/);
-  console.log("Known records are shown with distance, year and snapshot date.");
+  assert.match(
+    await known.textContent(),
+    /unexpected location is a reason to refer to a specialist, not to reject/i,
+  );
+
+  // Known range never reorders or hides a candidate (PRD P11): the queue follows margin.
+  const rows = async () =>
+    (await page.locator(".photo-row").allTextContents()).map((text) => text.match(/Bird (\w)/)[1]);
+  assert.deepEqual(await rows(), ["a", "b", "c"]);
+  const outOfRange = { ...comparable, nearest: null, within_radius: 0 };
+  photos = [
+    photo("a", 0.3, { comparable: false, reason: "Photo location is obscured or missing" }),
+    photo("b", 0.2, outOfRange),
+    photo("c", 0.1, { ...comparable, within_radius: 40 }),
+  ];
+  await page.reload();
+  await page.locator(".photo-row").first().waitFor();
+  assert.deepEqual(await rows(), ["a", "b", "c"]);
+  console.log(
+    "Known records are shown with distance, year and snapshot date, and never reorder the queue.",
+  );
 } finally {
   await browser.close();
 }
