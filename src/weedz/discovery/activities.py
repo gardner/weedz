@@ -112,6 +112,8 @@ class Activities:
         result = export(self.store, run_id)
         result["run"]["status"] = "completed"
         result["run"]["detail"] = "Screening complete; expert review is pending"
+        # Summarised again, so it reads the run as completed rather than still exporting.
+        result["source_suitability"] = suitability(result)
         destination = self.store.root / "runs" / run_id / "manifest.json"
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_suffix(".tmp")

@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -44,6 +45,21 @@ def test_failed_manifest_write_is_not_reported_as_completed(tmp_path: Path, monk
     with pytest.raises(OSError, match="Disk write failed"):
         activities.export_run({"run_id": "run"})
     assert activities.store.runs()[0]["status"] != "completed"
+
+
+def test_completion_manifest_suitability_reads_the_run_as_completed(
+    tmp_path: Path, monkeypatch
+) -> None:
+    activities = Activities(tmp_path)
+    activities.store.create_run("run", RunSpec())
+    photo = photo_from_observation(observation(), "Nelson", "incidental")
+    assert photo is not None
+    activities.store.save_photos("run", [photo])
+    monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
+    manifest = Path(activities.export_run({"run_id": "run"})["manifest"])
+    scope = json.loads(manifest.read_text())["source_suitability"]["scope"]
+    assert scope["run_status"] == "completed"
+    assert not any("The run is" in gap for gap in scope["gaps"])
 
 
 def test_screening_passes_each_photo_original_subject(tmp_path: Path, monkeypatch) -> None:

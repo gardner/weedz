@@ -78,7 +78,8 @@ export const suitability = {
     not_screened: tally(0, 0, 0),
     pixel_coverage: { complete: 0, thinned: 0, not_recorded: 2 },
     featureless_windows: { photos_with: 0, not_recorded: 2 },
-    visible_vegetation: "Not measured: no step estimates how much vegetation each photo shows",
+    visible_vegetation:
+      "Not measured: no step estimates how much vegetation each photo shows. Featureless windows and pixel coverage say only what the screening could see",
     original_subjects: { "Blackbird (Turdus merula)": 2 },
     reviewed: tally(0, 0, 0),
     unassessed: tally(2, 1, 1),

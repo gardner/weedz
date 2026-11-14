@@ -210,6 +210,11 @@ def test_screening_status_keeps_unrecorded_coverage_and_vegetation_explicit() ->
     assert screening["pixel_coverage"] == {"complete": 1, "thinned": 1, "not_recorded": 1}
     assert screening["featureless_windows"] == {"photos_with": 1, "not_recorded": 2}
     assert screening["visible_vegetation"] == NOT_MEASURED
+    # The literal text, so a placeholder in the constant cannot slip through.
+    assert NOT_MEASURED == (
+        "Not measured: no step estimates how much vegetation each photo shows. Featureless "
+        "windows and pixel coverage say only what the screening could see"
+    )
     assert screening["original_subjects"] == {"Blackbird (Turdus merula)": 4}
     assert screening["reviewed"] == tally(1, 1, 0)
     assert screening["unassessed"] == tally(3, 3, 0)
