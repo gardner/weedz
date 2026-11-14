@@ -13,7 +13,13 @@ from test_leads import select
 
 from weedz.discovery import cli
 from weedz.discovery.api import create_app
-from weedz.discovery.package_output import archive, package_contents, texts, write
+from weedz.discovery.package_output import (
+    Retained,
+    archive,
+    package_contents,
+    texts,
+    write,
+)
 from weedz.discovery.records import Photo
 from weedz.discovery.store import Store
 
@@ -40,7 +46,8 @@ def test_a_permitted_photo_is_packaged_from_its_retained_copy(tmp_path: Path) ->
     store, photo_id = selected_store(tmp_path)
     package, photos = package_contents(store, "run", "2026-11-14")
     # Photos are named by path, not held in memory, so large runs stream from disk.
-    assert photos == {f"photos/{photo_id}.jpg": tmp_path / "images" / "101.jpg"}
+    sha = hashlib.sha256(BYTES).hexdigest()
+    assert photos == {f"photos/{photo_id}.jpg": Retained(tmp_path / "images" / "101.jpg", sha)}
     files = texts(package)
     assert json.loads(files["package.json"]) == package
     assert files["package.md"].decode().startswith("# Follow-up package: run")
@@ -67,6 +74,17 @@ def test_a_changed_or_missing_photo_is_linked_not_packaged(tmp_path: Path) -> No
     package, _photos = package_contents(store, "run", "2026-11-14")
     assert "no retained copy" in package["leads"][0]["image"]["terms"]
     assert "no retained copy" in texts(package)["package.md"].decode()
+
+
+def test_a_photo_changed_after_checking_is_never_written(tmp_path: Path) -> None:
+    store, _photo_id = selected_store(tmp_path)
+    package, photos = package_contents(store, "run", "2026-11-14")
+    (tmp_path / "images" / "101.jpg").write_bytes(b"changed since it was checked")
+    with pytest.raises(ValueError, match="changed"):
+        archive(package, photos, io.BytesIO())
+    with pytest.raises(ValueError, match="changed"):
+        write(package, photos, tmp_path / "out")
+    assert not list((tmp_path / "out").rglob("*.jpg"))
 
 
 def test_the_api_serves_the_package_and_its_archive(tmp_path: Path) -> None:
@@ -117,7 +135,8 @@ def test_files_are_never_written_outside_the_output_folder(tmp_path: Path) -> No
     source = tmp_path / "photo.jpg"
     source.write_bytes(BYTES)
     with pytest.raises(ValueError, match="outside"):
-        write({"leads": []}, {"photos/../../escape.jpg": source}, tmp_path / "out")
+        escape = {"photos/../../escape.jpg": Retained(source, "")}
+        write({"leads": []}, escape, tmp_path / "out")
     assert not (tmp_path / "escape.jpg").exists()
 
 
@@ -134,3 +153,21 @@ def test_main_routes_the_package_command(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.setattr("sys.argv", argv + ["--out", str(tmp_path / "out")])
     with pytest.raises(SystemExit, match="No pilot store"):
         entry.main()
+
+
+def test_the_archive_refuses_a_photo_changed_after_checking(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from weedz.discovery import api
+
+    selected_store(tmp_path)
+    checked = api.package_contents
+
+    def then_changed(*args: object) -> object:
+        result = checked(*args)  # type: ignore[arg-type]
+        (tmp_path / "images" / "101.jpg").write_bytes(b"changed since it was checked")
+        return result
+
+    monkeypatch.setattr(api, "package_contents", then_changed)
+    response = TestClient(create_app(tmp_path)).get("/runs/run/package/archive")
+    assert response.status_code == 409 and "changed" in response.json()["detail"]

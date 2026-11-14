@@ -144,15 +144,20 @@ class ReviewAPI:
         return package_contents(self.store, run_id, now())[0]
 
     def package_archive(self, run_id: str) -> StreamingResponse:
-        """The package as a zip, built in a temporary file and streamed, so photos are
-        never all held in memory."""
+        """The package as a zip, built in a temporary file before any byte is sent (so a
+        photo that changed is refused with 409, not truncated) and then streamed."""
         self.run(run_id)
         package, photos = package_contents(self.store, run_id, now())
+        spool = tempfile.TemporaryFile()  # noqa: SIM115 - closed once streamed or refused
+        try:
+            archive(package, photos, spool)
+        except ValueError as error:
+            spool.close()
+            raise HTTPException(409, str(error)) from error
+        spool.seek(0)
 
         def chunks() -> Iterator[bytes]:
-            with tempfile.TemporaryFile() as spool:
-                archive(package, photos, spool)
-                spool.seek(0)
+            with spool:
                 yield from iter(lambda: spool.read(1 << 16), b"")
 
         return StreamingResponse(
