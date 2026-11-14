@@ -83,8 +83,9 @@ These are measurements at one Montana site, not evidence of NZ generalisation.
 The baseline itself has no saved human-review workflow (the pilot does), and
 neither path has perspective augmentation, a box detector, a pixel segmenter, or
 inference over arbitrary geographic rasters. Both collections can be read into
-the [common sample contract](#a-common-sample-and-annotation-contract), but
-neither pipeline trains or exports from it yet. The map's `truth` field means
+the [common sample contract](#a-common-sample-and-annotation-contract), and the
+baseline's split can be frozen as a [release](#what-a-release-implements), but
+neither pipeline trains or exports from either yet. The map's `truth` field means
 the upstream survey label; it has not been independently adjudicated by us.
 
 ## Dataset shortlist
@@ -496,14 +497,14 @@ pipelines.
 
 | Concern | Version 1 | Not yet |
 | --- | --- | --- |
-| Identity/lineage | `<source>:<source_id>` IDs, snapshot (revision or run), parent ID, original URI, media SHA-256 | Release IDs (#7), retrieval date |
-| Rights | Media and metadata licences kept separately; creator when the source names one separately (otherwise the attribution is authoritative); attribution; where the licence was read | Intended-use eligibility |
+| Identity/lineage | `<source>:<source_id>` IDs, snapshot (revision or run), parent ID, original URI, media SHA-256; release IDs live in [releases](#what-a-release-implements) | Retrieval date |
+| Rights | Media and metadata licences kept separately; creator when the source names one separately (otherwise the attribution is authoritative); attribution; where the licence was read; intended-use eligibility (training, evaluation, sharing) derived per example by the reference collection | Rights per annotation, where they differ from the photo's |
 | Media | Width/height and format when known | Colour space, dtype, bands, valid-data mask |
 | Taxonomy | The original source label kept as context only; annotation taxon as recorded | Taxon IDs, synonym mapping, regional status |
 | Supervision / label extent | Typed annotations with `present`/`absent`/`unknown`/`ignored` labels, pixel points, boxes and mask URIs | Mask files and ignored-pixel handling; annotation completeness, so a verified target-absent image can count as a detection negative without an invented box |
 | View/scale | Nadir/oblique/ground/unknown, detail/plant/patch/unknown, and GSD when known | Pose, angle convention, footprint |
 | Geography/time | Optional WGS84 point with uncertainty and public/obscured privacy; capture date | CRS/affine transforms, survey dates, sensor |
-| Grouping | Free-form groups (survey cluster, published split, observation) | Duplicate/encounter linking, final splits (#7) |
+| Grouping | Free-form groups (survey cluster, published split, observation); final splits are assigned by a [release](#what-a-release-implements), not stored on the sample | Duplicate/encounter linking |
 | Review | Origin (`source`/`reviewer`/`model`), review state (`unreviewed`/`accepted`/`rejected`/`uncertain`), author of the claim and its reviewers as a list of names (who may differ), time and note | Superseded-decision chains |
 | Prediction | Model-origin annotations with model, score and method note, which never count as supervision | Thresholds, abstention, preprocessing versions |
 
@@ -534,6 +535,33 @@ supervision cannot support. Predictions, rejected labels, and `unknown` or
   reference), all with public coordinates, checksums and sizes. Each has one
   unreviewed model suggestion, and there are no findings yet.
 
+`src/weedz/reference.py` reads contract samples as a **reference collection**
+(PRD P13). Each annotation is one example with a standing:
+
+- original
+- accepted
+- unresolved
+- unsuitable
+- unreviewed
+
+Its eligibility for training, evaluation and sharing is derived from:
+
+- the contract's `supervises()` rule
+- whose label it is: a source's own label, a reviewer's, or a model suggestion
+- the sharing policy
+
+A model suggestion that reviewers accepted may train, but it is never evaluation
+evidence, because the reviewers saw it.
+
+`src/weedz/reference_gaps.py` counts coverage per species and use. It counts by
+source, label, view, season and region, and lists the gaps. Growth stage and
+habitat are recorded nowhere and are reported as such. Locally, Leafy Spurge gives
+900 original examples, eligible for every use. Its only gaps are oblique and
+ground views, and its season is unknown because the adapter records no capture
+date. The pilot run `nelson-tasman-3e62ad801459` has 30 unreviewed suggestions,
+so every watchlist species is a gap for every use until someone reviews them.
+See [local operation](local-development.md#review-the-reference-collection).
+
 ### Bronze, silver, and gold releases
 
 | Layer | Contents | Promotion rule |
@@ -548,6 +576,80 @@ release with explicit training/validation/test assignments, not a synonym for
 the test set. Versioned correction files produce new releases without rewriting
 the upstream originals. The saved map supports visual inspection but does not
 persist review decisions; editable review and dataset promotion are still to build.
+
+#### What a release implements
+
+[release.py](../src/weedz/release.py) freezes contract samples as a release
+directory. It holds `samples.jsonl`, the manifest of exactly the kept samples
+with their annotations and rights, and a small `release.json`. Nothing else is
+stored.
+
+- **Split by group.** A `ReleaseSpec` declares the task, the protocol and a
+  split rule over one group key. An explicit rule maps each group to a split and
+  refuses unassigned groups. A hash rule places each group by a seeded SHA-256,
+  and the seed is recorded. Whole groups move together before anything is
+  derived from them.
+- **Buffer.** An optional spatial buffer protects the test, then validation. It
+  uses the great-circle distance between public WGS84 points plus any known
+  coordinate uncertainty. Samples without a usable location (none, or obscured)
+  are listed as `unbuffered` and are never assumed to be far away. Buffers from
+  real footprints remain future work.
+- **Refusals.** The release is refused if:
+  - a sample did not declare the task, or lacks the split's group
+  - a declared group spans splits, or a lineage does. A lineage is a sample,
+    its derivatives and theirs, followed through `parent_id` to the earliest
+    known ancestor.
+  - a split is empty
+  - a split lacks task evidence. Point classification needs a single target
+    taxon, with both present and absent labels in every split. Predictions,
+    rejected labels and uncertain labels never count.
+- **What `release.json` records:**
+  - the release id, which is derived from the content
+  - the contract schema version and the manifest SHA-256
+  - per-split sample and group IDs, and buffer exclusions with their reasons
+  - the rule and its parameters
+  - source snapshots and media licences
+  - per-split counts of labels, review states and taxa
+- **Test freshness.** `test_status` is `fresh`, `inspected` or
+  `used_for_selection`. Its append-only `test_history` can only advance: a test
+  that has been inspected or used for selection is never recorded as fresh
+  again. Later status changes do not change the release id, but the status at
+  creation is part of it, so a record cannot be edited to restart as fresh.
+  Dropping later history entries can only be detected against an outside copy
+  of `release.json`, for example one kept in version control.
+- **Checks on read.** Reading verifies the manifest checksum, and that the id
+  still matches the record and the splits list exactly the manifest's samples.
+  Rebuilding from the same inputs gives the same id and manifest bytes.
+
+```sh
+uv run main.py release leafy-spurge --output-dir releases/leafy-spurge-baseline \
+    --check-run runs/<run>/run.json
+uv run main.py release status releases/leafy-spurge-baseline used_for_selection --note "..."
+uv run main.py release verify releases/leafy-spurge-baseline
+```
+
+The Leafy Spurge release reproduces `partition.py`:
+
+- the published test clusters as test
+- the highest training cluster as validation
+- the remaining clusters as fit
+- a 2 m buffer
+
+It reads verified local data and never downloads. With `--check-run`, it refuses
+to write when a recorded run's partition IDs differ. Locally it matches the
+recorded baseline runs exactly:
+
+- fit: 700 samples, clusters 0–2 and 4–7 (356 present, 344 absent)
+- validation: 100 samples, cluster 8 (50/50)
+- test: 100 samples, cluster 9 (51 present, 49 absent)
+- nothing excluded: the nearest points in different splits are 91 m apart
+
+All of its labels are unreviewed upstream survey labels. Because its test has
+already been reported, the release records it as `inspected`.
+
+Rights eligibility and taxonomy synonym mapping are not checked. The contract
+does not carry them yet, so a release pins licences and taxa as recorded. The
+training pipeline still recomputes its split rather than reading a release.
 
 ### Improve coverage and annotation quality
 
@@ -625,16 +727,18 @@ binary score is not calibrated confidence and is not a universal weed threshold.
 
 ## Implementation order and acceptance checks
 
-This is proposed follow-up work. The only available CLI remains the Leafy Spurge
-`fetch`/`run` interface documented at the top.
+This is proposed follow-up work. Besides the Leafy Spurge `fetch`/`run`
+interface documented at the top, `release` freezes the baseline split.
 
 1. **Shared inventory and curation:** introduce source-independent IDs, typed
    supervision, review decisions, and frozen release/split manifests. Preserve
    the legacy baseline adapter and its recorded experiment. *Partly done:* the
    versioned contract, task validation, checksummed JSONL manifests, and the
    Leafy Spurge and pilot adapters exist (#3), and the recorded experiment is
-   unchanged. Frozen release and split manifests, and moving the baseline and
-   pilot export onto them, remain for #7.
+   unchanged. Frozen releases with group splits, buffers and recorded test
+   freshness exist, and the baseline split is reproduced as an `inspected`
+   release (#7). Moving baseline training and the pilot export onto releases,
+   rights eligibility, and taxonomy mapping remain.
 2. **Bounded incidental-photo collection:** inspect metadata and eligibility for
    an accessible NZ trail-camera, community-photo, or roadside source. Keep original
    subjects, duplicate/encounter groups, capture dates, and location limitations.
@@ -645,6 +749,12 @@ This is proposed follow-up work. The only available CLI remains the Leafy Spurge
    independent incidental-plant labels; measure review effort, false alarms,
    missed visible targets, and deduplicated useful discoveries. Do not require
    supervised segmentation before testing the product hypothesis.
+   *Partly done:* the whole-frame versus tile readouts of one BioCLIP 2 screen
+   can be compared at fixed reviewer budgets
+   (`scripts/compare_framing.py`, #12). They meet the same source-labelled
+   references at every budget, but give different incidental queues (3 of the
+   top 5 shared). Independent incidental-plant labels, from blind audits or
+   independently accepted findings, are still needed for a verdict.
 4. **Local retrospective benchmark:** define the weed watchlist and reference
    occurrence records with specialists. Preserve as-of dates and distinguish an
    unlabelled photo, a finding missing from the reference set, earlier available

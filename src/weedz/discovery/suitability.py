@@ -167,20 +167,42 @@ def _gaps(photos: Photos, start: date | None, end: date) -> Gaps:
     return [year for year in range(start.year, end.year + 1) if year not in years], seasons
 
 
-def _window(export: dict[str, Any], study: StudyDefinition | None) -> tuple[date | None, date]:
-    """The period the photos should span: the study's, with the query's for an open end."""
+Window = tuple[date | None, date]
+
+
+def _window(export: dict[str, Any], study: StudyDefinition | None) -> Window:
+    """The part of the study period the run queried (the query period for an open end).
+    A study period wholly outside the query period ends before it starts."""
     spec = _spec(export) or RunSpec()
     after = spec.after if spec.sampling == "stratified" else None
     start = study.period_start if study and study.period_start else after
     end = study.period_end if study and study.period_end else spec.before
-    return start, end
+    return (max(start, after) if start and after else start), min(end, spec.before)
+
+
+def _unsampled(study: StudyDefinition | None, window: Window) -> list[str]:
+    """The ends of a partly queried study period that the run never queried."""
+    start, end = window
+    if study is None or (start and start > end):
+        return []
+    parts = []
+    if start and study.period_start and study.period_start < start:
+        parts.append(f"before {start.isoformat()}")
+    if study.period_end and study.period_end > end:
+        parts.append(f"after {end.isoformat()}")
+    return parts
 
 
 def _date_notes(
-    dated: list[str], window: tuple[date | None, date], gaps: int, undated: int
+    dated: list[str], study: StudyDefinition | None, window: Window, gaps: int, undated: int
 ) -> list[str]:
     start, end = window
     notes = []
+    if unsampled := _unsampled(study, window):
+        notes.append(
+            f"The study period {' and '.join(unsampled)} was not sampled (outside the run's "
+            "query period); it is unassessed and its years are not listed as gaps"
+        )
     if start is None and dated:
         notes.append(
             f"Recent sampling takes the newest photos first, so dates before {min(dated)} "
@@ -237,7 +259,9 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
         ),
         "years_without_photos": years,
         "seasons_without_photos": seasons,
-        "notes": _date_notes(dated, (start, end), len(years or []) + len(seasons or []), undated),
+        "notes": _date_notes(
+            dated, study, (start, end), len(years or []) + len(seasons or []), undated
+        ),
     }
 
 

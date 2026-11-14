@@ -176,6 +176,40 @@ def test_a_study_period_outside_the_query_period_is_unsampled_not_covered() -> N
     assert any("lies outside the run's query period" in note for note in dates["notes"])
 
 
+def test_a_study_period_wholly_before_the_query_period_is_unsampled_too() -> None:
+    linked = study(period_start="2018-01-01", period_end="2020-12-31")
+    dates = suitability(run_export([photo("a", "a")], study=linked))["dates"]
+    assert dates["years_without_photos"] is None
+    assert dates["seasons_without_photos"] is None
+    assert any("lies outside the run's query period" in note for note in dates["notes"])
+
+
+def test_study_years_before_the_query_start_are_not_sampled_not_gaps() -> None:
+    linked = study(period_start="2020-01-01", period_end="2023-12-31")
+    photos = [photo("a", "a", observed_on="2023-01-05")]
+    dates = suitability(run_export(photos, study=linked))["dates"]
+    # 2020 and 2021 were never queried; only 2022 was queried and came back empty.
+    assert dates["years_without_photos"] == [2022]
+    assert any(
+        "before 2022-01-01 was not sampled" in note and "unassessed" in note
+        for note in dates["notes"]
+    )
+
+
+def test_study_years_after_the_query_end_are_not_sampled_not_gaps() -> None:
+    linked = study(period_start="2023-01-01", period_end="2026-06-30")
+    photos = [photo("a", "a", observed_on="2023-01-05")]
+    dates = suitability(run_export(photos, study=linked))["dates"]
+    assert dates["years_without_photos"] == [2024]
+    assert any("after 2024-12-31 was not sampled" in note for note in dates["notes"])
+    # A recent run queries up to its end date too.
+    recent = run_export(photos, study=linked)
+    recent["run"]["spec"] = {"limit_per_region": 2, "before": "2024-12-31"}
+    dates = suitability(recent)["dates"]
+    assert dates["years_without_photos"] == [2024]
+    assert any("after 2024-12-31 was not sampled" in note for note in dates["notes"])
+
+
 def test_without_a_study_the_query_period_bounds_the_years_and_recent_runs_say_so() -> None:
     report = suitability(run_export([photo("a", "a", observed_on="2024-01-05")]))
     assert report["dates"]["study_period"] is None
