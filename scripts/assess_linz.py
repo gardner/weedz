@@ -8,6 +8,10 @@ simplified capture area; no rasters are downloaded) and the pilot's photo record
 For every public-coordinate incidental photo it reports which collections cover the
 point, how far their capture window is from the observation date, and how many
 pixels a weed clump or the photo's positional uncertainty spans at that resolution.
+
+The catalogue is live and changes as LINZ publishes. Each listed collection records
+the catalogue's multihash of its collection JSON and of its capture area, so a rerun
+can tell which inputs changed since the recorded benchmark.
 """
 
 import argparse
@@ -36,15 +40,15 @@ REQUEST_PAUSE_S = 0.2
 Json = dict[str, Any]
 
 
-def candidate_hrefs(catalog: Json, regions: tuple[str, ...]) -> list[str]:
+def candidate_links(catalog: Json, regions: tuple[str, ...]) -> list[Json]:
     """Collections filed under a region, naming it in their slug, or national."""
-    hrefs = [link["href"] for link in catalog["links"] if link["rel"] == "child"]
-    return [href for href in hrefs if _is_candidate(href, regions)]
+    children = [link for link in catalog["links"] if link["rel"] == "child"]
+    return [link for link in children if _is_candidate(link["href"], regions)]
 
 
 def _is_candidate(href: str, regions: tuple[str, ...]) -> bool:
     filed_under, slug = href.split("/")[1:3]
-    return filed_under == NATIONAL or any(region in slug for region in regions)
+    return filed_under in (NATIONAL, *regions) or any(region in slug for region in regions)
 
 
 def _local_date(stamp: str | None) -> str | None:
@@ -59,8 +63,11 @@ def _named(collection: Json, role: str) -> list[str]:
     return [provider["name"] for provider in providers if role in provider.get("roles", [])]
 
 
-def parse_collection(collection: Json, href: str) -> Json:
+def parse_collection(collection: Json, link: Json) -> Json:
+    """Facts used by the assessment, with the digests of the metadata they came from."""
     start, end = collection["extent"]["temporal"]["interval"][0]
+    href = link["href"]
+    area = collection.get("assets", {}).get("capture_area", {})
     return {
         "slug": collection["linz:slug"],
         "title": collection["title"],
@@ -73,6 +80,8 @@ def parse_collection(collection: Json, href: str) -> Json:
         "producers": _named(collection, "producer"),
         "capture_start": _local_date(start),
         "capture_end": _local_date(end),
+        "collection_checksum": link.get("file:checksum"),
+        "capture_area_checksum": area.get("file:checksum"),
     }
 
 
@@ -199,12 +208,12 @@ def _fetch(client: httpx.Client, url: str) -> Json:
 def _collections(client: httpx.Client, catalog_url: str) -> list[tuple[Json, Json]]:
     base = catalog_url.rsplit("/", 1)[0]
     found = []
-    for href in candidate_hrefs(_fetch(client, catalog_url), ("nelson", "tasman")):
-        url = f"{base}/{href.removeprefix('./')}"
+    for link in candidate_links(_fetch(client, catalog_url), ("nelson", "tasman")):
+        url = f"{base}/{link['href'].removeprefix('./')}"
         raw = _fetch(client, url)
         area_href = raw["assets"]["capture_area"]["href"].removeprefix("./")
         area = _fetch(client, f"{url.rsplit('/', 1)[0]}/{area_href}")
-        found.append((parse_collection(raw, href), area))
+        found.append((parse_collection(raw, link), area))
     return found
 
 

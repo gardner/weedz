@@ -291,14 +291,22 @@ facts below come from the public `nz-imagery` STAC catalogue and the run
 [the assessment summary](../benchmarks/linz-nelson-tasman-assessment.json), which
 lists photo IDs but no coordinates. Reproduce them with
 `uv run python scripts/assess_linz.py`. The script reads collection JSON and
-simplified capture areas only, never rasters.
+simplified capture areas only, never rasters. The catalogue is live, so each
+collection's entry records the catalogue's checksums of its collection JSON and
+capture area. A rerun can then show which inputs have changed.
 
-- **Coverage:** 42 of the 60 candidate collections cover at least one photo.
+- **Coverage:** 43 of the 61 candidate collections cover at least one photo.
   They run from 1980 to 2025, with GSDs from 0.075 to 1 m plus six national 10 m
   satellite mosaics. Seven are RGBN near-infrared products. All are
-  CC BY 4.0. The licensor is Nelson City Council, Tasman District Council or
-  LINZ/MPI, and the producer is named in each collection. Keep both in any
-  attribution.
+  CC BY 4.0, but licensors vary:
+  - Most aerial surveys name one of the two councils.
+  - The 2022 Top of the South flood survey adds Waka Kotahi.
+  - The 2016–17 Tasman surveys add AAM NZ.
+  - Scanned historical surveys name LINZ and/or MPI.
+  - The satellite mosaics name Planet or Sinergise.
+
+  Take each collection's own licensors and producers from the benchmark, and
+  keep both in any attribution.
 - **Dates are seasons, not days:** collections and tiles carry one flying-season
   window, encoded as New Zealand midnights. The day a given tile was flown is
   not published in STAC. Only **8 of 24** photos fall inside a contemporary

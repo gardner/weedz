@@ -22,10 +22,14 @@ def catalog() -> dict[str, Any]:
         "./marlborough/marlborough_tasman_sn8415_1984_0.375m/rgb/2193/collection.json",
         "./new-zealand/new-zealand_2024-2025_10m/rgb/2193/collection.json",
         "./otago/otago_2020_0.3m/rgb/2193/collection.json",
+        "./nelson/top-of-the-south-flood_2022_0.15m/rgb/2193/collection.json",
     ]
     return {
         "links": [{"rel": "root", "href": "./catalog.json"}]
-        + [{"rel": "child", "href": href} for href in hrefs]
+        + [
+            {"rel": "child", "href": href, "file:checksum": f"1220{i}"}
+            for i, href in enumerate(hrefs)
+        ]
     }
 
 
@@ -51,14 +55,30 @@ HOLE = [[4, 4], [6, 4], [6, 6], [4, 6], [4, 4]]
 
 
 def test_candidates_are_the_regions_own_collections_plus_named_and_national_ones() -> None:
-    hrefs = assess.candidate_hrefs(catalog(), ("nelson", "tasman"))
-    assert len(hrefs) == 4
+    links = assess.candidate_links(catalog(), ("nelson", "tasman"))
+    hrefs = [link["href"] for link in links]
+    assert len(hrefs) == 5
     assert not any("otago" in href for href in hrefs)
+    # Filed under the region even though the slug names a place, not the region.
+    assert "./nelson/top-of-the-south-flood_2022_0.15m/rgb/2193/collection.json" in hrefs
+
+
+def test_collection_records_the_digests_of_the_metadata_it_was_read_from() -> None:
+    raw = collection(
+        assets={"capture_area": {"href": "./capture-area.geojson", "file:checksum": "1220area"}}
+    )
+    link = {
+        "href": "./tasman/tasman_2024-2025_0.25m/rgb/2193/collection.json",
+        "file:checksum": "1220collection",
+    }
+    parsed = assess.parse_collection(raw, link)
+    assert parsed["collection_checksum"] == "1220collection"
+    assert parsed["capture_area_checksum"] == "1220area"
 
 
 def test_collection_keeps_scale_bands_licence_attribution_and_local_dates() -> None:
     href = "./tasman/tasman_2024-2025_0.25m/rgbnir/2193/collection.json"
-    parsed = assess.parse_collection(collection(), href)
+    parsed = assess.parse_collection(collection(), {"href": href})
     assert parsed["slug"] == "tasman_2024-2025_0.25m"
     assert parsed["bands"] == "rgbnir"
     assert parsed["gsd_m"] == 0.25
@@ -73,7 +93,7 @@ def test_collection_keeps_scale_bands_licence_attribution_and_local_dates() -> N
 def test_collection_without_gsd_or_dates_is_kept_as_unknown() -> None:
     raw = collection(extent={"temporal": {"interval": [[None, None]]}})
     del raw["gsd"]
-    parsed = assess.parse_collection(raw, "./tasman/x/rgb/2193/collection.json")
+    parsed = assess.parse_collection(raw, {"href": "./tasman/x/rgb/2193/collection.json"})
     assert parsed["gsd_m"] is None
     assert parsed["capture_start"] is None
     assert parsed["bands"] == "rgb"
