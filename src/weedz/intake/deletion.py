@@ -86,6 +86,9 @@ class Deletions:
                 (row["requested_at"], submitter),
             )
             db.execute("DELETE FROM usage WHERE submitter=?", (submitter,))
+            # Crashed uploads can leave crops without any committed owner row. Sweep
+            # them under the same writer lock before claiming that erasure completed.
+            self.store._sweep(db)
             completed = _now()
             db.execute(
                 "UPDATE submitter_deletions SET completed_at=? WHERE submitter=?",

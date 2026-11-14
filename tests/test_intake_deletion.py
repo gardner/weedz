@@ -280,3 +280,35 @@ def test_operator_withdrawal_reports_an_existing_bulk_deletion(tmp_path: Path) -
                 str(tmp_path),
             ]
         )
+
+
+def test_operator_deletion_sweeps_crops_left_by_an_abrupt_upload_exit(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    credential = Submitters(tmp_path).issue("phone")
+    other = Submitters(tmp_path).issue("other phone")
+    client = TestClient(create_intake_app(tmp_path))
+    headers = {"Authorization": f"Bearer {other.token}"}
+    assert (
+        client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=headers).status_code
+        == 201
+    )
+    script = """
+import os, sys
+from pathlib import Path
+from weedz.intake.store import ReportStore
+store = ReportStore(Path(sys.argv[1]))
+with store._transaction():
+    store._write_image(sys.stdin.buffer.read())
+    os._exit(23)  # SQLite rolls back; durable image has no committed report owner.
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(tmp_path)], input=jpeg(), capture_output=True, timeout=10
+    )
+    assert result.returncode == 23, result.stderr
+    assert len(list((tmp_path / "reports/images").iterdir())) == 2
+    # No API startup sweep between the crash and this operator-side erasure.
+    Deletions(tmp_path).delete(credential.id)
+    assert len(list((tmp_path / "reports/images").iterdir())) == 1
+    assert [item.submitter for item in ReportStore(tmp_path).active()] == [other.id]

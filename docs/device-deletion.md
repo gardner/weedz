@@ -35,8 +35,9 @@ marker commits. Objects returned by an earlier read cannot be revoked; consumers
 must not keep stale snapshots as a substitute for current withdrawal state.
 
 The server then revokes the credential, durably deletes crops, clears report
-bodies and content hashes, removes the submitter's abuse-budget rows, and records
-completion. Existing report tombstones retain submitter/report ids and received
+bodies and content hashes, removes the submitter's abuse-budget rows, sweeps
+unreferenced crops left by crashed uploads under the reports write lock, and
+records completion. Committed crops belonging to other devices are preserved. Existing report tombstones retain submitter/report ids and received
 and withdrawn times. Earlier withdrawal times are preserved. A deletion marker
 retains the submitter id and request/completion times to prevent resurrection and
 make retries stable. The credential's existing hash, operator label and issue/

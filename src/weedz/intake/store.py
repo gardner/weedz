@@ -208,10 +208,17 @@ class ReportStore:
             ]
 
     def sweep(self) -> None:
-        """Delete crops no report names: left by a crash between writing an image and
-        committing its report. Run at start-up, before any request is taken."""
-        with closing(self._connect()) as db:
-            named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
+        """Delete orphan crops under the upload writer lock, including while workers run."""
+        with self._transaction() as db:
+            self._sweep(db)
+
+    def _sweep(self, db: sqlite3.Connection) -> None:
+        """Sweep within the caller's existing write transaction; never nest transactions.
+
+        Every normal image write holds that same transaction until its report commits,
+        so an unreferenced crop here belongs to an interrupted upload, not a live one.
+        """
+        named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
         for path in self.images.iterdir():
             if path.name not in named:
                 path.unlink(missing_ok=True)
