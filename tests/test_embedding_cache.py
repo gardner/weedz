@@ -170,3 +170,22 @@ def test_a_different_pinned_model_misses_the_cache(tmp_path: Path, monkeypatch) 
     other, encoder = screener(cache)
     other.screen(photo(tmp_path))
     assert encoder.image_calls == 1
+
+
+@pytest.mark.parametrize("bad", ["integers", "nan"])
+def test_cached_arrays_must_be_finite_floats(tmp_path: Path, bad: str) -> None:
+    import numpy as np
+
+    cache = tmp_path / "cache"
+    first, _ = screener(cache)
+    first.screen(photo(tmp_path))
+    for entry in cache.glob("*.npy"):
+        stored = np.load(entry)
+        if bad == "integers":
+            stored = stored.astype(np.int64)
+        else:
+            stored[0, 0] = np.nan
+        np.save(entry, stored)
+    again, encoder = screener(cache)
+    assert again.screen(photo(tmp_path))["embedding_cache"] == "miss"
+    assert encoder.image_calls == 1
