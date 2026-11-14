@@ -24,6 +24,8 @@ export type Photo = {
   positional_accuracy_m: number | null;
   coordinate_status: string;
   review_status: Status;
+  audit_sample?: boolean;
+  audited?: boolean;
   review_note: string;
   review_reviewer: string;
   reviewer_decisions: Record<string, Status>;
@@ -38,6 +40,21 @@ export type Photo = {
     height?: number;
     species?: { name: string; similarity: number; margin: number; box: number[] }[];
   };
+};
+
+export type AuditSummary = {
+  sampled: number;
+  audited: number;
+  remaining: number;
+  weed_found: number;
+  missed_by_screening: number;
+};
+
+export type RunDetail = {
+  run: Run;
+  photos: Photo[];
+  review_effort?: ReviewEffort;
+  audit?: AuditSummary;
 };
 
 export type ReviewEffort = {

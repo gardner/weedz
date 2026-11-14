@@ -94,7 +94,13 @@ intended for local development, not shared public hosting.
    per "Species visible" photo. Untimed earlier decisions are listed as unmeasured,
    never as zero, and any untimed incidental decision withholds the per-photo rate.
    Photos where reviewers disagree are not counted as "Species visible".
-   Confirmation is not a useful-finding measure. The
+   Confirmation is not a useful-finding measure. The **Audit sample** view lists
+   a fixed random quarter of incidental photos, chosen from run and photo ids so
+   screening rank plays no part. It hides the suggestion, search window and
+   scores, and asks "Is any watchlist weed visible?". Audits are stored apart
+   from suggestion reviews. The run detail and export count audited photos and
+   split any weed found into flagged or missed by screening. With a small sample
+   this bounds, rather than estimates, the miss rate. The
    API export includes current decisions, while the completion manifest records
    the state at screening completion.
 

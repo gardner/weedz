@@ -51,8 +51,12 @@ class ReviewAPI:
         photos = self.store.photos(run_id)
         effort = summarize_effort(photos, review_history(self.store, run_id, photos))
         sample = audit_sample(run_id, photos)
-        audit = summarize_audit(photos, sample, self.store.latest_audits(run_id))
-        photos = [photo | {"audit_sample": photo["id"] in sample} for photo in photos]
+        latest = self.store.latest_audits(run_id)
+        audit = summarize_audit(photos, sample, latest)
+        photos = [
+            photo | {"audit_sample": photo["id"] in sample, "audited": photo["id"] in latest}
+            for photo in photos
+        ]
         return {"run": run, "photos": photos, "review_effort": effort, "audit": audit}
 
     def download(self, run_id: str) -> JSONResponse:

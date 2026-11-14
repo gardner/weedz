@@ -102,6 +102,7 @@ def test_api_accepts_audits_only_for_sampled_photos(tmp_path: Path) -> None:
     assert (event["reviewer"], event["finding"], event["effort_seconds"]) == ("Ana", "none", 12)
     detail = client.get("/runs/run").json()
     assert detail["audit"]["audited"] == 1
+    assert {photo["id"] for photo in detail["photos"] if photo["audited"]} == {sampled[0]}
     assert export(store, "run")["audit"]["sampled"] == 2
 
 

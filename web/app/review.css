@@ -1,5 +1,6 @@
 /* Reviewer attribution, disagreement and decision history. */
-.review-form input#reviewer-name {
+.review-form input#reviewer-name,
+.review-form input.reviewer-name {
   width: 100%;
   border: 1px solid #dee5d5;
   border-radius: 4px;

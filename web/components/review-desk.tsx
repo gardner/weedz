@@ -4,16 +4,20 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useReviewTimer } from "../lib/review-timer";
 import {
+  type AuditSummary,
   effortNote,
   imageUrl,
   names,
   type Photo,
   type ReviewEffort,
   type Run,
+  type RunDetail,
   request,
   type Status,
 } from "../lib/types";
+import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
+import FieldNotes from "./field-notes";
 
 const REVIEWER_KEY = "weedz-reviewer";
 
@@ -23,6 +27,7 @@ export default function ReviewDesk() {
   const [runId, setRunId] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
+  const [auditSummary, setAuditSummary] = useState<AuditSummary>();
   const [activeId, setActiveId] = useState("");
   const [cohort, setCohort] = useState("incidental");
   const [region, setRegion] = useState("all");
@@ -46,12 +51,11 @@ export default function ReviewDesk() {
       const selected = runId || list[0]?.id;
       if (selected) {
         if (!runId) setRunId(selected);
-        const result = await request<{ run: Run; photos: Photo[]; review_effort?: ReviewEffort }>(
-          `runs/${selected}`,
-        );
+        const result = await request<RunDetail>(`runs/${selected}`);
         if (generation !== requestGeneration.current) return;
         setPhotos(result.photos);
         setEffortSummary(result.review_effort);
+        setAuditSummary(result.audit);
       }
       setError("");
     } catch (failure) {
@@ -91,44 +95,49 @@ export default function ReviewDesk() {
     };
   }, [refresh]);
 
+  const auditing = cohort === "audit";
   const filtered = photos
-    .filter(
-      (photo) =>
-        photo.cohort === cohort &&
-        (region === "all" || photo.region === region) &&
-        (review === "all" || photo.review_status === review),
+    .filter((photo) =>
+      auditing
+        ? photo.audit_sample && (region === "all" || photo.region === region)
+        : photo.cohort === cohort &&
+          (region === "all" || photo.region === region) &&
+          (review === "all" || photo.review_status === review),
     )
-    .sort((a, b) => (b.scores.margin ?? -2) - (a.scores.margin ?? -2));
+    // The audit list must not hint at screening rank, so it uses a neutral order.
+    .sort((a, b) =>
+      auditing ? a.id.localeCompare(b.id) : (b.scores.margin ?? -2) - (a.scores.margin ?? -2),
+    );
   const active = filtered.find((photo) => photo.id === activeId) ?? filtered[0];
   const incidental = photos.filter((photo) => photo.cohort === "incidental");
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
 
-  const effort = useReviewTimer(`${runId}:${active?.id ?? ""}`);
+  const effort = useReviewTimer(`${runId}:${auditing ? "audit:" : ""}${active?.id ?? ""}`);
 
   function switchRun(id: string) {
     setPhotos([]);
     setEffortSummary(undefined);
+    setAuditSummary(undefined);
     setActiveId("");
     setRunId(id);
   }
 
-  async function save(status: Status, note: string) {
+  async function submit(kind: "review" | "audit", fields: Record<string, string>) {
     if (!active) return;
     const measured = effort.snapshot();
     setSaving(true);
     try {
-      await request(`runs/${runId}/photos/${active.id}/review`, {
+      await request(`runs/${runId}/photos/${active.id}/${kind}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status,
-          note,
+          ...fields,
           reviewer: reviewer.trim(),
           effort_seconds: measured.seconds,
         }),
       });
       effort.clear(measured);
-      setNotice("Review saved locally.");
+      setNotice(kind === "audit" ? "Audit saved locally." : "Review saved locally.");
       await latestRefresh.current();
     } catch (failure) {
       setError(String(failure));
@@ -136,6 +145,8 @@ export default function ReviewDesk() {
       setSaving(false);
     }
   }
+  const save = (status: Status, note: string) => submit("review", { status, note });
+  const saveAudit = (finding: string, note: string) => submit("audit", { finding, note });
 
   async function start() {
     setStarting(true);
@@ -317,7 +328,11 @@ export default function ReviewDesk() {
                 <h2>
                   Review queue <span>{filtered.length}</span>
                 </h2>
-                <p>Highest relative similarity first</p>
+                <p>
+                  {auditing
+                    ? "Fixed random sample · screening rank hidden"
+                    : "Highest relative similarity first"}
+                </p>
               </div>
               <div className="cohort-tabs">
                 <button
@@ -334,6 +349,9 @@ export default function ReviewDesk() {
                 >
                   References
                 </button>
+                <button type="button" aria-pressed={auditing} onClick={() => setCohort("audit")}>
+                  Audit sample
+                </button>
               </div>
               <div className="queue-filters">
                 <select
@@ -345,17 +363,19 @@ export default function ReviewDesk() {
                   <option>Nelson</option>
                   <option>Tasman</option>
                 </select>
-                <select
-                  aria-label="Filter review status"
-                  value={review}
-                  onChange={(event) => setReview(event.target.value)}
-                >
-                  <option value="all">All decisions</option>
-                  <option value="unreviewed">Needs review</option>
-                  <option value="confirmed">Species visible</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="uncertain">Uncertain</option>
-                </select>
+                {!auditing && (
+                  <select
+                    aria-label="Filter review status"
+                    value={review}
+                    onChange={(event) => setReview(event.target.value)}
+                  >
+                    <option value="all">All decisions</option>
+                    <option value="unreviewed">Needs review</option>
+                    <option value="confirmed">Species visible</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="uncertain">Uncertain</option>
+                  </select>
+                )}
               </div>
               <div className="photo-list">
                 {filtered.map((photo, index) => (
@@ -382,15 +402,21 @@ export default function ReviewDesk() {
                         {String(index + 1).padStart(2, "0")} / {photo.region}
                       </span>
                       <strong>
-                        {names[photo.scores.best_species ?? ""] ?? "Awaiting screening"}
+                        {auditing
+                          ? "Blind audit photo"
+                          : (names[photo.scores.best_species ?? ""] ?? "Awaiting screening")}
                       </strong>
                       <span>{photo.original_common_name || photo.original_taxon}</span>
                       <small>
                         {photo.observed_on ?? "Date unknown"} ·{" "}
-                        {photo.review_status === "unreviewed"
-                          ? "Needs review"
-                          : photo.review_status}
-                        {photo.disputed && " · Reviewers disagree"}
+                        {auditing
+                          ? photo.audited
+                            ? "Audited"
+                            : "Not yet audited"
+                          : photo.review_status === "unreviewed"
+                            ? "Needs review"
+                            : photo.review_status}
+                        {!auditing && photo.disputed && " · Reviewers disagree"}
                       </small>
                     </span>
                   </button>
@@ -406,7 +432,18 @@ export default function ReviewDesk() {
                 )}
               </div>
             </section>
-            {active ? (
+            {active && auditing ? (
+              <AuditPanel
+                key={`${runId}:audit:${active.id}`}
+                photo={active}
+                runId={runId}
+                summary={auditSummary}
+                reviewer={reviewer}
+                onReviewerChange={changeReviewer}
+                onSave={saveAudit}
+                saving={saving}
+              />
+            ) : active ? (
               <Evidence
                 key={`${runId}:${active.id}`}
                 photo={active}
@@ -427,44 +464,7 @@ export default function ReviewDesk() {
                 </p>
               </div>
             )}
-            <aside className="field-notes">
-              <span className="eyebrow">FIELD NOTES</span>
-              <h3>Read the whole scene.</h3>
-              <p>Original labels describe the observed animal, not every plant in the photo.</p>
-              <div className="notes-rule" />
-              <h4>Provisional watchlist</h4>
-              {Object.entries(names).map(([scientific, common]) => (
-                <div className="watch-species" key={scientific}>
-                  <strong>{common}</strong>
-                  <em>{scientific}</em>
-                </div>
-              ))}
-              <div className="notes-rule" />
-              <h4>Check the lookalikes</h4>
-              <p>
-                Native clematis and toetoe can resemble targets. A model ranking alone cannot
-                resolve species.
-              </p>
-              {active?.scores.species && (
-                <>
-                  <h4>Similarity comparison</h4>
-                  {active.scores.species.map((species) => (
-                    <div className="score-row" key={species.name}>
-                      <span>{names[species.name]}</span>
-                      <b>{species.similarity.toFixed(3)}</b>
-                    </div>
-                  ))}
-                  <small>
-                    Raw cosine similarity. Ranking uses the margin against comparison labels.
-                  </small>
-                </>
-              )}
-              <div className="notes-rule" />
-              <p className="location-note">
-                A photo location is an observation location. It may be obscured, approximate or
-                distant from the plant.
-              </p>
-            </aside>
+            <FieldNotes species={auditing ? undefined : active?.scores.species} />
           </div>
           <footer className="page-footer">
             <span>WEEDZ · COMMUNITY CONSERVATION RESEARCH</span>
