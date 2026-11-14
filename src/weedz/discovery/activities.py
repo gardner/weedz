@@ -142,7 +142,8 @@ def export(store: Store, run_id: str) -> dict:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
     # A withdrawn report is used for nothing further, so nothing is derived from it (#60).
-    live = [photo for photo in store.photos(run_id) if not withdrawn(photo)]
+    every = store.photos(run_id)
+    live = [photo for photo in every if not withdrawn(photo)]
     references, photos = with_references(store.root, live)
     kept = {photo["id"] for photo in photos}
     history = review_history(store, run_id, photos)
@@ -163,7 +164,8 @@ def export(store: Store, run_id: str) -> dict:
         "review_effort": summarize_effort(photos, history),
         "audit": summarize_audit(
             photos,
-            audit_sample(run_id, photos),
+            # Drawn from every photo, as the review app draws it, less the withdrawn.
+            audit_sample(run_id, every) & kept,
             store.latest_audits(run_id),
             store.latest_audits(run_id, blind=False),
         ),

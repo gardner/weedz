@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from test_discovery import observation
 from test_judgements import store_with_photo
 from test_leads import select
 from test_reference import note, reasons
@@ -13,7 +14,11 @@ from test_sharing import photo
 from weedz.contract import Sample
 from weedz.discovery import package, package_report
 from weedz.discovery.activities import export
+from weedz.discovery.audit import audit_sample
+from weedz.discovery.records import RunSpec
 from weedz.discovery.sharing import image_use, location, shareable_export, shareable_photo
+from weedz.discovery.source import photo_from_observation
+from weedz.discovery.store import Store
 from weedz.reference import examples
 
 WITHDRAWN_AT = "2026-11-14T00:00:00Z"
@@ -179,3 +184,24 @@ def test_nothing_derived_from_a_withdrawn_photo_is_exported(tmp_path: Path) -> N
     store.photos = lambda run_id: [item | {"consent": ended} for item in stored(run_id)]  # type: ignore[method-assign]
     shared = json.dumps(shareable_export(export(store, "run")))
     assert photo_id not in shared
+
+
+def test_a_withdrawal_leaves_the_rest_of_the_audit_sample_as_the_review_app_draws_it(
+    tmp_path: Path,
+) -> None:
+    store = Store(tmp_path)
+    store.create_run("run", RunSpec())
+    records = [
+        photo_from_observation(observation() | {"id": 100 + index}, "Nelson", "incidental")
+        for index in range(8)
+    ]
+    store.save_photos("run", [record for record in records if record is not None])
+    drawn = audit_sample("run", store.photos("run"))
+    outside = next(item["id"] for item in store.photos("run") if item["id"] not in drawn)
+    ended = consented(["review"], WITHDRAWN_AT)
+    stored = store.photos
+    for gone in (sorted(drawn)[0], outside):
+        store.photos = lambda run_id, gone=gone: [  # type: ignore[method-assign]
+            item | {"consent": ended} if item["id"] == gone else item for item in stored(run_id)
+        ]
+        assert export(store, "run")["audit"]["sampled"] == len(drawn - {gone})
