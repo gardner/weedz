@@ -34,6 +34,7 @@ from weedz.discovery.study_store import (
     run_study,
     save_version,
 )
+from weedz.discovery.suitability_report import to_markdown as suitability_markdown
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -169,13 +170,22 @@ def package(args: argparse.Namespace) -> None:
     print(f"Wrote {count} lead{'s' if count != 1 else ''} for follow-up to {args.out}")
 
 
-def report(args: argparse.Namespace) -> None:
-    store = run_store(args)
-    result = outcomes(export(store, args.run))
-    print(to_markdown(result), end="")
+def _print(args: argparse.Namespace, result: dict, markdown: str) -> None:
+    """Print the Markdown and, with --json, also write the result there."""
+    print(markdown, end="")
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+
+
+def report(args: argparse.Namespace) -> None:
+    result = outcomes(export(run_store(args), args.run))
+    _print(args, result, to_markdown(result))
+
+
+def suitability(args: argparse.Namespace) -> None:
+    result = export(run_store(args), args.run)["source_suitability"]
+    _print(args, result, suitability_markdown(result))
 
 
 def _record_study(store: Store, args: argparse.Namespace) -> None:
@@ -274,6 +284,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
     measures.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     measures.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     measures.add_argument("--json", type=Path, help="Also write the report as JSON here")
+    suits = commands.add_parser(
+        "suitability", help="Report what a run's photos can and cannot support (Markdown)"
+    )
+    suits.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    suits.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    suits.add_argument("--json", type=Path, help="Also write the summary as JSON here")
     define = commands.add_parser(
         "study", help="Show a run's study, or record a new version of it from a JSON file"
     )
@@ -301,6 +317,9 @@ def main(argv: list[str]) -> None:
         return
     if args.command == "outcomes":
         report(args)
+        return
+    if args.command == "suitability":
+        suitability(args)
         return
     if args.command == "package":
         package(args)

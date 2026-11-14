@@ -9,6 +9,11 @@ def _counts(counts: dict[str, Any]) -> str:
     return ", ".join(f"{name} {count}" for name, count in counts.items()) or "none"
 
 
+def _photos(found: dict[str, int] | None) -> str:
+    """Photos with their site visits; "none" for no photos, "unknown" when not assessed."""
+    return "none" if found and not found["photos"] else render(found)
+
+
 def _scope(scope: dict[str, Any]) -> list[str]:
     regions = "; ".join(
         f"{name} {item['photos']} of {item['requested']} requested"
@@ -18,7 +23,7 @@ def _scope(scope: dict[str, Any]) -> list[str]:
         "## Scope",
         "",
         f"- Run status: {scope['run_status']}",
-        f"- Incidental photos: {render(scope['incidental'])}",
+        f"- Incidental photos: {_photos(scope['incidental'])}",
         f"- By region: {regions}",
         f"- Other photos (not incidental): {_counts(scope['other_photos'])}",
     ]
@@ -43,7 +48,7 @@ def _period(period: dict[str, Any] | None) -> str:
 
 def _dates(dates: dict[str, Any]) -> list[str]:
     corpus = dates["corpus"]
-    years = dates["years_without_photos"]
+    years, period = dates["years_without_photos"], dates["study_period"]
     lines = [
         "## Dates",
         "",
@@ -51,9 +56,10 @@ def _dates(dates: dict[str, Any]) -> list[str]:
         f"- Query period: {_period(dates['query_period'])}; sampling "
         f"{corpus.get('sampling', 'unknown')}",
         f"- Study period: {_period(dates['study_period'])}",
-        f"- Outside the study period: {render(dates['outside_study_period'])}",
-        f"- Undated: {render(dates['undated'])}; dated only to a month or year: "
-        f"{render(dates['imprecise'])}",
+        "- Outside the study period: "
+        + ("not assessed" if period is None else _photos(dates["outside_study_period"])),
+        f"- Undated: {_photos(dates['undated'])}; dated only to a month or year: "
+        f"{_photos(dates['imprecise'])}",
         f"- By year: {_counts(corpus.get('by_year', {}))}",
         f"- By season: {_counts(corpus.get('by_season', {}))}",
         "- Years in the period with no photos: "
@@ -72,7 +78,7 @@ def _locations(locations: dict[str, Any]) -> list[str]:
         f"context: {areas['site_context_precision']}",
     ]
     lines += [
-        f"- Not searchable, {name.replace('_', ' ')}: {render(item)} ({item['reason']})"
+        f"- Not searchable, {name.replace('_', ' ')}: {_photos(item)} ({item['reason']})"
         for name, item in locations["not_searchable"].items()
     ]
     return lines + [
@@ -115,16 +121,16 @@ def _screening(screening: dict[str, Any], independence: dict[str, Any]) -> list[
         "",
         "## Screening and visibility",
         "",
-        f"- Screened: {render(screening['screened'])}; not screened: "
-        f"{render(screening['not_screened'])}",
+        f"- Screened: {_photos(screening['screened'])}; not screened: "
+        f"{_photos(screening['not_screened'])}",
         f"- Every pixel covered by tiles: yes {pixels['complete']}, thinned "
         f"{pixels['thinned']}, not recorded {pixels['not_recorded']}",
         f"- With featureless windows: {featureless['photos_with']}; not recorded "
         f"{featureless['not_recorded']}",
         f"- Visible vegetation: {screening['visible_vegetation']}",
         f"- Original subjects: {_counts(screening['original_subjects'])}",
-        f"- Reviewed: {render(screening['reviewed'])}; unassessed: "
-        f"{render(screening['unassessed'])}",
+        f"- Reviewed: {_photos(screening['reviewed'])}; unassessed: "
+        f"{_photos(screening['unassessed'])}",
     ]
 
 
@@ -139,10 +145,10 @@ def _comparison(comparison: dict[str, Any]) -> list[str]:
         "## Comparison with known records",
         "",
         f"- Basis: {basis}",
-        f"- Compared: {render(comparison['compared'])}",
+        f"- Compared: {_photos(comparison['compared'])}",
     ]
     return lines + [
-        f"- Not compared, {reason}: {render(count)}"
+        f"- Not compared, {reason}: {_photos(count)}"
         for reason, count in comparison["not_compared"].items()
     ]
 
@@ -156,14 +162,14 @@ def _cannot(items: list[dict[str, Any]]) -> list[str]:
     ]
     return lines + [
         f"| {item['conclusion']} | "
-        f"{'not assessed' if item['photos'] is None else render(item['photos'])} | "
+        f"{'not assessed' if item['photos'] is None else _photos(item['photos'])} | "
         f"{item['because']} |"
         for item in items
     ]
 
 
 def to_markdown(report: dict[str, Any]) -> str:
-    missing = report["missing"]
+    missing = {name.replace("_", " "): count for name, count in report["missing"].items()}
     lines = [
         f"# Source suitability: {report['run_id']}",
         "",

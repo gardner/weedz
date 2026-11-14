@@ -28,6 +28,7 @@ def main() -> None:
         "outcomes",
         "package",
         "study",
+        "suitability",
     }:
         from weedz.discovery.cli import main as discovery_main
 

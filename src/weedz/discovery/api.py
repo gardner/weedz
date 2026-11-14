@@ -165,6 +165,11 @@ class ReviewAPI:
         self.run(run_id)
         return outcomes(export(self.store, run_id))
 
+    def suitability(self, run_id: str) -> dict:
+        """What the run's photos can and cannot support, before review (PRD P02, P14)."""
+        self.run(run_id)
+        return export(self.store, run_id)["source_suitability"]
+
     def studies(self) -> list[dict]:
         return studies(self.store)
 
@@ -354,6 +359,7 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.get("/runs/{run_id}")(api.detail)
     app.get("/runs/{run_id}/export")(api.download)
     app.get("/runs/{run_id}/outcomes")(api.outcomes)
+    app.get("/runs/{run_id}/suitability")(api.suitability)
     app.get("/runs/{run_id}/study")(api.run_study)
     app.post("/runs/{run_id}/study")(api.link_study)
     app.get("/studies")(api.studies)

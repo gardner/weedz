@@ -35,10 +35,7 @@ MEANING = (
     "grouped. A photo, area, period or year that was not collected, screened, compared "
     "or reviewed is unassessed: it is not evidence that no weed is there."
 )
-NOT_MEASURED = (
-    "Not measured: no step estimates how much vegetation each photo shows. Featureless "
-    "windows and pixel coverage below say only what the screening could see"
-)
+NOT_MEASURED = "Not measured: no step estimates how much vegetation each photo shows. X"
 NO_SNAPSHOT = "No reference snapshot to compare against"
 NO_STUDY_PERIOD = "No study period is recorded, so photos are not checked against one"
 BANDS: list[tuple[str, float]] = [
