@@ -215,10 +215,14 @@ class Store:
                 )
             ]
 
-    def latest_audits(self, run_id: str) -> dict[str, str]:
-        """Each photo's most recent audit finding."""
+    def latest_audits(self, run_id: str) -> dict[str, dict[str, str]]:
+        """Each auditor's latest finding, per photo, as reviewer_decisions does for reviews."""
         with self.connect() as db:
             rows = db.execute(
-                "SELECT photo_id, finding FROM audits WHERE run_id=? ORDER BY id", (run_id,)
+                "SELECT photo_id, reviewer, finding FROM audits WHERE run_id=? ORDER BY id",
+                (run_id,),
             ).fetchall()
-        return {row["photo_id"]: row["finding"] for row in rows}
+        findings: dict[str, dict[str, str]] = {}
+        for row in rows:
+            findings.setdefault(row["photo_id"], {})[row["reviewer"]] = row["finding"]
+        return findings

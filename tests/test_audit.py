@@ -45,30 +45,67 @@ def test_audit_finding_must_be_a_watchlist_species_none_or_unsure() -> None:
         Audit.model_validate({"finding": "none", "reviewer": " "})
 
 
-def test_summary_splits_found_weeds_into_flagged_and_missed() -> None:
-    sampled = [
-        {"id": "a", "cohort": "incidental", "scores": {"species": [margin("Ulex europaeus", 0.1)]}},
-        {
-            "id": "b",
-            "cohort": "incidental",
-            "scores": {"species": [margin("Ulex europaeus", -0.2)]},
-        },
-        {"id": "c", "cohort": "incidental", "scores": {}},
-        {"id": "d", "cohort": "incidental", "scores": {}},
+def scored(pid: str, best: str | None = None, value: float | None = None) -> dict:
+    scores = {} if best is None else {"best_species": best, "margin": value}
+    return {"id": pid, "cohort": "incidental", "scores": scores}
+
+
+def test_summary_reports_queue_rank_and_whether_the_find_was_the_suggestion() -> None:
+    queue = [
+        scored("a", "Ulex europaeus", 0.1),
+        scored("b", "Cortaderia selloana", 0.3),
+        scored("c", "Ulex europaeus", -0.2),
+        scored("d"),
+        {"id": "r", "cohort": "reference", "scores": {"margin": 9.0}},
     ]
     latest = {
-        "a": "Ulex europaeus",
-        "b": "Ulex europaeus",
-        "c": "none",
+        "a": {"Ana": "Ulex europaeus"},
+        "b": {"Ana": "Ulex europaeus"},
+        "c": {"Ana": "none"},
     }
-    summary = summarize_audit(sampled, {"a", "b", "c", "d"}, latest)
+    summary = summarize_audit(queue, {"a", "b", "c", "d"}, latest)
     assert summary["sampled"] == 4
     assert summary["audited"] == 3
     assert summary["remaining"] == 1
     assert summary["weed_found"] == 2
-    assert summary["flagged_by_screening"] == 1
-    assert summary["missed_by_screening"] == 1
+    assert summary["found_as_top_suggestion"] == 1
+    assert summary["found_not_top_suggestion"] == 1
+    assert summary["disputed"] == 0
+    assert summary["findings"] == [
+        {
+            "photo_id": "a",
+            "species": "Ulex europaeus",
+            "top_suggestion": True,
+            "queue_rank": 2,
+            "queue_size": 4,
+        },
+        {
+            "photo_id": "b",
+            "species": "Ulex europaeus",
+            "top_suggestion": False,
+            "queue_rank": 1,
+            "queue_size": 4,
+        },
+    ]
+    assert "flagged_by_screening" not in summary
+    assert "missed_by_screening" not in summary
     assert "not expert-verified" in summary["meaning"]
+    assert "no calibrated detection threshold" in summary["meaning"]
+
+
+def test_a_later_none_from_another_auditor_does_not_erase_a_found_weed(tmp_path: Path) -> None:
+    store = run_with_photos(tmp_path)
+    queue = store.photos("run")
+    target = sorted(audit_sample("run", queue))[0]
+    store.audit("run", target, "Ulex europaeus", "", "Ana")
+    store.audit("run", target, "none", "", "Ben")
+    summary = summarize_audit(queue, audit_sample("run", queue), store.latest_audits("run"))
+    assert summary["audited"] == 1
+    assert summary["weed_found"] == 1
+    assert summary["disputed"] == 1
+    store.audit("run", target, "none", "", "Ana")
+    summary = summarize_audit(queue, audit_sample("run", queue), store.latest_audits("run"))
+    assert (summary["weed_found"], summary["disputed"]) == (0, 0)
 
 
 def margin(name: str, value: float) -> dict:
@@ -104,6 +141,18 @@ def test_api_accepts_audits_only_for_sampled_photos(tmp_path: Path) -> None:
     assert detail["audit"]["audited"] == 1
     assert {photo["id"] for photo in detail["photos"] if photo["audited"]} == {sampled[0]}
     assert export(store, "run")["audit"]["sampled"] == 2
+
+
+def test_detail_keeps_audit_findings_blind_but_export_includes_them(tmp_path: Path) -> None:
+    store = run_with_photos(tmp_path)
+    target = sorted(audit_sample("run", store.photos("run")))[0]
+    store.audit("run", target, "Ulex europaeus", "By the fence", "Ana")
+    detail = TestClient(create_app(tmp_path)).get("/runs/run").json()
+    assert detail["audit"]["weed_found"] == 1
+    assert "findings" not in detail["audit"]
+    assert "Ulex europaeus" not in str(detail["audit"])
+    [finding] = export(store, "run")["audit"]["findings"]
+    assert (finding["photo_id"], finding["species"]) == (target, "Ulex europaeus")
 
 
 def test_audits_table_is_added_to_existing_databases(tmp_path: Path) -> None:

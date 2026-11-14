@@ -52,7 +52,9 @@ class ReviewAPI:
         effort = summarize_effort(photos, review_history(self.store, run_id, photos))
         sample = audit_sample(run_id, photos)
         latest = self.store.latest_audits(run_id)
+        # Per-photo findings stay in the export; the review app sees only counts and flags.
         audit = summarize_audit(photos, sample, latest)
+        del audit["findings"]
         photos = [
             photo | {"audit_sample": photo["id"] in sample, "audited": photo["id"] in latest}
             for photo in photos

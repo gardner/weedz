@@ -14,7 +14,12 @@ FRACTION = 0.25
 MEANING = (
     "Blind audit of a fixed random sample of incidental photos, without the screening "
     "suggestion. Findings are reviewer judgements, not expert-verified identifications. "
-    "With a small sample, missed counts bound rather than estimate the miss rate."
+    "A photo counts as a found weed if any auditor's latest finding names a species; "
+    "'disputed' counts photos where auditors' latest findings differ. There is no "
+    "calibrated detection threshold yet, so each found weed reports its 1-based rank in "
+    "the incidental queue (by margin, highest first) and whether the found species was "
+    "the top suggestion shown, rather than a hit or miss verdict. With a small sample, "
+    "these counts bound rather than estimate how often screening ranks weeds low."
 )
 
 
@@ -26,18 +31,32 @@ def audit_sample(run_id: str, photos: list[dict[str, Any]], fraction: float = FR
     return set(order[: max(1, math.ceil(len(order) * fraction))])
 
 
-def _flagged(photo: dict[str, Any], species: str) -> bool:
-    rows = photo.get("scores", {}).get("species", [])
-    return any(row["name"] == species and row["margin"] > 0 for row in rows)
+def queue_ranks(photos: list[dict[str, Any]]) -> dict[str, int]:
+    """1-based positions in the incidental queue, ordered as the review app orders it."""
+    incidental = [photo for photo in photos if photo["cohort"] == "incidental"]
+    queue = sorted(incidental, key=lambda photo: -photo["scores"].get("margin", -2))
+    return {photo["id"]: rank for rank, photo in enumerate(queue, start=1)}
 
 
 def summarize_audit(
-    photos: list[dict[str, Any]], sample: set[str], latest: dict[str, str]
+    photos: list[dict[str, Any]], sample: set[str], latest: dict[str, dict[str, str]]
 ) -> dict[str, Any]:
     by_id = {photo["id"]: photo for photo in photos}
-    audited = {pid: latest[pid] for pid in sample if pid in latest}
-    found = {pid: finding for pid, finding in audited.items() if finding in SPECIES}
-    flagged = sum(_flagged(by_id[pid], finding) for pid, finding in found.items())
+    ranks = queue_ranks(photos)
+    audited = {pid: latest[pid] for pid in sorted(sample) if latest.get(pid)}
+    findings = [
+        {
+            "photo_id": pid,
+            "species": species,
+            "top_suggestion": species == by_id[pid]["scores"].get("best_species"),
+            "queue_rank": ranks[pid],
+            "queue_size": len(ranks),
+        }
+        for pid, by_auditor in audited.items()
+        for species in sorted(set(by_auditor.values()) & set(SPECIES))
+    ]
+    found = {finding["photo_id"] for finding in findings}
+    as_top = {finding["photo_id"] for finding in findings if finding["top_suggestion"]}
     return {
         "meaning": MEANING,
         "fraction": FRACTION,
@@ -45,7 +64,9 @@ def summarize_audit(
         "audited": len(audited),
         "remaining": len(sample) - len(audited),
         "weed_found": len(found),
-        "flagged_by_screening": flagged,
-        "missed_by_screening": len(found) - flagged,
-        "unsure": sum(finding == "unsure" for finding in audited.values()),
+        "found_as_top_suggestion": len(as_top),
+        "found_not_top_suggestion": len(found - as_top),
+        "disputed": sum(len(set(by_auditor.values())) > 1 for by_auditor in audited.values()),
+        "unsure": sum("unsure" in by_auditor.values() for by_auditor in audited.values()),
+        "findings": findings,
     }
