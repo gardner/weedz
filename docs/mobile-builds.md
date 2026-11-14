@@ -68,3 +68,24 @@ cleanup requires operator attention before reusing the runner.
 Issue #114 remains open until the owner configures signing credentials and both
 signed platform builds have been verified. Development CI success proves the
 native projects build; it does not verify signing or make the app store-ready.
+
+## Check Apple signing before deployment is configured
+
+The manually dispatched **iOS Signing Check** workflow is restricted to `main`
+and the `mobile-release` environment. It exercises the five configured Apple
+signing secrets without needing Android keys or deployment URLs. The helper's
+`--ios-signing-check` mode is mutually exclusive with `--release` and deliberately
+embeds an empty development configuration, even if URL variables exist.
+
+This builds an actual signed IPA, verifies the exported app with
+`codesign --verify --deep --strict`, and uploads the `ios-signing-check` artifact,
+including a README identifying it as an unconfigured signing proof. The IPA uses
+App Store distribution signing; physical-device testing requires a separate
+TestFlight distribution step. Deployment-
+dependent features remain unavailable. It is not a production-ready release and
+is not uploaded to a store. Temporary signing files/profile/keychain are always
+cleaned up using the same helper as the production workflow.
+
+This proof does not change production validation: **Mobile Builds → signed_release**
+still requires both real deployment URLs and each platform's release settings.
+Issue #114 remains open until that fully configured release path is verified.
