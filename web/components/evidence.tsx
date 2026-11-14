@@ -2,24 +2,46 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { imageUrl, names, type Photo, type Status } from "../lib/types";
+import {
+  imageUrl,
+  names,
+  type Photo,
+  type References,
+  referenceNote,
+  type Status,
+  siteVisitSummary,
+  statusLabels,
+} from "../lib/types";
+import ReviewHistory from "./review-history";
 
 export default function Evidence({
   photo,
   runId,
   onSave,
   saving,
+  references,
+  reviewer,
+  onReviewerChange,
 }: {
   photo: Photo;
   runId: string;
   onSave: (status: Status, note: string) => Promise<void>;
   saving: boolean;
+  references: References;
+  reviewer: string;
+  onReviewerChange: (name: string) => void;
 }) {
-  const [note, setNote] = useState(photo.review_note);
+  // Only the latest note's author gets it back to edit; others start blank. Derived, not
+  // initial state, because the remembered name arrives after mount.
+  const ownNote =
+    photo.review_reviewer && photo.review_reviewer === reviewer.trim() ? photo.review_note : "";
+  const [draft, setNote] = useState<string | null>(null);
+  const note = draft ?? ownNote;
   const [windowVisible, setWindowVisible] = useState(true);
   const { scores } = photo;
   const [x1, y1, x2, y2] = scores.box ?? [0, 0, 0, 0];
   const target = scores.best_species ?? "Pending screening";
+  const blocked = saving || !reviewer.trim();
   return (
     <article className="evidence">
       <div className="evidence-heading">
@@ -32,6 +54,18 @@ export default function Evidence({
           {photo.review_status === "unreviewed" ? "Needs review" : photo.review_status}
         </span>
       </div>
+      {photo.disputed && (
+        <div className="dispute" role="note">
+          <strong>⚠ Reviewers disagree</strong>
+          <ul>
+            {Object.entries(photo.reviewer_decisions).map(([name, status]) => (
+              <li key={name}>
+                {name}: {statusLabels[status] ?? status}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="image-stage">
         {scores.width && scores.height ? (
           <svg
@@ -100,6 +134,11 @@ export default function Evidence({
           <small>Uploaded {photo.uploaded_at?.slice(0, 10) ?? "unknown"}</small>
         </div>
         <div>
+          <span>Site visit</span>
+          <strong>{siteVisitSummary(photo)}</strong>
+          <small>Same observer, date and nearby location; not necessarily the same plant</small>
+        </div>
+        <div>
           <span>Observation location</span>
           <strong>
             {photo.coordinate_status === "missing"
@@ -114,6 +153,15 @@ export default function Evidence({
               : "Accuracy not supplied"}
           </small>
         </div>
+        <div>
+          <span>Known records</span>
+          <strong>{referenceNote(photo, references)}</strong>
+          <small>
+            {references
+              ? `${references.dataset.title}, snapshot as of ${references.retrieved_at.slice(0, 10)}. Distance between reported points; a missing record is not evidence of a new locality.`
+              : "Run `uv run main.py references` to load DOC weed records for comparison."}
+          </small>
+        </div>
       </div>
       <div className="review-form">
         <h3>Is the suggested species visible?</h3>
@@ -121,6 +169,18 @@ export default function Evidence({
           Check leaf shape, flowers and context. The dashed window is a search area, not a plant
           boundary.
         </p>
+        <label htmlFor="reviewer-name">Your name</label>
+        <input
+          id="reviewer-name"
+          value={reviewer}
+          onChange={(event) => onReviewerChange(event.target.value)}
+          maxLength={80}
+          autoComplete="name"
+          aria-describedby="reviewer-help"
+        />
+        <small id="reviewer-help">
+          Recorded with each decision on this computer. Required before deciding.
+        </small>
         <label htmlFor="review-note">Review note</label>
         <textarea
           id="review-note"
@@ -134,15 +194,15 @@ export default function Evidence({
           <button
             type="button"
             className="primary"
-            disabled={saving || !scores.best_species}
+            disabled={blocked || !scores.best_species}
             onClick={() => onSave("confirmed", note)}
           >
             Species visible
           </button>
-          <button type="button" disabled={saving} onClick={() => onSave("rejected", note)}>
+          <button type="button" disabled={blocked} onClick={() => onSave("rejected", note)}>
             Reject suggestion
           </button>
-          <button type="button" disabled={saving} onClick={() => onSave("uncertain", note)}>
+          <button type="button" disabled={blocked} onClick={() => onSave("uncertain", note)}>
             Unsure
           </button>
         </div>
@@ -150,7 +210,7 @@ export default function Evidence({
           <button
             type="button"
             className="text-button"
-            disabled={saving}
+            disabled={blocked}
             onClick={() => onSave("unreviewed", note)}
           >
             Reopen for review
@@ -161,6 +221,7 @@ export default function Evidence({
           it does not establish a new weed locality.
         </small>
       </div>
+      <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />
     </article>
   );
 }
