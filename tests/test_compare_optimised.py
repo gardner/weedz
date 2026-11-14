@@ -137,3 +137,18 @@ def test_conclusion_names_passing_and_failing_variants() -> None:
     assert "Kept parity: good." in text
     assert "Failed parity: bad." in text
     assert "Kept parity: none." in script.conclusion({"bad": variant(False)})
+
+
+def test_artefacts_are_cached_per_weights_libraries_and_export_settings(tmp_path: Path) -> None:
+    metadata = {"model_key": "bioclip-2", "revision": "r", "weights_sha256": "w" * 64}
+    versions = {"torch": "2.15.0", "onnxruntime": "1.32.0"}
+    folder = script.artefact_folder(tmp_path, metadata, versions)
+    assert folder.parent == tmp_path / "bioclip-2"
+    assert folder == script.artefact_folder(tmp_path, dict(metadata), dict(versions))
+    repinned = metadata | {"weights_sha256": "v" * 64}
+    upgraded = versions | {"onnxruntime": "1.33.0"}
+    assert script.artefact_folder(tmp_path, repinned, versions) != folder
+    assert script.artefact_folder(tmp_path, metadata, upgraded) != folder
+    fingerprint = json.loads((folder / "provenance.json").read_text())
+    assert fingerprint["weights_sha256"] == "w" * 64
+    assert fingerprint["export"] == script.EXPORT

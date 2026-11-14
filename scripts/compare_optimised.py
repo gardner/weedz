@@ -15,6 +15,7 @@ weedz.discovery.parity. Artefacts and pixels are written under --work, never to 
 
 import argparse
 import copy
+import hashlib
 import json
 import platform
 import subprocess
@@ -29,6 +30,13 @@ import numpy as np
 from weedz.discovery.parity import THRESHOLDS, compare, encoding_cost
 
 ENCODER = Path(__file__).with_name("encode_variant.py")
+# How artefacts are made; part of their cache key (artefact_folder).
+EXPORT: dict[str, Any] = {
+    "onnx_exporter": "torch.onnx TorchScript (dynamo=False)",
+    "onnx_opset": 17,
+    "int8": "onnxruntime quantize_dynamic, QInt8 weights",
+    "fp16": "torch module.half()",
+}
 PROVENANCE = ["model", "model_key", "revision", "weights_sha256"]
 REFERENCE = {"model": "bioclip-2", "artefact": "fp32"}
 # Artefact -> how it runs and its file name under --work/<model>/.
@@ -209,8 +217,28 @@ def window_layout(photos: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return layout
 
 
+def artefact_folder(work: Path, metadata: Mapping[str, Any], versions: Mapping[str, str]) -> Path:
+    """Where one model's artefacts live: a folder per weights, libraries and export settings.
+
+    Artefacts are reused between runs, so a re-pinned model, an upgraded library or a
+    changed export setting must land in a new folder rather than reuse old towers.
+    """
+    fingerprint = {
+        "model_key": metadata["model_key"],
+        "revision": metadata["revision"],
+        "weights_sha256": metadata["weights_sha256"],
+        "versions": dict(sorted(versions.items())),
+        "export": EXPORT,
+    }
+    encoded = json.dumps(fingerprint, sort_keys=True).encode()
+    folder = work / metadata["model_key"] / hashlib.sha256(encoded).hexdigest()[:16]
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "provenance.json").write_text(json.dumps(fingerprint, indent=2) + "\n")
+    return folder
+
+
 def export_artefacts(visual: Any, folder: Path, needed: set[str]) -> None:
-    """Write each needed image-tower artefact once; existing files are reused."""
+    """Write each needed image-tower artefact once; artefact_folder keys their provenance."""
     import torch
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
@@ -229,7 +257,7 @@ def export_artefacts(visual: Any, folder: Path, needed: set[str]) -> None:
             output_names=["embedding"],
             dynamic_axes={"pixels": {0: "batch"}, "embedding": {0: "batch"}},
             dynamo=False,
-            opset_version=17,
+            opset_version=EXPORT["onnx_opset"],
         )
     for name, per_channel in [("int8", False), ("int8-per-channel", True)]:
         if name in needed and not paths[name].exists():
@@ -240,12 +268,20 @@ def export_artefacts(visual: Any, folder: Path, needed: set[str]) -> None:
 
 def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]) -> dict[str, Any]:
     """One model's text embeddings, pre-processed windows and artefacts."""
+    import onnxruntime
     import torch
 
-    from weedz.discovery.inference import Screener, prompt, region_boxes, square_view
+    from weedz.discovery.inference import (
+        Screener,
+        library_versions,
+        prompt,
+        region_boxes,
+        square_view,
+    )
 
     screener = Screener.load(model=key)
-    folder = work / key
+    versions = library_versions() | {"onnxruntime": onnxruntime.__version__}
+    folder = artefact_folder(work, screener.metadata, versions)
     pixels = folder / "pixels"
     pixels.mkdir(parents=True, exist_ok=True)
     texts = {}
