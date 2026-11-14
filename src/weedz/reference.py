@@ -34,7 +34,9 @@ MEANING = (
 NO_TARGET = "The label is not present or absent, so no use has a target"
 SET_ASIDE = {
     "unresolved": "Reviewers disagree or left it unresolved",
-    "unsuitable": "Rejected on review",
+    # A rejected suggestion may well be a hard negative, but nothing records that the
+    # species is absent rather than, say, unidentifiable, so no negative is invented.
+    "unsuitable": "Rejected on review; a rejected claim is not turned into a negative example",
 }
 PREDICTION = "A screening suggestion nobody has accepted is a prediction, not a label"
 SUGGESTED = (

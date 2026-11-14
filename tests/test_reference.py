@@ -222,3 +222,10 @@ def test_the_collection_counts_standings_and_eligibility_with_reasons() -> None:
     assert sum(training["not_eligible"].values()) == 1
     assert len(result["examples"]) == 2
     assert "growth_stage" in result["not_recorded"] and "habitat" in result["not_recorded"]
+
+
+def test_a_rejected_suggestion_is_not_turned_into_a_negative() -> None:
+    rejected = note(origin="model", model="bioclip-2", reviewers=["Ana"], review="rejected")
+    example = only(sample(rejected))
+    assert (example["standing"], example["label"]) == ("unsuitable", "present")
+    assert "not turned into a negative" in reasons(example)["training"]
