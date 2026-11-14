@@ -26,7 +26,9 @@ def summarise(data: dict[str, Any]) -> dict[str, Any]:
     images = data["images"]
     names = {category["id"]: category["name"] for category in data["categories"]}
     labels = Counter(names[annotation["category_id"]] for annotation in data["annotations"])
-    per_site = sorted(Counter(image["location"] for image in images).values())
+    # "<project>_unknown" pools unrelated cameras, so it is not a fixed camera view.
+    known = [image for image in images if not image["location"].endswith("unknown")]
+    per_site = sorted(Counter(image["location"] for image in known).values())
     hours = [hour for image in images if (hour := _hour(image)) is not None]
     years = Counter(image["datetime"][:4] for image in images if image.get("datetime"))
     return {
@@ -42,7 +44,7 @@ def summarise(data: dict[str, Any]) -> dict[str, Any]:
         "timestamped": len(hours),
         "daylight_07_19": sum(7 <= hour < 19 for hour in hours),
         "midday_09_16": sum(_midday(image) for image in images),
-        "midday_sites": len({image["location"] for image in images if _midday(image)}),
+        "midday_sites": len({image["location"] for image in known if _midday(image)}),
         "by_year": dict(sorted(years.items())),
         "top_labels": [[name, count] for name, count in labels.most_common(10)],
     }

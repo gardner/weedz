@@ -13,17 +13,17 @@
   "summary": {
     "images": 2453840,
     "projects": 57,
-    "sites": 3127,
+    "sites": 3113,
     "unknown_site_images": 84091,
     "frames_per_site": {
-      "median": 78,
-      "p90": 1218,
-      "max": 43835
+      "median": 77,
+      "p90": 1176,
+      "max": 27563
     },
     "timestamped": 2280269,
     "daylight_07_19": 753399,
     "midday_09_16": 442567,
-    "midday_sites": 1793,
+    "midday_sites": 1784,
     "by_year": {
       "2010": 470,
       "2011": 296,

@@ -206,12 +206,13 @@ are downloaded.
 
 - **Size and labels:** 2,453,840 images, all labelled with an animal. Half are
   mice, and the public subset has no empty frames.
-- **Sites:** 57 projects and 3,127 camera site IDs. Each site repeats one fixed view
-  (median 78 frames, p90 1,218, max 43,835), and 84,091 images come from sites
-  named `unknown`.
+- **Sites:** 57 projects and 3,113 known camera sites. Each site repeats one fixed
+  view (median 77 frames, p90 1,176, max 27,563). Another 84,091 images sit in
+  per-project `unknown` buckets that pool unrelated cameras, so they are not
+  counted as sites.
 - **Timing:** there are no sequence IDs. 93% of frames are timestamped, mostly
   2019–2020 with only 2,709 before 2015. Only 33% are between 07:00 and 19:00;
-  442,567 frames from 1,793 sites are between 09:00 and 16:00.
+  442,567 frames are between 09:00 and 16:00, 1,784 known sites among them.
 - **Vegetation:** in the script's `daytime_sample` (the first 12 projects by name hash,
   with one mid-day frame from each; the frame ids are listed in the summary), 11 show substantial
   forest-floor, fern, tussock or grassland vegetation, and one is a low-light

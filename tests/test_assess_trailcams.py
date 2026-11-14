@@ -35,7 +35,7 @@ def test_summary_counts_sites_daylight_years_and_labels() -> None:
     summary = assess.summarise(coco())
     assert summary["images"] == 4
     assert summary["projects"] == 2
-    assert summary["sites"] == 3
+    assert summary["sites"] == 2  # the "P2_unknown" bucket is not a camera site
     assert summary["unknown_site_images"] == 1
     assert summary["timestamped"] == 3
     assert summary["daylight_07_19"] == 2
@@ -81,3 +81,21 @@ def test_sample_keeps_the_first_projects_by_name_hash_like_the_recorded_check() 
 def test_summary_reports_midday_frames_and_sites() -> None:
     summary = assess.summarise(coco())
     assert (summary["midday_09_16"], summary["midday_sites"]) == (2, 2)
+
+
+def test_unknown_site_buckets_are_not_counted_as_camera_sites() -> None:
+    data = coco()
+    for index in range(5):
+        data["images"].append(
+            {
+                "id": f"u{index}",
+                "location": "P2_unknown",
+                "project": "P2",
+                "datetime": "2019-05-01 12:00:00",
+            }
+        )
+    summary = assess.summarise(data)
+    assert summary["sites"] == 2
+    assert summary["frames_per_site"]["max"] == 2
+    assert summary["unknown_site_images"] == 6
+    assert summary["midday_sites"] == 2
