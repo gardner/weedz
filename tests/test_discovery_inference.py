@@ -3,18 +3,52 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 from PIL import Image
 
-from weedz.discovery.inference import Screener, region_boxes, subject_label, summarize_scores
+from weedz.discovery.inference import (
+    LETTERBOX,
+    Screener,
+    region_boxes,
+    square_view,
+    subject_label,
+    summarize_scores,
+)
 
 
-def test_regions_include_whole_frame_and_cover_edges() -> None:
-    boxes = region_boxes(1000, 600)
-    assert boxes[0] == (0, 0, 1000, 600)
-    assert (0, 0, 600, 360) in boxes
-    assert (400, 240, 1000, 600) in boxes
-    assert all(0 <= x1 < x2 <= 1000 and 0 <= y1 < y2 <= 600 for x1, y1, x2, y2 in boxes)
+def tiles_cover_every_pixel(width: int, height: int) -> bool:
+    seen = np.zeros((height, width), bool)
+    for x1, y1, x2, y2 in region_boxes(width, height)[1:]:
+        seen[y1:y2, x1:x2] = True
+    return bool(seen.all())
+
+
+@pytest.mark.parametrize("size", [(1024, 768), (768, 1024), (485, 1024), (1024, 576), (633, 616)])
+def test_square_tiles_cover_the_whole_photo_with_overlap(size: tuple[int, int]) -> None:
+    width, height = size
+    boxes = region_boxes(width, height)
+    assert boxes[0] == (0, 0, width, height)
+    tiles = boxes[1:]
+    side = round(min(width, height) * 0.6)
+    assert all(x2 - x1 == side and y2 - y1 == side for x1, y1, x2, y2 in tiles)
+    assert all(x1 >= 0 and y1 >= 0 and x2 <= width and y2 <= height for x1, y1, x2, y2 in tiles)
+    assert tiles_cover_every_pixel(width, height)
+    xs = sorted({x1 for x1, _, _, _ in tiles})
+    assert all(b - a <= side * 0.75 + 1 for a, b in zip(xs, xs[1:], strict=False))
+
+
+def test_tile_counts_follow_the_photo_shape() -> None:
+    assert len(region_boxes(1024, 768)) == 1 + 6
+    assert len(region_boxes(485, 1024)) == 1 + 10
+
+
+def test_the_whole_frame_reaches_the_model_as_a_letterboxed_square() -> None:
+    image = Image.new("RGB", (40, 20), (200, 0, 0))
+    view = square_view(image, (0, 0, 40, 20))
+    assert view.size == (40, 40)
+    assert view.getpixel((20, 10)) == (200, 0, 0)
+    assert view.getpixel((20, 1)) == LETTERBOX
 
 
 def test_summary_preserves_raw_similarity_and_best_region() -> None:
@@ -86,7 +120,7 @@ def test_comparisons_include_non_vegetation_scenes() -> None:
     prompts = " ".join(fake_screener().prompts).lower()
     for scene in ["sky", "water", "sand", "rock"]:
         assert scene in prompts
-    assert fake_screener().metadata["ranking_revision"] == 3
+    assert fake_screener().metadata["ranking_revision"] == 4
 
 
 def test_subject_label_uses_taxon_and_optional_common_name() -> None:

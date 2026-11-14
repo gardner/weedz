@@ -7,6 +7,7 @@ segmentation mask or a localized plant boundary. No threshold is calibrated yet.
 import hashlib
 import io
 import json
+import math
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Protocol, cast
@@ -18,7 +19,7 @@ from weedz.discovery.records import SPECIES
 
 # Bump when image decoding changes, so cached embeddings are not reused.
 # Window geometry needs no bump: the exact boxes are part of the cache key.
-WINDOW_REVISION = 1
+WINDOW_REVISION = 2
 MODEL = "imageomics/bioclip"
 REVISION = "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c"
 LOOKALIKES = [
@@ -48,20 +49,41 @@ class Encoder(Protocol):
     def encode_text(self, text: Any, *, normalize: bool) -> Any: ...
 
 
+TILE_FRACTION = 0.6
+MAX_STRIDE = 0.75  # at least 25% overlap between neighbouring tiles
+LETTERBOX = (124, 116, 104)  # neutral pad, close to the model's normalisation mean
+
+
+def _positions(length: int, side: int) -> list[int]:
+    if length <= side:
+        return [0]
+    count = math.ceil((length - side) / (side * MAX_STRIDE)) + 1
+    return [round(index * (length - side) / (count - 1)) for index in range(count)]
+
+
 def region_boxes(width: int, height: int) -> list[tuple[int, int, int, int]]:
-    crop_width, crop_height = max(1, round(width * 0.6)), max(1, round(height * 0.6))
-    return list(
-        dict.fromkeys(
-            [
-                (0, 0, width, height),
-                *(
-                    (x, y, x + crop_width, y + crop_height)
-                    for y in [0, height - crop_height]
-                    for x in [0, width - crop_width]
-                ),
-            ]
-        )
-    )
+    """The whole frame, then overlapping square tiles that together cover every pixel.
+
+    Square tiles survive the model's centre-crop intact, so no edge strip is discarded.
+    """
+    side = max(1, round(min(width, height) * TILE_FRACTION))
+    tiles = [
+        (x, y, x + side, y + side)
+        for y in _positions(height, side)
+        for x in _positions(width, side)
+    ]
+    return list(dict.fromkeys([(0, 0, width, height), *tiles]))
+
+
+def square_view(image: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
+    """Crop a box and pad it to a square, so centre-cropping cannot remove any of it."""
+    crop = image.crop(box)
+    side = max(crop.size)
+    if crop.size == (side, side):
+        return crop
+    canvas = Image.new("RGB", (side, side), LETTERBOX)
+    canvas.paste(crop, ((side - crop.width) // 2, (side - crop.height) // 2))
+    return canvas
 
 
 def summarize_scores(
@@ -88,7 +110,7 @@ def summarize_scores(
         "margin": best["margin"],
         "box": best["box"],
         "species": results,
-        "method": "BioCLIP cosine similarity; full frame + four overlapping windows",
+        "method": "BioCLIP cosine similarity; letterboxed frame + square tiles over every pixel",
     }
 
 
@@ -147,11 +169,11 @@ class Screener:
             "revision": REVISION,
             "weights_sha256": weights_sha256,
             "device": "cpu",
-            "ranking_revision": 3,
+            "ranking_revision": 4,
             "prompts": self.prompts,
             "subject_prompt": prompt("<original taxon>, <common name>"),
             "target_count": len(SPECIES),
-            "regions": "whole image and four 60% width/height overlapping windows",
+            "regions": "letterboxed whole image and overlapping square tiles covering every pixel",
             "ranking": (
                 "maximum target minus best comparison-label cosine similarity per window; "
                 "comparisons include the photo's original subject"
@@ -224,7 +246,7 @@ class Screener:
                     return self.torch.from_numpy(cached), "hit"
             except (OSError, ValueError, EOFError):
                 pass  # Corrupt or partial entries are recomputed, never trusted.
-        batch = self.torch.stack([self.transform(image.crop(box)) for box in boxes])
+        batch = self.torch.stack([self.transform(square_view(image, box)) for box in boxes])
         with self.torch.inference_mode():
             features = self.model.encode_image(batch, normalize=True)
         if cache is None:
