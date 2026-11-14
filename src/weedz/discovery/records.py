@@ -1,9 +1,9 @@
 """Serializable records shared by activities, API and saved run manifests."""
 
 from datetime import date
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 REGIONS = {"Nelson": 40493, "Tasman": 40494}
 SPECIES = {
@@ -46,6 +46,11 @@ class Photo(BaseModel):
     sha256: str = ""
 
 
+ReviewerName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+
+
 class Review(BaseModel):
     status: ReviewStatus
+    # Attribution on a local stack, not authentication; see issue #31 for remote review.
+    reviewer: ReviewerName
     note: str = Field(default="", max_length=4000)
