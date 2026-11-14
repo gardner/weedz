@@ -48,7 +48,8 @@ export default function Evidence({
   saving: boolean;
   references: References;
   reviewer: string;
-  onReviewerChange: (name: string) => void;
+  /** Undefined when the name is fixed by sign-in. */
+  onReviewerChange?: (name: string) => void;
 }) {
   // Only the latest note's author gets it back to edit; others start blank. Derived, not
   // initial state, because the remembered name arrives after mount.
@@ -152,13 +153,16 @@ export default function Evidence({
         <input
           id="reviewer-name"
           value={reviewer}
-          onChange={(event) => onReviewerChange(event.target.value)}
+          onChange={(event) => onReviewerChange?.(event.target.value)}
+          readOnly={!onReviewerChange}
           maxLength={80}
           autoComplete="name"
           aria-describedby="reviewer-help"
         />
         <small id="reviewer-help">
-          Recorded with each decision on this computer. Required before deciding.
+          {onReviewerChange
+            ? "Recorded with each decision on this computer. Required before deciding."
+            : "Signed in: recorded with each decision as the reviewer your token was issued to."}
         </small>
         <label htmlFor="review-note">Review note</label>
         <textarea

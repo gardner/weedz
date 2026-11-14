@@ -175,11 +175,11 @@ def test_no_one_can_write_as_another_reviewer(tmp_path: Path, path: str, field: 
     assert store.reviews("run", photo_id) == []
 
 
-def test_every_attributed_write_is_checked() -> None:
+def test_every_attributed_write_is_checked(tmp_path: Path) -> None:
     """A new attribution field on any write must be bound to the signed-in reviewer too."""
     attributed = {
         name
-        for route in create_app(Path("unused")).routes
+        for route in create_app(tmp_path).routes
         if isinstance(route, APIRoute) and route.methods == {"POST"} and route.body_field
         for name, field in typing.cast(
             typing.Any, route.body_field.field_info.annotation
