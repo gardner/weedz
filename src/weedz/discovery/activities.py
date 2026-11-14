@@ -75,6 +75,8 @@ class Activities:
         run = next(item for item in self.store.runs() if item["id"] == run_id)
         key = RunSpec.from_saved(run["spec"]).model
         if key not in self.screeners:
+            # Keep only the active model: two encoders (0.6 + 1.7 GB) could exhaust memory.
+            self.screeners.clear()
             self.screeners[key] = while_heartbeating(
                 lambda: Screener.load(self.store.root / "embeddings", model=key),
                 f"loading {key} model",

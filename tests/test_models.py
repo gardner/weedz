@@ -213,3 +213,25 @@ def test_weights_are_hashed_in_chunks(tmp_path: Path) -> None:
     path = tmp_path / "weights.bin"
     path.write_bytes(b"x" * 3_000_000)
     assert file_sha256(path) == hashlib.sha256(b"x" * 3_000_000).hexdigest()
+
+
+def test_only_the_active_model_stays_loaded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    activities = Activities(tmp_path)
+
+    class FakeScreener:
+        def __init__(self, key: str) -> None:
+            self.metadata = {"model_key": key}
+
+        def screen(self, _path: Path, _subject: str | None = None) -> dict:
+            return {}
+
+    monkeypatch.setattr(
+        "weedz.discovery.inference.Screener.load", lambda _cache, model: FakeScreener(model)
+    )
+    monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
+    for run, spec in [("first", RunSpec(model="bioclip")), ("second", RunSpec(model="bioclip-2"))]:
+        activities.store.create_run(run, spec)
+        activities.screen_photos({"run_id": run})
+    assert list(activities.screeners) == ["bioclip-2"]
