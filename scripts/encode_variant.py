@@ -13,6 +13,7 @@ Usage:
 import argparse
 import json
 import resource
+import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -27,8 +28,18 @@ BATCH = 16
 
 
 def peak_rss_bytes() -> int:
-    """Peak resident memory of this process so far (Linux reports kilobytes)."""
-    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+    """Peak resident memory of this process so far.
+
+    Linux carries ru_maxrss across fork and exec, so a child launched by a large parent
+    would report the parent's peak. VmHWM belongs to the address space exec creates.
+    """
+    status = Path("/proc/self/status")
+    if status.exists():
+        for line in status.read_text().splitlines():
+            if line.startswith("VmHWM:"):
+                return int(line.split()[1]) * 1024
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return peak if sys.platform == "darwin" else peak * 1024  # macOS reports bytes
 
 
 def _torch_encoder(artefact: Path, threads: int) -> Encode:

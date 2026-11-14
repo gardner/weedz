@@ -79,6 +79,18 @@ def test_encoding_runs_as_its_own_process_and_reports_memory(tmp_path: Path) -> 
     assert len(stats["seconds"]) == 1
 
 
+def test_a_child_does_not_inherit_its_parents_peak_memory(tmp_path: Path) -> None:
+    """Linux keeps ru_maxrss across fork and exec; the child must report its own peak."""
+    save_onnx(tiny_tower(), tmp_path / "tower.onnx")
+    pixels = pixel_dir(tmp_path, {"a": 1})
+    ballast = np.ones(800_000_000 // 8)  # the parent touches about 800 MB
+    stats = script.encode_in_process(
+        "onnx", tmp_path / "tower.onnx", pixels, ["a"], tmp_path / "out.npz"
+    )
+    assert ballast.sum() > 0
+    assert stats["peak_rss_bytes"] < 500_000_000
+
+
 def test_results_score_normalised_embeddings_against_each_photos_text() -> None:
     embeddings = {"a": np.array([[3.0, 4.0], [0.0, 2.0]])}
     texts = {"a": np.array([[1.0, 0.0], [0.0, 1.0]])}
