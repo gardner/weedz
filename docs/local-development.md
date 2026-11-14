@@ -157,6 +157,10 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   a location without its accuracy, a capture time without a timezone, and
   anything but a declared target taxon are refused with 422. A body over 2 MB
   is refused with 413.
+- `consent.location` is required and must be true exactly when `location` is
+  present. The app shows the exact point and accuracy before approval; a
+  location without consent, or consent without a location, gets 422 and
+  nothing is stored. Removing a location clears its consent.
 - An optional cropped `image` (base64 JPEG, PNG or WebP, at most 1 MB and
   4096×4096 pixels) is accepted only with `consent.image: true` and a licence
   the collection admits (`cc0`, `cc-by` or `cc-by-nc`). Otherwise the report is

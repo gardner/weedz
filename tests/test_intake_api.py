@@ -87,7 +87,14 @@ def test_different_content_under_a_used_report_id_is_a_conflict(
         report(location={"latitude": -41.27, "longitude": 173.28}),
         report(location={"latitude": -91, "longitude": 173.28, "accuracy_m": 5}),
         report(captured_at="2026-10-01T10:00:00"),
-        report(consent={"wording_version": "2026-11", "image": False, "licence": "cc-by-nd"}),
+        report(
+            consent={
+                "wording_version": "2026-11",
+                "location": True,
+                "image": False,
+                "licence": "cc-by-nd",
+            }
+        ),
         report(app_version="x" * 500),
     ],
 )
@@ -126,8 +133,12 @@ def test_an_image_without_consent_and_licence_is_refused_and_not_stored(
     tmp_path: Path, client: TestClient
 ) -> None:
     headers = auth(tmp_path)
-    unconsented = with_image(jpeg()) | {"consent": {"wording_version": "2026-11", "image": False}}
-    unlicensed = with_image(jpeg()) | {"consent": {"wording_version": "2026-11", "image": True}}
+    unconsented = with_image(jpeg()) | {
+        "consent": {"wording_version": "2026-11", "location": True, "image": False}
+    }
+    unlicensed = with_image(jpeg()) | {
+        "consent": {"wording_version": "2026-11", "location": True, "image": True}
+    }
     for body in (unconsented, unlicensed):
         path = f"/reports/{new_id()}"
         assert client.put(path, json=body, headers=headers).status_code == 422
@@ -137,7 +148,9 @@ def test_an_image_without_consent_and_licence_is_refused_and_not_stored(
 
 
 def test_image_consent_without_an_image_is_refused(tmp_path: Path, client: TestClient) -> None:
-    body = report(consent={"wording_version": "2026-11", "image": True, "licence": "cc0"})
+    body = report(
+        consent={"wording_version": "2026-11", "location": True, "image": True, "licence": "cc0"}
+    )
     assert client.put(f"/reports/{new_id()}", json=body, headers=auth(tmp_path)).status_code == 422
 
 

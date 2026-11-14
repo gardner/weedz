@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weedz/metadata/photo_metadata.dart';
+import 'package:weedz/domain/report.dart';
 
 import '../domain/fixtures.dart';
 import 'raw.dart';
@@ -103,6 +104,7 @@ void main() {
     test('an exact photo fills location and capture time as the fixture', () {
       final metadata = extractPhotoMetadata(iphonePhoto());
       final report = minimalReport().copyWith(
+        consent: Consent(wordingVersion: 'v1', image: false, location: true),
         location: metadata.reportLocation,
         capturedAt: metadata.reportCapturedAt,
       );

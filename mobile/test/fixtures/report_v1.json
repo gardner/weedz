@@ -13,6 +13,7 @@
   "consent": {
     "wording_version": "consent-2026-11",
     "image": true,
+    "location": true,
     "licence": "cc-by",
     "credit": "A. Contributor"
   },
