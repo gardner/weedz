@@ -42,6 +42,7 @@ TASK_SUPERVISION: dict[str, frozenset[str]] = {
     "site_selection": frozenset({"occurrence"}),
     "inference": frozenset(),
 }
+Review = Literal["unreviewed", "accepted", "rejected", "uncertain"]
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 Pixels = Annotated[float, Field(ge=0)]
@@ -98,7 +99,7 @@ class Annotation(Contract):
     box: tuple[Pixels, Pixels, Pixels, Pixels] | None = None
     mask_uri: str | None = None
     origin: Literal["source", "reviewer", "model"]
-    review: Literal["unreviewed", "accepted", "rejected", "uncertain"] = "unreviewed"
+    review: Review = "unreviewed"
     reviewer: str | None = None
     recorded_at: str | None = None
     note: str = ""
