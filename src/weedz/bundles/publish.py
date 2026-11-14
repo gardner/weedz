@@ -16,7 +16,7 @@ import os
 import shutil
 import tempfile
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -43,12 +43,19 @@ def published_sequence(out: Path) -> int:
     return int(json.loads(base64.b64decode(envelope["payload"]))["sequence"])
 
 
-def _atomic_copy(source: Path, target: Path) -> None:
+def _place_artefact(source: Path, target: Path, entry: dict) -> None:
+    """Put exactly the listed bytes at `target`: a copy is checked before it replaces
+    anything, and a file already there that fails the check (say, a truncated earlier
+    copy) is replaced rather than trusted."""
+    with suppress(BundleRejected, FileNotFoundError):
+        check_artefact(target, entry)
+        return
     target.parent.mkdir(parents=True, exist_ok=True)
     handle, temporary = tempfile.mkstemp(dir=target.parent, prefix=".partial-")
     os.close(handle)
     try:
         shutil.copyfile(source, temporary)
+        check_artefact(Path(temporary), entry)
         os.chmod(temporary, 0o644)
         os.replace(temporary, target)
     finally:
@@ -92,10 +99,7 @@ def _place(spec: BundleSpec, manifest: dict, key: Ed25519PrivateKey, out: Path) 
     sources = {"image_model": spec.image_model.path, "text_table": spec.text_table}
     for part, source in sources.items():
         entry = manifest[part]
-        target = artefact_path(out, entry["sha256"])
-        if not target.exists():
-            _atomic_copy(Path(source), target)
-        check_artefact(target, entry)
+        _place_artefact(Path(source), artefact_path(out, entry["sha256"]), entry)
     _atomic_write(out / MANIFEST, json.dumps(sign(canonical(manifest), key), indent=2).encode())
 
 

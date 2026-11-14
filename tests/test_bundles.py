@@ -238,6 +238,7 @@ def test_the_device_refuses_an_unknown_schema(tmp_path: Path, key: Ed25519Privat
 def test_the_manifest_carries_window_vectors_a_device_must_reproduce(tmp_path: Path) -> None:
     windows = build_manifest(spec(tmp_path))["windows"]
     assert "whole frame first" in windows["algorithm"]
+    assert windows["algorithm"].startswith("Decode the photo, apply its EXIF orientation")
     sizes = {(item["width"], item["height"]) for item in windows["examples"]}
     assert {(4032, 3024), (3024, 4032), (9000, 1000)} <= sizes, "landscape, portrait, thinned"
     for item in windows["examples"]:

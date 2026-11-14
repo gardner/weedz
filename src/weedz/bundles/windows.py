@@ -13,6 +13,8 @@ from weedz.discovery import inference
 from weedz.discovery.inference import RANKING_REVISION, region_boxes
 
 ALGORITHM = (
+    "Decode the photo, apply its EXIF orientation so it is upright, and convert it to RGB "
+    "(8 bits per channel); width, height and every box refer to that upright image. "
     "Boxes are [x1, y1, x2, y2] in pixels, whole frame first: [0, 0, width, height]. "
     "Then square tiles of side round(min(width, height) * tile_percent_of_short_side / 100) "
     "(at least 1). Along each axis of length L, tile positions are [0] if L <= side; "

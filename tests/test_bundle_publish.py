@@ -1,5 +1,6 @@
 """Publishing a signed bundle, serving it, and keeping the signing key out of the repo (#59)."""
 
+import hashlib
 import json
 import logging
 import os
@@ -12,9 +13,17 @@ from bundle_helpers import parity_benchmark, spec, write_artefacts
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi.testclient import TestClient
 
+from weedz.bundles import publish as publishing
 from weedz.bundles.api import create_app
 from weedz.bundles.cli import main
-from weedz.bundles.manifest import BundleRejected, ParityRefused, check_artefact, read_manifest
+from weedz.bundles.manifest import (
+    BundleRejected,
+    BundleSpec,
+    ParityRefused,
+    build_manifest,
+    check_artefact,
+    read_manifest,
+)
 from weedz.bundles.publish import lock, publish
 from weedz.bundles.signing import KeyRefused, generate_key, load_private_key, public_key_text
 
@@ -171,3 +180,34 @@ def test_only_one_publish_runs_on_a_tree_at_a_time(tmp_path: Path, key_path: Pat
     with lock(out), pytest.raises(BundleRejected, match="in progress"):
         publish(spec(tmp_path), key_path, out)
     publish(spec(tmp_path), key_path, out)
+
+
+def test_a_corrupt_artefact_left_in_the_tree_is_replaced(tmp_path: Path, key_path: Path) -> None:
+    bundle = spec(tmp_path)
+    out = tmp_path / "site"
+    digest = hashlib.sha256(Path(bundle.image_model.path).read_bytes()).hexdigest()
+    stale = out / "artifacts" / "sha256" / digest
+    stale.parent.mkdir(parents=True)
+    stale.write_bytes(b"truncated")
+    publish(bundle, key_path, out)
+    assert stale.read_bytes() == Path(bundle.image_model.path).read_bytes()
+
+
+def test_a_source_changed_after_hashing_leaves_nothing_under_its_digest(
+    tmp_path: Path, key_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle = spec(tmp_path)
+    tower = Path(bundle.image_model.path)
+    digest = hashlib.sha256(tower.read_bytes()).hexdigest()
+
+    def then_changed(spec_: BundleSpec) -> dict:
+        manifest = build_manifest(spec_)
+        tower.write_bytes(b"swapped after hashing")
+        return manifest
+
+    monkeypatch.setattr(publishing, "build_manifest", then_changed)
+    out = tmp_path / "site"
+    with pytest.raises(BundleRejected):
+        publish(bundle, key_path, out)
+    assert not publishing.artefact_path(out, digest).exists()
+    assert not (out / "manifest.json").exists()
