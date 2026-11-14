@@ -22,13 +22,13 @@ def report(**changes: Any) -> dict:
         },
         "captured_at": "2026-10-01T10:00:00+13:00",
         "location": {"latitude": -41.27, "longitude": 173.28, "accuracy_m": 25},
-        "consent": {"wording_version": "2026-11", "image": False},
+        "consent": {"wording_version": "2026-11", "image": False, "location": True},
     }
     return body | changes
 
 
 def with_image(data: bytes, licence: str = "cc-by", **changes: Any) -> dict:
-    consent = {"wording_version": "2026-11", "image": True, "licence": licence}
+    consent = {"wording_version": "2026-11", "image": True, "location": True, "licence": licence}
     return report(image=base64.b64encode(data).decode(), consent=consent, **changes)
 
 

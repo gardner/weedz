@@ -42,7 +42,9 @@ mobile/
     scan/          photo-library access, the scan queue and its local index (#53)
     inference/     the Dart side of the image encoder (a Pigeon interface)
     metadata/      capture time and location per photo, with quality states (#54)
-    reports/       building reports from scan results, and the approval screens (#56)
+    reports/       building reports from scan results
+    ui/            the shared theme (ui/theme.dart) and screens; ui/approval/
+                   is the approval screen (#56)
     upload/        the intake client, secure token storage, retries (#57)
     models/        downloading and verifying model artefacts (#59)
     main.dart
@@ -222,9 +224,17 @@ found ─► pending ──approve──► approved ──send──► sending
   - the suggested weed, worded as a suggestion to be checked, not an
     identification (lookalikes exist; see the pilot results);
   - the capture time;
-  - the exact location, on a map with its accuracy circle, and as coordinates
-    in numbers;
+  - the exact location, as a pin in its accuracy circle with a scale bar, and
+    as coordinates in numbers, read to screen readers as one sentence. There
+    is no map underneath: tiles would send the exact point to a third host
+    before the person agrees, and map SDKs need keys and track users (#56);
   - the consent wording and the licence they choose for the crop.
+
+- **Explicit location consent.** The version-1 report records
+  `consent.location`, true exactly when it includes the exact point and its
+  accuracy. The approval screen must show that point and accuracy before the
+  person agrees to send it. Removing the location clears this consent
+  independently of image consent (#91).
 - **The person can remove details before approving.** "Remove location" and
   "Don't send the photo" both change the report, so it needs approving again.
   An approved report cannot change silently. Any edit returns it to pending,
@@ -247,9 +257,18 @@ found ─► pending ──approve──► approved ──send──► sending
 - **After sending**, the receipt is kept. The person can withdraw the report
   from the same screen (`DELETE`), which deletes the crop on the server.
 
+- **Choices start unanswered.** Sending the photo, its licence and sharing
+  the location are each an explicit choice with nothing preselected, and
+  Approve stays disabled, saying why, until they are answered. The screen
+  is `mobile/lib/ui/approval/approval_screen.dart`; it shows the case and
+  asks the domain for each transition, which the store then commits.
+
 Accessibility (VoiceOver, TalkBack, dynamic type, large tap targets for
 Approve and Decline) is part of this flow, not an add-on
-([#63](https://github.com/gardner/weedz/issues/63)).
+([#63](https://github.com/gardner/weedz/issues/63)). Every state of the
+approval screen is tested against Flutter's tap-target, label and contrast
+guidelines and at a text scale of 2.0 on a 360 × 640 phone; the status is a
+live region with an icon and words, and section titles are headings.
 
 ## Upload contract
 
@@ -360,12 +379,6 @@ feature that needs it is built.
   shown but left out of the report. Should the person be able to state an
   accuracy or place the point, or confirm a time zone, on the approval screen
   (#54, #56)?
-- **Explicit location consent** ([#91](https://github.com/gardner/weedz/issues/91)).
-  The report is to gain `consent.location`, true exactly when a location is
-  sent, mirroring `consent.image`. When the server accepts it, the Dart
-  `Consent` gains the same field, and `withoutLocation()` sets it to false.
-  Until then the app keeps to the current version-1 schema, which refuses
-  unknown fields.
 - **Contributor-chosen protection** (a follow-up from #61). Should a person be
   able to mark one report as obscured on the phone, for example a photo taken
   at home? It would be opt-in per report, not a default.
