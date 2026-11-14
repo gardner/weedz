@@ -103,6 +103,9 @@ class Annotation(Contract):
     mask_uri: Text | None = None
     origin: Literal["source", "reviewer", "model"]
     review: Review = "unreviewed"
+    # Who made the claim (for reviewer-origin annotations), and who reviewed it: different
+    # people, e.g. one reviewer records a plant and others judge its identity.
+    author: str | None = None
     reviewer: str | None = None
     recorded_at: str | None = None
     note: str = ""
@@ -124,8 +127,8 @@ class Annotation(Contract):
             )
         if self.origin == "model" and not self.model:
             raise ValueError("A model prediction names its model")
-        if self.origin == "reviewer" and not (self.reviewer or "").strip():
-            raise ValueError("A reviewer annotation names its reviewer")
+        if self.origin == "reviewer" and not (self.author or "").strip():
+            raise ValueError("A reviewer annotation names its author")
         return self
 
     @model_validator(mode="after")

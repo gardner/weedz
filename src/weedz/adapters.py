@@ -82,15 +82,19 @@ SUGGESTION_REVIEW: dict[str, Review] = {
 }
 
 
-def _identity_review(judgements: dict[str, dict[str, dict]]) -> Review:
-    """Agreeing standing identity judgements decide a plant; disagreement is uncertain."""
-    values = {judgement["value"] for judgement in judgements["identity"].values()}
+def _identity_review(judgements: dict[str, dict[str, dict]]) -> tuple[Review, str | None]:
+    """Agreeing standing identity judgements decide a plant; disagreement is uncertain.
+    The reviewers are whoever holds those judgements, not the plant's author."""
+    standing = judgements["identity"]
+    values = {judgement["value"] for judgement in standing.values()}
+    names = "; ".join(sorted(standing)) or None
     if len(values) > 1:
-        return "uncertain"
-    return IDENTITY_REVIEW[values.pop()] if values else "unreviewed"
+        return "uncertain", names
+    return (IDENTITY_REVIEW[values.pop()] if values else "unreviewed"), names
 
 
 def _finding(plant: dict[str, Any]) -> Annotation:
+    review, reviewers = _identity_review(plant["judgements"])
     return Annotation(
         id=f"{plant['kind']}-{plant['id']}",
         supervision="box" if plant["box"] else "image_class",
@@ -98,8 +102,9 @@ def _finding(plant: dict[str, Any]) -> Annotation:
         label="present",
         box=tuple(plant["box"]) if plant["box"] else None,
         origin="reviewer",
-        review=_identity_review(plant["judgements"]),
-        reviewer=plant["reviewer"],
+        review=review,
+        author=plant["reviewer"],
+        reviewer=reviewers,
         recorded_at=plant["created_at"],
         note=plant["note"],
     )

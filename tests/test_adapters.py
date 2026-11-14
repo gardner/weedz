@@ -77,7 +77,9 @@ def test_pilot_photos_become_image_samples_without_plant_supervision(tmp_path: P
 def test_pilot_findings_become_reviewed_annotations_with_provenance(tmp_path: Path) -> None:
     store, photo_id = store_with_photo(tmp_path)
     store.review("run", photo_id, "rejected", "not clematis", "Ana")
-    box = Finding.model_validate(finding(box=[10, 20, 110, 220], note="flowering"))
+    box = Finding.model_validate(
+        finding(box=[10, 20, 110, 220], note="flowering", reviewer="Carol")
+    )
     store.finding("run", photo_id, box)
     store.finding("run", photo_id, Finding.model_validate(finding(species=None, other_taxon="x")))
     gorse = store.findings("run", photo_id)[0]["id"]
@@ -94,9 +96,11 @@ def test_pilot_findings_become_reviewed_annotations_with_provenance(tmp_path: Pa
         (10, 20, 110, 220),
         "Ulex europaeus",
     )
-    assert (boxed.origin, boxed.reviewer, boxed.note, boxed.review) == (
+    # Carol recorded the plant; Ana and Ben's identity judgements decided it.
+    assert (boxed.origin, boxed.author, boxed.reviewer, boxed.note, boxed.review) == (
         "reviewer",
-        "Ana",
+        "Carol",
+        "Ana; Ben",
         "flowering",
         "accepted",
     )

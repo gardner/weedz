@@ -15,7 +15,7 @@ from weedz.manifest import read_manifest, write_manifest
 
 def samples() -> list[Sample]:
     box = annotation(
-        id="a2", supervision="box", box=[1, 2, 30, 40], origin="reviewer", reviewer="Ana"
+        id="a2", supervision="box", box=[1, 2, 30, 40], origin="reviewer", author="Ana"
     )
     return [
         Sample.model_validate(sample()),
@@ -125,3 +125,15 @@ def test_a_failed_write_leaves_no_temporary_file(
     with pytest.raises(OSError, match="disk full"):
         write_manifest(tmp_path / "manifest.jsonl", samples())
     assert list(tmp_path.iterdir()) == []
+
+
+def test_writing_never_changes_the_process_umask(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import os
+
+    def forbidden(_mask: int) -> int:
+        raise AssertionError("os.umask changes state for every thread in the process")
+
+    monkeypatch.setattr(os, "umask", forbidden)
+    write_manifest(tmp_path / "manifest.jsonl", samples())

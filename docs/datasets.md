@@ -495,7 +495,7 @@ pipelines.
 | View/scale | Nadir/oblique/ground/unknown, detail/plant/patch/unknown, and GSD when known | Pose, angle convention, footprint |
 | Geography/time | Optional WGS84 point with uncertainty and public/obscured privacy; capture date | CRS/affine transforms, survey dates, sensor |
 | Grouping | Free-form groups (survey cluster, published split, observation) | Duplicate/encounter linking, final splits (#7) |
-| Review | Origin (`source`/`reviewer`/`model`), review state (`unreviewed`/`accepted`/`rejected`/`uncertain`), reviewer, time and note | Superseded-decision chains |
+| Review | Origin (`source`/`reviewer`/`model`), review state (`unreviewed`/`accepted`/`rejected`/`uncertain`), author of the claim and its reviewers (who may differ), time and note | Superseded-decision chains |
 | Prediction | Model-origin annotations with model, score and method note, which never count as supervision | Thresholds, abstention, preprocessing versions |
 
 Each sample declares its tasks, and validation refuses any task that the sample's
@@ -516,10 +516,11 @@ supervision cannot support. Predictions, rejected labels, and `unknown` or
   443 absent; 800 train and 100 test across 9 survey clusters), all 39×39.
 - **Pilot:** `pilot_samples` turns a pilot run's photos into image-level samples
   that support `inference` only. The original subject and cohort are context, not
-  labels. Reviewer findings become `box` or `image_class` annotations with reviewer
-  provenance, and their review state comes from the standing identity judgements.
-  The screening suggestion is a model prediction, and its review state comes from
-  the suggestion review. Missing coordinates and unscreened image sizes stay `None`.
+  labels. Reviewer findings become `box` or `image_class` annotations whose author
+  is the person who recorded the plant; their review state and reviewers come from
+  the standing identity judgements. The screening suggestion is a model prediction,
+  and its review state and reviewers come from each reviewer's standing suggestion
+  decision. Missing coordinates and unscreened image sizes stay `None`.
   The local run `nelson-tasman-3e62ad801459` gives 30 samples (24 incidental, 6
   reference), all with public coordinates, checksums and sizes. Each has one
   unreviewed model suggestion, and there are no findings yet.

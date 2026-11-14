@@ -2,7 +2,7 @@
 
 import hashlib
 import os
-import tempfile
+import secrets
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -18,23 +18,18 @@ def _unique(samples: list[Sample]) -> list[Sample]:
     return samples
 
 
-def _umask() -> int:
-    mask = os.umask(0)
-    os.umask(mask)
-    return mask
-
-
 def write_manifest(path: Path, samples: Iterable[Sample]) -> str:
     """Write the samples atomically and return the manifest's SHA-256."""
     rows = _unique(list(samples))
     content = "".join(sample.model_dump_json() + "\n" for sample in rows).encode("utf-8")
     # A unique temporary file in the same directory, so concurrent writers never share one.
-    with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as out:
-        temporary = Path(out.name)
+    # O_EXCL keeps the temporary file unique per writer; mode 0o666 lets the kernel apply
+    # the umask, so nothing reads or changes the process-wide umask.
+    temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
     try:
-        temporary.write_bytes(content)
-        # Temporary files are owner-only; a manifest is a shared artefact, so use the umask.
-        temporary.chmod(0o666 & ~_umask())
+        with os.fdopen(descriptor, "wb") as out:
+            out.write(content)
         temporary.replace(path)
     except BaseException:
         temporary.unlink(missing_ok=True)

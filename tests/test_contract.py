@@ -167,10 +167,11 @@ def test_a_consumer_refuses_samples_that_do_not_declare_its_task() -> None:
         require_task(record, "detection")
 
 
-def test_a_reviewer_annotation_names_its_reviewer() -> None:
-    with pytest.raises(ValidationError, match="names its reviewer"):
+def test_a_reviewer_annotation_names_its_author() -> None:
+    with pytest.raises(ValidationError, match="names its author"):
         Sample.model_validate(
             sample(annotations=[annotation(origin="reviewer", review="accepted")])
         )
-    named = annotation(origin="reviewer", review="accepted", reviewer="Ana")
-    assert Sample.model_validate(sample(annotations=[named])).annotations[0].reviewer == "Ana"
+    named = annotation(origin="reviewer", review="accepted", author="Carol", reviewer="Ana")
+    recorded = Sample.model_validate(sample(annotations=[named])).annotations[0]
+    assert (recorded.author, recorded.reviewer) == ("Carol", "Ana")
