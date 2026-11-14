@@ -7,7 +7,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from temporalio.client import Client
 
-from weedz.discovery.activities import export
+from weedz.discovery.activities import export, review_history
+from weedz.discovery.effort import summarize_effort
 from weedz.discovery.records import TASK_QUEUE, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
@@ -45,7 +46,10 @@ class ReviewAPI:
         return {"id": run_id}
 
     def detail(self, run_id: str) -> dict:
-        return {"run": self.run(run_id), "photos": self.store.photos(run_id)}
+        run = self.run(run_id)
+        photos = self.store.photos(run_id)
+        effort = summarize_effort(photos, review_history(self.store, run_id, photos))
+        return {"run": run, "photos": photos, "review_effort": effort}
 
     def download(self, run_id: str) -> JSONResponse:
         self.run(run_id)

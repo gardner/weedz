@@ -86,3 +86,10 @@ def test_api_accepts_and_stores_effort(tmp_path: Path) -> None:
     body = {"status": "rejected", "reviewer": "Ana", "effort_seconds": 9.5}
     assert client.post(f"{path}/review", json=body).status_code == 200
     assert client.get(f"{path}/reviews").json()[0]["effort_seconds"] == 9.5
+
+
+def test_run_detail_includes_the_effort_summary(tmp_path: Path) -> None:
+    store, photo_id, _ = store_with_photos(tmp_path)
+    store.review("run", photo_id, "rejected", "", "Ana", 90)
+    detail = TestClient(create_app(tmp_path)).get("/runs/run").json()
+    assert detail["review_effort"]["total_minutes"] == 1.5

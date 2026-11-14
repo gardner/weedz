@@ -84,15 +84,19 @@ class Activities:
         self.store.status(payload["run_id"], "failed", payload["error"])
 
 
+def review_history(store: Store, run_id: str, photos: list[dict]) -> list[dict]:
+    return [
+        dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"])) for photo in photos
+    ]
+
+
 def export(store: Store, run_id: str) -> dict:
     run = next((item for item in store.runs() if item["id"] == run_id), None)
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
     photos = store.photos(run_id)
-    history = [
-        dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"])) for photo in photos
-    ]
+    history = review_history(store, run_id, photos)
     return {
         "schema": 1,
         "run": run,
