@@ -106,7 +106,8 @@ class Annotation(Contract):
     # Who made the claim (for reviewer-origin annotations), and who reviewed it: different
     # people, e.g. one reviewer records a plant and others judge its identity.
     author: str | None = None
-    reviewer: str | None = None
+    # A collection, never a joined string: a name may itself contain any separator.
+    reviewers: tuple[str, ...] = ()
     recorded_at: str | None = None
     note: str = ""
     model: Text | None = None

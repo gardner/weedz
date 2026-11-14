@@ -90,17 +90,17 @@ def test_pilot_findings_become_reviewed_annotations_with_provenance(tmp_path: Pa
         )
     (sample,) = pilot_samples(store, "run")
     suggestion, boxed, unboxed = sample.annotations
-    assert (suggestion.review, suggestion.reviewer) == ("rejected", "Ana")
+    assert (suggestion.review, suggestion.reviewers) == ("rejected", ("Ana",))
     assert (boxed.supervision, boxed.box, boxed.taxon) == (
         "box",
         (10, 20, 110, 220),
         "Ulex europaeus",
     )
     # Carol recorded the plant; Ana and Ben's identity judgements decided it.
-    assert (boxed.origin, boxed.author, boxed.reviewer, boxed.note, boxed.review) == (
+    assert (boxed.origin, boxed.author, boxed.reviewers, boxed.note, boxed.review) == (
         "reviewer",
         "Carol",
-        "Ana; Ben",
+        ("Ana", "Ben"),
         "flowering",
         "accepted",
     )
@@ -158,7 +158,7 @@ def test_a_reopen_does_not_hide_another_reviewer_s_standing_decision(tmp_path: P
     store.review("run", photo_id, "unreviewed", "Second look", "Ben")
     (sample,) = pilot_samples(store, "run")
     suggestion = next(a for a in sample.annotations if a.id == "suggestion")
-    assert (suggestion.review, suggestion.reviewer) == ("accepted", "Ana")
+    assert (suggestion.review, suggestion.reviewers) == ("accepted", ("Ana",))
 
 
 def test_disagreeing_reviewers_leave_the_suggestion_uncertain_and_name_both(tmp_path: Path) -> None:
@@ -168,7 +168,7 @@ def test_disagreeing_reviewers_leave_the_suggestion_uncertain_and_name_both(tmp_
     store.review("run", photo_id, "rejected", "Native", "Ben")
     (sample,) = pilot_samples(store, "run")
     suggestion = next(a for a in sample.annotations if a.id == "suggestion")
-    assert (suggestion.review, suggestion.reviewer) == ("uncertain", "Ana; Ben")
+    assert (suggestion.review, suggestion.reviewers) == ("uncertain", ("Ana", "Ben"))
 
 
 def test_source_urls_use_forward_slashes_whatever_the_platform() -> None:

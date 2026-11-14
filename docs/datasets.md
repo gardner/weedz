@@ -495,7 +495,7 @@ pipelines.
 | View/scale | Nadir/oblique/ground/unknown, detail/plant/patch/unknown, and GSD when known | Pose, angle convention, footprint |
 | Geography/time | Optional WGS84 point with uncertainty and public/obscured privacy; capture date | CRS/affine transforms, survey dates, sensor |
 | Grouping | Free-form groups (survey cluster, published split, observation) | Duplicate/encounter linking, final splits (#7) |
-| Review | Origin (`source`/`reviewer`/`model`), review state (`unreviewed`/`accepted`/`rejected`/`uncertain`), author of the claim and its reviewers (who may differ), time and note | Superseded-decision chains |
+| Review | Origin (`source`/`reviewer`/`model`), review state (`unreviewed`/`accepted`/`rejected`/`uncertain`), author of the claim and its reviewers as a list of names (who may differ), time and note | Superseded-decision chains |
 | Prediction | Model-origin annotations with model, score and method note, which never count as supervision | Thresholds, abstention, preprocessing versions |
 
 Each sample declares its tasks, and validation refuses any task that the sample's

@@ -172,6 +172,14 @@ def test_a_reviewer_annotation_names_its_author() -> None:
         Sample.model_validate(
             sample(annotations=[annotation(origin="reviewer", review="accepted")])
         )
-    named = annotation(origin="reviewer", review="accepted", author="Carol", reviewer="Ana")
+    named = annotation(origin="reviewer", review="accepted", author="Carol", reviewers=["Ana"])
     recorded = Sample.model_validate(sample(annotations=[named])).annotations[0]
-    assert (recorded.author, recorded.reviewer) == ("Carol", "Ana")
+    assert (recorded.author, recorded.reviewers) == ("Carol", ("Ana",))
+
+
+def test_reviewer_names_stay_distinct_even_with_separators_in_them() -> None:
+    one = annotation(origin="reviewer", author="Carol", reviewers=["Ana; Ben"])
+    two = annotation(origin="reviewer", author="Carol", reviewers=["Ana", "Ben"])
+    first = Sample.model_validate(sample(annotations=[one])).annotations[0].reviewers
+    second = Sample.model_validate(sample(annotations=[two])).annotations[0].reviewers
+    assert first != second

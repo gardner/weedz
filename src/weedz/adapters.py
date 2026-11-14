@@ -88,12 +88,12 @@ SUGGESTION_REVIEW: dict[str, Review] = {
 }
 
 
-def _identity_review(judgements: dict[str, dict[str, dict]]) -> tuple[Review, str | None]:
+def _identity_review(judgements: dict[str, dict[str, dict]]) -> tuple[Review, tuple[str, ...]]:
     """Agreeing standing identity judgements decide a plant; disagreement is uncertain.
     The reviewers are whoever holds those judgements, not the plant's author."""
     standing = judgements["identity"]
     values = {judgement["value"] for judgement in standing.values()}
-    names = "; ".join(sorted(standing)) or None
+    names = tuple(sorted(standing))
     if len(values) > 1:
         return "uncertain", names
     return (IDENTITY_REVIEW[values.pop()] if values else "unreviewed"), names
@@ -110,19 +110,19 @@ def _finding(plant: dict[str, Any]) -> Annotation:
         origin="reviewer",
         review=review,
         author=plant["reviewer"],
-        reviewer=reviewers,
+        reviewers=reviewers,
         recorded_at=plant["created_at"],
         note=plant["note"],
     )
 
 
-def _suggestion_review(row: dict[str, Any]) -> tuple[Review, str | None]:
+def _suggestion_review(row: dict[str, Any]) -> tuple[Review, tuple[str, ...]]:
     """From each reviewer's standing decision, so a later reopen or another reviewer's
     event cannot hide a decision that still stands."""
     standing = row.get("reviewer_decisions") or {}
     if not standing:  # unattributed decisions from before reviewer names existed
-        return SUGGESTION_REVIEW.get(row["review_status"], "unreviewed"), None
-    names = "; ".join(sorted(standing))
+        return SUGGESTION_REVIEW.get(row["review_status"], "unreviewed"), ()
+    names = tuple(sorted(standing))
     statuses = set(standing.values())
     if len(statuses) > 1:
         return "uncertain", names
@@ -134,7 +134,7 @@ def _suggestion(row: dict[str, Any], model: dict[str, Any]) -> Annotation | None
     scores = row["scores"]
     if not scores.get("best_species"):
         return None
-    review, reviewer = _suggestion_review(row)
+    review, reviewers = _suggestion_review(row)
     return Annotation(
         id="suggestion",
         supervision="image_class",
@@ -142,7 +142,7 @@ def _suggestion(row: dict[str, Any], model: dict[str, Any]) -> Annotation | None
         label="present",
         origin="model",
         review=review,
-        reviewer=reviewer,
+        reviewers=reviewers,
         note=scores.get("method", ""),
         model="@".join(filter(None, [model.get("model"), model.get("revision")])) or "unknown",
         score=scores.get("margin"),
