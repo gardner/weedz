@@ -123,6 +123,19 @@ try {
   await legacy.getByText("No declared meaning for this screening configuration").waitFor();
   await legacy.locator(".screening-note").getByText("The screening model ranks").waitFor();
   await legacy.close();
+  // A later meaning version that fixes an operating point is shown as declared.
+  const later = await open({
+    ...declared,
+    id: "bioclip-2/ranking-4/meaning-2",
+    meaning_version: 2,
+    operating_point: "Margins above 0.02 are reviewed first.",
+  });
+  const laterDetails = later.locator("details.score-meaning");
+  await laterDetails.locator("summary").click();
+  await laterDetails.getByText("Operating point: Margins above 0.02 are reviewed first.").waitFor();
+  await laterDetails.getByText("Abstention rule: none chosen.").waitFor();
+  assert.equal(await laterDetails.getByText("No threshold or abstention rule").count(), 0);
+  await later.close();
   console.log("Scores are shown with their declared meaning, and hidden in blind audits.");
 } finally {
   await browser.close();

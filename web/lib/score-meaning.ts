@@ -9,8 +9,9 @@ export type ScoreMeaning = {
   score: string;
   use: string;
   not_meaning: string[];
-  operating_point: null;
-  abstention: null;
+  /** Plain-language rules, null until a meaning version declares one. */
+  operating_point: string | null;
+  abstention: string | null;
   choosing_an_operating_point: string;
   evidence: { key: string; finding: string; source: string; labels: string }[];
   run_evidence: string;

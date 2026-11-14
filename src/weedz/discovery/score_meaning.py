@@ -106,6 +106,7 @@ def _declare(
         "score": SCORE,
         "use": USE,
         "not_meaning": NOT_MEANING,
+        # Plain-language rules (str) once a later meaning version declares them.
         "operating_point": None,
         "abstention": None,
         "choosing_an_operating_point": CHOOSING,

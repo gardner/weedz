@@ -17,6 +17,22 @@ export function ScreeningNote({ meaning }: { meaning?: ScoreMeaning }) {
   );
 }
 
+/** The declared threshold and abstention rule, or that none has been chosen. */
+function OperatingPoint({ meaning }: { meaning: ScoreMeaning }) {
+  const { operating_point: point, abstention } = meaning;
+  if (point === null && abstention === null) {
+    return (
+      <p>No threshold or abstention rule has been chosen. {meaning.choosing_an_operating_point}</p>
+    );
+  }
+  return (
+    <>
+      <p>Operating point: {point ?? "none chosen."}</p>
+      <p>Abstention rule: {abstention ?? "none chosen."}</p>
+    </>
+  );
+}
+
 function MeaningDetails({ meaning }: { meaning: ScoreMeaning }) {
   return (
     <details className="score-meaning">
@@ -30,7 +46,7 @@ function MeaningDetails({ meaning }: { meaning: ScoreMeaning }) {
         ))}
       </ul>
       <h4>Operating point</h4>
-      <p>No threshold or abstention rule has been chosen. {meaning.choosing_an_operating_point}</p>
+      <OperatingPoint meaning={meaning} />
       <h4>Evidence</h4>
       {meaning.evidence.length ? (
         <ul>
