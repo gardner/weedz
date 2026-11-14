@@ -44,6 +44,8 @@ TASK_SUPERVISION: dict[str, frozenset[str]] = {
 }
 Review = Literal["unreviewed", "accepted", "rejected", "uncertain"]
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+# A source names the namespace of "<source>:<source_id>", so it cannot hold the colon.
+SourceName = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9._-]*$")]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 Pixels = Annotated[float, Field(ge=0)]
 
@@ -98,7 +100,7 @@ class Annotation(Contract):
     label: Literal["present", "absent", "unknown", "ignored"] = "unknown"
     point: tuple[Pixels, Pixels] | None = None
     box: tuple[Pixels, Pixels, Pixels, Pixels] | None = None
-    mask_uri: str | None = None
+    mask_uri: Text | None = None
     origin: Literal["source", "reviewer", "model"]
     review: Review = "unreviewed"
     reviewer: str | None = None
@@ -140,7 +142,7 @@ class Sample(Contract):
     schema_version: Literal[1] = SCHEMA_VERSION
     # Namespaced "<source>:<source_id>" so IDs never collide across sources.
     id: Text
-    source: Text
+    source: SourceName
     source_id: Text
     # The source revision, query or run this sample was read from.
     snapshot: Text

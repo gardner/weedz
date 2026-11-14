@@ -112,6 +112,7 @@ def test_occurrence_supervision_needs_a_real_location() -> None:
         ({"supervision": "box", "box": [10, 10, 500, 20]}, "inside the image"),
         ({"box": [1, 1, 2, 2]}, "image_class"),
         ({"supervision": "dense_mask"}, "mask_uri"),
+        ({"supervision": "dense_mask", "mask_uri": "  "}, "mask_uri"),
         ({"supervision": "surveyed_point", "point": [401, 10]}, "inside the image"),
         ({"supervision": "surveyed_point"}, "point"),
         ({"supervision": "unlabelled"}, "unlabelled"),
@@ -139,6 +140,12 @@ def test_a_sample_rejects_unknown_schema_versions_and_unnamespaced_ids() -> None
         Sample.model_validate(sample(schema_version=2))
     with pytest.raises(ValidationError, match="source"):
         Sample.model_validate(sample(id="other:1"))
+
+
+def test_a_source_name_cannot_contain_the_id_separator() -> None:
+    assert Sample.model_validate(sample(id="test:b:c", source_id="b:c"))
+    with pytest.raises(ValidationError, match="source"):
+        Sample.model_validate(sample(id="test:b:c", source="test:b", source_id="c"))
 
 
 def test_annotation_ids_are_unique_within_a_sample() -> None:
