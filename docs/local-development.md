@@ -120,8 +120,8 @@ lookalikes, indistinct plants and locations with no nearby known weed record are
 still reviewable. Photos by the same observer on the same observed date, with public coordinates
 within 250 m once both accuracy radii are allowed for, form one site visit. The
 queue and export show the group, and the stats count independent visits.
-Obscured, missing or undated records, and photos with positional accuracy over
-250 m, never link, so groups can be too small but are never invented. These
+Obscured, missing or undated records, and photos with unknown positional
+accuracy or accuracy over 250 m, never link, so groups can be too small but are never invented. These
 photos show “Site visit unknown” and are counted as “could not be grouped”,
 never as independent visits. “Species visible” is a local reviewer decision about the suggested
 species in a photo; it does not verify a new locality. Notes can record alternative

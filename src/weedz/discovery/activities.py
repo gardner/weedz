@@ -115,6 +115,9 @@ def export(store: Store, run_id: str) -> dict:
             "Observation coordinates locate the observation, not a confirmed weed",
             "No novelty comparison, infestation area estimate or external publication performed",
             "Site-visit groups link photos by observer, date and distance; not the same plant",
-            "Obscured, missing, imprecise or undated photos are ungrouped, not independent visits",
+            (
+                "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "
+                "are ungrouped, not counted as independent visits"
+            ),
         ],
     }

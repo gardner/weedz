@@ -46,7 +46,7 @@ export function siteVisitNote(photo: Photo): string | null {
 }
 
 export const unknownSiteVisit =
-  "Site visit unknown: location obscured, missing or imprecise, or date unknown";
+  "Site visit unknown: location obscured, missing, imprecise or of unknown accuracy, or date unknown";
 
 /** Describe a photo's site visit; an unchecked visit is unknown, never independent. */
 export function siteVisitSummary(photo: Photo): string {

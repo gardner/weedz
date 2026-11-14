@@ -75,8 +75,9 @@ def test_unknown_or_obscured_evidence_never_invents_a_link() -> None:
         photo("d", observed_on=None),
         photo("e", observer=None),
         photo("f", positional_accuracy_m=251.0),
+        photo("g", positional_accuracy_m=None),
     ]
-    assert encounter_groups(photos) == {key: key for key in "abcdef"}
+    assert encounter_groups(photos) == {key: key for key in "abcdefg"}
 
 
 def test_photos_report_whether_their_site_visit_could_be_checked() -> None:

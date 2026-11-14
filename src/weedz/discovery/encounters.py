@@ -14,7 +14,7 @@ THRESHOLD_M = 250.0
 RULE = (
     "same observer and observed date; public coordinates within "
     f"{THRESHOLD_M:g} m after allowing for both positional-accuracy radii; "
-    f"photos with accuracy over {THRESHOLD_M:g} m are ungrouped"
+    f"photos with unknown accuracy or accuracy over {THRESHOLD_M:g} m are ungrouped"
 )
 
 
@@ -36,14 +36,15 @@ def _linkable(photo: dict[str, Any]) -> bool:
         and photo.get("longitude") is not None
         and bool(photo.get("observed_on"))
         and bool(photo.get("observer"))
-        and (photo.get("positional_accuracy_m") or 0) <= THRESHOLD_M
+        and photo.get("positional_accuracy_m") is not None
+        and photo["positional_accuracy_m"] <= THRESHOLD_M
     )
 
 
 def _same_visit(a: dict[str, Any], b: dict[str, Any]) -> bool:
     if (a["observer"], a["observed_on"]) != (b["observer"], b["observed_on"]):
         return False
-    slack = (a.get("positional_accuracy_m") or 0) + (b.get("positional_accuracy_m") or 0)
+    slack = a["positional_accuracy_m"] + b["positional_accuracy_m"]
     return _distance_m(a, b) - slack <= THRESHOLD_M
 
 
