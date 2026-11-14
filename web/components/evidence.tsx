@@ -20,7 +20,12 @@ export default function Evidence({
   reviewer: string;
   onReviewerChange: (name: string) => void;
 }) {
-  const [note, setNote] = useState(photo.review_note);
+  // Only the latest note's author gets it back to edit; others start blank. Derived, not
+  // initial state, because the remembered name arrives after mount.
+  const ownNote =
+    photo.review_reviewer && photo.review_reviewer === reviewer.trim() ? photo.review_note : "";
+  const [draft, setNote] = useState<string | null>(null);
+  const note = draft ?? ownNote;
   const [windowVisible, setWindowVisible] = useState(true);
   const { scores } = photo;
   const [x1, y1, x2, y2] = scores.box ?? [0, 0, 0, 0];

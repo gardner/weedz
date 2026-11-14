@@ -89,13 +89,20 @@ try {
 
   const unsure = page.getByRole("button", { name: "Unsure" });
   assert.equal(await unsure.isDisabled(), true, "a decision needs a reviewer name");
-  await page.getByLabel("Your name").fill("  Cara ");
+  // Only the reviewer who wrote the latest note gets it back to edit.
+  const name = page.getByLabel("Your name");
+  const note = page.getByLabel("Review note");
+  await name.fill("Ben");
+  assert.equal(await note.inputValue(), "Native clematis");
+  await name.fill("  Cara ");
+  assert.equal(await note.inputValue(), "", "another reviewer's note is not reused");
   await unsure.click();
   await page.getByText("Review saved locally.").waitFor();
-  assert.deepEqual(posted, [{ status: "uncertain", note: "Native clematis", reviewer: "Cara" }]);
+  assert.deepEqual(posted, [{ status: "uncertain", note: "", reviewer: "Cara" }]);
 
   await page.reload();
-  assert.equal(await page.getByLabel("Your name").inputValue(), "Cara");
+  assert.equal(await name.inputValue(), "Cara");
+  assert.equal(await note.inputValue(), "", "a remembered name does not inherit the note");
   console.log("Review decisions are attributed; disagreement and history are visible.");
 } finally {
   await browser.close();
