@@ -30,8 +30,9 @@ flutter build appbundle \
 
 These values become public in the app binary even when supplied as CI secrets.
 **Never put a submitter token in a build define, GitHub secret, URL, or log.**
-A build without a valid public deletion route explicitly says it is not ready for
-store release. Configuration alone does not publish the route: verify its actual
+A build without a valid public deletion route shows that the request page is
+unavailable. Such a build is not ready for store release. Configuration alone
+does not publish the route: verify its actual
 availability and the operator response procedure before submitting to a store.
 Issue #107 remains open for that operational verification and real-device checks.
 

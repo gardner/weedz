@@ -120,8 +120,9 @@ class _DeviceSettingsState extends State<DeviceSettings> {
               ),
             ] else
               const Text(
-                'A public deletion request page has not been configured for '
-                'this build. This build is not ready for store release.',
+                'The public deletion request page is unavailable in this '
+                'version. If you need help, contact the operator who '
+                'enrolled you. Do not send your token.',
               ),
             if (_routeError case final error?) Text(error),
           ],
