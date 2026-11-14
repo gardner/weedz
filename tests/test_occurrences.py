@@ -195,3 +195,20 @@ def test_run_detail_and_export_carry_the_comparison_and_its_as_of_date(tmp_path:
         export(store, "run")["photos"][0]["reference_comparison"]
         == detail["photos"][0]["reference_comparison"]
     )
+
+
+def test_wording_never_frames_the_comparison_as_novelty(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from weedz.discovery import cli as discovery_cli
+    from weedz.discovery.activities import export
+    from weedz.discovery.records import RunSpec
+    from weedz.discovery.store import Store
+
+    with pytest.raises(SystemExit):
+        discovery_cli.main(["--help"])
+    assert "novelty" not in capsys.readouterr().out.lower()
+    store = Store(tmp_path)
+    store.create_run("run", RunSpec())
+    limitations = " ".join(export(store, "run")["limitations"]).lower()
+    assert "distance" in limitations and "not a novelty" in limitations

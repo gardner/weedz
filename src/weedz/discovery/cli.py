@@ -144,7 +144,7 @@ def main(argv: list[str]) -> None:
     run.add_argument("--temporal-address", default="localhost:7234")
     run.add_argument("--wait", action="store_true")
     snapshot = commands.add_parser(
-        "references", help="Snapshot DOC weed records from GBIF for novelty comparison"
+        "references", help="Snapshot DOC weed records from GBIF for distance comparison"
     )
     snapshot.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     args = parser.parse_args(argv)

@@ -113,6 +113,7 @@ def export(store: Store, run_id: str) -> dict:
             "Windows are search regions, not plant boundaries; no segmentation model used",
             "Reference photos are separate; animal photos have no background weed ground truth",
             "Observation coordinates locate the observation, not a confirmed weed",
-            "No novelty comparison, infestation area estimate or external publication performed",
+            "Known-record comparison is distance and date only, not a novelty verdict; "
+            "no infestation area estimate or external publication performed",
         ],
     }
