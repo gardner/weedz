@@ -78,3 +78,41 @@ def test_startup_sweep_does_not_delete_an_uncommitted_upload_crop(
     stored = ReportStore(tmp_path).active()
     assert len(stored) == 1 and stored[0].image is not None
     assert stored[0].image.exists()
+
+
+def test_failed_image_write_does_not_leave_pixels_after_report_withdrawal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret, report_id = token(tmp_path), new_id()
+    headers, path = {"Authorization": f"Bearer {secret}"}, f"/reports/{report_id}"
+    client = TestClient(create_intake_app(tmp_path), raise_server_exceptions=False)
+    original = ReportStore._sync_images
+    failed: list[bool] = []
+
+    def fail_once(store: ReportStore) -> None:
+        if not failed:
+            failed.append(True)
+            raise OSError("Directory sync interrupted after writing private pixels")
+        original(store)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(ReportStore, "_sync_images", fail_once)
+        assert client.put(path, json=with_image(jpeg()), headers=headers).status_code == 500
+    assert client.delete(path, headers=headers).status_code == 200
+    assert list(ReportStore(tmp_path).images.iterdir()) == []
+
+
+def test_image_open_collision_never_removes_an_existing_crop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import uuid
+
+    store = ReportStore(tmp_path)
+    store.images.mkdir(parents=True)
+    identifier = uuid.UUID(int=0)
+    existing = store.images / f"{identifier.hex}.jpg"
+    existing.write_bytes(b"another report's crop")
+    monkeypatch.setattr("weedz.intake.store.uuid.uuid4", lambda: identifier)
+    with pytest.raises(FileExistsError):
+        store._write_image(b"new crop")
+    assert existing.read_bytes() == b"another report's crop"

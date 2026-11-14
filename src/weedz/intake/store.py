@@ -271,12 +271,19 @@ class ReportStore:
     def _write_image(self, image: bytes) -> str:
         name = f"{uuid.uuid4().hex}.jpg"
         descriptor = os.open(self.images / name, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        with os.fdopen(descriptor, "wb") as out:
-            out.write(image)
-            out.flush()
-            os.fsync(out.fileno())
-        # Durable before the report naming it commits, so a 201 never names a lost crop.
-        self._sync_images()
+        try:
+            with os.fdopen(descriptor, "wb") as out:
+                out.write(image)
+                out.flush()
+                os.fsync(out.fileno())
+            # Durable before the report naming it commits, so a 201 never names a lost crop.
+            self._sync_images()
+        except BaseException:
+            # receive() cannot know this name until we return. Remove a failed write
+            # here; an actual process crash is recovered by the transactional sweep.
+            (self.images / name).unlink(missing_ok=True)
+            self._sync_images()
+            raise
         return name
 
     def _sync_images(self) -> None:
