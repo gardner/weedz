@@ -15,7 +15,9 @@ MEANING = (
     "Blind audit of a fixed random sample of incidental photos, without the screening "
     "suggestion. Findings are reviewer judgements, not expert-verified identifications. "
     "A photo counts as a found weed if any auditor's latest finding names a species; "
-    "'disputed' counts photos where auditors' latest findings differ. There is no "
+    "'disputed' counts photos where auditors' latest findings differ. Audits made "
+    "after the photo was first reviewed are not blind, so they are left out of every "
+    "count except 'not_blind', the photos that have such an audit. There is no "
     "calibrated detection threshold yet, so each found weed reports its 1-based rank in "
     "the incidental queue (by margin, highest first) and whether the found species was "
     "the top suggestion shown, rather than a hit or miss verdict. With a small sample, "
@@ -39,8 +41,12 @@ def queue_ranks(photos: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def summarize_audit(
-    photos: list[dict[str, Any]], sample: set[str], latest: dict[str, dict[str, str]]
+    photos: list[dict[str, Any]],
+    sample: set[str],
+    latest: dict[str, dict[str, str]],
+    late: dict[str, dict[str, str]],
 ) -> dict[str, Any]:
+    """Summarise blind audits (`latest`); `late` holds audits made after a review."""
     by_id = {photo["id"]: photo for photo in photos}
     ranks = queue_ranks(photos)
     audited = {pid: latest[pid] for pid in sorted(sample) if latest.get(pid)}
@@ -66,6 +72,7 @@ def summarize_audit(
         "weed_found": len(found),
         "found_as_top_suggestion": len(as_top),
         "found_not_top_suggestion": len(found - as_top),
+        "not_blind": len(sample & set(late)),
         "disputed": sum(len(set(by_auditor.values())) > 1 for by_auditor in audited.values()),
         "unsure": sum("unsure" in by_auditor.values() for by_auditor in audited.values()),
         "findings": findings,

@@ -215,12 +215,18 @@ class Store:
                 )
             ]
 
-    def latest_audits(self, run_id: str) -> dict[str, dict[str, str]]:
-        """Each auditor's latest finding, per photo, as reviewer_decisions does for reviews."""
+    def latest_audits(self, run_id: str, blind: bool = True) -> dict[str, dict[str, str]]:
+        """Each auditor's latest finding per photo, as reviewer_decisions does for reviews.
+
+        An audit is blind only if it came before the photo's first review event, when the
+        suggestion could not yet have been seen. `blind=False` returns the later audits.
+        """
         with self.connect() as db:
             rows = db.execute(
-                "SELECT photo_id, reviewer, finding FROM audits WHERE run_id=? ORDER BY id",
-                (run_id,),
+                "SELECT a.photo_id, a.reviewer, a.finding FROM audits a WHERE a.run_id=? "
+                "AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.run_id=a.run_id "
+                "AND r.photo_id=a.photo_id AND r.created_at<=a.created_at) = ? ORDER BY a.id",
+                (run_id, blind),
             ).fetchall()
         findings: dict[str, dict[str, str]] = {}
         for row in rows:

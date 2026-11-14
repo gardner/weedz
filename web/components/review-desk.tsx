@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
+import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { useReviewTimer } from "../lib/review-timer";
 import {
   type AuditSummary,
@@ -100,11 +100,11 @@ export default function ReviewDesk() {
   }, [refresh]);
 
   const auditing = cohort === "audit";
-  const filtered = queuePhotos(photos, cohort, region, review);
+  const filtered = queuePhotos(photos, cohort, { region, review, reviewer });
   const active = filtered.find((photo) => photo.id === activeIds[cohort]) ?? filtered[0];
   const incidental = photos.filter((photo) => photo.cohort === "incidental");
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
-  const held = incidental.filter(heldForAudit).length;
+  const held = incidental.filter((photo) => heldForAudit(photo, reviewer)).length;
 
   const effort = useReviewTimer(`${runId}:${auditing ? "audit:" : ""}${active?.id ?? ""}`);
 
@@ -397,7 +397,7 @@ export default function ReviewDesk() {
                       <small>
                         {photo.observed_on ?? "Date unknown"} ·{" "}
                         {auditing
-                          ? photo.audited
+                          ? auditedBy(photo, reviewer)
                             ? "Audited"
                             : "Not yet audited"
                           : photo.review_status === "unreviewed"

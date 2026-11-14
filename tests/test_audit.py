@@ -63,7 +63,7 @@ def test_summary_reports_queue_rank_and_whether_the_find_was_the_suggestion() ->
         "b": {"Ana": "Ulex europaeus"},
         "c": {"Ana": "none"},
     }
-    summary = summarize_audit(queue, {"a", "b", "c", "d"}, latest)
+    summary = summarize_audit(queue, {"a", "b", "c", "d"}, latest, {})
     assert summary["sampled"] == 4
     assert summary["audited"] == 3
     assert summary["remaining"] == 1
@@ -99,12 +99,12 @@ def test_a_later_none_from_another_auditor_does_not_erase_a_found_weed(tmp_path:
     target = sorted(audit_sample("run", queue))[0]
     store.audit("run", target, "Ulex europaeus", "", "Ana")
     store.audit("run", target, "none", "", "Ben")
-    summary = summarize_audit(queue, audit_sample("run", queue), store.latest_audits("run"))
+    summary = summarize_audit(queue, audit_sample("run", queue), store.latest_audits("run"), {})
     assert summary["audited"] == 1
     assert summary["weed_found"] == 1
     assert summary["disputed"] == 1
     store.audit("run", target, "none", "", "Ana")
-    summary = summarize_audit(queue, audit_sample("run", queue), store.latest_audits("run"))
+    summary = summarize_audit(queue, audit_sample("run", queue), store.latest_audits("run"), {})
     assert (summary["weed_found"], summary["disputed"]) == (0, 0)
 
 
@@ -141,6 +141,35 @@ def test_api_accepts_audits_only_for_sampled_photos(tmp_path: Path) -> None:
     assert detail["audit"]["audited"] == 1
     assert {photo["id"] for photo in detail["photos"] if photo["audited"]} == {sampled[0]}
     assert export(store, "run")["audit"]["sampled"] == 2
+
+
+def test_audits_after_the_photo_was_reviewed_are_not_counted_as_blind(tmp_path: Path) -> None:
+    store = run_with_photos(tmp_path, count=12)
+    queue = store.photos("run")
+    sample = audit_sample("run", queue)
+    seen, fresh, *_ = sorted(sample)
+    store.review("run", seen, "confirmed", "", "Carol")
+    store.audit("run", seen, "Ulex europaeus", "", "Ana")
+    store.audit("run", fresh, "Ulex europaeus", "", "Ana")
+    store.review("run", fresh, "confirmed", "", "Ana")
+    blind, late = store.latest_audits("run"), store.latest_audits("run", blind=False)
+    assert set(blind) == {fresh}
+    assert set(late) == {seen}
+    summary = summarize_audit(queue, sample, blind, late)
+    assert (summary["audited"], summary["weed_found"], summary["not_blind"]) == (1, 1, 1)
+    assert "after the photo was first reviewed" in summary["meaning"]
+
+
+def test_detail_lists_who_audited_each_photo_without_findings(tmp_path: Path) -> None:
+    store = run_with_photos(tmp_path)
+    target = sorted(audit_sample("run", store.photos("run")))[0]
+    store.audit("run", target, "none", "", "Ben")
+    store.audit("run", target, "Ulex europaeus", "", "Ana")
+    photos = TestClient(create_app(tmp_path)).get("/runs/run").json()["photos"]
+    by_id = {photo["id"]: photo for photo in photos}
+    assert by_id[target]["auditors"] == ["Ana", "Ben"]
+    assert by_id[target]["audited"] is True
+    assert all(photo["auditors"] == [] for photo in photos if photo["id"] != target)
 
 
 def test_detail_keeps_audit_findings_blind_but_export_includes_them(tmp_path: Path) -> None:

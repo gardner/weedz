@@ -26,6 +26,7 @@ export type Photo = {
   review_status: Status;
   audit_sample?: boolean;
   audited?: boolean;
+  auditors?: string[];
   review_note: string;
   review_reviewer: string;
   reviewer_decisions: Record<string, Status>;
@@ -51,6 +52,7 @@ export type AuditSummary = {
   found_as_top_suggestion: number;
   found_not_top_suggestion: number;
   disputed: number;
+  not_blind: number;
 };
 
 export type RunDetail = {

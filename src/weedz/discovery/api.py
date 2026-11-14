@@ -15,6 +15,11 @@ from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
+def audit_state(photo_id: str, sample: set[str], *audits: dict[str, dict[str, str]]) -> dict:
+    auditors = sorted({name for found in audits for name in found.get(photo_id, {})})
+    return {"audit_sample": photo_id in sample, "audited": bool(auditors), "auditors": auditors}
+
+
 class ReviewAPI:
     def __init__(self, root: Path, temporal_address: str) -> None:
         self.store = Store(root)
@@ -51,14 +56,12 @@ class ReviewAPI:
         photos = self.store.photos(run_id)
         effort = summarize_effort(photos, review_history(self.store, run_id, photos))
         sample = audit_sample(run_id, photos)
-        latest = self.store.latest_audits(run_id)
-        # Per-photo findings stay in the export; the review app sees only counts and flags.
-        audit = summarize_audit(photos, sample, latest)
+        blind, late = self.store.latest_audits(run_id), self.store.latest_audits(run_id, False)
+        # Per-photo findings stay in the export; the review app sees only counts and who
+        # audited, so it can hold a sampled photo out of each auditor's ranked queue.
+        audit = summarize_audit(photos, sample, blind, late)
         del audit["findings"]
-        photos = [
-            photo | {"audit_sample": photo["id"] in sample, "audited": photo["id"] in latest}
-            for photo in photos
-        ]
+        photos = [photo | audit_state(photo["id"], sample, blind, late) for photo in photos]
         return {"run": run, "photos": photos, "review_effort": effort, "audit": audit}
 
     def download(self, run_id: str) -> JSONResponse:

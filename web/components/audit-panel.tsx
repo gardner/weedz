@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { auditedBy } from "../lib/queue";
 import { type AuditSummary, imageUrl, names, type Photo } from "../lib/types";
 
 /**
@@ -40,7 +41,9 @@ export default function AuditPanel({
               : "Audit sample"}
           </p>
         </div>
-        <span className="badge">{photo.audited ? "Audited" : "Not yet audited"}</span>
+        <span className="badge">
+          {auditedBy(photo, reviewer) ? "You audited this" : "Not yet audited by you"}
+        </span>
       </div>
       <div className="image-stage">
         <Image

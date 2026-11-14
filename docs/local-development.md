@@ -100,12 +100,18 @@ intended for local development, not shared public hosting.
    scores, and asks "Is any watchlist weed visible?". Audits are stored apart
    from suggestion reviews, and each auditor's latest finding is kept. A photo
    counts as a found weed if any auditor's latest finding names a species, and
-   photos where auditors' findings differ are counted as disputed. Until it is
-   audited, a sampled photo is held out of the ranked Incidental queue, and
-   each view keeps its own open photo, so nobody sees its suggestion first.
-   This is a workflow guard on a local, unauthenticated stack, not access
-   control: anyone with the API can still read the scores. The run detail gives
-   audit counts and an audited flag per photo; only the export lists findings.
+   photos where auditors' findings differ are counted as disputed. A sampled
+   photo is held out of each reviewer's ranked Incidental queue until that
+   reviewer has audited it (with no name entered, every sampled photo is held),
+   and each view keeps its own open photo, so no auditor sees its suggestion
+   first. This is a workflow guard on a local, unauthenticated stack, not access
+   control: names are not verified and anyone with the API can still read the
+   scores. An audit counts as blind only if it was made before the photo's
+   first review event. Later audits, including those on photos reviewed before
+   the audit sample existed, are left out of the findings and reported as
+   `not_blind`. The sample itself comes from run and photo ids, so it is fixed
+   from the moment a run starts. The run detail gives audit counts and who
+   audited each photo; only the export lists findings.
    There is no calibrated detection threshold yet, so neither gives a hit or
    miss verdict. For each found weed the export reports the photo's 1-based
    rank in the incidental queue (by margin, highest first) out of all incidental

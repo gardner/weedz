@@ -1,6 +1,6 @@
 // The audit view is blind: no suggestion, search window or scores, and it posts a finding.
 import assert from "node:assert/strict";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 
 const browser = await chromium.launch({
   headless: true,
@@ -32,6 +32,7 @@ try {
     review_count: 0,
     audit_sample: sampled,
     audited: sampled && audited,
+    auditors: sampled && audited ? ["Ana"] : [],
     scores: {
       best_species: "Cortaderia selloana",
       margin,
@@ -54,6 +55,7 @@ try {
     found_as_top_suggestion: 0,
     found_not_top_suggestion: Number(audited),
     disputed: 0,
+    not_blind: 0,
   });
   const posted = [];
   await page.route("**/api/**", async (route) => {
@@ -110,12 +112,20 @@ try {
   assert.equal(typeof posted[0].effort_seconds, "number");
   await page.getByText("1 of 1 sampled photos audited").waitFor();
 
-  // Once audited, it rejoins the ranked queue, and the audit selection is not carried over.
+  // Once Ana has audited it, it rejoins her ranked queue, and the audit selection is not
+  // carried over.
   await incidentalTab.click();
   await page.locator(".photo-list").getByText("Bird sampled").waitFor();
   assert.equal(await rows.count(), 2, "audited photo rejoins the queue");
   const selected = await page.locator(".photo-row.selected").textContent();
   assert.ok(selected.includes("Bird other"), "switching views resets the open photo");
+
+  // It stays held for anyone who has not audited it yet.
+  await page.getByLabel("Your name").fill("Ben");
+  await expect(rows).toHaveCount(1);
+  assert.ok(!(await page.locator(".photo-list").textContent()).includes("Bird sampled"));
+  await page.getByRole("button", { name: "Audit sample" }).click();
+  await page.locator(".photo-row").getByText("Not yet audited").waitFor();
   console.log("The audit view stays blind until audited and records a blind finding.");
 } finally {
   await browser.close();
