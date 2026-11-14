@@ -43,6 +43,7 @@ UNKNOWN = "Not admitted: the licence {licence} is not one the collection accepts
 WITHHELD = {
     "obscured": "Withheld: the source obscured this location, so its displaced point is "
     "never passed on",
+    "not_public": "Withheld: the source did not mark this location public",
     "accuracy_unknown": "Withheld: the location's accuracy was not supplied, and a point "
     "without its uncertainty would overstate where the photo was taken",
     "observation_licence": "Withheld: the observation licence is not admitted, so its "
@@ -120,6 +121,8 @@ def terms(photo: dict[str, Any]) -> dict[str, Any]:
 def _withheld(photo: dict[str, Any], use: Use) -> str:
     if photo.get("coordinate_status") == "obscured":
         return WITHHELD["obscured"]
+    if photo.get("coordinate_status") != "public":
+        return WITHHELD["not_public"]
     if use == "review":
         return ""
     if photo.get("observation_license") not in OBSERVATION_TERMS:

@@ -113,6 +113,14 @@ def test_a_location_under_a_non_admitted_observation_licence_is_not_shared() -> 
     assert "observation licence" in shared.withheld.lower()
 
 
+def test_a_point_not_marked_public_never_leaves() -> None:
+    for status in ("missing", None, "private"):
+        for use in ("review", "share"):
+            shared = location(photo(coordinate_status=status), use)
+            assert (shared.latitude, shared.longitude) == (None, None)
+            assert shared.withheld
+
+
 def test_a_missing_location_stays_missing() -> None:
     shared = location(photo(latitude=None, longitude=None, coordinate_status="missing"), "share")
     assert (shared.latitude, shared.longitude, shared.status) == (None, None, "missing")
