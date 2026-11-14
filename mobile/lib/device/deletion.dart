@@ -30,11 +30,15 @@ final class DeviceDeletion extends ChangeNotifier {
   final DeleteSubmitter _api;
   DeviceRecord? _record;
   bool _disposed = false;
-  bool busy = false;
-  DeletionPhase phase = DeletionPhase.loading;
-  DeletionProblem? problem;
+  bool _busy = false;
+  DeletionPhase _phase = DeletionPhase.loading;
+  DeletionProblem? _problem;
 
-  bool get canUpload => phase == DeletionPhase.ready && !busy;
+  bool get busy => _busy;
+  DeletionPhase get phase => _phase;
+  DeletionProblem? get problem => _problem;
+
+  bool get canUpload => _phase == DeletionPhase.ready && !_busy;
   String? get server => _record?.device?.server.toString();
   DateTime? get completedAt => _record?.completedAt;
 
@@ -43,69 +47,70 @@ final class DeviceDeletion extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    if (busy) return;
-    busy = true;
-    problem = null;
+    if (_busy) return;
+    _busy = true;
+    _problem = null;
     try {
       final text = await _store.read();
       _record = text == null ? null : DeviceRecord.parse(text);
-      phase = switch (_record) {
+      _phase = switch (_record) {
         null => DeletionPhase.unenrolled,
         DeviceRecord(device: null) => DeletionPhase.deleted,
         DeviceRecord(pending: true) => DeletionPhase.pending,
         _ => DeletionPhase.ready,
       };
     } on Exception {
-      phase = DeletionPhase.unavailable;
-      problem = DeletionProblem.storage;
+      _phase = DeletionPhase.unavailable;
+      _problem = DeletionProblem.storage;
     } finally {
-      busy = false;
+      _busy = false;
       _changed();
     }
-    if (phase == DeletionPhase.pending) await delete();
+    if (_phase == DeletionPhase.pending) await delete();
   }
 
   Future<void> enroll(DeviceEnrollment device) async {
-    if (busy ||
-        (phase != DeletionPhase.unenrolled && phase != DeletionPhase.deleted)) {
+    if (_busy ||
+        (_phase != DeletionPhase.unenrolled &&
+            _phase != DeletionPhase.deleted)) {
       return;
     }
-    busy = true;
-    problem = null;
+    _busy = true;
+    _problem = null;
     _changed();
     final record = DeviceRecord(device: device);
     try {
       await _store.write(record.encode());
       _record = record;
-      phase = DeletionPhase.ready;
+      _phase = DeletionPhase.ready;
     } on Exception {
-      phase = DeletionPhase.unavailable;
-      problem = DeletionProblem.storage;
+      _phase = DeletionPhase.unavailable;
+      _problem = DeletionProblem.storage;
     } finally {
-      busy = false;
+      _busy = false;
       _changed();
     }
   }
 
   Future<void> delete() async {
-    if (busy ||
-        (phase != DeletionPhase.ready && phase != DeletionPhase.pending)) {
+    if (_busy ||
+        (_phase != DeletionPhase.ready && _phase != DeletionPhase.pending)) {
       return;
     }
     final device = _record!.device!;
-    busy = true;
-    problem = null;
+    _busy = true;
+    _problem = null;
     _changed();
     // Commit intent first. Failure leaves the previous secure record intact.
     final pending = DeviceRecord(device: device, pending: true);
     _record = pending;
-    phase = DeletionPhase.pending;
+    _phase = DeletionPhase.pending;
     _changed();
     try {
       await _store.write(pending.encode());
     } on Exception {
-      problem = DeletionProblem.storage;
-      busy = false;
+      _problem = DeletionProblem.storage;
+      _busy = false;
       _changed();
       return;
     }
@@ -121,16 +126,16 @@ final class DeviceDeletion extends ChangeNotifier {
       try {
         await _store.write(completed.encode());
         _record = completed;
-        phase = DeletionPhase.deleted;
+        _phase = DeletionPhase.deleted;
       } on Exception {
-        problem = DeletionProblem.storage;
+        _problem = DeletionProblem.storage;
       }
     } on DeletionFailure catch (error) {
-      problem = error.problem;
+      _problem = error.problem;
     } on Exception {
-      problem = DeletionProblem.unconfirmed;
+      _problem = DeletionProblem.unconfirmed;
     } finally {
-      busy = false;
+      _busy = false;
       _changed();
     }
   }
