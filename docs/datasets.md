@@ -75,9 +75,11 @@ and accuracy 67%, versus a 51% majority-class accuracy. It missed 9 positives
 and produced 24 false alarms. The validation set had 5 misses and 21 false alarms.
 These are measurements at one Montana site, not evidence of NZ generalisation.
 
-There is currently no saved human-review workflow, general dataset schema,
-perspective augmentation, learned image encoder, box detector, pixel segmenter,
-or inference over arbitrary geographic rasters. The map's `truth` field means
+The baseline itself has no saved human-review workflow (the pilot does), and
+neither path has perspective augmentation, a box detector, a pixel segmenter, or
+inference over arbitrary geographic rasters. Both collections can be read into
+the [common sample contract](#a-common-sample-and-annotation-contract), but
+neither pipeline trains or exports from it yet. The map's `truth` field means
 the upstream survey label; it has not been independently adjudicated by us.
 
 ## Dataset shortlist
@@ -442,7 +444,8 @@ Preserve the source's actual reuse and redistribution terms with the results.
 Build reusable ingestion, curation, split, and reporting stages, with task-specific
 models. A new source should supply an adapter and an explicit capability record,
 not force image-level labels, boxes, masks, and occurrence points into one binary
-training table. This is a proposed interface, not an existing API.
+training table. The contract below exists as schema version 1, with adapters for
+the two current collections. Shared stages built on it are still proposed.
 
 ### A common sample and annotation contract
 
@@ -472,6 +475,54 @@ photos should still work for classification without invented coordinates.
 Keep original labels alongside reviewed labels. "Not leafy spurge" does not mean
 "no invasive plants"; "another observed species" does not mean "no gorse in the
 frame". Taxon identity and weed status in a jurisdiction are separate concepts.
+
+#### What schema version 1 implements
+
+[contract.py](../src/weedz/contract.py) defines a typed `Sample` with typed
+`Annotation`s. [manifest.py](../src/weedz/manifest.py) writes them as JSONL, one
+validated sample per line, and returns the file's SHA-256. Reading verifies that
+digest when it is given, and a manifest round-trips exactly. Two read-only adapters
+are in [adapters.py](../src/weedz/adapters.py). Neither changes the existing
+pipelines.
+
+| Concern | Version 1 | Not yet |
+| --- | --- | --- |
+| Identity/lineage | `<source>:<source_id>` IDs, snapshot (revision or run), parent ID, original URI, media SHA-256 | Release IDs (#7), retrieval date |
+| Rights | Media and metadata licences kept separately; creator; attribution; where the licence was read | Intended-use eligibility |
+| Media | Width/height and format when known | Colour space, dtype, bands, valid-data mask |
+| Taxonomy | The original source label kept as context only; annotation taxon as recorded | Taxon IDs, synonym mapping, regional status |
+| Supervision / label extent | Typed annotations with `present`/`absent`/`unknown`/`ignored` labels, pixel points, boxes and mask URIs | Mask files and ignored-pixel handling |
+| View/scale | Nadir/oblique/ground/unknown, detail/plant/patch/unknown, and GSD when known | Pose, angle convention, footprint |
+| Geography/time | Optional WGS84 point with uncertainty and public/obscured privacy; capture date | CRS/affine transforms, survey dates, sensor |
+| Grouping | Free-form groups (survey cluster, published split, observation) | Duplicate/encounter linking, final splits (#7) |
+| Review | Origin (`source`/`reviewer`/`model`), review state (`unreviewed`/`accepted`/`rejected`/`uncertain`), reviewer, time and note | Superseded-decision chains |
+| Prediction | Model-origin annotations with model, score and method note, which never count as supervision | Thresholds, abstention, preprocessing versions |
+
+Each sample declares its tasks, and validation refuses any task that the sample's
+supervision cannot support. Predictions and rejected labels are not evidence for
+this check. In particular:
+
+- image labels, boxes and sparse masks cannot support dense segmentation
+- area measurement also needs a known GSD
+- occurrences need a real location
+- geometry must match its supervision and lie inside known image bounds
+
+`require_task` lets a consumer refuse samples that did not declare its task.
+
+- **Leafy Spurge:** `leafy_spurge_samples` verifies the pinned checksums first.
+  Each point becomes a nadir 1.3 cm GSD crop with one unreviewed source
+  `surveyed_point` annotation at the crop centre, and it supports
+  `point_classification` only. Locally this gives 900 samples (457 present,
+  443 absent; 800 train and 100 test across 9 survey clusters), all 39×39.
+- **Pilot:** `pilot_samples` turns a pilot run's photos into image-level samples
+  that support `inference` only. The original subject and cohort are context, not
+  labels. Reviewer findings become `box` or `image_class` annotations with reviewer
+  provenance, and their review state comes from the standing identity judgements.
+  The screening suggestion is a model prediction, and its review state comes from
+  the suggestion review. Missing coordinates and unscreened image sizes stay `None`.
+  The local run `nelson-tasman-3e62ad801459` gives 30 samples (24 incidental, 6
+  reference), all with public coordinates, checksums and sizes. Each has one
+  unreviewed model suggestion, and there are no findings yet.
 
 ### Bronze, silver, and gold releases
 
@@ -569,7 +620,11 @@ This is proposed follow-up work. The only available CLI remains the Leafy Spurge
 
 1. **Shared inventory and curation:** introduce source-independent IDs, typed
    supervision, review decisions, and frozen release/split manifests. Preserve
-   the legacy baseline adapter and its recorded experiment.
+   the legacy baseline adapter and its recorded experiment. *Partly done:* the
+   versioned contract, task validation, checksummed JSONL manifests, and the
+   Leafy Spurge and pilot adapters exist (#3), and the recorded experiment is
+   unchanged. Frozen release and split manifests, and moving the baseline and
+   pilot export onto them, remain for #7.
 2. **Bounded incidental-photo collection:** inspect metadata and eligibility for
    an accessible NZ trail-camera, community-photo, or roadside source. Keep original
    subjects, duplicate/encounter groups, capture dates, and location limitations.
