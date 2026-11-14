@@ -97,11 +97,15 @@ final class FakeScreener implements Screener {
   /// Called before each screening; a test can pause the scan from here.
   void Function(String id)? onScreen;
 
+  /// Ids the model fails on, like an odd thumbnail or running out of memory.
+  final Set<String> failing = {};
+
   @override
   Future<Margins> screen(ScanImage image) async {
     final id = String.fromCharCodes(image.bytes);
     screened.add(id);
     onScreen?.call(id);
+    if (failing.contains(id)) throw StateError('model failed on $id');
     return {'Ulex europaeus': id.length / 100, 'Clematis vitalba': -0.1};
   }
 }

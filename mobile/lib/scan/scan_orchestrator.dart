@@ -166,22 +166,22 @@ final class ScanOrchestrator {
     if (asset.width < minimumSide || asset.height < minimumSide) {
       return skip(SkipReason.tooSmall);
     }
-    final LoadOutcome outcome;
+    // A photo that fails to load or to screen is skipped as unreadable, and
+    // tried again next pass, rather than stopping the scan at it for good.
     try {
-      outcome = await _library.load(asset);
+      return switch (await _library.load(asset)) {
+        ImageSkipped(:final reason) => skip(reason),
+        ImageLoaded(:final image) => ScreenedAsset(
+          id: asset.id,
+          modifiedAt: asset.modifiedAt,
+          seenInPass: pass,
+          modelRevision: _screener.modelRevision,
+          margins: await _screener.screen(image),
+        ),
+      };
     } on Object {
       return skip(SkipReason.unreadable);
     }
-    return switch (outcome) {
-      ImageSkipped(:final reason) => skip(reason),
-      ImageLoaded(:final image) => ScreenedAsset(
-        id: asset.id,
-        modifiedAt: asset.modifiedAt,
-        seenInPass: pass,
-        modelRevision: _screener.modelRevision,
-        margins: await _screener.screen(image),
-      ),
-    };
   }
 
   Future<ScanProgress> _progress(ScanState state) async {

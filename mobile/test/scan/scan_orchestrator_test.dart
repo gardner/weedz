@@ -93,6 +93,15 @@ void main() {
       expect(last.coverage.isComplete, isTrue);
     });
 
+    test('skips a photo the model fails on, and carries on', () async {
+      screener.failing.add('p1');
+      final last = await orchestrator(FakeLibrary(photos(3))).run().last;
+      expect(last.state, ScanState.finished);
+      expect(screener.screened, ['p2', 'p1', 'p0']);
+      expect(last.coverage.screened, 2);
+      expect(last.coverage.skipped, {SkipReason.unreadable: 1});
+    });
+
     test('scans nothing without photo access, and says why', () async {
       final library = FakeLibrary(photos(3), accessState: PhotoAccess.denied);
       final progress = await orchestrator(library).run().toList();

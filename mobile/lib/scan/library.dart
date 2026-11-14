@@ -130,29 +130,42 @@ typedef CaptureRangeQuery = Future<List<LibraryAsset>> Function({
 /// The next page after [cursor], built from capture-time range queries.
 ///
 /// The plugin reports capture times in whole seconds, so bursts share them,
-/// while the platform filters on the exact time. A page therefore always holds
-/// every photo reported in the same second as its last one, sorted by id, so
-/// the cursor never falls in the middle of an unsorted tie. A page may be a
-/// little longer than [limit] for that reason.
+/// while the platform may filter on the exact time, to below a millisecond.
+/// So every query is inclusive at whole seconds and its results are filtered
+/// on the reported time, and a page always holds every photo reported in the
+/// same second as its last one, sorted by id. The cursor then never falls in
+/// the middle of an unsorted tie. A page may be a little longer than [limit].
 Future<List<LibraryAsset>> pageOlderThan(
   ScanCursor? cursor, {
   required int limit,
   required CaptureRangeQuery query,
 }) async {
-  // Every photo reported as captured in [second]'s whole second.
-  Future<List<LibraryAsset>> sameSecond(DateTime second) => query(
-    oldest: second,
-    newest: second.add(const Duration(milliseconds: 999)),
-  );
+  // Every photo reported as captured in [second]. Its true time lies in
+  // [second, second + 1s), inside the inclusive range asked for.
+  Future<List<LibraryAsset>> sameSecond(DateTime second) async => [
+    for (final a in await query(
+      oldest: second,
+      newest: second.add(const Duration(seconds: 1)),
+    ))
+      if (a.createdAt.isAtSameMomentAs(second)) a,
+  ];
 
   final page = <LibraryAsset>[];
-  if (cursor != null) {
-    page.addAll((await sameSecond(cursor.createdAt)).where(cursor.precedes));
+  var older = <LibraryAsset>[];
+  if (cursor == null) {
+    older = await query(limit: limit);
+  } else {
+    final c = cursor.createdAt;
+    final ties = await sameSecond(c);
+    page.addAll(ties.where(cursor.precedes));
+    // Up to `c` inclusive, so a true time just short of `c` is not lost. Any
+    // photo reported at `c` that comes back is one of `ties`, so asking for
+    // that many more still leaves [limit] older ones.
+    older = [
+      for (final a in await query(newest: c, limit: limit + ties.length))
+        if (a.createdAt.isBefore(c)) a,
+    ];
   }
-  final older = await query(
-    newest: cursor?.createdAt.subtract(const Duration(milliseconds: 1)),
-    limit: limit,
-  );
   if (older.isNotEmpty) {
     final ties = await sameSecond(older.last.createdAt);
     final ids = {for (final a in ties) a.id};

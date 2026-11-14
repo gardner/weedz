@@ -31,7 +31,7 @@ enum SkipReason {
     explanationOne: 'is too small to check',
   ),
 
-  /// Loading failed, perhaps only this time.
+  /// Loading or screening failed, perhaps only this time.
   unreadable(
     isPermanent: false,
     explanation: 'could not be opened',
