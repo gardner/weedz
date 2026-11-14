@@ -21,6 +21,7 @@ export default function ReviewDesk() {
   const [starting, setStarting] = useState(false);
   const [limit, setLimit] = useState(12);
   const [before, setBefore] = useState("2024-12-31");
+  const [after, setAfter] = useState("2010-01-01");
   const run = runs.find((item) => item.id === runId);
 
   const refresh = useCallback(async () => {
@@ -90,7 +91,13 @@ export default function ReviewDesk() {
       const result = await request<{ id: string }>("runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit_per_region: limit, controls_per_species: 1, before }),
+        body: JSON.stringify({
+          limit_per_region: limit,
+          controls_per_species: 1,
+          before,
+          after,
+          sampling: "stratified",
+        }),
       });
       setPhotos([]);
       setActiveId("");
@@ -233,6 +240,14 @@ export default function ReviewDesk() {
                 />
               </label>
               <label>
+                Photographed on or after
+                <input
+                  type="date"
+                  value={after}
+                  onChange={(event) => setAfter(event.target.value)}
+                />
+              </label>
+              <label>
                 Photographed on or before
                 <input
                   type="date"
@@ -244,7 +259,13 @@ export default function ReviewDesk() {
                 type="button"
                 className="primary"
                 disabled={
-                  starting || !Number.isInteger(limit) || limit < 1 || limit > 50 || !before
+                  starting ||
+                  !Number.isInteger(limit) ||
+                  limit < 1 ||
+                  limit > 50 ||
+                  !before ||
+                  !after ||
+                  after > before
                 }
                 onClick={start}
               >
@@ -252,9 +273,10 @@ export default function ReviewDesk() {
               </button>
             </div>
             <p>
-              Also requests one reference photo for each of three target species in each region.
-              Queries use current council boundaries and eligible CC0, CC BY or CC BY-NC photos and
-              metadata.
+              Animal photos are spread across every season in the period, at most one per observer
+              per day. Also requests one reference photo for each of three target species in each
+              region. Queries use current council boundaries and eligible CC0, CC BY or CC BY-NC
+              photos and metadata.
             </p>
           </details>
           <div className="screening-note">

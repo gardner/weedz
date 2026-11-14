@@ -41,9 +41,24 @@ def _stable(photo: Photo) -> bytes:
     return hashlib.sha256(f"weedz-sample-v1|{photo.observation_id}".encode()).digest()
 
 
+def _diagonal(keys: list[str]) -> list[str]:
+    """Order "YEAR-SEASON" strata so consecutive picks change both year and season.
+
+    Walking diagonals of the year x season grid means the first few picks already span
+    several years and every season, instead of exhausting the earliest year first.
+    """
+    years = sorted({key.split("-")[0] for key in keys})
+    order = {
+        f"{years[(diagonal + index) % len(years)]}-{season}": (diagonal, index)
+        for diagonal in range(len(years))
+        for index, season in enumerate(SEASONS)
+    }
+    return sorted(keys, key=lambda key: order.get(key, (len(years), 0)))
+
+
 def select_across_strata(strata: dict[str, list[Photo]], limit: int) -> list[Photo]:
     """Round-robin across strata, at most one photo per observer per day."""
-    queues = {key: sorted(photos, key=_stable) for key, photos in sorted(strata.items())}
+    queues = {key: sorted(strata[key], key=_stable) for key in _diagonal(list(strata))}
     chosen: list[Photo] = []
     visits: set[tuple[str, str | None]] = set()
     while len(chosen) < limit and any(queues.values()):

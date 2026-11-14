@@ -94,3 +94,49 @@ def test_export_reports_corpus_coverage_with_the_run_sampling(tmp_path) -> None:
     summary = export(store, "run")["corpus_coverage"]
     assert summary["sampling"] == "stratified"
     assert summary["by_season"] == {"DJF": 1, "JJA": 1}
+
+
+def test_discover_sends_the_sampling_period(monkeypatch: pytest.MonkeyPatch) -> None:
+    import asyncio
+    import json
+
+    import httpx
+
+    from weedz.discovery import cli as discovery_cli
+
+    sent: list[dict] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        sent.append(json.loads(request.content))
+        return httpx.Response(200, json={"id": "run"})
+
+    real = httpx.AsyncClient
+    monkeypatch.setattr(
+        discovery_cli.httpx,
+        "AsyncClient",
+        lambda **kwargs: real(transport=httpx.MockTransport(handle), **kwargs),
+    )
+    args = discovery_cli.argparse.Namespace(
+        limit=4,
+        controls=0,
+        before="2024-12-31",
+        after="2015-01-01",
+        sampling="recent",
+        api_url="http://api",
+        temporal_address="",
+        wait=False,
+    )
+    asyncio.run(discovery_cli.discover(args))
+    assert (sent[0]["after"], sent[0]["sampling"]) == ("2015-01-01", "recent")
+
+
+def test_a_small_sample_spreads_across_years_and_seasons_at_once() -> None:
+    seasons = {"DJF": "01", "MAM": "04", "JJA": "07", "SON": "10"}
+    strata = {
+        f"{year}-{season}": [candidate(year * 100 + index, f"{year}-{month}-15", f"{year}{season}")]
+        for index, (season, month) in enumerate(seasons.items())
+        for year in range(2020, 2025)
+    }
+    chosen = select_across_strata(strata, 4)
+    assert len({(p.observed_on or "")[:4] for p in chosen}) == 4
+    assert len({(p.observed_on or "")[5:7] for p in chosen}) == 4
