@@ -21,6 +21,7 @@ from weedz.discovery.lookalikes import summarize_lookalikes
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
+from weedz.discovery.score_meaning import score_meaning
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
 from weedz.discovery.study_store import run_study
@@ -153,6 +154,8 @@ def export(store: Store, run_id: str) -> dict:
         "references": references,
         "encounters": summarize(photos, encounter_groups(photos)),
         "lookalikes": summarize_lookalikes(photos),
+        # What the run's scores mean, for its model and ranking revision (#16).
+        "score_meaning": score_meaning(run["model"]),
         "corpus_coverage": coverage(
             [Photo.model_validate(p) for p in photos if p["cohort"] == "incidental"],
             RunSpec.from_saved(run["spec"]).sampling,

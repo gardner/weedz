@@ -22,6 +22,7 @@ from weedz.discovery.outcomes import outcomes
 from weedz.discovery.package_output import archive, package_contents
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
+from weedz.discovery.score_meaning import score_meaning
 from weedz.discovery.sharing import image_use, shareable_export, with_location
 from weedz.discovery.store import Store, now
 from weedz.discovery.study import NewStudy, StudyDefinition, StudyEdit, StudyLink, terms
@@ -148,6 +149,7 @@ class ReviewAPI:
             "audit": audit,
             "references": references,
             "study": study,
+            "score_meaning": score_meaning(run["model"]),
         }
 
     def download(self, run_id: str) -> JSONResponse:
