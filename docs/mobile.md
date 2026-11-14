@@ -195,7 +195,8 @@ found ─► pending ──approve──► approved ──send──► sending
             │                                    ▼  │
             │                                 unanswered ──► withdrawn
             │
-            │      sending ──413/415/422──► refused ──revise──► a new pending case, new id
+            │      sending ──413/415/422──► refused ──revise──► revised (final)
+            │                                                   + a new pending case, new id
             └──decline──► declined (final; also from approved and refused)
 ```
 
@@ -218,6 +219,14 @@ found ─► pending ──approve──► approved ──send──► sending
 - **Once sent, a report is frozen.** After a send with no answer, the server
   may already have the report, so its id must keep meaning that content. The
   report can only be sent again unchanged, or withdrawn.
+- **The store commits each transition by id, compare-and-set.** A
+  `ReportCase` is an immutable value, so an old copy (for example, the
+  approved case after `startSending()`) can still be called. The store
+  therefore saves a transition only if the stored case still has the status
+  it started from. It saves `startSending()`'s frozen case before
+  dispatching its `Upload`, and `revise()`'s retired and new cases in one
+  transaction. The uploader sends an `Upload` only while the stored case for
+  its id is `sending`.
 - **Declining is final** for that report. Declined photos are remembered so
   they are not suggested again under the same model.
 - **After sending**, the receipt is kept. The person can withdraw the report

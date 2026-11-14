@@ -118,10 +118,20 @@ void main() {
 
     test('a refused report is revised as a new case, with a new id', () {
       const newId = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
-      final revised = sending().refused().revise(
+      final (retired, revised) = sending().refused().revise(
         id: newId,
         report: fullReport().withoutImage(),
       );
+      // The refused case is retired in the same step, so it cannot be
+      // revised twice into two sendable reports of one find.
+      expect(retired.status, ApprovalStatus.revised);
+      expect(retired.id, id);
+      expect(retired.maySend, isFalse);
+      expect(
+        () => retired.revise(id: newId, report: fullReport().withoutImage()),
+        throwsStateError,
+      );
+      expect(retired.decline, throwsStateError);
       expect(revised.status, ApprovalStatus.pending);
       expect(revised.id, newId);
       expect(revised.report.image, isNull);

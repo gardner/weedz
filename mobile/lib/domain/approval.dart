@@ -31,6 +31,9 @@ enum ApprovalStatus {
   /// under this id: the person can decline it, or revise it as a new case.
   refused,
 
+  /// A refused report replaced by a new case under a new id. Final.
+  revised,
+
   /// The server has it and returned a receipt.
   received,
 
@@ -117,9 +120,17 @@ final class ReportCase {
 
   /// A refused report, changed, as a new pending case under a new [id], so
   /// the refused id never stands for different content and the refused
-  /// content is never sent again.
-  ReportCase revise({required String id, required Report report}) {
-    _expect({ApprovalStatus.refused}, 'revise');
+  /// content is never sent again. The refused case is retired in the same
+  /// step, so it cannot be revised twice; save both together.
+  (ReportCase, ReportCase) revise({
+    required String id,
+    required Report report,
+  }) {
+    final retired = _move(
+      {ApprovalStatus.refused},
+      ApprovalStatus.revised,
+      'revise',
+    );
     if (id == this.id) {
       throw ArgumentError.value(id, 'id', 'A revision needs a new id');
     }
@@ -130,7 +141,7 @@ final class ReportCase {
         'A revision must change it',
       );
     }
-    return ReportCase.found(id: id, report: report);
+    return (retired, ReportCase.found(id: id, report: report));
   }
 
   ReportCase received() =>
