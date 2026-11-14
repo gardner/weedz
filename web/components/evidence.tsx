@@ -191,11 +191,7 @@ export default function Evidence({
           it does not establish a new weed locality.
         </small>
       </div>
-      <ReviewHistory
-        key={`${photo.review_status}|${photo.review_reviewer}|${photo.review_note}`}
-        runId={runId}
-        photo={photo}
-      />
+      <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />
     </article>
   );
 }

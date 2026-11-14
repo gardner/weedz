@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from collections import Counter
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -116,6 +117,7 @@ class Store:
                 (run_id,),
             ).fetchall()
         decisions = reviewer_decisions(events)
+        counts = Counter(event["photo_id"] for event in events)
         return [
             dict(
                 json.loads(row["record"]),
@@ -125,6 +127,7 @@ class Store:
                 review_reviewer=row["review_reviewer"],
                 reviewer_decisions=decisions.get(row["id"], {}),
                 disputed=len(set(decisions.get(row["id"], {}).values())) > 1,
+                review_count=counts[row["id"]],
             )
             for row in rows
         ]

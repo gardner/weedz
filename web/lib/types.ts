@@ -28,6 +28,7 @@ export type Photo = {
   review_reviewer: string;
   reviewer_decisions: Record<string, Status>;
   disputed: boolean;
+  review_count: number;
   scores: {
     best_species?: string;
     similarity?: number;

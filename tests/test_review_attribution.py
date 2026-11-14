@@ -39,6 +39,7 @@ def test_reviewers_holding_different_decisions_mark_the_photo_disputed(tmp_path:
     [photo] = store.photos("run")
     assert photo["disputed"] is True
     assert photo["reviewer_decisions"] == {"Ana": "confirmed", "Ben": "rejected"}
+    assert photo["review_count"] == 2
 
 
 def test_a_reviewer_changing_their_own_mind_is_not_a_dispute(tmp_path: Path) -> None:

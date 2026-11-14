@@ -28,6 +28,7 @@ try {
     review_reviewer: "Ben",
     reviewer_decisions: { Ana: "confirmed", Ben: "rejected" },
     disputed: true,
+    review_count: 3,
     scores: { best_species: "Clematis vitalba" },
     photo_license: "cc0",
     coordinate_status: "missing",
