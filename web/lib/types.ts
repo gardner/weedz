@@ -1,5 +1,6 @@
 import type { Finding } from "./findings";
 import type { Judged } from "./judgements";
+import type { Limits } from "./limits";
 import type { Referral } from "./referrals";
 
 export type Status = "unreviewed" | "confirmed" | "rejected" | "uncertain";
@@ -42,6 +43,7 @@ export type Photo = Judged & {
   encounter_size?: number;
   encounter_linkable?: boolean;
   reference_comparison?: Record<string, ReferenceComparison>;
+  limits?: Limits;
   findings?: Finding[];
   referrals?: Referral[];
   scores: {

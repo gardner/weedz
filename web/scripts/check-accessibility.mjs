@@ -98,6 +98,27 @@ try {
     latitude: -41.2,
     longitude: 173.3,
     positional_accuracy_m: 10,
+    limits: {
+      search_area: {
+        status: "searchable",
+        reason: "",
+        centre: [-41.2, 173.3],
+        centre_is: "observation point (where the photographer was), not a plant point",
+        accuracy_m: 10,
+        allowance_m: 100,
+        allowance_reason: "100 m declared allowance for camera-to-plant distance",
+        radius_m: 110,
+        site_context: true,
+      },
+      dates: {
+        photographed: "2024-12-30",
+        uploaded: "2024-12-31",
+        screened: "2024-12-31",
+        days_photo_to_upload: 1,
+        days_photo_to_screening: 1,
+        current_presence: "Shows the plant was there on 2024-12-30, not that it is there now",
+      },
+    },
     attribution: "Test fixture",
     source_url: "https://www.inaturalist.org/observations/1",
     findings: [
