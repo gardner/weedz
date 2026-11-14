@@ -55,6 +55,7 @@ try {
   photos = [
     photo("a", 0.3, comparable),
     photo("b", 0.2, { comparable: false, reason: "Photo location is obscured or missing" }),
+    photo("c", 0.1, { comparable: false, reason: "Not queried in this reference snapshot" }),
   ];
   await page.reload();
   await known.getByText("Nearest DOC record of Gorse: 2.3 km (2015)").waitFor();
@@ -62,6 +63,9 @@ try {
   assert.match(await known.textContent(), /not evidence of a new locality/i);
   await page.locator(".photo-row").nth(1).click();
   await known.getByText("Not compared: Photo location is obscured or missing").waitFor();
+  await page.locator(".photo-row").nth(2).click();
+  await known.getByText("Not compared: Not queried in this reference snapshot").waitFor();
+  assert.doesNotMatch(await known.textContent(), /No DOC record/);
   console.log("Known records are shown with distance, year and snapshot date.");
 } finally {
   await browser.close();

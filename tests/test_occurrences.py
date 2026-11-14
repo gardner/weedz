@@ -1,5 +1,6 @@
 """Reference records are a declared, dated snapshot; comparisons never overstate precision."""
 
+import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +16,7 @@ from weedz.discovery.occurrences import (
     fetch_snapshot,
     latest_snapshot,
     record_from_gbif,
+    with_references,
 )
 
 
@@ -112,7 +114,7 @@ def test_comparison_reports_nearest_record_and_nearby_years() -> None:
         record(3, -41.4637, 1990),  # about 22 km
         record(4, -41.2647, 2020, status="ABSENT"),
     ]
-    result = compare(photo(), records)
+    result = compare(photo(), records, TAXON_KEYS)
     gorse = result["Ulex europaeus"]
     assert gorse["comparable"] is True
     assert gorse["nearest"]["gbif_key"] == 1
@@ -132,14 +134,34 @@ def test_unknown_or_imprecise_photo_locations_are_not_comparable() -> None:
         photo(positional_accuracy_m=None),
         photo(positional_accuracy_m=6_000.0),
     ]:
-        gorse = compare(location, [record(1, -41.2737, 2015)])["Ulex europaeus"]
+        gorse = compare(location, [record(1, -41.2737, 2015)], TAXON_KEYS)["Ulex europaeus"]
         assert gorse["comparable"] is False
         assert gorse["reason"]
 
 
 def test_records_at_the_same_distance_do_not_break_the_comparison() -> None:
     twins = [record(1, -41.2737, 2015), record(2, -41.2737, 2016)]
-    assert compare(photo(), twins)["Ulex europaeus"]["within_radius"] == 2
+    assert compare(photo(), twins, TAXON_KEYS)["Ulex europaeus"]["within_radius"] == 2
+
+
+def test_species_the_snapshot_never_queried_are_not_reported_as_absent() -> None:
+    queried = {"Ulex europaeus": TAXON_KEYS["Ulex europaeus"]}
+    result = compare(photo(), [record(1, -41.2737, 2015)], queried)
+    assert result["Ulex europaeus"]["nearest"]["gbif_key"] == 1
+    for species in ["Clematis vitalba", "Cortaderia selloana"]:
+        assert result[species] == {
+            "comparable": False,
+            "reason": "Not queried in this reference snapshot",
+        }
+
+
+def test_metadata_identifies_the_exact_snapshot_file(tmp_path: Path) -> None:
+    at = datetime(2026, 11, 14, tzinfo=UTC)
+    path = fetch_snapshot(tmp_path, httpx.Client(transport=transport({}, [])), at, pause=0)
+    metadata, _ = with_references(tmp_path, [])
+    assert metadata is not None
+    assert metadata["snapshot_file"] == path.name
+    assert metadata["snapshot_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_references_command_writes_a_snapshot_under_the_pilot_dir(

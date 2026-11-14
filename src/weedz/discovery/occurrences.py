@@ -5,6 +5,7 @@ comparison reports distances and dates to known records; it never claims a new
 locality, and a missing record is not an absence.
 """
 
+import hashlib
 import json
 import math
 import time
@@ -38,6 +39,7 @@ LIMITATIONS = [
     "Distances are between reported points; neither point locates a plant boundary",
 ]
 SEARCH = "https://api.gbif.org/v1/occurrence/search"
+NOT_QUERIED = "Not queried in this reference snapshot"
 
 
 def record_from_gbif(raw: dict[str, Any], species: str) -> dict[str, Any] | None:
@@ -102,9 +104,14 @@ def fetch_snapshot(root: Path, client: httpx.Client, at: datetime, pause: float 
     return destination
 
 
-def latest_snapshot(root: Path) -> dict[str, Any] | None:
+def _latest_path(root: Path) -> Path | None:
     paths = sorted((root / "references").glob("doc-weeds-*.json"))
-    return json.loads(paths[-1].read_text()) if paths else None
+    return paths[-1] if paths else None
+
+
+def latest_snapshot(root: Path) -> dict[str, Any] | None:
+    path = _latest_path(root)
+    return json.loads(path.read_text()) if path else None
 
 
 def _distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -161,22 +168,43 @@ def _compare_species(photo: dict[str, Any], records: list[dict[str, Any]]) -> di
     }
 
 
-def compare(photo: dict[str, Any], records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Per watchlist species: distance and dates of known records near this photo."""
-    reason = _not_comparable(photo)
+def _compare_one(
+    photo: dict[str, Any], records: list[dict[str, Any]], species: str, reason: str | None
+) -> dict[str, Any]:
     if reason:
-        return {species: {"comparable": False, "reason": reason} for species in SPECIES}
+        return {"comparable": False, "reason": reason}
+    return _compare_species(photo, [row for row in records if row["species"] == species])
+
+
+def compare(
+    photo: dict[str, Any], records: list[dict[str, Any]], queried: dict[str, int]
+) -> dict[str, dict[str, Any]]:
+    """Per watchlist species: distance and dates of known records near this photo.
+
+    Only species the snapshot queried are compared; for the rest, a missing record
+    would say nothing, so they are marked not comparable.
+    """
+    photo_reason = _not_comparable(photo)
     return {
-        species: _compare_species(photo, [row for row in records if row["species"] == species])
+        species: _compare_one(
+            photo, records, species, photo_reason if species in queried else NOT_QUERIED
+        )
         for species in SPECIES
     }
 
 
 def with_references(root: Path, photos: list[dict[str, Any]]) -> tuple[dict | None, list[dict]]:
     """The latest snapshot's metadata, and photos annotated with their comparison."""
-    snapshot = latest_snapshot(root)
-    if snapshot is None:
+    path = _latest_path(root)
+    if path is None:
         return None, photos
-    records = snapshot["records"]
-    metadata = {key: value for key, value in snapshot.items() if key != "records"}
-    return metadata, [photo | {"reference_comparison": compare(photo, records)} for photo in photos]
+    content = path.read_bytes()
+    snapshot = json.loads(content)
+    records, queried = snapshot["records"], snapshot["taxon_keys"]
+    metadata = {key: value for key, value in snapshot.items() if key != "records"} | {
+        "snapshot_file": path.name,
+        "snapshot_sha256": hashlib.sha256(content).hexdigest(),
+    }
+    return metadata, [
+        photo | {"reference_comparison": compare(photo, records, queried)} for photo in photos
+    ]
