@@ -55,17 +55,28 @@ def app_config(env: Mapping[str, str], *, release: bool) -> dict[str, str]:
         value = env.get(name, "")
         if not value:
             continue
-        parsed = urlsplit(value)
-        if (
-            parsed.scheme != "https"
-            or not parsed.hostname
-            or parsed.username
-            or parsed.password
-            or parsed.fragment
-        ):
-            raise BuildError(f"{name} must be an HTTPS URL without credentials or fragment")
+        validate_url(value, name)
         result[name] = value
     return result
+
+
+def validate_url(value: str, name: str) -> None:
+    try:
+        parsed = urlsplit(value)
+        _ = parsed.port  # Validate non-numeric/out-of-range ports without exposing the input.
+    except ValueError:
+        raise BuildError(f"{name} must be a valid HTTPS URL") from None
+    invalid = (
+        parsed.scheme != "https",
+        not parsed.hostname,
+        bool(parsed.username),
+        bool(parsed.password),
+        bool(parsed.fragment),
+        bool(re.search(r"\s", value)),
+        name == "WEEDZ_INTAKE_BASE_URL" and bool(parsed.query),
+    )
+    if any(invalid):
+        raise BuildError(f"{name} must be HTTPS without credentials/fragment or an intake query")
 
 
 def decode_secret(env: Mapping[str, str], name: str) -> bytes:

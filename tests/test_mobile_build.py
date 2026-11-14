@@ -159,3 +159,18 @@ def test_ios_preparation_and_cleanup_with_a_matching_private_identity(
     assert not (root / "mobile/ios/Flutter/Signing.xcconfig").exists()
     assert ["security", "list-keychains", "-d", "user", "-s", "original.keychain-db"] in calls
     assert any(args[1] == "delete-keychain" for args in calls)
+
+
+def test_urls_refuse_bad_ports_ipv6_and_intake_queries_without_echoing_values() -> None:
+    for value in (
+        "https://pilot.invalid:wrong",
+        "https://pilot.invalid:99999",
+        "https://[malformed-private",
+        "https://pilot.invalid?credential=private",
+        "https://pilot.invalid\n/private",
+    ):
+        with pytest.raises(BuildError, match="WEEDZ_INTAKE_BASE_URL") as error:
+            app_config({"WEEDZ_INTAKE_BASE_URL": value}, release=False)
+        assert value not in str(error.value)
+    contact = {"WEEDZ_DELETION_REQUEST_URL": "https://pilot.invalid/form?type=delete"}
+    assert app_config(contact, release=False) == contact
