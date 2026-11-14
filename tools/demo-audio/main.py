@@ -23,7 +23,11 @@ def main() -> None:
     parser.add_argument("--text-file", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--reference-audio", type=Path)
+    parser.add_argument("--reference-text-file", type=Path)
     args = parser.parse_args()
+    if (args.reference_audio is None) != (args.reference_text_file is None):
+        parser.error("Reference audio and its exact transcript must be provided together")
     if args.output.exists():
         parser.error("Choose a new output name; existing audio is never overwritten")
     source = args.source.resolve()
@@ -52,6 +56,13 @@ def main() -> None:
         "--output",
         str(args.output.resolve()),
     ]
+    if args.reference_audio is not None:
+        command += [
+            "--ref-audio",
+            str(args.reference_audio.resolve()),
+            "--ref-text",
+            args.reference_text_file.read_text().strip(),
+        ]
     subprocess.run(command, env={**os.environ, "CUDA_VISIBLE_DEVICES": "0"}, check=True)
     metadata = {
         "model": "BreezeBlue/Breeze-TTS-2",
@@ -63,6 +74,7 @@ def main() -> None:
         "cfg_scale": 4,
         "fast_all": False,
         "purpose": "Non-commercial Weedz project demonstration",
+        "reference_audio": str(args.reference_audio) if args.reference_audio else None,
         "packages": {
             name: importlib.metadata.version(name)
             for name in ("torch", "torchaudio", "qwen-tts", "transformers", "soundfile")

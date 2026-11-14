@@ -5,6 +5,7 @@ description = "Isolated Breeze narration tooling for the non-commercial Weedz de
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "faster-whisper>=1.2.1",
     "numpy>=2.5.4",
     "qwen-tts>=0.1.1",
     "soundfile>=0.14.0",

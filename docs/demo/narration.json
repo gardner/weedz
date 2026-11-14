@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "duration_seconds": 180,
+  "scenes": [
+    {
+      "id": "scene-01",
+      "start": 0,
+      "end": 18,
+      "visual": "A source-eligible ordinary photo; gently reveal background vegetation",
+      "narration": "What else did this photograph capture? A bird, a walk, a day by the coast—and perhaps a plant worth a second look."
+    },
+    {
+      "id": "scene-02",
+      "start": 18,
+      "end": 42,
+      "visual": "Photo → overlapping windows → shortlist animation",
+      "narration": "Most photographs are taken for something other than the plants in the background. Weedz explores whether those overlooked details can help people investigate invasive weeds. The screen examines the whole photograph and overlapping smaller views, comparing them with a watchlist and with lookalikes. Here, the targets include old man's beard, pampas and gorse. The result is a shortlist for a person to check, not a verdict about a plant."
+    },
+    {
+      "id": "scene-03",
+      "start": 42,
+      "end": 65,
+      "visual": "Real review desk, image and candidate window; include a lookalike/false alarm",
+      "narration": "This is the real review desk. A specialist can examine the original photograph and the suggested region together, rather than take a score on trust. A native plant may resemble an invasive one. An image may be too distant, blurred or incomplete to decide. The reviewer can record what the evidence supports—and leave uncertainty visible. The score helps order the work; it is not a confidence percentage."
+    },
+    {
+      "id": "scene-04",
+      "start": 65,
+      "end": 93,
+      "visual": "Real Flutter approval widgets, clearly marked phone prototype",
+      "narration": "These phone screens are a working interface prototype. The architecture is designed to screen a library on the phone and keep private photographs there. The person should decide whether each individual report is worth sharing. Photo-library access and report approval are separate steps. Native phone inference still needs to pass its performance and parity checks, so these screens demonstrate the controls, not a finished phone detector."
+    },
+    {
+      "id": "scene-05",
+      "start": 93,
+      "end": 120,
+      "visual": "Interact with actual approval controls; remove photo/location",
+      "narration": "Before approving, see the information that would be sent. Choose whether to attach a cropped photo, which licence applies, and whether to keep or remove its exact location. The approval screen shows the report itself, including its uncertainty and credit. Nothing about finding a possible weed should require sending the rest of your photographs. The aim is a useful contribution with a clear, deliberate choice."
+    },
+    {
+      "id": "scene-06",
+      "start": 120,
+      "end": 144,
+      "visual": "Device → intake → specialist animation; connect to real review footage",
+      "narration": "Only an approved report follows the contribution path. A separate server intake records its source, model and consent. The intended workflow connects that contribution with specialist review, while keeping a machine suggestion separate from a confirmed finding. Withdrawal matters too: the server removes the report's content and remembers that it must not be brought back by a late upload or retry."
+    },
+    {
+      "id": "scene-07",
+      "start": 144,
+      "end": 166,
+      "visual": "Current measured pilot facts and remaining work",
+      "narration": "The pilot compared thirty photographs and thirty-nine source-labelled lookalike examples. Those small convenience samples revealed failures as well as promising suggestions. They help choose the next experiment; they do not establish a detection rate for everyone's library. The next proof is useful findings, checked by people, at a manageable review cost. That is why the project keeps its evidence, limitations and human decisions together."
+    },
+    {
+      "id": "scene-08",
+      "start": 166,
+      "end": 180,
+      "visual": "Source/photo/audio credits and project URL",
+      "narration": "Can an overlooked background become a reason to investigate? Weedz is open-source work for conservation. Help test the question, review the evidence, and build a careful path from an ordinary photograph to a useful lead."
+    }
+  ]
+}
