@@ -1,4 +1,5 @@
 import type { Finding } from "./findings";
+import type { Dimension, Judgements } from "./judgements";
 
 export type Status = "unreviewed" | "confirmed" | "rejected" | "uncertain";
 export type Run = {
@@ -41,6 +42,8 @@ export type Photo = {
   encounter_linkable?: boolean;
   reference_comparison?: Record<string, ReferenceComparison>;
   findings?: Finding[];
+  judgements?: Judgements;
+  judgement_disputes?: Dimension[];
   scores: {
     best_species?: string;
     similarity?: number;
@@ -116,17 +119,23 @@ export type ReviewEffort = {
   unmeasured_decisions: number;
   measured_findings?: number;
   unmeasured_findings?: number;
+  measured_judgements?: number;
+  unmeasured_judgements?: number;
 };
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
-/** Measured time on decisions and findings; untimed ones are listed, never counted as zero. */
+/** Measured time on decisions, findings and judgements; untimed ones are listed, never zero. */
 export function effortNote(effort: ReviewEffort | undefined): string {
   const untimed = [
     [effort?.unmeasured_decisions ?? 0, "decision"],
     [effort?.unmeasured_findings ?? 0, "finding"],
+    [effort?.unmeasured_judgements ?? 0, "judgement"],
   ] as const;
-  const timed = (effort?.measured_decisions ?? 0) + (effort?.measured_findings ?? 0);
+  const timed =
+    (effort?.measured_decisions ?? 0) +
+    (effort?.measured_findings ?? 0) +
+    (effort?.measured_judgements ?? 0);
   if (!effort || (!timed && untimed.every(([count]) => !count))) return "No review time yet";
   return [
     `${effort.total_minutes} min measured review time`,

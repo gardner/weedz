@@ -142,8 +142,8 @@ intended for local development, not shared public hosting.
    scores. An audit counts as blind only if it is that auditor's first answer
    for the photo, and nobody reviewed the photo before it without having audited
    it first. The app lets a sampled photo be reviewed only after the reviewer's
-   own audit, so any other earlier review or recorded finding (for example, one
-   made before the audit sample existed) means the suggestion may have been seen. Other audits
+   own audit, so any other earlier review, recorded finding or judgement (for
+   example, one made before the audit sample existed) means the suggestion may have been seen. Other audits
    are left out of the findings and reported as `not_blind`, and the audit view
    disables the answers once you have audited a photo. Simply opening a photo is
    not recorded, so viewing outside this workflow cannot be detected. The
@@ -182,6 +182,40 @@ intended for local development, not shared public hosting.
    `GET` and `POST /runs/{run}/photos/{photo}/findings` read and append them.
    A box is a reviewer's outline, not a segmentation, and nothing can be edited
    or withdrawn yet.
+7. **Judge identity, location, history and novelty separately.** Under the
+   findings, *Separate judgements* has one row per dimension, each with its own
+   value, note and save button. Saving one changes neither the others nor the
+   suggestion decision:
+
+   | Dimension | Values |
+   | --- | --- |
+   | Identity | `confirmed`, `disputed`, `unresolved`, `unassessed` |
+   | Location usefulness | `usable`, `too_imprecise`, `camera_point_only`, `unknown`, `unassessed` |
+   | Historical relevance | `recent_evidence`, `historical_evidence`, `no_longer_present`, `date_unknown`, `unassessed` |
+   | Novelty | `already_recorded`, `new_in_photo`, `absent_from_references`, `earlier_than_records`, `verified_new_locality`, `unassessed` |
+
+   Novelty is graded so claims stay proportionate. *Newly noticed in this
+   photo* says nothing about records. *Absent from the reference records* and
+   *earlier than the available records* are relative to the loaded DOC
+   snapshot. Only *independently verified new locality* claims a new locality.
+   It needs a note giving the verification evidence (who checked, how and
+   when). An unresolved identity needs a note saying what evidence would
+   resolve it, and *reported no longer present* needs a note saying who reported
+   it gone and when. Missing notes are rejected (422). Claims the photo cannot
+   support are disabled in the app, with the reason, and refused by the API
+   (409): a usable location needs public coordinates; recent or historical
+   evidence and "earlier than records" need a photo date; and novelty against
+   records needs a reference snapshot the photo can be compared with. Without
+   one, novelty stays unassessed. Judgements are append-only, attributed and
+   timed (`measured_judgements`, `unmeasured_judgements`,
+   `minutes_by_judgement_dimension` and `unmeasured_incidental_judgements` in
+   `review_effort`). Each reviewer's latest judgement stands. `unassessed`
+   withdraws it, and no judgement means unassessed, never negative. Each photo
+   in the run detail and export carries `judgements` (per dimension, each
+   reviewer's standing value, note and time) and `judgement_disputes` (the
+   dimensions where standing values differ, shown as "Reviewers disagree").
+   The export's `review_history` carries every judgement event.
+   `GET` and `POST /runs/{run}/photos/{photo}/judgements` read and append them.
 
 Acquisition, screening and export are separate Temporal activities, each with
 timeouts, heartbeats and up to three attempts. Query snapshots and cached photos
@@ -231,7 +265,7 @@ Everything generated is ignored by Git:
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
 | `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, pinned model, weights, library versions, preprocessing and window geometry; safe to delete |
 | `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
-| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits and findings |
+| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings and judgements |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 
@@ -277,6 +311,10 @@ first audit found 42 failures.
 The findings check records a corrected and a missed plant, drawing one box by
 dragging on the photo and typing another by keyboard, and the accessibility
 check audits the finding form open with a box error showing.
+The judgements check saves identity and a noted verified new locality
+separately, and checks that per-dimension disagreement is shown. It also checks
+that unsupported claims are disabled with a reason. The accessibility check
+audits the judgements with a required-note hint showing.
 The smoke check is read-only against a completed local pilot and verifies filters,
 source-image loading, window toggling, export and mobile layout.
 
