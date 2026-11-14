@@ -140,3 +140,31 @@ def test_a_small_sample_spreads_across_years_and_seasons_at_once() -> None:
     chosen = select_across_strata(strata, 4)
     assert len({(p.observed_on or "")[:4] for p in chosen}) == 4
     assert len({(p.observed_on or "")[5:7] for p in chosen}) == 4
+
+
+def test_a_default_period_sample_reaches_both_ends_and_every_season() -> None:
+    months = {"DJF": "01", "MAM": "04", "JJA": "07", "SON": "10"}
+    windows = season_windows(date(2010, 1, 1), date(2024, 12, 31))
+    strata = {
+        label: [candidate(number, f"{label[:4]}-{months[label[5:]]}-15", label)]
+        for number, (label, _first, _last) in enumerate(windows, start=1)
+    }
+    chosen = select_across_strata(strata, 12)
+    years = {int((p.observed_on or "")[:4]) for p in chosen}
+    assert min(years) <= 2012 and max(years) >= 2022
+    assert {p.observer[5:] for p in chosen} == set(months)
+
+
+def test_recent_runs_may_end_before_the_stratified_default_start() -> None:
+    assert RunSpec(sampling="recent", before=date(2009, 6, 30)).sampling == "recent"
+    saved = {"limit_per_region": 12, "controls_per_species": 1, "before": "2009-06-30"}
+    assert RunSpec.from_saved(saved).before == date(2009, 6, 30)
+    with pytest.raises(ValidationError):
+        RunSpec(before=date(2009, 6, 30))
+
+
+def test_stratified_runs_start_no_earlier_than_inaturalist() -> None:
+    assert RunSpec(after=date(2008, 1, 1)).after == date(2008, 1, 1)
+    with pytest.raises(ValidationError):
+        RunSpec(after=date(2007, 12, 31))
+    assert RunSpec(sampling="recent", after=date(1995, 1, 1)).after == date(1995, 1, 1)

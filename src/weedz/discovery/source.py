@@ -162,6 +162,7 @@ class Inaturalist:
         """Query each season window, then download only the round-robin sample."""
         strata: dict[str, list[Photo]] = {}
         for label, first, last in season_windows(spec.after, spec.before):
+            progress(f"Querying {region}: {label}")
             snapshot = self.root / "runs" / run_id / f"{region}-animals-{label}.json"
             window = {"taxon_id": 1, "d1": first.isoformat(), "d2": last.isoformat()}
             result = self.query(snapshot, base | window)

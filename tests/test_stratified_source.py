@@ -82,3 +82,23 @@ def test_recent_sampling_keeps_the_original_single_query(
     client.collect("run", RunSpec(controls_per_species=0, sampling="recent"))
     assert len(queries) == 2
     assert all("d1" not in q for q in queries)
+
+
+def test_every_season_query_is_preceded_by_a_heartbeat(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(source.time, "sleep", lambda _seconds: None)
+    events: list[str] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        events.append(f"query {request.url.params.get('d1')}")
+        return httpx.Response(200, json={"results": []})
+
+    client = Inaturalist(tmp_path)
+    client.client = httpx.Client(transport=httpx.MockTransport(handle))
+    spec = RunSpec(controls_per_species=0, after=date(2022, 1, 1), before=date(2023, 12, 31))
+    client.collect("run", spec, progress=lambda message: events.append(f"progress {message}"))
+
+    queries = [index for index, event in enumerate(events) if event.startswith("query")]
+    assert len(queries) == 2 * 9  # two regions, nine season windows
+    assert all(events[index - 1].startswith("progress Querying") for index in queries)

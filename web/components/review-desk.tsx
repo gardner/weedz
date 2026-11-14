@@ -243,6 +243,7 @@ export default function ReviewDesk() {
                 Photographed on or after
                 <input
                   type="date"
+                  min="2008-01-01"
                   value={after}
                   onChange={(event) => setAfter(event.target.value)}
                 />
@@ -265,6 +266,7 @@ export default function ReviewDesk() {
                   limit > 50 ||
                   !before ||
                   !after ||
+                  after < "2008-01-01" ||
                   after > before
                 }
                 onClick={start}

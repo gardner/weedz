@@ -41,24 +41,37 @@ def _stable(photo: Photo) -> bytes:
     return hashlib.sha256(f"weedz-sample-v1|{photo.observation_id}".encode()).digest()
 
 
-def _diagonal(keys: list[str]) -> list[str]:
-    """Order "YEAR-SEASON" strata so consecutive picks change both year and season.
+def _spread(count: int) -> list[int]:
+    """Indices 0..count-1 in bit-reversed (van der Corput) order: 0, 8, 4, 12, 2, ...
 
-    Walking diagonals of the year x season grid means the first few picks already span
-    several years and every season, instead of exhausting the earliest year first.
+    Every prefix is spread evenly over the whole range, so a short sample already
+    reaches both ends and the middle of a long period.
+    """
+    bits = max(1, (count - 1).bit_length())
+    reversed_bits = (int(f"{index:0{bits}b}"[::-1], 2) for index in range(1 << bits))
+    return [index for index in reversed_bits if index < count]
+
+
+def _stratum_order(keys: list[str]) -> list[str]:
+    """Order "YEAR-SEASON" strata so every prefix spans the period and the seasons.
+
+    Each round visits every year once, in spread order, giving each year a different
+    season. The shift by `rank // 4` stops seasons tracking a quarter of the period,
+    and four rounds visit every year x season cell exactly once.
     """
     years = sorted({key.split("-")[0] for key in keys})
+    seasons = list(SEASONS)
     order = {
-        f"{years[(diagonal + index) % len(years)]}-{season}": (diagonal, index)
-        for diagonal in range(len(years))
-        for index, season in enumerate(SEASONS)
+        f"{years[index]}-{seasons[(rank + rank // 4 + round_) % 4]}": (round_, rank)
+        for round_ in range(len(seasons))
+        for rank, index in enumerate(_spread(len(years)))
     }
-    return sorted(keys, key=lambda key: order.get(key, (len(years), 0)))
+    return sorted(keys, key=lambda key: order.get(key, (len(seasons), 0)))
 
 
 def select_across_strata(strata: dict[str, list[Photo]], limit: int) -> list[Photo]:
     """Round-robin across strata, at most one photo per observer per day."""
-    queues = {key: sorted(strata[key], key=_stable) for key in _diagonal(list(strata))}
+    queues = {key: sorted(strata[key], key=_stable) for key in _stratum_order(list(strata))}
     chosen: list[Photo] = []
     visits: set[tuple[str, str | None]] = set()
     while len(chosen) < limit and any(queues.values()):

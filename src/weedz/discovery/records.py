@@ -12,6 +12,8 @@ SPECIES = {
     "Ulex europaeus": "Gorse",
 }
 TASK_QUEUE = "weedz-discovery-v1"
+# The earliest useful start: bounds stratified runs to four season queries per year since.
+INATURALIST_FOUNDED = date(2008, 1, 1)
 ReviewStatus = Literal["unreviewed", "confirmed", "rejected", "uncertain"]
 
 
@@ -29,7 +31,12 @@ class RunSpec(BaseModel):
         return cls.model_validate({"sampling": "recent"} | saved)
 
     @model_validator(mode="after")
-    def period_is_not_empty(self) -> "RunSpec":
+    def stratified_period_is_bounded(self) -> "RunSpec":
+        """Only stratified runs query by period; recent runs ignore `after`."""
+        if self.sampling != "stratified":
+            return self
+        if self.after < INATURALIST_FOUNDED:
+            raise ValueError("The sampling period cannot start before iNaturalist (2008)")
         if self.after > self.before:
             raise ValueError("The sampling period must start on or before its end")
         return self
