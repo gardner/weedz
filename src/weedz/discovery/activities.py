@@ -9,6 +9,10 @@ from typing import Any
 
 from temporalio import activity
 
+from weedz.discovery.audit import audit_sample, summarize_audit
+from weedz.discovery.effort import summarize_effort
+from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
+from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
@@ -85,18 +89,35 @@ class Activities:
         self.store.status(payload["run_id"], "failed", payload["error"])
 
 
+def review_history(store: Store, run_id: str, photos: list[dict]) -> list[dict]:
+    return [
+        dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"])) for photo in photos
+    ]
+
+
 def export(store: Store, run_id: str) -> dict:
     run = next((item for item in store.runs() if item["id"] == run_id), None)
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
+    references, photos = with_references(store.root, store.photos(run_id))
+    history = review_history(store, run_id, photos)
     return {
         "schema": 1,
         "run": run,
-        "photos": store.photos(run_id),
-        "review_history": [
-            dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"]))
-            for photo in store.photos(run_id)
+        "photos": with_encounters(photos),
+        "references": references,
+        "encounters": summarize(photos, encounter_groups(photos)),
+        "review_history": history,
+        "review_effort": summarize_effort(photos, history),
+        "audit": summarize_audit(
+            photos,
+            audit_sample(run_id, photos),
+            store.latest_audits(run_id),
+            store.latest_audits(run_id, blind=False),
+        ),
+        "audit_history": [
+            dict(photo_id=photo["id"], events=store.audits(run_id, photo["id"])) for photo in photos
         ],
         "source_snapshots": {
             path.name: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -112,6 +133,12 @@ def export(store: Store, run_id: str) -> dict:
             "Windows are search regions, not plant boundaries; no segmentation model used",
             "Reference photos are separate; animal photos have no background weed ground truth",
             "Observation coordinates locate the observation, not a confirmed weed",
-            "No novelty comparison, infestation area estimate or external publication performed",
+            "Known-record comparison is distance and date only, not a novelty verdict; "
+            "no infestation area estimate or external publication performed",
+            "Site-visit groups link photos by observer, date and distance; not the same plant",
+            (
+                "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "
+                "are ungrouped, not counted as independent visits"
+            ),
         ],
     }

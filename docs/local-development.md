@@ -48,8 +48,9 @@ Non-default connections use `discover --api-url` and `--temporal-address`.
 
 Stop the development stack with Ctrl+C. Restart with the same `--pilot-dir` to
 resume workflow history and retain photos and decisions. This stack binds its
-services locally and provides no authentication or multi-user reviewer identity;
-it is intended for local development, not shared public hosting.
+services locally and provides no authentication. Reviewers type their name, which is
+recorded with each decision as attribution, not verified identity. The stack is
+intended for local development, not shared public hosting.
 
 ## What the workflow actually does
 
@@ -85,8 +86,46 @@ it is intended for local development, not shared public hosting.
 5. **Export and review.** Write a reproducible run manifest, then mark screening
    completed. Next.js exposes sources, windows, dates, location uncertainty,
    reference separation, filters and decisions. Confirm/reject/uncertain decisions
-   and notes append local review history; activity retries preserve them. The
-   API export includes current decisions, while the completion manifest records
+   and notes append local review history with the reviewer's name; activity
+   retries preserve them. When reviewers' latest decisions differ, the photo is
+   marked "Reviewers disagree" with each person's decision. Decisions saved before
+   attribution existed show "Reviewer not recorded". Each decision also records
+   active review time on that photo. Time is counted only while the tab is
+   visible, and it stops counting after 10 minutes without input. The export's
+   `review_effort` reports minutes by decision and reviewer, and incidental minutes
+   per "Species visible" photo. Untimed earlier decisions are listed as unmeasured,
+   never as zero, and any untimed incidental decision withholds the per-photo rate.
+   Photos where reviewers disagree are not counted as "Species visible".
+   Confirmation is not a useful-finding measure. The **Audit sample** view lists
+   a fixed random quarter of incidental photos, chosen from run and photo ids so
+   screening rank plays no part. It hides the suggestion, search window and
+   scores, and asks "Is any watchlist weed visible?". Audits are stored apart
+   from suggestion reviews, and each auditor's blind finding is kept. A photo
+   counts as a found weed if any auditor's blind finding names a species, and
+   photos where auditors' findings differ are counted as disputed. A sampled
+   photo is held out of each reviewer's ranked Incidental queue until that
+   reviewer has audited it (with no name entered, every sampled photo is held),
+   and each view keeps its own open photo, so no auditor sees its suggestion
+   first. This is a workflow guard on a local, unauthenticated stack, not access
+   control: names are not verified and anyone with the API can still read the
+   scores. An audit counts as blind only if it is that auditor's first answer
+   for the photo, and nobody reviewed the photo before it without having audited
+   it first. The app lets a sampled photo be reviewed only after the reviewer's
+   own audit, so any other earlier review (for example, one made before the
+   audit sample existed) means the suggestion may have been seen. Other audits
+   are left out of the findings and reported as `not_blind`, and the audit view
+   disables the answers once you have audited a photo. Simply opening a photo is
+   not recorded, so viewing outside this workflow cannot be detected. The
+   sample itself comes from run and photo ids, so it is fixed from the moment a
+   run starts. The run detail gives audit counts and who
+   audited each photo; only the export lists findings.
+   There is no calibrated detection threshold yet, so neither gives a hit or
+   miss verdict. For each found weed the export reports the photo's 1-based
+   rank in the incidental queue (by margin, highest first) out of all incidental
+   photos, and whether the found species was the top suggestion shown. With a
+   small sample this bounds, rather than estimates, how often weeds are ranked
+   low. The
+   API export includes current decisions and site-visit groups, while the completion manifest records
    the state at screening completion.
 
 Acquisition, screening and export are separate Temporal activities, each with
@@ -97,8 +136,31 @@ Byte checksums are verified before inference. Inputs already cached for the firs
 time in a new run are checksummed as that run's input; this is not a publisher
 signature or proof that a previously modified local cache matches the source.
 
-No training, SAM segmentation, automatic augmentation, existing-occurrence
-comparison, public posting or creation of new iNaturalist observations occurs.
+### Compare with known records
+
+```sh
+uv run main.py references
+```
+
+This writes a new, never-overwritten snapshot of the
+[DOC Weeds Observation Data 1983–2023](https://www.gbif.org/dataset/d986e335-a2e3-44f0-9606-845e2eb6081d)
+(CC BY 4.0) to `data/pilot/references/`. It covers each watchlist taxon inside a
+declared Nelson/Tasman bounding box. The snapshot records its retrieval date,
+query, taxon keys and limitations. For each species, the run detail and export
+report the distance and year of the nearest record and the number of records
+within 5 km. This applies only to photos with public coordinates and known
+accuracy within 5 km; other photos are marked not compared, with a reason. The
+evidence panel shows this for the suggested species.
+
+This is a distance comparison, not a novelty verdict. A missing record is not
+an absence, and neither point locates a plant. The 14 November 2026 snapshot
+(51 old man's beard, 4 pampas, 147 gorse records) is sparse near the pilot
+photos: nearest records are typically 7–70 km away and mostly from the late
+1990s. "No nearby record" therefore says more about the reference set than about
+the plant.
+
+No training, SAM segmentation, automatic augmentation, novelty classification,
+public posting or creation of new iNaturalist observations occurs.
 Tiny/background-plant recall, skew tolerance and NZ field accuracy remain unmeasured.
 The six requested references are source-labelled reference evidence, not six
 independent expert-verified segmentation ground truths. Do not report classification
@@ -112,7 +174,8 @@ Everything generated is ignored by Git:
 | --- | --- |
 | `data/pilot/images/` | Downloaded large photo derivatives; source rights remain attached |
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
-| `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, weights, preprocessing and window revision; safe to delete |
+| `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, pinned model, weights, library versions, preprocessing and window geometry; safe to delete |
+| `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
 | `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions and review events |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
@@ -120,7 +183,13 @@ Everything generated is ignored by Git:
 An observation coordinate describes the original observation, not a located weed.
 Obscured/missing coordinates and positional accuracy remain explicit. Native
 lookalikes, indistinct plants and locations with no nearby known weed record are
-still reviewable. “Species visible” is a local reviewer decision about the suggested
+still reviewable. Photos by the same observer on the same observed date, with public coordinates
+within 250 m once both accuracy radii are allowed for, form one site visit. The
+queue and export show the group, and the stats count independent visits.
+Obscured, missing or undated records, and photos with unknown positional
+accuracy or accuracy over 250 m, never link, so groups can be too small but are never invented. These
+photos show “Site visit unknown” and are counted as “could not be grouped”,
+never as independent visits. “Species visible” is a local reviewer decision about the suggested
 species in a photo; it does not verify a new locality. Notes can record alternative
 identifications; a structured corrected-species annotation is a subsequent step.
 There is no gold dataset or measured discovery yield until independent reviews

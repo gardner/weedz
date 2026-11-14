@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "source": {
+    "name": "Trail Camera Images of New Zealand Animals (LILA BC)",
+    "metadata_url": "https://storage.googleapis.com/public-datasets-lila/nz-trailcams/trail_camera_images_of_new_zealand_animals_1.00.json.zip",
+    "metadata_version": "1.00",
+    "metadata_created": "2023-12-27",
+    "license": "CDLA-Permissive-1.0",
+    "assessed": "2026-11-14"
+  },
+  "issue": "https://github.com/gardner/weedz/issues/8",
+  "command": "uv run python scripts/assess_trailcams.py <metadata.json>",
+  "summary": {
+    "images": 2453840,
+    "projects": 57,
+    "sites": 3113,
+    "unknown_site_images": 84091,
+    "frames_per_site": {
+      "median": 77,
+      "p90": 1176,
+      "max": 27563
+    },
+    "timestamped": 2280269,
+    "daylight_07_19": 753399,
+    "midday_09_16": 442567,
+    "midday_sites": 1784,
+    "by_year": {
+      "2010": 470,
+      "2011": 296,
+      "2012": 881,
+      "2013": 360,
+      "2014": 702,
+      "2015": 34035,
+      "2016": 28479,
+      "2017": 801,
+      "2018": 71565,
+      "2019": 857966,
+      "2020": 709801,
+      "2021": 180316,
+      "2022": 289304,
+      "2023": 105293
+    },
+    "top_labels": [
+      [
+        "mouse",
+        1223161
+      ],
+      [
+        "possum",
+        166250
+      ],
+      [
+        "rat",
+        134900
+      ],
+      [
+        "robin",
+        107852
+      ],
+      [
+        "cat",
+        94080
+      ],
+      [
+        "stoat",
+        73278
+      ],
+      [
+        "kea",
+        54790
+      ],
+      [
+        "thrush",
+        50188
+      ],
+      [
+        "deer",
+        47277
+      ],
+      [
+        "kiwi",
+        47211
+      ]
+    ]
+  },
+  "visual_sample": {
+    "method": "daytime_sample(): the first 12 projects by sha256(project name), then the first 09:00-16:00 frame from a known site in each by sha256(image id)",
+    "with_substantial_vegetation": 11,
+    "low_light_infrared": 1,
+    "of": 12,
+    "image_ids": [
+      "LC3/pig/997e83ca-a2d9-44a2-96d4-65135fe3675f.JPG",
+      "LCC/deer/293a4948-26e1-4337-b815-1450455abbdd.JPG",
+      "R29/dunnock/91B617FC-A50E-4BFF-A832-DC890FE046A0.JPG",
+      "R20/blackbird/DFC60D8F-2353-4A14-B6B5-D0B4DA9E3090.JPG",
+      "MLP/canada_goose/8b8030a9-ad17-429c-b57d-84eea3f3ef0e.JPG",
+      "KCR/cat/4420191e-d669-4d07-a4c1-21f042d9aeda.JPG",
+      "EFD/mouse/33C0E8BD-35E6-4EC3-8960-4E150FC72638.JPG",
+      "DW2/kereru/677EBA26-6787-4FAB-A58C-ADF1800D073C.JPG",
+      "PS3/robin/5e2383ca-3386-4927-9cee-e673cb587f5c.JPG",
+      "ACC/pheasant/36FE7757-C0D1-4C26-860D-E443F3E7B4C8.JPG",
+      "CCP/sheep/4ead9167-fe58-4be0-8362-bceedb6c74ef.JPG",
+      "ZIK/tui/db0a49dd-8fc6-4621-8a9a-5dc8163a8a74.JPG"
+    ]
+  },
+  "location": "No coordinates published; DOC provides camera coordinates on request, rounded to the nearest 10 km"
+}

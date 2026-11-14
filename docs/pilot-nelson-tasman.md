@@ -27,6 +27,18 @@ native lookalikes and general scene/animal prompts. All three references in each
 region ranked their source-labelled target highest among our target species.
 That is a reference sanity check, not an accuracy estimate for background plants.
 
+The 24 incidental photos are not 24 independent pieces of evidence. Several
+are the same observer's photos from one beach or estuary visit, so they show
+the same background vegetation. Grouping by observer, observed date and public
+coordinates within 250 m (after both accuracy radii) gives **7 independent
+site visits** among the 16 photos that could be checked: three single photos,
+two pairs, one visit of four and one of five
+([#4](https://github.com/gardner/weedz/issues/4)). The other **8 photos could
+not be grouped**: four report no positional accuracy, and four report accuracy
+(282–1,634 m) wider than the 250 m rule. They are reported as unknown, not as independent visits. The
+review app and export show these groups. A group means one visit, not
+necessarily the same plant.
+
 The highest-ranked incidental suggestion was pampas grass in an
 [Australasian gannet photograph](https://www.inaturalist.org/observations/257459474).
 The displayed search window shows bird and sky, an obvious false alarm. A

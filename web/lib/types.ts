@@ -24,7 +24,18 @@ export type Photo = {
   positional_accuracy_m: number | null;
   coordinate_status: string;
   review_status: Status;
+  audit_sample?: boolean;
+  audited?: boolean;
+  auditors?: string[];
   review_note: string;
+  review_reviewer: string;
+  reviewer_decisions: Record<string, Status>;
+  disputed: boolean;
+  review_count: number;
+  encounter_group?: string;
+  encounter_size?: number;
+  encounter_linkable?: boolean;
+  reference_comparison?: Record<string, ReferenceComparison>;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -34,6 +45,92 @@ export type Photo = {
     height?: number;
     species?: { name: string; similarity: number; margin: number; box: number[] }[];
   };
+};
+
+export type ReferenceComparison = {
+  comparable: boolean;
+  reason?: string;
+  nearest?: { gbif_key: number; distance_m: number; year: number | null } | null;
+  within_radius?: number;
+  radius_m?: number;
+};
+
+export type References = { retrieved_at: string; dataset: { title: string } } | null;
+
+/** Distance and date to known records for the suggested species; never a novelty claim. */
+export function referenceNote(photo: Photo, references: References): string {
+  const species = photo.scores.best_species;
+  if (!references) return "No reference snapshot loaded";
+  const comparison = species ? photo.reference_comparison?.[species] : undefined;
+  if (!species || !comparison) return "Awaiting screening";
+  if (!comparison.comparable) return `Not compared: ${comparison.reason}`;
+  const common = names[species] ?? species;
+  if (!comparison.nearest) return `No DOC record of ${common} in the snapshot`;
+  const km = (comparison.nearest.distance_m / 1000).toFixed(1);
+  return `Nearest DOC record of ${common}: ${km} km (${comparison.nearest.year ?? "year unknown"})`;
+}
+
+export function siteVisitNote(photo: Photo): string | null {
+  const others = (photo.encounter_size ?? 1) - 1;
+  if (others < 1) return null;
+  return `Same site visit as ${others} other photo${others === 1 ? "" : "s"}`;
+}
+
+export const unknownSiteVisit =
+  "Site visit unknown: location obscured, missing, imprecise or of unknown accuracy, or date unknown";
+
+/** Describe a photo's site visit; an unchecked visit is unknown, never independent. */
+export function siteVisitSummary(photo: Photo): string {
+  if (photo.encounter_linkable !== true) return unknownSiteVisit;
+  return siteVisitNote(photo) ?? "No other photos from this visit";
+}
+
+/** Audit counts only; per-photo findings are in the export, so the audit view stays blind. */
+export type AuditSummary = {
+  sampled: number;
+  audited: number;
+  remaining: number;
+  weed_found: number;
+  found_as_top_suggestion: number;
+  found_not_top_suggestion: number;
+  disputed: number;
+  not_blind: number;
+};
+
+export type RunDetail = {
+  run: Run;
+  photos: Photo[];
+  review_effort?: ReviewEffort;
+  audit?: AuditSummary;
+  references?: References;
+};
+
+export type ReviewEffort = {
+  total_minutes: number;
+  measured_decisions: number;
+  unmeasured_decisions: number;
+};
+
+export function effortNote(effort: ReviewEffort | undefined): string {
+  if (!effort?.measured_decisions && !effort?.unmeasured_decisions) return "No review time yet";
+  const untimed = effort.unmeasured_decisions;
+  const note = `${effort.total_minutes} min measured review time`;
+  return untimed ? `${note} · ${untimed} decision${untimed === 1 ? "" : "s"} not timed` : note;
+}
+
+export type ReviewEvent = {
+  id: number;
+  reviewer: string;
+  status: Status;
+  note: string;
+  created_at: string;
+};
+
+export const statusLabels: Record<Status, string> = {
+  unreviewed: "Needs review",
+  confirmed: "Species visible",
+  rejected: "Rejected",
+  uncertain: "Uncertain",
 };
 
 export const names: Record<string, string> = {
