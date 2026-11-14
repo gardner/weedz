@@ -136,6 +136,7 @@ def _location(sample: Sample) -> dict[str, Any]:
             "coordinate_status": place.privacy,
             "positional_accuracy_m": place.uncertainty_m,
             "observation_license": licence_code(sample.rights.metadata_license),
+            "consent": consent.model_dump() if (consent := sample.rights.consent) else None,
         },
         "share",
     )

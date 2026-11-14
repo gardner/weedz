@@ -11,7 +11,7 @@ from test_leads import select
 from test_reference import note, reasons
 from test_sharing import photo
 
-from weedz.contract import Sample
+from weedz.contract import Geography, Sample
 from weedz.discovery import package, package_report
 from weedz.discovery.activities import export
 from weedz.discovery.audit import audit_sample
@@ -205,3 +205,12 @@ def test_a_withdrawal_leaves_the_rest_of_the_audit_sample_as_the_review_app_draw
             item | {"consent": ended} if item["id"] == gone else item for item in stored(run_id)
         ]
         assert export(store, "run")["audit"]["sampled"] == len(drawn - {gone})
+
+
+def test_a_withdrawn_reference_example_says_its_location_cannot_be_shared() -> None:
+    record = device_sample(["review", "agencies"], WITHDRAWN_AT).model_copy(
+        update={"geography": Geography(latitude=-41.3, longitude=173.2, uncertainty_m=10)}
+    )
+    (example,) = examples([record])
+    assert example["location"]["shareable"] is False
+    assert "withdrew" in example["location"]["reason"]
