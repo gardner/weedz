@@ -131,6 +131,8 @@ class Store:
             add_missing_column(db, "reviews", "reviewer")
             # Earlier decisions were not timed: NULL means unmeasured, never zero effort.
             add_missing_column(db, "reviews", "effort_seconds", "REAL")
+            # When each photo was last scored; NULL before this was recorded or before screening.
+            add_missing_column(db, "photos", "screened_at", "TEXT")
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -204,6 +206,7 @@ class Store:
             dict(
                 json.loads(row["record"]),
                 scores=json.loads(row["scores"]),
+                screened_at=row["screened_at"],
                 review_status=row["review_status"],
                 review_note=row["review_note"],
                 review_reviewer=row["review_reviewer"],
@@ -220,8 +223,8 @@ class Store:
     def score(self, run_id: str, photo_id: str, scores: dict) -> None:
         with self.connect() as db:
             db.execute(
-                "UPDATE photos SET scores=? WHERE run_id=? AND id=?",
-                (json.dumps(scores), run_id, photo_id),
+                "UPDATE photos SET scores=?, screened_at=? WHERE run_id=? AND id=?",
+                (json.dumps(scores), now(), run_id, photo_id),
             )
 
     def review(

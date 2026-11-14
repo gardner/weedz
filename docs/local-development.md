@@ -207,7 +207,8 @@ intended for local development, not shared public hosting.
    resolve it, and *reported no longer present* needs a note saying who reported
    it gone and when. Missing notes are rejected (422). Claims the photo cannot
    support are disabled in the app, with the reason, and refused by the API
-   (409): a usable location needs public coordinates; recent or historical
+   (409): a usable location needs a search area (public coordinates with a
+   reported accuracy; see *Location and date limits* below); recent or historical
    evidence and "earlier than records" need a photo date; and novelty against
    records needs this photo to have been compared with the snapshot for the
    judged plant's own watchlist species. A free-text taxon, or a species the
@@ -375,7 +376,50 @@ Everything generated is ignored by Git:
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 
 An observation coordinate describes the original observation, not a located weed.
-Obscured/missing coordinates and positional accuracy remain explicit. Native
+Obscured/missing coordinates and positional accuracy remain explicit.
+
+### Location and date limits
+
+For PRD P09, each photo in the run detail and export carries `limits`, computed in
+`src/weedz/discovery/limits.py`. The evidence panel shows them as *Dates* and
+*Search area*.
+
+- **Search area** (`limits.search_area`):
+  - The `centre` is the observation point, where the photographer was. It is
+    never a plant point.
+  - `radius_m` is the reported positional accuracy plus
+    `CAMERA_TO_PLANT_ALLOWANCE_M` (100 m). iNaturalist records no camera bearing,
+    pose or focal distance, and hosted photos have no EXIF, so the distance from
+    the camera to a background plant is unknown. The 100 m is a declared planning
+    allowance, not a measurement. A telephoto background can be farther, so the
+    area is where to start looking, not a bound.
+  - `site_context` is true when accuracy is 20 m or better. At that accuracy
+    aerial imagery can show the site's context, but never the plant
+    ([LINZ assessment](datasets.md)).
+  - Obscured, missing and unknown-accuracy locations have `status` `obscured`,
+    `missing` or `accuracy_unknown` and a `reason`, with no centre or radius.
+    The obscured point is never shown or used.
+- **Dates** (`limits.dates`):
+  - `photographed`, `uploaded` and `screened` are kept distinct. `screened` is
+    when the photo was last scored (the photo's `screened_at`). It is null before
+    screening, and for photos scored before this was recorded.
+  - `photographed` is kept as the source gave it, even a partial date such as
+    `2024-06`.
+  - `days_photo_to_upload` and `days_photo_to_screening` give the gaps. They are
+    null unless both dates are full calendar days.
+  - `current_presence` says that, if the plant is visible, the photo shows it
+    was there on its capture date, not that it is there now. For an undated
+    photo, it says the photo can show neither. It is conditional because a
+    candidate is not a confirmed plant.
+
+The outcomes report uses the same rule:
+
+- *Evidence and review completeness* counts a location as complete only when it
+  gives a search area, and lists `search_areas` by status.
+- *Follow-up usefulness* lists `watchlist_finding_search_areas` for confirmed
+  and recorded watchlist plants, counted per photo.
+
+A reviewer's location and history judgements (step 7) remain separate opinions. Native
 lookalikes, indistinct plants and locations with no nearby known weed record are
 still reviewable. Photos by the same observer on the same observed date, with public coordinates
 within 250 m once both accuracy radii are allowed for, form one site visit. The
@@ -428,6 +472,9 @@ another. It checks that the Needs specialist view lists only open referrals,
 holds back an unaudited sample photo until its reviewer has audited it, and
 that the blind audit list never mentions a referral. The accessibility check
 audits the referral form and an open referral's response form.
+The limits check shows a searchable photo's radius, labelled observation point,
+allowance and three dates. It also checks that an obscured photo shows no point
+or radius, and that an unknown-accuracy photo shows no radius.
 The smoke check is read-only against a completed local pilot and verifies filters,
 source-image loading, window toggling, export and mobile layout.
 

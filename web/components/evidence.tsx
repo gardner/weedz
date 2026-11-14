@@ -16,6 +16,7 @@ import {
 } from "../lib/types";
 import { FindingForm, FindingList } from "./finding-form";
 import JudgementPanel from "./judgements";
+import { PhotoDates, SearchAreaNote } from "./photo-limits";
 import PhotoStage from "./photo-stage";
 import ReferralPanel from "./referrals";
 import ReviewHistory from "./review-history";
@@ -119,31 +120,13 @@ export default function Evidence({
           <strong>{photo.original_common_name || photo.original_taxon}</strong>
           <small>{photo.original_taxon}</small>
         </div>
-        <div>
-          <span>Photographed</span>
-          <strong>{photo.observed_on ?? "Date unknown"}</strong>
-          <small>Uploaded {photo.uploaded_at?.slice(0, 10) ?? "unknown"}</small>
-        </div>
+        <PhotoDates photo={photo} />
         <div>
           <span>Site visit</span>
           <strong>{siteVisitSummary(photo)}</strong>
           <small>Same observer, date and nearby location; not necessarily the same plant</small>
         </div>
-        <div>
-          <span>Observation location</span>
-          <strong>
-            {photo.coordinate_status === "missing"
-              ? "Not available"
-              : photo.coordinate_status === "obscured"
-                ? "Obscured location"
-                : `${photo.latitude?.toFixed(3)}, ${photo.longitude?.toFixed(3)}`}
-          </strong>
-          <small>
-            {photo.positional_accuracy_m
-              ? `Reported accuracy ±${photo.positional_accuracy_m} m`
-              : "Accuracy not supplied"}
-          </small>
-        </div>
+        <SearchAreaNote photo={photo} />
         <div>
           <span>Known records</span>
           <strong>{referenceNote(photo, references)}</strong>

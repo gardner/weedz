@@ -12,6 +12,7 @@ from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.judgements import Judgement, unsupported
+from weedz.discovery.limits import with_limits
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.outcomes import outcomes
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
@@ -100,7 +101,7 @@ class ReviewAPI:
         audit = summarize_audit(photos, sample, blind, late)
         del audit["findings"]
         photos = [photo | audit_state(photo["id"], sample, blind, late) for photo in photos]
-        photos = with_encounters(photos)
+        photos = with_limits(with_encounters(photos))
         return {
             "run": run,
             "photos": photos,
