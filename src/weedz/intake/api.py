@@ -7,8 +7,8 @@ is a 404, the same as a missing one. Nothing here logs or echoes a token.
 """
 
 import base64
-import binascii
 import hashlib
+import threading
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -55,7 +55,7 @@ def uploaded_image(report: Report, limits: Limits) -> bytes | None:
         return None
     try:
         data = base64.b64decode(report.image, validate=True)
-    except binascii.Error as error:
+    except ValueError as error:  # binascii.Error, e.g. for bad padding
         raise HTTPException(422, "The image is not valid base64") from error
     if len(data) > limits.max_image_bytes:
         raise HTTPException(413, f"A crop is at most {limits.max_image_bytes} bytes")
@@ -94,6 +94,15 @@ class IntakeAPI:
     def __init__(self, root: Path, limits: Limits) -> None:
         self.store = ReportStore(root)
         self.limits = limits
+        self._guard = threading.Lock()
+        self._submitting: dict[int, threading.Lock] = {}
+
+    def _one_at_a_time(self, submitter: int) -> threading.Lock:
+        """Each submitter's new reports are taken in turn, so the budget is checked against
+        every earlier one before any image is decoded. (This holds within one server
+        process, which is how ``intake serve`` runs.)"""
+        with self._guard:
+            return self._submitting.setdefault(submitter, threading.Lock())
 
     async def put(self, report_id: uuid.UUID, request: Request, response: Response) -> Receipt:
         body = await read_body(request, self.limits.max_body_bytes)
@@ -110,7 +119,7 @@ class IntakeAPI:
         # Canonical, so a retry that differs only in spacing or key order is the same report.
         digest = hashlib.sha256(report.model_dump_json().encode()).hexdigest()
         upload = uploaded_image(report, self.limits)
-        with refusals():
+        with self._one_at_a_time(submitter), refusals():
             # A retry, or a report over budget, costs no image decoding.
             earlier = self.store.admit(
                 submitter, report_id, digest, len(upload or b""), self.limits
@@ -144,6 +153,7 @@ def create_intake_app(root: Path, limits: Limits | None = None) -> FastAPI:
         redoc_url=None,
     )
     api = IntakeAPI(root, limits or Limits())
+    api.store.sweep()
     app.put("/reports/{report_id}")(api.put)
     app.get("/reports/{report_id}")(api.get)
     app.delete("/reports/{report_id}")(api.delete)

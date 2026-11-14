@@ -40,12 +40,23 @@ def test_orientation_is_applied_before_the_metadata_is_dropped() -> None:
         assert image.size == (20, 60)
 
 
-@pytest.mark.parametrize("fmt", ["GIF", "BMP"])
+@pytest.mark.parametrize("fmt", ["GIF", "BMP", "TGA", "PPM"])
 def test_only_jpeg_png_and_webp_are_accepted(fmt: str) -> None:
     out = BytesIO()
     Image.new("RGB", (10, 10)).save(out, fmt)
     with pytest.raises(ImageRefused, match="JPEG, PNG or WebP"):
         clean_image(out.getvalue(), max_pixels=10_000)
+
+
+def test_other_format_parsers_never_see_the_upload(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Past Pillow CVEs were in uncommon header parsers such as PSD's."""
+    from PIL import PsdImagePlugin
+
+    parsed: list[bool] = []
+    monkeypatch.setattr(PsdImagePlugin.PsdImageFile, "_open", lambda _self: parsed.append(True))
+    with pytest.raises(ImageRefused):
+        clean_image(b"8BPS" + bytes(100), max_pixels=10_000)
+    assert parsed == []
 
 
 def test_too_many_pixels_are_refused_before_decoding() -> None:
@@ -60,10 +71,10 @@ def test_unexpected_pillow_errors_are_refusals_not_crashes(
         raise ValueError("corrupt EXIF IFD")
 
     monkeypatch.setattr("weedz.intake.images.ImageOps.exif_transpose", broken)
-    with pytest.raises(ImageRefused, match="not a readable image"):
+    with pytest.raises(ImageRefused, match="not a readable JPEG, PNG or WebP image"):
         clean_image(jpeg(), max_pixels=10_000)
 
 
 def test_bytes_that_are_not_an_image_are_refused() -> None:
-    with pytest.raises(ImageRefused, match="not a readable image"):
+    with pytest.raises(ImageRefused, match="not a readable JPEG, PNG or WebP image"):
         clean_image(b"\xff\xd8 truncated", max_pixels=10_000)

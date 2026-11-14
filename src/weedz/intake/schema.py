@@ -30,6 +30,8 @@ CLOCK_SKEW = timedelta(days=1)
 Token = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$")]
 MeaningId = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9./-]{0,119}$")]
 Credit = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+# Standard base64 of a non-empty crop: ASCII only, so it never fails late as text.
+Base64 = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9+/]+={0,2}$")]
 
 
 class Part(BaseModel):
@@ -113,7 +115,7 @@ class Report(ReportContent):
     """A report as sent, with its optional crop."""
 
     # A base64 crop, sent only with image consent. Its size is bounded by the body limit.
-    image: str | None = None
+    image: Base64 | None = None
 
     @model_validator(mode="after")
     def image_only_with_consent(self) -> "Report":

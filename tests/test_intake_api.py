@@ -4,7 +4,9 @@ import json
 import logging
 import os
 import sqlite3
+import time
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
 from pathlib import Path
@@ -16,6 +18,7 @@ from PIL import Image
 
 from weedz.discovery.access import Access
 from weedz.intake.api import create_intake_app
+from weedz.intake.images import clean_image
 from weedz.intake.limits import Limits
 from weedz.intake.store import ReportStore
 from weedz.intake.submitters import Submitters
@@ -145,11 +148,14 @@ def test_undecodable_or_oversize_images_are_refused(tmp_path: Path) -> None:
     client = TestClient(create_intake_app(tmp_path, Limits(max_pixels=100 * 100)))
     headers = auth(tmp_path)
     bad = with_image(b"not an image")
-    bad_base64 = with_image(jpeg()) | {"image": "***"}
     huge = with_image(jpeg((200, 200)))
-    for body in (bad, bad_base64, huge):
-        assert client.put(f"/reports/{new_id()}", json=body, headers=headers).status_code == 422
+    # Not base64, not ASCII, empty, and mis-padded.
+    malformed = [with_image(jpeg()) | {"image": text} for text in ("***", "é", "", "QUJD=")]
+    for body in (bad, huge, *malformed):
+        response = client.put(f"/reports/{new_id()}", json=body, headers=headers)
+        assert response.status_code == 422, body["image"][:10]
     assert images(tmp_path) == []
+    assert ReportStore(tmp_path).active() == []
 
 
 def test_withdrawal_deletes_the_image_and_erases_the_report(
@@ -293,3 +299,37 @@ def test_retry_after_waits_until_enough_image_bytes_expire(tmp_path: Path) -> No
     refused = client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=headers)
     assert refused.status_code == 429
     assert int(refused.headers["Retry-After"]) > 22 * 3600
+
+
+def test_concurrent_uploads_decode_only_what_the_budget_allows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    decoded: list[int] = []
+
+    def slow(data: bytes, max_pixels: int) -> bytes:
+        decoded.append(len(data))
+        time.sleep(0.1)
+        return clean_image(data, max_pixels)
+
+    monkeypatch.setattr("weedz.intake.api.clean_image", slow)
+    app = create_intake_app(tmp_path, Limits(reports_per_day=1))
+    headers = auth(tmp_path)
+
+    def send(_: int) -> int:
+        path = f"/reports/{new_id()}"
+        return TestClient(app).put(path, json=with_image(jpeg()), headers=headers).status_code
+
+    with ThreadPoolExecutor(4) as pool:
+        assert sorted(pool.map(send, range(4))) == [201, 429, 429, 429]
+    assert len(decoded) == 1
+
+
+def test_crops_orphaned_by_a_crash_are_deleted_when_the_intake_starts(
+    tmp_path: Path, client: TestClient
+) -> None:
+    client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=auth(tmp_path))
+    [kept] = images(tmp_path)
+    stray = kept.with_name("0" * 32 + ".jpg")
+    stray.write_bytes(jpeg())
+    create_intake_app(tmp_path)
+    assert images(tmp_path) == [kept]

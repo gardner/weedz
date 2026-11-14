@@ -178,6 +178,15 @@ class ReportStore:
             for row in rows
         ]
 
+    def sweep(self) -> None:
+        """Delete crops no report names: left by a crash between writing an image and
+        committing its report. Run at start-up, before any request is taken."""
+        with closing(self._connect()) as db:
+            named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
+        for path in self.images.iterdir():
+            if path.name not in named:
+                path.unlink(missing_ok=True)
+
     def _image(self, name: str | None) -> Path | None:
         # Withdrawal deletes the file before erasing the row (privacy first), so a failed
         # commit can leave a row naming a deleted image: that report has no image.
