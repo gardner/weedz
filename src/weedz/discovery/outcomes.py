@@ -245,6 +245,12 @@ def _comparison(photo: dict[str, Any]) -> dict[str, Any] | None:
     return found if found and found["comparable"] else None
 
 
+def _predates(photo: dict[str, Any], found: dict[str, Any]) -> bool:
+    """Observed in an earlier year than every declared record within the radius."""
+    earliest, observed = found.get("earliest_year"), photo.get("observed_on")
+    return bool(earliest and observed and int(observed[:4]) < earliest)
+
+
 def novel_evidence(study: Study) -> dict[str, Any]:
     references = study.export.get("references")
     key = "novel_or_earlier_evidence"
@@ -264,16 +270,21 @@ def novel_evidence(study: Study) -> dict[str, Any]:
         reason = "No confirmed finding has a location precise enough to compare."
         return _measure(key, NOT_YET, reason, evidence=evidence)
     evidence["radius_m"] = sorted({found["radius_m"] for _, found in compared})
+    unrecorded = [p for p, found in compared if found["within_radius"] == 0]
+    earlier = [p for p, found in compared if _predates(p, found)]
+    evidence["no_record_nearby"] = tally(unrecorded)
+    evidence["earlier_than_nearby_records"] = tally(earlier)
     reason = (
-        "Counts confirmed findings with no declared record within the radius, as of the "
-        "snapshot date. The reference set is incomplete, so this is not a novelty or "
-        f"first-occurrence claim (#25). {USEFULNESS_UNJUDGED}"
+        "Counts confirmed findings with no declared record within the radius, or observed "
+        "in an earlier year than every record within it, as of the snapshot date. The "
+        "reference set is incomplete, so this is not a novelty or first-occurrence claim "
+        f"(#25). {USEFULNESS_UNJUDGED}"
     )
     return _measure(
         key,
         PARTIAL,
         reason,
-        value=tally([p for p, found in compared if found["within_radius"] == 0]),
+        value=tally(unrecorded + earlier),
         denominator=tally([p for p, _ in compared]),
         evidence=evidence,
     )

@@ -204,6 +204,23 @@ def test_novelty_is_distance_to_declared_records_never_a_claim() -> None:
     assert "not a novelty" in novel["reason"]
 
 
+def test_findings_older_than_every_nearby_record_count_as_earlier_evidence() -> None:
+    def nearby(earliest: int) -> dict[str, Any]:
+        found = {"comparable": True, "within_radius": 3, "radius_m": 5000.0}
+        return {"Ulex europaeus": found | {"earliest_year": earliest, "latest_year": 2020}}
+
+    photos = [
+        photo("a", "v1", review_status="confirmed", reference_comparison=nearby(2019)),
+        photo("b", "v2", review_status="confirmed", reference_comparison=nearby(2024)),
+        photo("c", "v3", review_status="confirmed", reference_comparison=nearby(2010)),
+    ]
+    photos[0]["observed_on"] = "2018-05-01"
+    novel = measure(outcomes(export(photos, references=SNAPSHOT)), "novel_or_earlier_evidence")
+    assert novel["value"] == {"photos": 1, "site_visits": 1, "ungrouped_photos": 0}
+    assert novel["evidence"]["no_record_nearby"]["photos"] == 0
+    assert novel["evidence"]["earlier_than_nearby_records"]["photos"] == 1
+
+
 def test_novelty_with_a_snapshot_but_no_findings_is_not_yet_measurable() -> None:
     novel = measure(
         outcomes(export([photo("a", "a")], references=SNAPSHOT)), "novel_or_earlier_evidence"
