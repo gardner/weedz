@@ -12,7 +12,7 @@ import os
 import secrets
 import sqlite3
 from collections.abc import Awaitable, Callable
-from contextlib import closing
+from contextlib import closing, suppress
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -140,7 +140,13 @@ async def _attributed_to(request: Request) -> set[str]:
         return set()
     if not isinstance(body, dict):
         return set()
-    return {str(body[key]).strip() for key in ATTRIBUTION_FIELDS & body.keys()}
+    names = set()
+    for key in ATTRIBUTION_FIELDS & body.keys():
+        # Normalise exactly as the record model will, so the name checked is the one stored.
+        # (str.strip removes more characters than the model's strip_whitespace.)
+        with suppress(ValidationError):  # an invalid name fails the route's own validation
+            names.add(_NAME.validate_python(body[key]))
+    return names
 
 
 def session(request: Request) -> dict[str, str]:

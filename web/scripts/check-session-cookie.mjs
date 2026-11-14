@@ -5,6 +5,7 @@ import {
   bearerFrom,
   clearedCookie,
   isLoopback,
+  privateTransport,
   SESSION_COOKIE,
   sameOrigin,
   sessionCookie,
@@ -43,6 +44,12 @@ for (const bad of [
   assert.ok(!validToken(bad), JSON.stringify(bad));
 }
 assert.throws(() => sessionCookie("weedz_1_a;Domain=evil", { host: "localhost" }));
+
+// A token must not cross the network in the clear: sign-in needs HTTPS beyond loopback.
+assert.ok(privateTransport({ host: "127.0.0.1:3270" }));
+assert.ok(privateTransport({ host: "review.example.org", proto: "https" }));
+assert.ok(!privateTransport({ host: "review.example.org" }));
+assert.ok(!privateTransport({ host: "review.example.org", proto: "http" }));
 
 const fetched = (site) => ({ headers: { get: () => site } });
 assert.ok(sameOrigin(fetched(null)) && sameOrigin(fetched("same-origin")));

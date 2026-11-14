@@ -149,6 +149,19 @@ def test_a_signed_in_reviewer_writes_under_their_own_name(tmp_path: Path) -> Non
     assert [event["reviewer"] for event in store.reviews("run", photo_id)] == ["Ana"]
 
 
+@pytest.mark.parametrize("disguised", ["Ana\x1f", "Ana\x1c", "\x1dAna"])
+def test_a_name_that_only_python_would_strip_is_not_the_signed_in_reviewer(
+    tmp_path: Path, disguised: str
+) -> None:
+    """The check normalises names as the record model stores them, not as str.strip does."""
+    store, photo_id = store_with_photo(tmp_path)
+    client, token = signed_in(tmp_path)
+    body = {"status": "confirmed", "reviewer": disguised}
+    response = client.post(f"/runs/run/photos/{photo_id}/review", json=body, headers=bearer(token))
+    assert response.status_code == 403
+    assert store.reviews("run", photo_id) == []
+
+
 WRITES = [
     ("/runs/run/photos/p/review", "reviewer"),
     ("/runs/run/photos/p/audit", "reviewer"),

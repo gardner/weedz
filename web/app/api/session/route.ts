@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import {
   bearerFrom,
   clearedCookie,
+  privateTransport,
   sameOrigin,
   sessionCookie,
   validToken,
@@ -46,6 +47,13 @@ export async function POST(request: NextRequest) {
     !request.headers.get("content-type")?.startsWith("application/json")
   ) {
     return Response.json({ detail: "Sign in from the review app" }, { status: 403 });
+  }
+  // The browser would drop the Secure cookie anyway; say why rather than half sign in.
+  if (!privateTransport(origin(request))) {
+    return Response.json(
+      { detail: "Sign-in needs HTTPS. Ask the operator to serve the app behind a TLS proxy." },
+      { status: 400 },
+    );
   }
   const { token } = await request.json().catch(() => ({}));
   const presented = typeof token === "string" ? token.trim() : "";

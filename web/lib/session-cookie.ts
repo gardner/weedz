@@ -23,6 +23,11 @@ export function isLoopback(host: string): boolean {
   return name === "localhost" || name === "::1" || /^127(\.\d{1,3}){3}$/.test(name);
 }
 
+/** HTTPS, or a request that never left this computer: safe to carry a token. */
+export function privateTransport(origin: Origin): boolean {
+  return origin.proto === "https" || isLoopback(origin.host);
+}
+
 /** Secure everywhere but plain http on this computer, where a browser would drop it. */
 function attributes(origin: Origin, maxAge: number): string {
   const secure = origin.proto === "https" || !isLoopback(origin.host);

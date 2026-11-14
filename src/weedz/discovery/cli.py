@@ -134,6 +134,13 @@ async def dev(args: argparse.Namespace) -> None:
         await server.serve()
 
 
+def api_headers() -> dict[str, str]:
+    """A reviewer token from WEEDZ_REVIEWER_TOKEN for an API run with --access tokens. Read
+    from the environment, not an option, so it never shows in the process list."""
+    token = os.environ.get("WEEDZ_REVIEWER_TOKEN", "").strip()
+    return {"Authorization": f"Bearer {token}"} if token else {}
+
+
 async def discover(args: argparse.Namespace) -> None:
     spec = RunSpec(
         limit_per_region=args.limit,
@@ -144,7 +151,7 @@ async def discover(args: argparse.Namespace) -> None:
         lookalikes_per_taxon=args.lookalikes,
         model=args.model,
     )
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30, headers=api_headers()) as client:
         response = await client.post(f"{args.api_url}/runs", json=spec.model_dump(mode="json"))
         response.raise_for_status()
         run_id = response.json()["id"]

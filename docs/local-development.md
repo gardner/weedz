@@ -92,6 +92,10 @@ Start the stack with sign-in required:
 uv run main.py dev --access tokens
 ```
 
+To queue runs from the command line on the host, set your own token in the
+environment, never as an argument: `WEEDZ_REVIEWER_TOKEN=weedz_… uv run main.py
+discover …`.
+
 The API always listens on 127.0.0.1; only the review app talks to it. The review
 app also listens on 127.0.0.1 unless `--web-host` is given. `dev` refuses a
 non-loopback `--web-host` without `--access tokens`. Put an HTTPS reverse proxy in
@@ -108,9 +112,11 @@ review.example.org {
 Reviewers open `https://review.example.org` and paste their token into the
 sign-in form. The app exchanges it for an `HttpOnly`, `SameSite=Strict` session
 cookie, so page scripts never hold it. The cookie is marked `Secure` on any
-non-loopback host or when the proxy sends `X-Forwarded-Proto: https`, so plain
-HTTP beyond this computer cannot sign in. Keep the proxy's default of passing the
-original `Host` header through. The app's proxy refuses writes, and sign-ins,
+non-loopback host or when the proxy sends `X-Forwarded-Proto: https`. Plain HTTP
+beyond this computer cannot sign in. The form will not send a token from a page
+that is not a secure context, and the app refuses a sign-in that did not arrive
+over HTTPS or from this computer. Keep the proxy's defaults of passing the
+original `Host` header through and setting `X-Forwarded-Proto`. The app's proxy refuses writes, and sign-ins,
 that a browser marks as started by another site. Sign out clears the cookie in
 that browser only; to stop a token working everywhere, revoke it.
 

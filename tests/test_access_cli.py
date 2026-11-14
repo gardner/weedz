@@ -6,7 +6,7 @@ import pytest
 
 from weedz.discovery.access import Access
 from weedz.discovery.access_cli import main
-from weedz.discovery.cli import check_binding
+from weedz.discovery.cli import api_headers, check_binding
 
 
 def test_add_prints_the_token_once_and_list_never_does(
@@ -36,6 +36,15 @@ def test_revoke_refuses_the_token_and_reports_unknown_ids(
 def test_add_refuses_an_empty_name(tmp_path: Path) -> None:
     with pytest.raises(SystemExit, match="name"):
         main(["add", "--name", "  ", "--pilot-dir", str(tmp_path)])
+
+
+def test_cli_clients_send_a_reviewer_token_from_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("WEEDZ_REVIEWER_TOKEN", raising=False)
+    assert api_headers() == {}
+    monkeypatch.setenv("WEEDZ_REVIEWER_TOKEN", " weedz_1_secret\n")
+    assert api_headers() == {"Authorization": "Bearer weedz_1_secret"}
 
 
 @pytest.mark.parametrize("host", ["127.0.0.1", "localhost", "::1"])

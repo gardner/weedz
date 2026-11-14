@@ -10,6 +10,12 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (reviewer: string) 
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    // HTTPS and this computer are secure contexts; anywhere else the token would be sent
+    // in the clear, so never send it.
+    if (!window.isSecureContext) {
+      setError("Sign-in needs HTTPS. Ask the operator to serve the app behind a TLS proxy.");
+      return;
+    }
     setBusy(true);
     try {
       const response = await fetch("/api/session", {
