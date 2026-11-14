@@ -43,7 +43,7 @@ try {
   await panel.getByText("Tasman returned 0 of 2 requested photos").waitFor();
   await panel.getByText(/Outside the study period: not assessed/).waitFor();
   await panel.getByText(/Visible vegetation: Not measured/).waitFor();
-  await panel.getByText(/Years with no photos: unknown \(open start\)/).waitFor();
+  await panel.getByText(/Years with no photos: unknown \(see the notes\)/).waitFor();
   await panel.getByText("No reference snapshot: novelty is unassessed", { exact: false }).waitFor();
 
   const table = panel.getByRole("table", { name: "What these photos cannot support" });

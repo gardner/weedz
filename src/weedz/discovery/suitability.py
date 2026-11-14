@@ -132,15 +132,39 @@ def _placed(photos: Photos, study: StudyDefinition, inside: bool | None) -> Phot
     return [p for p in photos if _in_period(p, start, end) is inside]
 
 
-def _months(photos: Photos) -> set[tuple[int, int]]:
-    """Every (year, month) a photo's date could fall in, so a year-only date covers its
-    whole year rather than leaving its months to look empty."""
+def _month_range(first: date, last: date) -> set[tuple[int, int]]:
+    """Every (year, month) from the first day's month to the last day's, inclusive."""
+    start, stop = first.year * 12 + first.month - 1, last.year * 12 + last.month
+    return {(index // 12, index % 12 + 1) for index in range(start, stop)}
+
+
+def _covered(photos: Photos, start: date | None, end: date) -> set[tuple[int, int]]:
+    """Every in-window (year, month) a photo's date could fall in. A month- or year-only
+    date covers each month it spans, clipped to the window, so none looks empty."""
     months: set[tuple[int, int]] = set()
     for first, last in filter(None, (_span(p.get("observed_on")) for p in photos)):
-        for index in range(first.year * 12 + first.month - 1, last.year * 12 + last.month):
-            year, month = divmod(index, 12)
-            months.add((year, month + 1))
+        if (start is None or last >= start) and first <= end:
+            months |= _month_range(max(first, start) if start else first, min(last, end))
     return months
+
+
+Gaps = tuple[list[int] | None, list[str] | None]
+
+
+def _gaps(photos: Photos, start: date | None, end: date) -> Gaps:
+    """Years and seasons of the window no photo could fall in. Unknown (None) when an
+    undated photo could fall anywhere, when the window was not sampled at all, and, for
+    years, when it has an open start."""
+    if (start and start > end) or any(_span(p.get("observed_on")) is None for p in photos):
+        return None, None
+    covered = _covered(photos, start, end)
+    reached = {season_of(m) for _, m in _month_range(start, end)} if start else set(SEASONS)
+    found = {season_of(m) for _, m in covered}
+    seasons = [name for name in SEASONS if name in reached and name not in found]
+    if start is None:
+        return None, seasons
+    years = {year for year, _ in covered}
+    return [year for year in range(start.year, end.year + 1) if year not in years], seasons
 
 
 def _window(export: dict[str, Any], study: StudyDefinition | None) -> tuple[date | None, date]:
@@ -150,14 +174,6 @@ def _window(export: dict[str, Any], study: StudyDefinition | None) -> tuple[date
     start = study.period_start if study and study.period_start else after
     end = study.period_end if study and study.period_end else spec.before
     return start, end
-
-
-def _empty_years(months: set[tuple[int, int]], start: date | None, end: date) -> list[int] | None:
-    """Years of the window no photo could fall in; None for an open or empty window."""
-    if start is None or start > end:
-        return None
-    years = {year for year, _ in months}
-    return [year for year in range(start.year, end.year + 1) if year not in years]
 
 
 def _date_notes(
@@ -177,8 +193,11 @@ def _date_notes(
         )
     if gaps:
         notes.append("Years and seasons with no photos are unassessed, not weed-free")
-    if gaps and undated:
-        notes.append(f"{plural(undated, 'undated photo')} could fall in any of these")
+    if undated:
+        notes.append(
+            f"{plural(undated, 'undated photo')} could fall in any year or season, so gaps "
+            "in coverage are unknown"
+        )
     return notes
 
 
@@ -198,12 +217,9 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
     outside = unknown = None
     if study and period:
         outside, unknown = tally(_placed(photos, study, False)), tally(_placed(photos, study, None))
-    # Years and seasons count only photos known to fall inside the window.
-    # A gap is claimed only where no photo that may be in the window could fall.
-    months = _months([p for p in photos if _in_period(p, start, end) is not False])
-    years = _empty_years(months, start, end)
-    seasons = [name for name in SEASONS if name not in {season_of(m) for _, m in months}]
-    undated = sum(not p.get("observed_on") for p in photos)
+    # A gap is claimed only where no photo could fall.
+    years, seasons = _gaps(photos, start, end)
+    undated = sum(_span(p.get("observed_on")) is None for p in photos)
     return {
         "corpus": corpus,
         "earliest": min(dated, default=None),
@@ -221,7 +237,7 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
         ),
         "years_without_photos": years,
         "seasons_without_photos": seasons,
-        "notes": _date_notes(dated, (start, end), len(years or []) + len(seasons), undated),
+        "notes": _date_notes(dated, (start, end), len(years or []) + len(seasons or []), undated),
     }
 
 

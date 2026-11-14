@@ -29,7 +29,7 @@ export type Suitability = {
     undated: Tally;
     imprecise: Tally;
     years_without_photos: number[] | null;
-    seasons_without_photos: string[];
+    seasons_without_photos: string[] | null;
     notes: string[];
   };
   locations: {
@@ -100,13 +100,17 @@ function periodText(period: Period | null): string {
   return `${period.start ?? "open start"} to ${period.end ?? "open end"}`;
 }
 
+/** Years or seasons with no photos; unknown, with the reason in the notes, when null. */
+const gapsText = (gaps: (number | string)[] | null) =>
+  gaps === null ? "unknown (see the notes)" : gaps.join(", ") || "none";
+
 export function dateLines(dates: Suitability["dates"]): string[] {
   const years = dates.years_without_photos;
   return [
     `Photographed ${dates.earliest ?? "unknown"} to ${dates.latest ?? "unknown"}; query period ${periodText(dates.query_period)} (${dates.corpus.sampling ?? "unknown"} sampling); study period ${periodText(dates.study_period)}`,
     `Outside the study period: ${dates.study_period ? tallyText(dates.outside_study_period) : "not assessed"}. Cannot be placed in it: ${dates.study_period ? tallyText(dates.study_period_unknown) : "not assessed"}. Undated: ${tallyText(dates.undated)}. Dated only to a month or year: ${tallyText(dates.imprecise)}`,
     `By year: ${countsText(dates.corpus.by_year ?? {})}. By season: ${countsText(dates.corpus.by_season ?? {})}`,
-    `Years with no photos: ${years === null ? "unknown (open start)" : years.join(", ") || "none"}. Seasons with no photos: ${dates.seasons_without_photos.join(", ") || "none"}`,
+    `Years with no photos: ${gapsText(years)}. Seasons with no photos: ${gapsText(dates.seasons_without_photos)}`,
     ...dates.notes,
   ];
 }

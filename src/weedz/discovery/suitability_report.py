@@ -40,6 +40,11 @@ def _study(study: dict[str, Any] | None) -> list[str]:
     return lines + [f"- Differs from the screening: {note}" for note in study["differences"]]
 
 
+def _gaps(gaps: list[Any] | None) -> str:
+    """Years or seasons with no photos; unknown, with the reason in the notes, if None."""
+    return "unknown (see the notes)" if gaps is None else ", ".join(map(str, gaps)) or "none"
+
+
 def _period(period: dict[str, Any] | None) -> str:
     if period is None:
         return "not recorded"
@@ -64,9 +69,8 @@ def _dates(dates: dict[str, Any]) -> list[str]:
         f"{_photos(dates['imprecise'])}",
         f"- By year: {_counts(corpus.get('by_year', {}))}",
         f"- By season: {_counts(corpus.get('by_season', {}))}",
-        "- Years in the period with no photos: "
-        + ("unknown (open start)" if years is None else ", ".join(map(str, years)) or "none"),
-        f"- Seasons with no photos: {', '.join(dates['seasons_without_photos']) or 'none'}",
+        f"- Years in the period with no photos: {_gaps(years)}",
+        f"- Seasons with no photos: {_gaps(dates['seasons_without_photos'])}",
     ]
     return lines + [f"- {note}" for note in dates["notes"]]
 
