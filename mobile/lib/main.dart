@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:weedz/ui/theme.dart';
 
 void main() {
   runApp(const WeedzApp());
@@ -13,7 +14,7 @@ class WeedzApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Weedz',
-      theme: ThemeData(colorSchemeSeed: Colors.green),
+      theme: appTheme(),
       home: const Scaffold(
         body: SafeArea(
           child: Center(

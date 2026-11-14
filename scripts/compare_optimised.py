@@ -333,13 +333,9 @@ def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]
 def _references_external_data(path: Path) -> bool:
     """Whether an ONNX graph keeps any tensor in another file, whatever that file is named
     (the exporter may name it after its temporary output, or after each tensor)."""
-    import onnx
-    from onnx.external_data_helper import uses_external_data
+    from weedz.discovery.onnx_files import references_external_data
 
-    model = onnx.load(str(path), load_external_data=False)
-    tensors = [*model.graph.initializer]
-    tensors += [a.t for node in model.graph.node for a in node.attribute if a.HasField("t")]
-    return any(uses_external_data(tensor) for tensor in tensors)
+    return references_external_data(path)
 
 
 def artefact_sha256(path: Path) -> str | None:

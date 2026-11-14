@@ -72,27 +72,31 @@ class Submitters:
             ).fetchall()
         return [dict(row) for row in rows]
 
-    def submitter(self, token: str) -> int | None:
-        """The id of the active submitter a token names, or None."""
+    def submitter(self, token: str, *, allow_revoked: bool = False) -> int | None:
+        """The authenticated id, normally only while active. ``allow_revoked`` is solely
+        for resuming an already-requested deletion, never for report routes."""
         parts = tokens.split(token, PREFIX)
         if parts is None:
             return None
         token_id, secret = parts
         with closing(self._connect()) as db:
             row = db.execute(
-                "SELECT secret_sha256 FROM submitter_tokens WHERE id=? AND revoked_at IS NULL",
-                (token_id,),
+                "SELECT secret_sha256 FROM submitter_tokens WHERE id=? "
+                "AND (revoked_at IS NULL OR ?)",
+                (token_id, allow_revoked),
             ).fetchone()
         return token_id if tokens.matches(secret, row["secret_sha256"] if row else None) else None
 
 
-def require_submitter(store: Submitters) -> Callable[[Request], None]:
+def require_submitter(
+    store: Submitters, *, allow_revoked: bool = False
+) -> Callable[[Request], None]:
     """A request dependency: the bearer token of an active submitter, whose id it puts in
     ``request.state.submitter``. Sync, so FastAPI runs its SQLite lookup off the loop."""
 
     def dependency(request: Request) -> None:
         token = tokens.bearer(request)
-        submitter = store.submitter(token) if token else None
+        submitter = store.submitter(token, allow_revoked=allow_revoked) if token else None
         if submitter is None:
             raise HTTPException(
                 401, "Send a submitter token", headers={"WWW-Authenticate": "Bearer"}
