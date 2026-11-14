@@ -3,6 +3,8 @@ name = "weedz"
 version = "0.1.0"
 description = "Reproducible invasive-weed detection baselines and geospatial review"
 readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 authors = [
     { name = "Gardner Bickford", email = "gardner@bickford.ai" }
 ]

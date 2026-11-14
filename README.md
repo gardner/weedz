@@ -178,3 +178,30 @@ uv run python scripts/check_file_length.py
 Ruff checks McCabe complexity (maximum 8), Pyright checks annotated Python,
 and source files are limited to 500 lines. Local pre-commit hook definitions
 are in `.pre-commit-config.yaml`.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and how contributions
+are licensed.
+
+## Licence
+
+The Weedz source code is free software, licensed under the
+[GNU General Public License v3.0 or later](LICENSE) (SPDX `GPL-3.0-or-later`).
+You may use, study, share and change it. If you distribute it or a modified
+version, you must do so under the same terms, with source. "Non-commercial" above
+describes the project's purpose; it is not a restriction in the code licence.
+
+**The code licence does not relicense third-party data, media or model weights.**
+Each keeps its source licence and terms, and attribution travels with it:
+
+| Material | Licence | Notes |
+| --- | --- | --- |
+| iNaturalist photos | CC0, CC BY or CC BY-NC, per photo; other licences are linked, not used | [Sharing, licences and location privacy](docs/local-development.md#sharing-licences-and-location-privacy) |
+| iNaturalist observations | Licensed separately from photos (same admitted set), plus the [iNaturalist Terms of Use](https://www.inaturalist.org/pages/terms) | [Project purpose and source reuse](docs/datasets.md#project-purpose-and-source-reuse) |
+| Leafy Spurge dataset | CC BY 4.0 (Doherty et al.) | [Data and limits](#data-and-limits) |
+| DOC weeds observation data, via GBIF | CC BY 4.0, plus [GBIF data-use terms](https://www.gbif.org/terms) | `src/weedz/discovery/occurrences.py` |
+| LINZ aerial and satellite imagery | CC BY 4.0; licensors vary by collection | [Datasets](docs/datasets.md) |
+| DOC/LILA NZ trail cameras | CDLA-Permissive-1.0 | [Datasets](docs/datasets.md) |
+| BioCLIP and BioCLIP 2 weights (Imageomics) | MIT, per their [model](https://huggingface.co/imageomics/bioclip) [cards](https://huggingface.co/imageomics/bioclip-2); downloaded at run time, not included here | Their training images keep their own licences |
+
+CC BY-NC material stays non-commercial wherever it goes, even inside output
+produced by GPL code. Check a source's own terms before reusing its material.
