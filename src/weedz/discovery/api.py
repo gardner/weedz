@@ -13,6 +13,7 @@ from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.judgements import Judgement, unsupported
 from weedz.discovery.occurrences import with_references
+from weedz.discovery.outcomes import outcomes
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
@@ -116,6 +117,10 @@ class ReviewAPI:
             },
         )
 
+    def outcomes(self, run_id: str) -> dict:
+        self.run(run_id)
+        return outcomes(export(self.store, run_id))
+
     def image(self, run_id: str, photo_id: str) -> FileResponse:
         photo = self.photo(run_id, photo_id)
         path = (self.store.root / photo["image_path"]).resolve()
@@ -188,6 +193,7 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.post("/runs", status_code=202)(api.start)
     app.get("/runs/{run_id}")(api.detail)
     app.get("/runs/{run_id}/export")(api.download)
+    app.get("/runs/{run_id}/outcomes")(api.outcomes)
     app.get("/runs/{run_id}/photos/{photo_id}/image")(api.image)
     app.post("/runs/{run_id}/photos/{photo_id}/review")(api.review)
     app.get("/runs/{run_id}/photos/{photo_id}/reviews")(api.history)

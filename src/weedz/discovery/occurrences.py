@@ -172,6 +172,7 @@ def _compare_species(photo: dict[str, Any], records: list[dict[str, Any]]) -> di
         "within_radius": len(nearby),
         "earliest_year": min(years, default=None),
         "latest_year": max(years, default=None),
+        "undated_within_radius": len(nearby) - len(years),
     }
 
 

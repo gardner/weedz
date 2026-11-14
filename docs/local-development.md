@@ -261,6 +261,22 @@ The six requested references are source-labelled reference evidence, not six
 independent expert-verified segmentation ground truths. Do not report classification
 accuracy or discovery precision from these references alone.
 
+### Report outcomes against the success measures
+
+```sh
+uv run main.py outcomes --run nelson-tasman-3e62ad801459 --json outcomes.json
+```
+
+This reads the run from `--pilot-dir` (default `data/pilot`) without Temporal or
+the API, and prints a Markdown report of the PRD's eight success measures.
+`--json` also writes the report as JSON, and `GET /runs/{id}/outcomes` serves the
+same JSON. Each measure has a value, its denominator, the evidence behind it, and
+a status: measured, partially measured or not yet measurable, with the reason.
+Photo sets are counted as independent site visits, and ungrouped photos are kept
+apart. "Unknown" means unmeasured, not zero. A confirmed review shows only that
+the species is visible, not that the finding is useful (#18), and a reference
+distance is not a novelty claim.
+
 ## Files and evidence
 
 Everything generated is ignored by Git:

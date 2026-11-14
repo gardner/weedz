@@ -1,0 +1,196 @@
+{
+  "schema": 1,
+  "run_id": "nelson-tasman-3e62ad801459",
+  "meaning": "How far this run answers each pilot success measure (docs/prd.md). Values are counts of photos, independent site visits and ungrouped photos that could not be grouped; 'unknown' means not measured, not zero. No numeric success limits have been agreed yet, so there are no pass or fail verdicts.",
+  "context": {
+    "model": "imageomics/bioclip",
+    "ranking_revision": 2,
+    "incidental": {
+      "photos": 24,
+      "site_visits": 7,
+      "ungrouped_photos": 8
+    },
+    "site_visit_rule": "same observer and observed date; public coordinates within 250 m after allowing for both positional-accuracy radii; photos with unknown accuracy or accuracy over 250 m are ungrouped",
+    "reference_as_of": "2026-11-14T05:04:00.465757+00:00"
+  },
+  "measures": [
+    {
+      "key": "useful_incidental_yield",
+      "measure": "Useful incidental yield",
+      "status": "not yet measurable",
+      "reason": "No incidental photo has been reviewed yet. A confirmed review records only that the suggested species is visible; whether a finding is useful is not judged separately yet (#18).",
+      "value": null,
+      "denominator": {
+        "photos": 24,
+        "site_visits": 7,
+        "ungrouped_photos": 8
+      },
+      "evidence": {
+        "reviewed": {
+          "photos": 0,
+          "site_visits": 0,
+          "ungrouped_photos": 0
+        },
+        "confirmed_visible": {
+          "photos": 0,
+          "site_visits": 0,
+          "ungrouped_photos": 0
+        }
+      },
+      "success_condition": "Produces leads the partner considers worth investigation, beyond a study consisting only of known target observations"
+    },
+    {
+      "key": "reviewer_effort_per_useful_finding",
+      "measure": "Reviewer effort per useful finding",
+      "status": "not yet measurable",
+      "reason": "No useful finding can be counted until usefulness is judged (#18).",
+      "value": null,
+      "denominator": null,
+      "evidence": {
+        "incidental_minutes": null,
+        "timed_incidental_decisions": 0,
+        "untimed_incidental_decisions": 0,
+        "timed_incidental_findings": 0,
+        "untimed_incidental_findings": 0,
+        "audit_minutes": null,
+        "untimed_audit_answers": 0,
+        "confirmed_visible": {
+          "photos": 0,
+          "site_visits": 0,
+          "ungrouped_photos": 0
+        }
+      },
+      "success_condition": "Fits the partner's agreed review capacity and improves on comparable manual searching"
+    },
+    {
+      "key": "missed_visible_targets",
+      "measure": "Missed visible targets",
+      "status": "not yet measurable",
+      "reason": "The blind audit sample (6 photos) is not yet audited.",
+      "value": null,
+      "denominator": null,
+      "evidence": {
+        "sampled": 6,
+        "audited": 0,
+        "found_as_top_suggestion": 0,
+        "found_not_top_suggestion": 0,
+        "disputed": 0,
+        "unsure": 0,
+        "not_blind": 0,
+        "reviewer_added_watchlist_plants_not_blind": {
+          "photos": 0,
+          "site_visits": 0,
+          "ungrouped_photos": 0
+        }
+      },
+      "success_condition": "Meets watchlist- and condition-specific limits agreed before the pilot"
+    },
+    {
+      "key": "novel_or_earlier_evidence",
+      "measure": "Novel or earlier evidence",
+      "status": "not yet measurable",
+      "reason": "There is no confirmed or recorded watchlist finding to compare yet.",
+      "value": null,
+      "denominator": null,
+      "evidence": {
+        "reference_as_of": "2026-11-14T05:04:00.465757+00:00",
+        "reference_records": {
+          "Clematis vitalba": 51,
+          "Cortaderia selloana": 4,
+          "Ulex europaeus": 147
+        }
+      },
+      "success_condition": "Supports defensible claims of added information rather than unsupported first-occurrence claims"
+    },
+    {
+      "key": "false_alarm_workload",
+      "measure": "False-alarm workload",
+      "status": "not yet measurable",
+      "reason": "No incidental photo has been reviewed yet.",
+      "value": null,
+      "denominator": null,
+      "evidence": {},
+      "success_condition": "Does not overwhelm review capacity or erase discovery value"
+    },
+    {
+      "key": "follow_up_usefulness",
+      "measure": "Follow-up usefulness",
+      "status": "not yet measurable",
+      "reason": "Intended users' judgements of whether a lead supports a next step are not recorded yet (#18, #27).",
+      "value": null,
+      "denominator": null,
+      "evidence": {},
+      "success_condition": "Supports specialist assessment, a meaningful site visit, or a justified historical record update"
+    },
+    {
+      "key": "evidence_completeness",
+      "measure": "Evidence and review completeness",
+      "status": "partially measured",
+      "reason": "24 of 24 incidental photos have no review decision yet.",
+      "value": {
+        "photos": 20,
+        "site_visits": 7,
+        "ungrouped_photos": 4
+      },
+      "denominator": {
+        "photos": 24,
+        "site_visits": 7,
+        "ungrouped_photos": 8
+      },
+      "evidence": {
+        "checked": [
+          "source",
+          "attribution",
+          "licence",
+          "date",
+          "location",
+          "checksum"
+        ],
+        "missing": {
+          "location": 4
+        },
+        "with_decision": 0
+      },
+      "success_condition": "Every lead communicates the evidence and limits behind its conclusion"
+    },
+    {
+      "key": "coverage",
+      "measure": "Coverage and review usability",
+      "status": "partially measured",
+      "reason": "24 of 24 incidental photos are not reviewed yet. Whether intended users can complete the study is not recorded yet.",
+      "value": {
+        "photos": 0,
+        "site_visits": 0,
+        "ungrouped_photos": 0
+      },
+      "denominator": {
+        "photos": 24,
+        "site_visits": 7,
+        "ungrouped_photos": 8
+      },
+      "evidence": {
+        "unassessed": {
+          "photos": 24,
+          "site_visits": 7,
+          "ungrouped_photos": 8
+        },
+        "audit_sampled": 6,
+        "audit_audited": 0,
+        "corpus": {
+          "sampling": "recent",
+          "photos": 24,
+          "by_year": {
+            "2024": 24
+          },
+          "by_season": {
+            "DJF": 24
+          },
+          "undated": 0,
+          "observers": 11,
+          "observer_days": 12
+        }
+      },
+      "success_condition": "Users can complete the core journey and explain which evidence remains unassessed"
+    }
+  ]
+}
