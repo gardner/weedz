@@ -24,15 +24,7 @@ FOLDERS = (
     "vocoder",
 )
 LYRICS = "\n".join(
-    (
-        "[Intro]",
-        "[Instrumental]",
-        "[Instrumental]",
-        "[Bridge]",
-        "[Instrumental]",
-        "[Instrumental]",
-        "[Outro]",
-    )
+    ["[Intro]"] + ["[Instrumental]"] * 20 + ["[Bridge]"] + ["[Instrumental]"] * 8 + ["[Outro]"]
 )
 PROMPT = (
     "Global Metadata: Original instrumental conservation documentary underscore, approximately "
