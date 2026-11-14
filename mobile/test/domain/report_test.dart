@@ -37,6 +37,19 @@ void main() {
   });
 
   group('Report refuses what the server would refuse', () {
+    test('an exact location requires its own explicit consent', () {
+      expect(
+        () => minimalReport().copyWith(location: fullReport().location),
+        throwsArgumentError,
+      );
+      expect(
+        () => minimalReport().copyWith(
+          consent: Consent(wordingVersion: 'v1', image: false, location: true),
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('a taxon outside the declared targets', () {
       expect(
         () => Candidate(taxon: 'Bellis perennis', score: 0.1),
@@ -87,34 +100,55 @@ void main() {
 
     test('a licence without image consent, or image consent without one', () {
       expect(
-        () => Consent(wordingVersion: 'v1', image: false, licence: 'cc0'),
+        () => Consent(
+          wordingVersion: 'v1',
+          image: false,
+          location: false,
+          licence: 'cc0',
+        ),
         throwsArgumentError,
       );
       expect(
-        () => Consent(wordingVersion: 'v1', image: true),
+        () => Consent(wordingVersion: 'v1', location: false, image: true),
         throwsArgumentError,
       );
     });
 
     test('a licence the collection does not admit', () {
       expect(
-        () => Consent(wordingVersion: 'v1', image: true, licence: 'cc-by-sa'),
+        () => Consent(
+          wordingVersion: 'v1',
+          location: false,
+          image: true,
+          licence: 'cc-by-sa',
+        ),
         throwsArgumentError,
       );
     });
 
     test('a blank or overlong credit, and trims the rest', () {
       expect(
-        () => Consent(wordingVersion: 'v1', image: false, credit: '   '),
+        () => Consent(
+          wordingVersion: 'v1',
+          image: false,
+          location: false,
+          credit: '   ',
+        ),
         throwsArgumentError,
       );
       expect(
-        () => Consent(wordingVersion: 'v1', image: false, credit: 'x' * 81),
+        () => Consent(
+          wordingVersion: 'v1',
+          image: false,
+          location: false,
+          credit: 'x' * 81,
+        ),
         throwsArgumentError,
       );
       final consent = Consent(
         wordingVersion: 'v1',
         image: false,
+        location: false,
         credit: ' A ',
       );
       expect(consent.credit, 'A');
@@ -126,7 +160,7 @@ void main() {
         throwsArgumentError,
       );
       expect(
-        () => minimalReport().copyWith(consent: imageConsent()),
+        () => minimalReport().copyWith(consent: imageConsent(location: false)),
         throwsArgumentError,
       );
     });
@@ -136,7 +170,9 @@ void main() {
     test('withoutLocation drops the location and nothing else', () {
       final report = fullReport().withoutLocation();
       expect(report.location, isNull);
+      expect(report.consent.location, isFalse);
       expect(report.image, fullReport().image);
+      expect(report.consent.image, fullReport().consent.image);
     });
 
     test('withoutCapturedAt drops the capture time and nothing else', () {
@@ -144,6 +180,7 @@ void main() {
       final report = fullReport().withoutCapturedAt();
       expect(report.capturedAt, isNull);
       expect(report.location, fullReport().location);
+      expect(report.consent.location, isTrue);
       expect(report.image, fullReport().image);
     });
 
@@ -152,6 +189,7 @@ void main() {
       expect(report.image, isNull);
       expect(report.consent.image, isFalse);
       expect(report.consent.licence, isNull);
+      expect(report.consent.location, isTrue);
       expect(report.consent.credit, fullReport().consent.credit);
       expect(report.location, fullReport().location);
     });

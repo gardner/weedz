@@ -1,0 +1,35 @@
+import 'package:weedz/metadata/raw_photo_metadata.dart';
+
+/// A photo as an iPhone writes it: exact GPS with its error, an offset time,
+/// and a GPS fix taken at the moment of capture.
+RawPhotoMetadata iphonePhoto({
+  LocationAccess locationAccess = LocationAccess.granted,
+  double? latitude = -41.2706319,
+  double? longitude = 173.2839653,
+  double? gpsHPositioningErrorM = 4.7,
+  double? platformAccuracyM,
+  double? gpsDop,
+  String? dateTimeOriginal = '2026:10:03 12:15:42',
+  String? offsetTimeOriginal = '+13:00',
+  String? dateTime = '2026:10:03 12:15:42',
+  String? gpsDateStamp = '2026:10:02',
+  String? gpsTimeStamp = '23:15:41.50',
+  bool isScreenshot = false,
+  bool isEdited = false,
+  bool isLocallyAvailable = true,
+}) => RawPhotoMetadata(
+  locationAccess: locationAccess,
+  latitude: latitude,
+  longitude: longitude,
+  gpsHPositioningErrorM: gpsHPositioningErrorM,
+  platformAccuracyM: platformAccuracyM,
+  gpsDop: gpsDop,
+  dateTimeOriginal: dateTimeOriginal,
+  offsetTimeOriginal: offsetTimeOriginal,
+  dateTime: dateTime,
+  gpsDateStamp: gpsDateStamp,
+  gpsTimeStamp: gpsTimeStamp,
+  isScreenshot: isScreenshot,
+  isEdited: isEdited,
+  isLocallyAvailable: isLocallyAvailable,
+);

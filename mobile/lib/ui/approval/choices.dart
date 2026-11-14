@@ -67,29 +67,29 @@ final class Choices {
     return photoAnswered && locationAnswered;
   }
 
-  /// [report] with these answers applied, through the domain's own edits.
+  /// [report] with these answers applied, checked by the domain's [Report].
   /// Only an explicit yes puts a photo or a location in.
   Report applyTo(Report report, Findings found) {
-    final place = found.location;
-    var next = place != null && (shareLocation ?? false)
-        ? report.copyWith(location: place)
-        : report.withoutLocation();
-    final crop = found.crop;
+    final place = (shareLocation ?? false) ? found.location : null;
     final licence_ = licence;
-    if (crop != null && (sendPhoto ?? false) && licence_ != null) {
-      final consent = next.consent;
-      next = next.copyWith(
-        image: crop,
-        consent: Consent(
-          wordingVersion: consent.wordingVersion,
-          image: true,
-          licence: licence_,
-          credit: consent.credit,
-        ),
-      );
-    } else {
-      next = next.withoutImage();
-    }
-    return next;
+    final crop = (sendPhoto ?? false) && licence_ != null ? found.crop : null;
+    final consent = report.consent;
+    // Each part goes with its consent (#60, #91); the domain refuses either
+    // without the other.
+    return Report(
+      appVersion: report.appVersion,
+      candidate: report.candidate,
+      model: report.model,
+      capturedAt: report.capturedAt,
+      location: place,
+      image: crop,
+      consent: Consent(
+        wordingVersion: consent.wordingVersion,
+        image: crop != null,
+        location: place != null,
+        licence: crop == null ? null : licence_,
+        credit: consent.credit,
+      ),
+    );
   }
 }

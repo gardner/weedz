@@ -35,7 +35,10 @@ void main() {
         'longitude': 173.2839653,
         'accuracy_m': 4.7,
       });
-      expect((body['consent']! as Map<String, Object?>)['licence'], 'cc-by-nc');
+      final consent = body['consent']! as Map<String, Object?>;
+      expect(consent['licence'], 'cc-by-nc');
+      expect(consent['image'], isTrue);
+      expect(consent['location'], isTrue);
       expect(body['image'], isNotNull);
       expect(store.current.status, ApprovalStatus.sending);
     });
@@ -77,6 +80,7 @@ void main() {
 
       expect(store.current.status, ApprovalStatus.pending);
       expect(store.current.report.location, isNull);
+      expect(store.current.report.consent.location, isFalse);
       expect(find.textContaining('-41.2706319'), findsNothing);
       expect(find.text('Location removed. It will not be sent.'), findsOne);
     });
