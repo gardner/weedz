@@ -21,16 +21,21 @@ def test_review_api_persists_decision_and_rejects_unknown_photo(tmp_path: Path) 
         json={
             "status": "uncertain",
             "note": "Need expert review",
+            "reviewer": "Ana",
         },
     )
     assert response.status_code == 200
     assert client.get("/runs/run").json()["photos"][0]["review_status"] == "uncertain"
     assert (
-        client.post("/runs/run/photos/missing/review", json={"status": "confirmed"}).status_code
+        client.post(
+            "/runs/run/photos/missing/review", json={"status": "confirmed", "reviewer": "Ana"}
+        ).status_code
         == 404
     )
     assert (
-        client.post(f"/runs/run/photos/{photo.id}/review", json={"status": "fake"}).status_code
+        client.post(
+            f"/runs/run/photos/{photo.id}/review", json={"status": "fake", "reviewer": "Ana"}
+        ).status_code
         == 422
     )
 

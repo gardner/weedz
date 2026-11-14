@@ -1,0 +1,598 @@
+{
+  "schema": 1,
+  "assessed": "2026-11-14",
+  "issue": "https://github.com/gardner/weedz/issues/13",
+  "purpose": "Re-screen with square tiles covering every pixel plus a letterboxed whole frame (ranking revision 4) and compare with revision 3 (four 60% corner windows, centre-cropped). Sanity check only; no expert labels.",
+  "model": {
+    "model": "imageomics/bioclip",
+    "revision": "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
+    "weights_sha256": "e380384f0c30d425d8c6c40f24471f9dd497fbdfa734a89c461a94aee95f0ef4",
+    "ranking_revision": 4,
+    "regions": "letterboxed whole image and overlapping square tiles covering every pixel",
+    "ranking": "maximum target minus best comparison-label cosine similarity per window; comparisons include the photo's original subject; featureless tiles (greyscale std < 8) cannot be the winning window"
+  },
+  "coverage_before": "median 14.9% (max 31.5%) of each pilot photo never reached the model",
+  "summary": {
+    "incidental_positive_margin": {
+      "revision_3": 2,
+      "revision_4": 5
+    },
+    "references_ranking_own_target_first": {
+      "revision_4": 6,
+      "of": 6
+    },
+    "featureless_tiles_excluded": 5,
+    "lookalikes_without_subject_prompt": {
+      "Austroderia": {
+        "screened": 6,
+        "positive_before": 5,
+        "positive_after": 6,
+        "top_after": 5,
+        "confusable_with": "Cortaderia selloana"
+      },
+      "Clematis foetida": {
+        "screened": 3,
+        "positive_before": 2,
+        "positive_after": 1,
+        "top_after": 3,
+        "confusable_with": "Clematis vitalba"
+      },
+      "Clematis forsteri": {
+        "screened": 6,
+        "positive_before": 3,
+        "positive_after": 4,
+        "top_after": 5,
+        "confusable_with": "Clematis vitalba"
+      },
+      "Clematis paniculata": {
+        "screened": 6,
+        "positive_before": 1,
+        "positive_after": 4,
+        "top_after": 6,
+        "confusable_with": "Clematis vitalba"
+      },
+      "Cytisus scoparius": {
+        "screened": 6,
+        "positive_before": 0,
+        "positive_after": 0,
+        "top_after": 5,
+        "confusable_with": "Ulex europaeus"
+      },
+      "Kunzea ericoides": {
+        "screened": 6,
+        "positive_before": 0,
+        "positive_after": 2,
+        "top_after": 4,
+        "confusable_with": "Ulex europaeus"
+      },
+      "Leptospermum scoparium": {
+        "screened": 6,
+        "positive_before": 0,
+        "positive_after": 0,
+        "top_after": 4,
+        "confusable_with": "Ulex europaeus"
+      }
+    }
+  },
+  "photos": [
+    {
+      "id": "inat-309664282-558823763",
+      "cohort": "reference",
+      "subject": "Pampas Grass",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": 0.154757,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": 0.164635,
+      "r4_box": [
+        307,
+        282,
+        768,
+        743
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-254338658-455546899",
+      "cohort": "reference",
+      "subject": "Old man's beard",
+      "r3_species": "Clematis vitalba",
+      "r3_margin": 0.108269,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": 0.13088,
+      "r4_box": [
+        307,
+        563,
+        768,
+        1024
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-252250408-451525789",
+      "cohort": "reference",
+      "subject": "gorse",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": 0.121083,
+      "r4_species": "Ulex europaeus",
+      "r4_margin": 0.120275,
+      "r4_box": [
+        563,
+        0,
+        1024,
+        461
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-256862582-460640098",
+      "cohort": "incidental",
+      "subject": "Tanguru chafer",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": 0.029605,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": 0.105001,
+      "r4_box": [
+        307,
+        563,
+        768,
+        1024
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-82387196-135212551",
+      "cohort": "reference",
+      "subject": "Pampas Grass",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": 0.145311,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": 0.0868,
+      "r4_box": [
+        0,
+        183,
+        291,
+        474
+      ],
+      "windows": 11,
+      "featureless": []
+    },
+    {
+      "id": "inat-250240131-447484684",
+      "cohort": "reference",
+      "subject": "gorse",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": 0.055046,
+      "r4_species": "Ulex europaeus",
+      "r4_margin": 0.062953,
+      "r4_box": [
+        0,
+        614,
+        410,
+        1024
+      ],
+      "windows": 7,
+      "featureless": [
+        2
+      ]
+    },
+    {
+      "id": "inat-256682298-460279738",
+      "cohort": "reference",
+      "subject": "Old man's beard",
+      "r3_species": "Clematis vitalba",
+      "r3_margin": 0.010133,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": 0.032094,
+      "r4_box": [
+        0,
+        0,
+        461,
+        461
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-256864013-460643540",
+      "cohort": "incidental",
+      "subject": "South Island Pied Oystercatcher",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": 0.021583,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": 0.021583,
+      "r4_box": [
+        0,
+        0,
+        614,
+        614
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-256716592-460347209",
+      "cohort": "incidental",
+      "subject": "New Zealand Grass Skink",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.053943,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": 0.020737,
+      "r4_box": [
+        678,
+        0,
+        1024,
+        346
+      ],
+      "windows": 9,
+      "featureless": []
+    },
+    {
+      "id": "inat-256808221-460529900",
+      "cohort": "incidental",
+      "subject": "Silver Gull",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.011573,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": 0.005367,
+      "r4_box": [
+        563,
+        307,
+        1024,
+        768
+      ],
+      "windows": 7,
+      "featureless": [
+        3
+      ]
+    },
+    {
+      "id": "inat-256727061-460368453",
+      "cohort": "incidental",
+      "subject": "Ameletopsis perscitus",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.059889,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": 0.005042,
+      "r4_box": [
+        230,
+        0,
+        576,
+        346
+      ],
+      "windows": 9,
+      "featureless": []
+    },
+    {
+      "id": "inat-257734181-462389676",
+      "cohort": "incidental",
+      "subject": "Australopacifica garveyi",
+      "r3_species": "Clematis vitalba",
+      "r3_margin": -0.003774,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": -0.003774,
+      "r4_box": [
+        0,
+        0,
+        614,
+        614
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-256675146-460262865",
+      "cohort": "incidental",
+      "subject": "Mudflat Tītiko",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.009419,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.009419,
+      "r4_box": [
+        0,
+        410,
+        614,
+        1024
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-257459539-461857914",
+      "cohort": "incidental",
+      "subject": "Long-nosed Fur Seal",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.024729,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.00968,
+      "r4_box": [
+        0,
+        615,
+        409,
+        1024
+      ],
+      "windows": 9,
+      "featureless": []
+    },
+    {
+      "id": "inat-259114109-465059628",
+      "cohort": "incidental",
+      "subject": "Fungus-eating ladybird",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.043208,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.012578,
+      "r4_box": [
+        307,
+        563,
+        768,
+        1024
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-256863810-460643105",
+      "cohort": "incidental",
+      "subject": "Pied Stilt",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.009055,
+      "r4_species": "Ulex europaeus",
+      "r4_margin": -0.015425,
+      "r4_box": [
+        563,
+        0,
+        1024,
+        461
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-256675287-460263038",
+      "cohort": "incidental",
+      "subject": "Smooth Shore Crab",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.025359,
+      "r4_species": "Ulex europaeus",
+      "r4_margin": -0.025359,
+      "r4_box": [
+        0,
+        410,
+        614,
+        1024
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-331872487-602149309",
+      "cohort": "incidental",
+      "subject": "Weka",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.124364,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": -0.029495,
+      "r4_box": [
+        561,
+        308,
+        1024,
+        771
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-257459474-461857745",
+      "cohort": "incidental",
+      "subject": "Australasian Gannet",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.101777,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.037187,
+      "r4_box": [
+        0,
+        270,
+        405,
+        675
+      ],
+      "windows": 7,
+      "featureless": [
+        3
+      ]
+    },
+    {
+      "id": "inat-256675033-460262714",
+      "cohort": "incidental",
+      "subject": "Smooth Shore Crab",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.038997,
+      "r4_species": "Ulex europaeus",
+      "r4_margin": -0.038997,
+      "r4_box": [
+        0,
+        410,
+        614,
+        1024
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-256691045-460294362",
+      "cohort": "incidental",
+      "subject": "Magpie Perch",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.068986,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.048356,
+      "r4_box": [
+        307,
+        0,
+        768,
+        461
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-256864189-460643855",
+      "cohort": "incidental",
+      "subject": "Black-fronted Tern",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.051013,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.049887,
+      "r4_box": [
+        0,
+        307,
+        461,
+        768
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-331889702-602185404",
+      "cohort": "incidental",
+      "subject": "House Sparrow",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.056893,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": -0.063544,
+      "r4_box": [
+        0,
+        308,
+        463,
+        771
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-256913086-460741828",
+      "cohort": "incidental",
+      "subject": "Tasmanian Brown Lacewing",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.004696,
+      "r4_species": "Ulex europaeus",
+      "r4_margin": -0.065288,
+      "r4_box": [
+        0,
+        0,
+        1024,
+        683
+      ],
+      "windows": 7,
+      "featureless": [
+        3,
+        6
+      ]
+    },
+    {
+      "id": "inat-256912633-460740779",
+      "cohort": "incidental",
+      "subject": "Wellington Tree Wētā",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.099254,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": -0.066505,
+      "r4_box": [
+        230,
+        679,
+        575,
+        1024
+      ],
+      "windows": 9,
+      "featureless": []
+    },
+    {
+      "id": "inat-256864136-460643767",
+      "cohort": "incidental",
+      "subject": "Silver Gull",
+      "r3_species": "Clematis vitalba",
+      "r3_margin": -0.069262,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": -0.069262,
+      "r4_box": [
+        0,
+        0,
+        614,
+        614
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-256918601-460754616",
+      "cohort": "incidental",
+      "subject": "Dark-banded Carpet Moth",
+      "r3_species": "Cortaderia selloana",
+      "r3_margin": -0.099858,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.082472,
+      "r4_box": [
+        575,
+        299,
+        1024,
+        748
+      ],
+      "windows": 7,
+      "featureless": []
+    },
+    {
+      "id": "inat-256674952-460262550",
+      "cohort": "incidental",
+      "subject": "New Zealand Blue-banded Periwinkle",
+      "r3_species": "Clematis vitalba",
+      "r3_margin": -0.092277,
+      "r4_species": "Clematis vitalba",
+      "r4_margin": -0.092277,
+      "r4_box": [
+        410,
+        410,
+        1024,
+        1024
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-257459949-461859480",
+      "cohort": "incidental",
+      "subject": "Bar-tailed Godwit",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.118857,
+      "r4_species": "Ulex europaeus",
+      "r4_margin": -0.113632,
+      "r4_box": [
+        0,
+        246,
+        370,
+        616
+      ],
+      "windows": 5,
+      "featureless": []
+    },
+    {
+      "id": "inat-257460208-461859096",
+      "cohort": "incidental",
+      "subject": "Red Knot",
+      "r3_species": "Ulex europaeus",
+      "r3_margin": -0.155783,
+      "r4_species": "Cortaderia selloana",
+      "r4_margin": -0.144419,
+      "r4_box": [
+        0,
+        0,
+        1024,
+        683
+      ],
+      "windows": 7,
+      "featureless": []
+    }
+  ]
+}

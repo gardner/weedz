@@ -130,3 +130,10 @@ def test_a_top_suggestion_with_a_negative_margin_still_counts_as_suggested() -> 
     photo["lookalike_taxon"] = "Cytisus scoparius"
     broom = summarize_lookalikes([photo])["by_taxon"]["Cytisus scoparius"]
     assert (broom["top_suggestion"], broom["positive_confusable_margin"]) == (1, 0)
+
+
+def test_lookalike_photos_are_not_given_their_own_taxon_as_a_comparison() -> None:
+    from weedz.discovery.inference import subject_label
+
+    photo = {"cohort": "lookalike", "original_taxon": "Austroderia richardii"}
+    assert subject_label(photo) is None

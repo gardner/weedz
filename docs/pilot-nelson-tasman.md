@@ -27,6 +27,18 @@ native lookalikes and general scene/animal prompts. All three references in each
 region ranked their source-labelled target highest among our target species.
 That is a reference sanity check, not an accuracy estimate for background plants.
 
+The 24 incidental photos are not 24 independent pieces of evidence. Several
+are the same observer's photos from one beach or estuary visit, so they show
+the same background vegetation. Grouping by observer, observed date and public
+coordinates within 250 m (after both accuracy radii) gives **7 independent
+site visits** among the 16 photos that could be checked: three single photos,
+two pairs, one visit of four and one of five
+([#4](https://github.com/gardner/weedz/issues/4)). The other **8 photos could
+not be grouped**: four report no positional accuracy, and four report accuracy
+(282–1,634 m) wider than the 250 m rule. They are reported as unknown, not as independent visits. The
+review app and export show these groups. A group means one visit, not
+necessarily the same plant.
+
 The highest-ranked incidental suggestion was pampas grass in an
 [Australasian gannet photograph](https://www.inaturalist.org/observations/257459474).
 The displayed search window shows bird and sky, an obvious false alarm. A
@@ -67,6 +79,58 @@ These are small, source-labelled samples, not reviewed false-positive rates.
 
 The next experiment should include original-subject taxon prompts as stronger
 comparison labels, independently reviewed native lookalikes and genuine
+### Ranking revision 3: re-screen of the same photos
+
+The gannet failure was not a one-off. In 10 of 24 incidental photos a target
+beat every comparison prompt, and the top four all chose a top-row window,
+mostly as pampas grass. Pale sky, sea and shore textures had no better
+explanation on offer. The comparisons also ignored the photo's own subject.
+Ranking revision 3 ([#10](https://github.com/gardner/weedz/issues/10)) adds
+the original-subject taxon as a per-photo comparison (never for a watchlist
+target) and fixed sky, water, shore and rock prompts.
+
+The same 30 photos and checksums were re-screened with the same weights. The
+results are recorded in the [re-screen summary](../benchmarks/nelson-tasman-rescreen-r3.json).
+
+| Check | Revision 2 | Revision 3 |
+| --- | --- | --- |
+| Incidental photos with a positive margin | 10 of 24 | 2 of 24 |
+| Gannet margin (pampas) | +0.041, sky window | −0.102 |
+| References ranking their source-labelled target first | 6 of 6 | 6 of 6, margins unchanged |
+
+Two positives remain. The Tanguru chafer window is a pink fibrous non-plant
+surface, so it is probably a false alarm. The South Island pied oystercatcher
+window shows riverbed vegetation, which is reviewable but unverified. Fewer
+positives is not higher recall: nothing here measures missed weeds, and 30
+unreviewed photos give no accuracy estimate.
+
+### Ranking revision 4: look at the whole photo
+
+Revision 3 never showed the model a median 14.9% of each photo, and up to 31.5%
+of tall photos ([#13](https://github.com/gardner/weedz/issues/13)). The four 60%
+corner windows and the full frame were centre-cropped, losing their edges.
+Revision 4 scores a letterboxed whole frame plus square tiles covering every
+pixel, and ignores featureless tiles as winners. The 30 photos were re-screened
+with the same weights ([summary](../benchmarks/nelson-tasman-rescreen-r4.json)).
+
+| Check | Revision 3 | Revision 4 |
+| --- | --- | --- |
+| Incidental photos with a positive margin | 2 of 24 | 5 of 24 |
+| References ranking their own target first | 6 of 6 | 6 of 6 |
+| Featureless tiles excluded | n/a | 5 |
+
+Looking at more of each photo surfaces more candidates. The extra three are a
+grassy skink window, which is plausible vegetation, and two near-zero margins
+(+0.005) on sky and on blurred water. A black night strip that briefly ranked
+as pampas is now excluded as featureless. Lookalike confusion rises with
+coverage too. Without the subject prompt, toetoe passes as pampas in 6 of 6
+photos (previously 5), puawhānanga as old man's beard in 4 of 6 (previously 1),
+and kānuka as gorse in 2 of 6 (previously 0). Seeing the whole photo is
+necessary to find edge weeds, but it does not make the ranking more selective.
+Calibrated thresholds and lookalike discrimination (#16, #14) remain the
+limiting problems.
+
+The next experiment should include independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.
 Retain low-ranked photos for missed-weed review. Compare whole-frame and regional
 analysis at a fixed reviewer budget before deciding whether a stronger model or

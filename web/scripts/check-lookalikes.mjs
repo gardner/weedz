@@ -25,6 +25,10 @@ try {
     original_common_name: `Name ${id}`,
     review_status: "unreviewed",
     review_note: "",
+    review_reviewer: "",
+    reviewer_decisions: {},
+    disputed: false,
+    review_count: 0,
     scores: { best_species: "Cortaderia selloana", margin: 0.04 },
     photo_license: "cc0",
     coordinate_status: "missing",
@@ -42,6 +46,7 @@ try {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/runs") return route.fulfill({ json: [run] });
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
+    if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     await route.fulfill({ json: { run, photos } });
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");

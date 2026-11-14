@@ -6,6 +6,7 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import AsyncExitStack
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
@@ -16,7 +17,9 @@ from temporalio.worker import Worker
 
 from weedz.discovery.activities import Activities
 from weedz.discovery.api import create_app
+from weedz.discovery.occurrences import fetch_snapshot
 from weedz.discovery.records import TASK_QUEUE, RunSpec
+from weedz.discovery.source import HEADERS
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -116,6 +119,12 @@ async def discover(args: argparse.Namespace) -> None:
         print(json.dumps(result, indent=2))
 
 
+def references(args: argparse.Namespace) -> None:
+    with httpx.Client(headers=HEADERS, timeout=60) as client:
+        path = fetch_snapshot(args.pilot_dir, client, datetime.now(UTC))
+    print(f"Wrote reference snapshot {path}")
+
+
 def parse(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Nelson/Tasman discovery and review")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -152,9 +161,16 @@ def parse(argv: list[str]) -> argparse.Namespace:
         default=0,
         help="Lookalike photos per declared lookalike taxon per region (0–3)",
     )
+    snapshot = commands.add_parser(
+        "references", help="Snapshot DOC weed records from GBIF for distance comparison"
+    )
+    snapshot.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     return parser.parse_args(argv)
 
 
 def main(argv: list[str]) -> None:
     args = parse(argv)
+    if args.command == "references":
+        references(args)
+        return
     asyncio.run(dev(args) if args.command == "dev" else discover(args))
