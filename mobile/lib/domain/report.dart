@@ -28,6 +28,9 @@ const targetTaxa = {
 /// Image licences the collection admits (`weedz.discovery.sharing.ADMITTED`).
 const admittedLicences = {'cc0', 'cc-by', 'cc-by-nc'};
 
+/// The largest location accuracy the server accepts, in metres.
+const maxAccuracyM = 100000.0;
+
 final _token = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$');
 final _meaningId = RegExp(r'^[a-z0-9][a-z0-9./-]{0,119}$');
 
@@ -138,7 +141,7 @@ final class Location {
     required double accuracyM,
   }) : latitude = _checkRange(latitude, 'latitude', -90, 90),
        longitude = _checkRange(longitude, 'longitude', -180, 180),
-       accuracyM = _checkRange(accuracyM, 'accuracyM', 0, 100000) {
+       accuracyM = _checkRange(accuracyM, 'accuracyM', 0, maxAccuracyM) {
     _check(accuracyM > 0, 'accuracyM', accuracyM, 'Must be positive');
   }
 

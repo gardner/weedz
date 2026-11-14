@@ -14,7 +14,8 @@ void main() {
     });
 
     test('handles negative and half-hour offsets', () {
-      final time = captureTime('2026:01:01 00:10:00', '-03:30') as OffsetKnownTime;
+      final time =
+          captureTime('2026:01:01 00:10:00', '-03:30') as OffsetKnownTime;
       expect(time.instant, DateTime.utc(2026, 1, 1, 3, 40));
       expect(time.offset, const Duration(hours: -3, minutes: -30));
     });
@@ -37,7 +38,15 @@ void main() {
     });
 
     test('when the offset is blank or malformed', () {
-      for (final offset in ['', '   :  ', '+1300', '+15:00', '+13:60', 'Z']) {
+      for (final offset in [
+        '',
+        '   :  ',
+        '+1300',
+        '+15:00',
+        '+13:60',
+        '+14:30',
+        'Z',
+      ]) {
         expect(
           captureTime('2026:10:03 12:15:42', offset),
           isA<LocalOnlyTime>(),

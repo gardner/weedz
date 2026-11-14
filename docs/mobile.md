@@ -41,7 +41,7 @@ mobile/
                    states, scoring and window geometry. Unit tested on any machine.
     scan/          photo-library access, the scan queue and its local index (#53)
     inference/     the Dart side of the image encoder (a Pigeon interface)
-    location/      capture time and location, with accuracy, per photo (#54)
+    metadata/      capture time and location per photo, with quality states (#54)
     reports/       building reports from scan results, and the approval screens (#56)
     upload/        the intake client, secure token storage, retries (#57)
     models/        downloading and verifying model artefacts (#59)
@@ -168,20 +168,35 @@ shape is:
 
 ## Location and time
 
-Location and time are detailed in [#54](https://github.com/gardner/weedz/issues/54).
-The app reads the capture time and the camera's GPS position from the photo:
+Location and time are detailed in [#54](https://github.com/gardner/weedz/issues/54)
+and built in `mobile/lib/metadata/`. A platform reader (`PhotoMetadataReader`)
+only copies raw facts from the photo:
 
-- on iOS, from `PHAsset.location`, a `CLLocation` with `horizontalAccuracy`;
-- on Android, from EXIF, which needs `ACCESS_MEDIA_LOCATION`; without it, the
-  system redacts the GPS tags.
+- on iOS, `PHAsset` (location, `horizontalAccuracy`, screenshot and edit
+  flags) and the EXIF of the original;
+- on Android, the EXIF of the original from `MediaStore.setRequireOriginal()`,
+  which needs `ACCESS_MEDIA_LOCATION`; without it the system redacts the GPS
+  tags.
 
-Accuracy comes from the platform or from EXIF `GPSHPositioningError`. Coordinates
-are kept at full precision.
+Every rule is pure Dart in `extractPhotoMetadata`, and each result carries an
+explicit quality state:
 
-**A location without a known accuracy is not sent as if it were exact.** The
-server requires an accuracy with every location. When a photo has none, the
-report has no location unless the person supplies one, and this is shown to
-them. Whether to allow a stated default accuracy instead is left to #54.
+| Part | States | Sent in the report |
+| --- | --- | --- |
+| Location | exact (with accuracy), accuracy unknown, redacted by the OS, missing | only exact |
+| Capture time | offset known (`DateTimeOriginal` + `OffsetTimeOriginal`), local only, missing | only offset known, in UTC |
+| GPS-time check | agrees (within 2 minutes), disagrees by some time, unavailable | no; shown as a warning |
+| Flags | screenshot, edited, cloud-only | no; a screenshot sends neither place nor time |
+
+- Coordinates are kept at full precision. `(0, 0)` and out-of-range values
+  count as missing, and with location access denied the tags are never trusted.
+- **An accuracy is never invented.** It comes from EXIF `GPSHPositioningError`,
+  else the platform's horizontal accuracy, and only when positive, finite and
+  within the schema limit. `GPSDOP` has no unit and is never used. A point
+  without a usable accuracy is shown to the person but not sent, since the
+  server would give it no search area.
+- **No time zone is assumed**, neither the phone's nor one derived from the GPS
+  time. A local-only time is shown but not sent.
 
 ## Report approval flow
 
@@ -338,8 +353,10 @@ feature that needs it is built.
 - **Enrolment.** How a phone gets its submitter token, for example by scanning
   a QR code from an operator during the pilot, and how a token is revoked if a
   phone is lost.
-- **Locations without accuracy.** Should the app leave the location out, or
-  use a stated default (#54)?
+- **Locations without accuracy, and times without a zone.** For now both are
+  shown but left out of the report. Should the person be able to state an
+  accuracy or place the point, or confirm a time zone, on the approval screen
+  (#54, #56)?
 - **Explicit location consent** ([#91](https://github.com/gardner/weedz/issues/91)).
   The report is to gain `consent.location`, true exactly when a location is
   sent, mirroring `consent.image`. When the server accepts it, the Dart

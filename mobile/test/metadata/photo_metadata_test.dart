@@ -1,17 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weedz/metadata/capture_time.dart';
-import 'package:weedz/metadata/photo_location.dart';
 import 'package:weedz/metadata/photo_metadata.dart';
-import 'package:weedz/metadata/raw_photo_metadata.dart';
 
 import '../domain/fixtures.dart';
 import 'raw.dart';
 
 /// A reader that answers from a map, as the platform readers will (#53).
 final class FakeReader implements PhotoMetadataReader {
-  FakeReader(this.photos);
+  new(this.photos);
 
   final Map<String, RawPhotoMetadata> photos;
 
