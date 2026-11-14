@@ -169,8 +169,30 @@ try {
     await decision.evaluate((el) => el === document.activeElement),
     "decision reachable by Tab",
   );
-  const outline = await decision.evaluate((el) => getComputedStyle(el).outlineStyle);
-  assert.notEqual(outline, "none", "focused controls show a visible focus indicator");
+  // SC 1.4.11: the offset focus ring sits on the surrounding background and needs 3:1.
+  const ring = await decision.evaluate((el) => {
+    const rgb = (value) => (value.match(/[\d.]+/g) ?? []).map(Number);
+    const luminance = ([r, g, b]) => {
+      const channel = (c) => {
+        const v = c / 255;
+        return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    };
+    let behind = [255, 255, 255];
+    for (let node = el.parentElement; node; node = node.parentElement) {
+      const colour = rgb(getComputedStyle(node).backgroundColor);
+      if (colour.length === 3 || colour[3] === 1) {
+        behind = colour.slice(0, 3);
+        break;
+      }
+    }
+    const style = getComputedStyle(el);
+    const [a, b] = [luminance(rgb(style.outlineColor)), luminance(behind)].sort((x, y) => y - x);
+    return { style: style.outlineStyle, ratio: (a + 0.05) / (b + 0.05) };
+  });
+  assert.notEqual(ring.style, "none", "focused controls show a visible focus indicator");
+  assert.ok(ring.ratio >= 3, `focus ring contrast ${ring.ratio.toFixed(2)}:1 is below 3:1`);
   await page.keyboard.press("Enter");
   await page.getByText("Review saved locally.").waitFor();
   assert.equal(posted[0].status, "rejected");

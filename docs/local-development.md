@@ -125,7 +125,7 @@ intended for local development, not shared public hosting.
    photos, and whether the found species was the top suggestion shown. With a
    small sample this bounds, rather than estimates, how often weeds are ranked
    low. The
-   API export includes current decisions, while the completion manifest records
+   API export includes current decisions and site-visit groups, while the completion manifest records
    the state at screening completion.
 
 Acquisition, screening and export are separate Temporal activities, each with
@@ -158,7 +158,13 @@ Everything generated is ignored by Git:
 An observation coordinate describes the original observation, not a located weed.
 Obscured/missing coordinates and positional accuracy remain explicit. Native
 lookalikes, indistinct plants and locations with no nearby known weed record are
-still reviewable. “Species visible” is a local reviewer decision about the suggested
+still reviewable. Photos by the same observer on the same observed date, with public coordinates
+within 250 m once both accuracy radii are allowed for, form one site visit. The
+queue and export show the group, and the stats count independent visits.
+Obscured, missing or undated records, and photos with unknown positional
+accuracy or accuracy over 250 m, never link, so groups can be too small but are never invented. These
+photos show “Site visit unknown” and are counted as “could not be grouped”,
+never as independent visits. “Species visible” is a local reviewer decision about the suggested
 species in a photo; it does not verify a new locality. Notes can record alternative
 identifications; a structured corrected-species annotation is a subsequent step.
 There is no gold dataset or measured discovery yield until independent reviews
