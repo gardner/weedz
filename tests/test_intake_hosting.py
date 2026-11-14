@@ -80,6 +80,9 @@ def test_cancelling_upload_keeps_its_turn_until_the_worker_finishes(
             upload.cancel()
             await asyncio.sleep(0.02)
             assert not upload.done(), "Cancellation must not abandon a mutating worker"
+            upload.cancel()
+            await asyncio.sleep(0.02)
+            assert not upload.done(), "Repeated cancellation must preserve ownership too"
             with pytest.raises(TurnBusy), SubmitterTurns(tmp_path).take(1, 0.02):
                 pass
         finally:
@@ -101,3 +104,13 @@ def test_requests_are_limited_before_authentication_without_retaining_ips(tmp_pa
     refused = client.get(path)
     assert refused.status_code == 429
     assert int(refused.headers["Retry-After"]) > 0
+
+
+def test_waiting_for_a_submitter_turn_returns_a_retryable_timeout(tmp_path: Path) -> None:
+    app = create_intake_app(tmp_path, Limits(submitter_wait_seconds=0.02))
+    headers = {"Authorization": f"Bearer {token(tmp_path)}"}
+    with SubmitterTurns(tmp_path).take(1, 0.1):
+        response = TestClient(app).put(f"/reports/{new_id()}", json=report(), headers=headers)
+    assert response.status_code == 503
+    assert response.headers["Retry-After"] == "1"
+    assert ReportStore(tmp_path).active() == []

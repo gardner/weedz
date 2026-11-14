@@ -43,6 +43,7 @@ def upload(root: Path, secret: str, report_id: str) -> None:
 @pytest.mark.parametrize("operation", ["upload", "operator-withdraw"])
 def test_api_and_operator_share_the_other_process_turn(tmp_path: Path, operation: str) -> None:
     secret, report_id = token(tmp_path), new_id()
+    other = token(tmp_path)
     # Create the second app first: startup maintenance is covered separately.
     client = TestClient(create_intake_app(tmp_path, Limits(reports_per_day=1)))
     worker = multiprocessing.get_context("spawn").Process(
@@ -54,6 +55,13 @@ def test_api_and_operator_share_the_other_process_turn(tmp_path: Path, operation
         while not (tmp_path / "decoding").exists():
             assert time.monotonic() < deadline and worker.is_alive()
             time.sleep(0.01)
+        # Waiting for one device must not hold a global database/server turn.
+        independent = client.put(
+            f"/reports/{new_id()}",
+            json=with_image(jpeg()),
+            headers={"Authorization": f"Bearer {other}"},
+        )
+        assert independent.status_code == 201
         with ThreadPoolExecutor(1) as pool:
             if operation == "upload":
                 pending = pool.submit(
@@ -88,7 +96,7 @@ def test_api_and_operator_share_the_other_process_turn(tmp_path: Path, operation
             assert result is not None
             assert result.status_code == 429
         else:
-            assert ReportStore(tmp_path).active() == []
+            assert all(row.submitter != 1 for row in ReportStore(tmp_path).active())
     finally:
         (tmp_path / "release").touch()
         if worker.is_alive():
