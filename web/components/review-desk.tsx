@@ -9,6 +9,7 @@ import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/q
 import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
 import { useReviewer } from "../lib/reviewer";
+import type { ScoreMeaning } from "../lib/score-meaning";
 import type { Study } from "../lib/study";
 import {
   type AuditSummary,
@@ -28,6 +29,7 @@ import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
 import RunSettings from "./run-settings";
+import { ScreeningNote } from "./score-meaning";
 import StudyPanel from "./study-panel";
 import SuitabilityPanel from "./suitability-panel";
 
@@ -70,6 +72,7 @@ export default function ReviewDesk({
   const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
   const [auditSummary, setAuditSummary] = useState<AuditSummary>();
   const [study, setStudy] = useState<Study | null>(null);
+  const [scoreMeaning, setScoreMeaning] = useState<ScoreMeaning>();
   // Each view remembers its own open photo, so one opened in a view never carries into
   // another (an audit photo must not open in the ranked queue) yet a glance at the
   // references returns to the same incidental photo.
@@ -100,6 +103,7 @@ export default function ReviewDesk({
         setAuditSummary(result.audit);
         setReferences(result.references ?? null);
         setStudy(result.study ?? null);
+        setScoreMeaning(result.score_meaning);
       }
       setError("");
     } catch (failure) {
@@ -144,6 +148,7 @@ export default function ReviewDesk({
     setEffortSummary(undefined);
     setAuditSummary(undefined);
     setStudy(null);
+    setScoreMeaning(undefined);
     setActiveIds({});
     setRunId(id);
   }
@@ -324,16 +329,7 @@ export default function ReviewDesk({
             onError={setError}
           />
           <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />
-          <div className="screening-note">
-            <span className="note-icon" aria-hidden="true">
-              i
-            </span>
-            <p>
-              <strong>Screening, awaiting expert review.</strong> BioCLIP ranks full images and
-              overlapping windows. Scores are similarities, not probabilities. Location novelty and
-              weed boundaries have not been established.
-            </p>
-          </div>
+          <ScreeningNote meaning={scoreMeaning} />
           <div className="workspace">
             <section className="queue" aria-label="Photo review queue">
               <div className="queue-heading">
@@ -465,6 +461,7 @@ export default function ReviewDesk({
                 onSelectLead={selectLead}
                 saving={saving}
                 references={references}
+                scoreMeaning={scoreMeaning}
                 reviewer={reviewer}
                 onReviewerChange={changeReviewer}
               />
@@ -479,7 +476,7 @@ export default function ReviewDesk({
                 </p>
               </div>
             )}
-            <FieldNotes species={auditing ? undefined : active?.scores.species} />
+            <FieldNotes />
           </div>
           <footer className="page-footer">
             <span>WEEDZ · COMMUNITY CONSERVATION RESEARCH</span>

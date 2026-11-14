@@ -276,6 +276,10 @@ Choose operating thresholds, any calibration, tile overlap, minimum patch size,
 and optional SAM refinement using development data only. Compare the full
 runtime route; proposal or refinement stages can introduce missed detections.
 Calibrated scores on a familiar domain do not prove correctness on unfamiliar data.
+Until then, the incidental-discovery screen declares what its uncalibrated margin
+means for each model and ranking revision, with no operating point chosen
+(see "Rank for inspection" in [local development](local-development.md)); a chosen
+threshold or abstention rule becomes a new declared meaning version.
 
 A release pins the model weights/hash, dataset release, label mapping, permitted
 input views/bands/GSD range, preprocessing, thresholds, postprocessing, and measured

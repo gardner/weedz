@@ -186,6 +186,27 @@ are never served in either mode, and nothing is published on anyone's behalf.
    A positive margin is not an established detection threshold. Every acquired
    animal photo remains reviewable, including low-ranked photos for missed-weed
    auditing. Whole-image scores are retained as the first direct-analysis comparison.
+   **What a score means** is declared per model, pinned checkpoint and ranking
+   revision in `src/weedz/discovery/score_meaning.py`, and served as the run's
+   `score_meaning` (run detail, export and completion manifest). A declaration
+   such as `bioclip-2/ranking-4/meaning-1` states what the margin ranks, what it
+   does not mean (not a probability; positive is not present and negative is not
+   absent; not comparable across models or ranking revisions), that no threshold
+   or abstention rule has been chosen, and the source-labelled evidence from
+   `benchmarks/model-comparison.json` (a test keeps the numbers equal to the
+   benchmark). An operating point may only be chosen on reviewed and
+   blind-audited development runs, then fixed as a new meaning version before
+   any final test. Screening pins each run to the declaration current when it
+   started (the run's model metadata records its `score_meaning` id, and a retry
+   keeps it), and declarations are never edited, so a new version never changes
+   an earlier run's meaning. A run screened under a configuration with no
+   declaration is pinned as undeclared (`null`), so a declaration added later
+   cannot claim it. Runs screened before pinning keep their configuration's
+   first declaration. Any other configuration, such as runs scored under ranking
+   revisions 2 or 3, is served with "no declared meaning": compare its scores
+   only within that run. The review desk shows each species' margin in words
+   beside the suggestion, with the declaration behind "What this score means";
+   the blind audit view shows neither.
 5. **Export and review.** Write a reproducible run manifest, then mark screening
    completed. Next.js exposes sources, windows, dates, location uncertainty,
    reference separation, filters and decisions. Confirm/reject/uncertain decisions

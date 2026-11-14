@@ -1,7 +1,7 @@
-import { names, type Photo } from "../lib/types";
+import { names } from "../lib/types";
 
-/** Reviewer guidance beside the evidence; similarity rows are omitted in blind audits. */
-export default function FieldNotes({ species }: { species?: Photo["scores"]["species"] }) {
+/** Reviewer guidance beside the evidence; scores are shown with their meaning in the evidence. */
+export default function FieldNotes() {
   return (
     <aside className="field-notes">
       <span className="eyebrow">FIELD NOTES</span>
@@ -21,18 +21,6 @@ export default function FieldNotes({ species }: { species?: Photo["scores"]["spe
         Native clematis and toetoe can resemble targets. A model ranking alone cannot resolve
         species.
       </p>
-      {species && (
-        <>
-          <h4>Similarity comparison</h4>
-          {species.map((row) => (
-            <div className="score-row" key={row.name}>
-              <span>{names[row.name]}</span>
-              <b>{row.similarity.toFixed(3)}</b>
-            </div>
-          ))}
-          <small>Raw cosine similarity. Ranking uses the margin against comparison labels.</small>
-        </>
-      )}
       <div className="notes-rule" />
       <p className="location-note">
         A photo location is an observation location. It may be obscured, approximate or distant from
