@@ -24,7 +24,7 @@ from weedz.discovery.limits import (
     search_area_summary,
 )
 from weedz.discovery.occurrences import NOT_QUERIED
-from weedz.discovery.outcome_terms import EVIDENCE_FIELDS, Photos, tally
+from weedz.discovery.outcome_terms import EVIDENCE_FIELDS, Photos, plural, tally
 from weedz.discovery.records import REGIONS, SPECIES, RunSpec
 from weedz.discovery.sampling import SEASONS, season_of
 from weedz.discovery.sharing import image_use, location, terms
@@ -132,9 +132,15 @@ def _placed(photos: Photos, study: StudyDefinition, inside: bool | None) -> Phot
     return [p for p in photos if _in_period(p, start, end) is inside]
 
 
-def _seasons(photos: Photos) -> set[str]:
-    spans = [_span(p.get("observed_on")) for p in photos]
-    return {season_of(s[0].month) for s in spans if s and s[0].month == s[1].month}
+def _months(photos: Photos) -> set[tuple[int, int]]:
+    """Every (year, month) a photo's date could fall in, so a year-only date covers its
+    whole year rather than leaving its months to look empty."""
+    months: set[tuple[int, int]] = set()
+    for first, last in filter(None, (_span(p.get("observed_on")) for p in photos)):
+        for index in range(first.year * 12 + first.month - 1, last.year * 12 + last.month):
+            year, month = divmod(index, 12)
+            months.add((year, month + 1))
+    return months
 
 
 def _window(export: dict[str, Any], study: StudyDefinition | None) -> tuple[date | None, date]:
@@ -146,24 +152,33 @@ def _window(export: dict[str, Any], study: StudyDefinition | None) -> tuple[date
     return start, end
 
 
-def _empty_years(inside: Photos, start: date | None, end: date) -> list[int] | None:
-    """Years of the window with no photo dated to them; None for an open start."""
-    if start is None:
+def _empty_years(months: set[tuple[int, int]], start: date | None, end: date) -> list[int] | None:
+    """Years of the window no photo could fall in; None for an open or empty window."""
+    if start is None or start > end:
         return None
-    spans = [_span(p.get("observed_on")) for p in inside]
-    years = {s[0].year for s in spans if s and s[0].year == s[1].year}
+    years = {year for year, _ in months}
     return [year for year in range(start.year, end.year + 1) if year not in years]
 
 
-def _date_notes(dated: list[str], start: date | None, years: list[int] | None) -> list[str]:
+def _date_notes(
+    dated: list[str], window: tuple[date | None, date], gaps: int, undated: int
+) -> list[str]:
+    start, end = window
     notes = []
     if start is None and dated:
         notes.append(
             f"Recent sampling takes the newest photos first, so dates before {min(dated)} "
             "were not sampled; they are unassessed"
         )
-    if years:
-        notes.append("Years with no photos are unassessed, not weed-free")
+    if start and start > end:
+        notes.append(
+            "The study period lies outside the run's query period, so none of it was "
+            "sampled; it is unassessed"
+        )
+    if gaps:
+        notes.append("Years and seasons with no photos are unassessed, not weed-free")
+    if gaps and undated:
+        notes.append(f"{plural(undated, 'undated photo')} could fall in any of these")
     return notes
 
 
@@ -184,8 +199,11 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
     if study and period:
         outside, unknown = tally(_placed(photos, study, False)), tally(_placed(photos, study, None))
     # Years and seasons count only photos known to fall inside the window.
-    inside = [p for p in photos if _in_period(p, start, end)]
-    years = _empty_years(inside, start, end)
+    # A gap is claimed only where no photo that may be in the window could fall.
+    months = _months([p for p in photos if _in_period(p, start, end) is not False])
+    years = _empty_years(months, start, end)
+    seasons = [name for name in SEASONS if name not in {season_of(m) for _, m in months}]
+    undated = sum(not p.get("observed_on") for p in photos)
     return {
         "corpus": corpus,
         "earliest": min(dated, default=None),
@@ -202,8 +220,8 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
             [p for p in photos if p.get("observed_on") and not calendar_day(p["observed_on"])]
         ),
         "years_without_photos": years,
-        "seasons_without_photos": [s for s in SEASONS if s not in _seasons(inside)],
-        "notes": _date_notes(dated, start, years),
+        "seasons_without_photos": seasons,
+        "notes": _date_notes(dated, (start, end), len(years or []) + len(seasons), undated),
     }
 
 

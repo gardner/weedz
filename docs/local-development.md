@@ -409,7 +409,9 @@ the reference comparison and the linked study. It covers:
 - **Dates:** earliest and latest photo, the query period and the study period.
   Also photos outside the study period, and those that cannot be placed in it
   because they are undated, or dated only to a month or year that crosses one of
-  its ends. Years and seasons with no photos inside the period are listed too. A recent (newest-first) run has an open start, so
+  its ends. Years and seasons no photo could fall in are listed as unassessed:
+  a year-only date covers its whole year, and a study period outside the query
+  period is stated as unsampled. A recent (newest-first) run has an open start, so
   its earlier years are stated as not sampled.
 - **Location quality:** photos with a search area, each reason the rest have none,
   and the reported accuracy (median and bands, with 20 m or better marked as

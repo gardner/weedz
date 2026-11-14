@@ -132,6 +132,23 @@ def test_an_imprecise_date_straddling_the_period_start_is_unknown_not_inside() -
     assert cannot(report, "study_period")["photos"] == tally(1, 1, 0)
 
 
+def test_a_year_only_photo_leaves_its_years_and_seasons_possibly_covered() -> None:
+    linked = study(period_start="2022-06-01", period_end="2023-12-31")
+    photos = [photo("a", "a", observed_on="2022"), photo("b", None, observed_on=None)]
+    dates = suitability(run_export(photos, study=linked))["dates"]
+    # "2022" may fall in the period and in any season, so none is claimed empty.
+    assert dates["years_without_photos"] == [2023]
+    assert dates["seasons_without_photos"] == []
+    assert any("1 undated photo could fall in any" in note for note in dates["notes"])
+
+
+def test_a_study_period_outside_the_query_period_is_unsampled_not_covered() -> None:
+    linked = study(period_start="2025-06-01")
+    dates = suitability(run_export([photo("a", "a")], study=linked))["dates"]
+    assert dates["years_without_photos"] is None
+    assert any("lies outside the run's query period" in note for note in dates["notes"])
+
+
 def test_without_a_study_the_query_period_bounds_the_years_and_recent_runs_say_so() -> None:
     report = suitability(run_export([photo("a", "a", observed_on="2024-01-05")]))
     assert report["dates"]["study_period"] is None
