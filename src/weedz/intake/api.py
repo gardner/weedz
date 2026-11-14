@@ -149,9 +149,14 @@ class IntakeAPI:
         so a late upload cannot resurrect it."""
         submitter: int = request.state.submitter
         async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            receipt = await run_in_threadpool(
-                self.store.withdraw, submitter, str(report_id), before_arrival=True
-            )
+            with refusals():
+                receipt = await run_in_threadpool(
+                    self.store.withdraw,
+                    submitter,
+                    str(report_id),
+                    before_arrival=True,
+                    limits=self.limits,
+                )
         return receipt or receipt_missing()
 
 

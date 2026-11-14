@@ -292,7 +292,10 @@ JSON over HTTPS, and nothing about it is Flutter-specific.
   server records a withdrawal even when it has not received the id yet.
   A late `PUT` then gets 410, even after a server restart. Withdrawal intent
   belongs to the authenticated submitter; it cannot affect another device
-  using the same id. A network error still requires retrying `DELETE`.
+  using the same id. New withdrawal ids count toward the daily report
+  budget; an existing report or withdrawal can always be withdrawn again.
+  A 429 requires retrying after `Retry-After`; a network error also requires
+  retrying `DELETE`. Neither confirms withdrawal.
 - **Token storage:** the submitter token lives in
   [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage)
   (the iOS Keychain, with *after first unlock, this device only* so background
