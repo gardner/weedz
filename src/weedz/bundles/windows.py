@@ -9,8 +9,11 @@ reproduce every one before it is used.
 
 from typing import Any
 
+import numpy as np
+
 from weedz.discovery import inference
-from weedz.discovery.inference import RANKING_REVISION, region_boxes
+from weedz.discovery.inference import RANKING_REVISION, region_boxes, summarize_scores
+from weedz.discovery.records import SPECIES
 
 ALGORITHM = (
     "Decode the photo, apply its EXIF orientation so it is upright, and convert it to RGB "
@@ -24,10 +27,16 @@ ALGORITHM = (
     "(x when width >= height) is thinned to max_tiles // (other axis's count) positions: "
     "step = (n - 1) / max(1, keep - 1), keeping sorted unique positions[round(i * step)]. "
     "Tiles are ordered row by row (y outer, x inner); a box equal to an earlier one is "
-    "dropped. Round half to even. Each box is cropped, letterboxed to a square with "
-    "letterbox_rgb, then pre-processed. A tile whose greyscale standard deviation is below "
-    "featureless_greyscale_std_below cannot be a species' winning window; the whole frame "
-    "is never excluded."
+    "dropped. Round half to even. Each box is cropped and letterboxed to a square of side "
+    "max(crop width, crop height) filled with letterbox_rgb, the crop pasted at "
+    "((side - width) // 2, (side - height) // 2), so an odd extra pixel of padding goes to "
+    "the right and bottom; then it is pre-processed. A tile is featureless when the "
+    "population standard deviation (divide by N) of its greyscale pixels is below "
+    "featureless_greyscale_std_below, greyscale being ITU-R 601-2 luma, L = R * 299/1000 + "
+    "G * 587/1000 + B * 114/1000, computed exactly as PIL mode L does: "
+    "(R * 19595 + G * 38470 + B * 7471 + 32768) >> 16; it is measured on the un-padded "
+    "crop. A featureless tile cannot be a species' winning window; the whole frame is "
+    "never excluded."
 )
 # Phone landscape and portrait, a square crop, a small photo, and a panorama whose long
 # axis is thinned.
@@ -61,3 +70,48 @@ def windows() -> dict[str, Any]:
             for width, height in EXAMPLE_SIZES
         ],
     }
+
+
+RULE = (
+    "Score every window embedding against every text_table row (cosine similarity). The "
+    "first target_count rows are watchlist targets, the rest comparison labels. For each "
+    "target, a window's margin is its similarity to that target minus its highest "
+    "similarity to any comparison label; the target's margin is the largest such margin "
+    "over the eligible windows (the whole frame and every non-featureless tile), and the "
+    "window giving it is the target's box (the first such window on a tie). The top "
+    "suggestion is the target with the largest margin (the first in watchlist order on a "
+    "tie). Each example gives similarities per window, one column per text_table row, in "
+    "integer units; margins are in the same units."
+)
+# Windows x (3 targets, 2 comparisons), in thousandths. The second puts the strongest
+# target evidence in a featureless tile, which must not win.
+SCORING_EXAMPLES: list[dict[str, Any]] = [
+    {"similarities": [[210, 180, 150, 200, 190], [260, 170, 240, 220, 180]], "featureless": []},
+    {
+        "similarities": [
+            [200, 230, 150, 210, 205],
+            [320, 140, 150, 160, 150],
+            [250, 150, 240, 200, 170],
+        ],
+        "featureless": [1],
+    },
+]
+
+
+def scoring() -> dict[str, Any]:
+    """How window similarities become margins and a top suggestion, with vectors."""
+    examples = []
+    for case in SCORING_EXAMPLES:
+        scores = np.array(case["similarities"], dtype=float)
+        eligible = [index not in case["featureless"] for index in range(len(scores))]
+        boxes = [(0, 0, 1, 1)] * len(scores)
+        result = summarize_scores(scores, boxes, list(SPECIES), len(SPECIES), eligible)
+        examples.append(
+            {
+                "similarities": case["similarities"],
+                "featureless_windows": case["featureless"],
+                "margins": {row["name"]: round(row["margin"]) for row in result["species"]},
+                "best_species": result["best_species"],
+            }
+        )
+    return {"ranking_revision": RANKING_REVISION, "rule": RULE, "examples": examples}

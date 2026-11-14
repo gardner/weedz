@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 
 from weedz.bundles.signing import PAYLOAD_TYPE, BundleRejected, verify
 from weedz.bundles.text_table import table_parts
-from weedz.bundles.windows import windows
+from weedz.bundles.windows import scoring, windows
 from weedz.discovery.inference import COMPARISONS, MODELS, RANKING_REVISION, file_sha256
 from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.parity import THRESHOLDS
@@ -110,6 +110,8 @@ def parity_record(benchmark: Mapping[str, Any], variant: str, model_key: str, sh
     version = benchmark.get("thresholds", {}).get("version")
     if version != THRESHOLDS["version"]:
         raise ParityRefused(f"{variant} was measured against thresholds version {version}")
+    if benchmark["thresholds"].get("limits") != THRESHOLDS["limits"]:
+        raise ParityRefused(f"{variant} was judged against other limits than version {version}'s")
     if record["parity"]["passed"] is not True:
         raise ParityRefused(f"{variant} did not pass parity with the reference")
     _measured_these_bytes(record, variant, sha256)
@@ -165,6 +167,7 @@ def build_manifest(spec: BundleSpec) -> dict[str, Any]:
         ],
         "comparisons": list(COMPARISONS),
         "windows": windows(),
+        "scoring": scoring(),
         "screening": screening_stamp(spec.model_key),
         "image_model": tower
         | {

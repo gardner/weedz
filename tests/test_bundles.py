@@ -6,6 +6,7 @@ import math
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 import pytest
 from bundle_helpers import PREPROCESSING, VARIANT, parity_benchmark, spec, write_artefacts
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -24,7 +25,9 @@ from weedz.bundles.manifest import (
 )
 from weedz.bundles.signing import public_key_text, sign, verify
 from weedz.bundles.text_table import save_table
-from weedz.discovery.inference import MODELS, RANKING_REVISION, region_boxes
+from weedz.bundles.windows import ALGORITHM
+from weedz.discovery.inference import MODELS, RANKING_REVISION, region_boxes, summarize_scores
+from weedz.discovery.parity import THRESHOLDS
 from weedz.discovery.records import SPECIES
 
 TODAY = date(2026, 11, 14)
@@ -277,3 +280,39 @@ def test_the_written_window_algorithm_reproduces_the_server(tmp_path: Path) -> N
     for width, height in sizes + [(9000, 1000), (1000, 9000), (12000, 300)]:
         expected = [list(box) for box in region_boxes(width, height)]
         assert _boxes_from_the_written_algorithm(width, height, w) == expected, (width, height)
+
+
+def test_a_benchmark_with_other_limits_under_the_same_version_cannot_gate(tmp_path: Path) -> None:
+    tower, _ = write_artefacts(tmp_path)
+    looser = THRESHOLDS | {"limits": THRESHOLDS["limits"] | {"max_margin_drift": 0.5}}
+    benchmark = json.loads(parity_benchmark(tmp_path, tower, thresholds=looser).read_text())
+    with pytest.raises(ParityRefused, match="limits"):
+        parity_record(benchmark, VARIANT, "bioclip-2", artefact(tower)["sha256"])
+
+
+def test_the_written_conventions_cover_padding_and_luma() -> None:
+    assert "right and bottom" in ALGORITHM
+    assert "R * 299/1000" in ALGORITHM and "population" in ALGORITHM
+
+
+def test_the_manifest_states_how_window_scores_become_an_answer(tmp_path: Path) -> None:
+    scoring = build_manifest(spec(tmp_path))["scoring"]
+    assert "margin" in scoring["rule"]
+    for case in scoring["examples"]:
+        scores = np.array(case["similarities"], dtype=float)
+        eligible = [index not in case["featureless_windows"] for index in range(len(scores))]
+        boxes = [(0, 0, 1, 1)] * len(scores)
+        expected = summarize_scores(scores, boxes, list(SPECIES), len(SPECIES), eligible)
+        assert case["best_species"] == expected["best_species"]
+        assert case["margins"] == {row["name"]: int(row["margin"]) for row in expected["species"]}
+    assert any(case["featureless_windows"] for case in scoring["examples"])
+
+
+def test_the_written_luma_is_pil_mode_l() -> None:
+    from PIL import Image
+
+    pixels = np.random.default_rng(0).integers(0, 256, (64, 64, 3), dtype=np.uint8)
+    luma = np.asarray(Image.fromarray(pixels).convert("L")).astype(int)
+    red, green, blue = (pixels[..., channel].astype(int) for channel in range(3))
+    assert "(R * 19595 + G * 38470 + B * 7471 + 32768) >> 16" in ALGORITHM
+    assert (luma == (red * 19595 + green * 38470 + blue * 7471 + 32768) >> 16).all()
