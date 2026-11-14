@@ -76,3 +76,21 @@ def test_run_spec_defaults_to_stratified_and_rejects_an_empty_period() -> None:
     assert (spec.sampling, spec.after) == ("stratified", date(2010, 1, 1))
     with pytest.raises(ValidationError):
         RunSpec(after=date(2024, 1, 1), before=date(2023, 1, 1))
+
+
+def test_saved_specs_without_sampling_are_the_original_recent_runs() -> None:
+    old = {"limit_per_region": 12, "controls_per_species": 1, "before": "2024-12-31"}
+    assert RunSpec.from_saved(old).sampling == "recent"
+    assert RunSpec.from_saved(old | {"sampling": "stratified"}).sampling == "stratified"
+
+
+def test_export_reports_corpus_coverage_with_the_run_sampling(tmp_path) -> None:
+    from weedz.discovery.activities import export
+    from weedz.discovery.store import Store
+
+    store = Store(tmp_path)
+    store.create_run("run", RunSpec())
+    store.save_photos("run", [candidate(1, "2023-01-05", "a"), candidate(2, "2023-07-01", "b")])
+    summary = export(store, "run")["corpus_coverage"]
+    assert summary["sampling"] == "stratified"
+    assert summary["by_season"] == {"DJF": 1, "JJA": 1}

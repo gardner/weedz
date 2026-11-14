@@ -9,7 +9,8 @@ from typing import Any
 
 from temporalio import activity
 
-from weedz.discovery.records import RunSpec
+from weedz.discovery.records import Photo, RunSpec
+from weedz.discovery.sampling import coverage
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
 
@@ -22,7 +23,7 @@ class Activities:
     @activity.defn
     def collect_photos(self, payload: dict) -> dict:
         run_id = payload["run_id"]
-        spec = RunSpec.model_validate(payload["spec"])
+        spec = RunSpec.from_saved(payload["spec"])
         self.store.create_run(run_id, spec)
         self.store.status(run_id, "acquiring", "Fetching attributed regional photos")
         activity.heartbeat("acquiring")
@@ -92,6 +93,10 @@ def export(store: Store, run_id: str) -> dict:
         "schema": 1,
         "run": run,
         "photos": store.photos(run_id),
+        "corpus_coverage": coverage(
+            [Photo.model_validate(p) for p in store.photos(run_id) if p["cohort"] == "incidental"],
+            RunSpec.from_saved(run["spec"]).sampling,
+        ),
         "review_history": [
             dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"]))
             for photo in store.photos(run_id)

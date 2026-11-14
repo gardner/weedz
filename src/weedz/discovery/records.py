@@ -23,6 +23,11 @@ class RunSpec(BaseModel):
     # "recent" reproduces the first pilot's newest-first selection; see issue #5.
     sampling: Literal["stratified", "recent"] = "stratified"
 
+    @classmethod
+    def from_saved(cls, saved: dict) -> "RunSpec":
+        """Runs saved before stratified sampling existed were newest-first runs."""
+        return cls.model_validate({"sampling": "recent"} | saved)
+
     @model_validator(mode="after")
     def period_is_not_empty(self) -> "RunSpec":
         if self.after > self.before:
