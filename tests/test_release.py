@@ -323,3 +323,13 @@ def test_a_hand_edited_history_that_regresses_is_refused(tmp_path: Path) -> None
     path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="cannot return"):
         read_release(tmp_path)
+
+
+def test_a_release_manifest_cannot_point_outside_its_directory(tmp_path: Path) -> None:
+    write_release(tmp_path / "release", sites("a", "c", "d"), spec(), recorded_at=WHEN)
+    path = tmp_path / "release" / "release.json"
+    payload = json.loads(path.read_text())
+    payload["manifest"] = "../elsewhere.jsonl"
+    path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="samples.jsonl"):
+        read_release(tmp_path / "release")

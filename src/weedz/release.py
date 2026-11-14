@@ -136,7 +136,8 @@ class Release(Frozen):
     split: SplitRule
     separate: list[str]
     contract_schema_version: int
-    manifest: str = MANIFEST
+    # Always the sibling file, so an edited record cannot point outside the release.
+    manifest: Literal["samples.jsonl"] = MANIFEST
     manifest_sha256: Sha256
     source_snapshots: dict[SourceName, list[str]]
     licenses: list[str]
