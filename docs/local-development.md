@@ -204,7 +204,11 @@ cohort, so they never change an iNaturalist run's counts.
 - The run syncs with intake on every request. After a withdrawal, the report
   leaves the queue at the next request. Its image copy is deleted and its
   location, capture time and credit are erased. Past reviews and judgements
-  stay in the append-only history.
+  stay in the append-only history, and nothing new can be recorded on it.
+  The erased bytes are zeroed in the review database and its log. Only a
+  withdrawal recorded by intake erases a report; a report merely missing (for
+  example, from a wrong `--intake-dir`) is left as it was.
+- Once it holds device reports, the review database is owner-only.
 
 Hosting, accounts and enrolment, the retention period, and whether images are
 uploaded at all are the project owner's decisions; see issues #55 and #57.

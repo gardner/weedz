@@ -17,6 +17,8 @@ import hashlib
 import json
 import os
 import uuid
+from io import BytesIO
+from pathlib import Path
 from typing import Literal
 
 from PIL import Image
@@ -123,32 +125,63 @@ def scores(stored: StoredReport) -> dict:
     return {"best_species": candidate.taxon, "margin": candidate.score, "method": method}
 
 
-def _copy_image(store: Store, stored: StoredReport, record: DeviceItem, found: dict) -> None:
-    """Copy a consented crop into the review store, owner-only; skip one already gone."""
+def _crop(stored: StoredReport, record: DeviceItem) -> bytes | None:
+    """The consented crop's bytes, or None when there is none to copy."""
     if stored.image is None or not record.device.image_consent:
-        return
+        return None
     try:
-        data = stored.image.read_bytes()
+        return stored.image.read_bytes()
     except FileNotFoundError:  # withdrawn after it was listed
-        return
-    relative = f"{IMAGES}/{record.id}.jpg"
-    target = store.root / relative
+        return None
+
+
+def _write_private(target: Path, data: bytes) -> None:
     target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     # Its own temporary name, so two syncs at once never write into the same file.
     temporary = target.with_suffix(f".{uuid.uuid4().hex}.tmp")
     descriptor = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-    with os.fdopen(descriptor, "wb") as out:
-        out.write(data)
-    temporary.replace(target)
-    with Image.open(target) as image:
-        found.update(width=image.width, height=image.height)
-    record.image_path, record.sha256 = relative, hashlib.sha256(data).hexdigest()
+    try:
+        with os.fdopen(descriptor, "wb") as out:
+            out.write(data)
+        temporary.replace(target)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
-def _erase(store: Store, record: dict) -> dict:
-    """A withdrawn report's item: its image deleted and personal details erased."""
-    if record.get("image_path"):
-        (store.root / record["image_path"]).unlink(missing_ok=True)
+def _names(store: Store, identifier: str, image_path: str) -> bool:
+    with store.connect() as db:
+        row = db.execute(
+            "SELECT record FROM photos WHERE run_id=? AND id=?", (RUN_ID, identifier)
+        ).fetchone()
+    return row is not None and json.loads(row["record"])["image_path"] == image_path
+
+
+def _add(store: Store, stored: StoredReport) -> None:
+    """Add a report. Its row names the crop before the crop is written, so every copy on
+    disk is one a withdrawal can find and delete."""
+    record, found = item(stored), scores(stored)
+    data = _crop(stored, record)
+    if data:
+        with Image.open(BytesIO(data)) as image:
+            found.update(width=image.width, height=image.height)
+        record.image_path = f"{IMAGES}/{record.id}.jpg"
+        record.sha256 = hashlib.sha256(data).hexdigest()
+    with store.connect() as db:
+        cursor = db.execute(
+            "INSERT OR IGNORE INTO photos(run_id,id,record,scores) VALUES(?,?,?,?)",
+            (RUN_ID, record.id, record.model_dump_json(), json.dumps(found)),
+        )
+    if not (data and cursor.rowcount == 1):
+        return
+    target = store.root / record.image_path
+    _write_private(target, data)
+    # Withdrawn while it was written: the erase may have run before the file existed.
+    if not _names(store, record.id, record.image_path):
+        target.unlink(missing_ok=True)
+
+
+def _erased(record: dict) -> dict:
+    """A withdrawn report's item, with its personal details erased."""
     erased = {"latitude": None, "longitude": None, "positional_accuracy_m": None}
     return (
         record
@@ -165,9 +198,41 @@ def _erase(store: Store, record: dict) -> dict:
     )
 
 
+def _withdraw(store: Store, identifier: str, record: dict) -> None:
+    """Erase the record, zeroing the old bytes in the database and its log, then delete
+    the crop. The record goes first, so a crop written meanwhile is found and deleted."""
+    with store.connect() as db:
+        db.execute("PRAGMA secure_delete=ON")
+        db.execute(
+            "UPDATE photos SET record=? WHERE run_id=? AND id=?",
+            (json.dumps(_erased(record)), RUN_ID, identifier),
+        )
+    with store.connect() as db:
+        db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    if record.get("image_path"):
+        (store.root / record["image_path"]).unlink(missing_ok=True)
+
+
+def _withdrawn(reports: ReportStore, record: dict) -> bool:
+    """Whether intake says the person withdrew it. A report merely missing, as from a
+    wrong or empty intake folder, is left alone rather than erased."""
+    device = record["device"]
+    receipt = reports.receipt(device["submitter"], device["report_id"])
+    return receipt is not None and receipt.status == "withdrawn"
+
+
+def _private(store: Store) -> None:
+    """Device reports hold exact locations, so the review database is owner-only."""
+    for suffix in ("", "-wal", "-shm"):
+        path = store.database.with_name(store.database.name + suffix)
+        if path.exists():
+            path.chmod(0o600)
+
+
 def sync(store: Store, reports: ReportStore) -> None:
     """Bring the device run up to date with intake: add new reports, erase withdrawn ones."""
     store.create_run(RUN_ID, RunSpec())
+    _private(store)
     active = {item_id(stored): stored for stored in reports.active()}
     with store.connect() as db:
         rows = db.execute("SELECT id, record FROM photos WHERE run_id=?", (RUN_ID,))
@@ -175,28 +240,12 @@ def sync(store: Store, reports: ReportStore) -> None:
     for identifier, stored in active.items():
         if identifier not in known:
             _add(store, stored)
-    gone = {key: record for key, record in known.items() if key not in active}
-    for identifier, record in gone.items():
-        if not record.get("withdrawn_at"):
+    withdrawn = 0
+    for identifier, record in known.items():
+        if record.get("withdrawn_at"):
+            withdrawn += 1
+        elif identifier not in active and _withdrawn(reports, record):
             _withdraw(store, identifier, record)
-    detail = f"{len(active)} reports in review · {len(gone)} withdrawn"
+            withdrawn += 1
+    detail = f"{len(active)} reports in review · {withdrawn} withdrawn"
     store.status(RUN_ID, "receiving", detail)
-
-
-def _withdraw(store: Store, identifier: str, record: dict) -> None:
-    erased = _erase(store, record)
-    with store.connect() as db:
-        db.execute(
-            "UPDATE photos SET record=? WHERE run_id=? AND id=?",
-            (json.dumps(erased), RUN_ID, identifier),
-        )
-
-
-def _add(store: Store, stored: StoredReport) -> None:
-    record, found = item(stored), scores(stored)
-    _copy_image(store, stored, record, found)
-    with store.connect() as db:
-        db.execute(
-            "INSERT OR IGNORE INTO photos(run_id,id,record,scores) VALUES(?,?,?,?)",
-            (RUN_ID, record.id, record.model_dump_json(), json.dumps(found)),
-        )

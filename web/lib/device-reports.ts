@@ -21,8 +21,14 @@ export type DeviceProvenance = {
   image_consent: boolean;
 };
 
-/** Whether the photo has an image to request: a device report only with consent. */
-export const hasImage = (photo: Photo) => !photo.device || photo.device.image_consent;
+export const NO_CROP = "No image: the crop was not received, or is no longer kept";
+
+/** Whether the photo has an image to request: a device report only with a kept crop. */
+export const hasImage = (photo: Photo) => !photo.device || Boolean(photo.image_path);
+
+/** Why a device report shows no image. */
+export const noImageReason = (photo: Photo) =>
+  photo.device?.image_consent ? NO_CROP : NO_IMAGE_CONSENT;
 
 /** The device's exact point with its accuracy; the location is the point of the report. */
 export function exactPoint(photo: Photo): string {

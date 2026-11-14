@@ -49,6 +49,7 @@ try {
     scores: consent
       ? { best_species: "Ulex europaeus", margin: 0.12, width: 64, height: 48 }
       : { best_species: "Ulex europaeus", margin: 0.05 },
+    image_path: consent ? `images/device/${id}.jpg` : "",
     photo_license: consent ? "cc-by" : "",
     observation_license: consent ? "cc-by" : "",
     attribution: consent ? "Aroha" : "Device report (no credit given)",
@@ -88,7 +89,15 @@ try {
     },
     ...fields,
   });
-  const photos = [report("device-1-a", true), report("device-1-b", false)];
+  const photos = [
+    report("device-1-a", true),
+    report("device-1-b", false),
+    // Consented, but the crop is not kept: nothing to request either.
+    report("device-1-c", true, {
+      image_path: "",
+      scores: { best_species: "Ulex europaeus", margin: 0.01, width: 64, height: 48 },
+    }),
+  ];
   const images = [];
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -146,9 +155,12 @@ try {
   assert.equal(await page.locator(".image-stage img, .image-stage svg image").count(), 0);
   assert.equal(await evidence.getByText("Open full image").count(), 0);
   assert.equal(await evidence.getByText("Aroha").count(), 0);
+  await rows.nth(2).click();
+  await evidence.getByText("the crop was not received").first().waitFor();
+  assert.equal(await page.locator(".image-stage img, .image-stage svg image").count(), 0);
   assert.ok(
-    images.every((path) => !path.includes("device-1-b")),
-    "no image is requested for a report without consent",
+    images.every((path) => !path.includes("device-1-b") && !path.includes("device-1-c")),
+    "no image is requested for a report without a kept crop",
   );
   console.log("Device report checks passed");
 } finally {

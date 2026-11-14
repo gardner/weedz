@@ -21,6 +21,8 @@ export type Photo = Judged & {
   cohort: "incidental" | "reference" | "lookalike" | "device";
   /** Provenance of a report sent from a phone (#58); absent for iNaturalist photos. */
   device?: DeviceProvenance;
+  /** The kept copy's path; empty when there is no image to show. */
+  image_path?: string;
   lookalike_taxon?: string | null;
   lookalike_of?: string | null;
   reference_species: string | null;

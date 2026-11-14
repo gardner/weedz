@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { type PointerEvent, type ReactNode, useRef } from "react";
-import { hasImage, NO_IMAGE_CONSENT } from "../lib/device-reports";
+import { hasImage, noImageReason } from "../lib/device-reports";
 import { findingName } from "../lib/findings";
 import { imageUrl, names, type Photo } from "../lib/types";
 
@@ -66,7 +66,7 @@ export default function PhotoStage({
   if (!hasImage(photo)) {
     return (
       <div className="image-stage">
-        <p className="no-image">{NO_IMAGE_CONSENT}</p>
+        <p className="no-image">{noImageReason(photo)}</p>
         <span className="image-caption">{caption}</span>
       </div>
     );

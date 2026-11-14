@@ -366,6 +366,7 @@ class ReviewAPI:
         self, run_id: str, photo_id: str, referral_id: int, event: ReferralEvent
     ) -> dict:
         """Answer or withdraw an open referral; a closed one stays closed."""
+        self.writable(run_id, photo_id)
         referral = next(
             (item for item in self.referrals(run_id, photo_id) if item["id"] == referral_id),
             None,
