@@ -9,6 +9,7 @@ from typing import Any
 
 from temporalio import activity
 
+from weedz.discovery.lookalikes import summarize_lookalikes
 from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
 from weedz.discovery.source import Inaturalist
@@ -93,6 +94,7 @@ def export(store: Store, run_id: str) -> dict:
         "schema": 1,
         "run": run,
         "photos": store.photos(run_id),
+        "lookalikes": summarize_lookalikes(store.photos(run_id)),
         "corpus_coverage": coverage(
             [Photo.model_validate(p) for p in store.photos(run_id) if p["cohort"] == "incidental"],
             RunSpec.from_saved(run["spec"]).sampling,

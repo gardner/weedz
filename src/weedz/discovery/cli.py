@@ -103,6 +103,7 @@ async def discover(args: argparse.Namespace) -> None:
         before=args.before,
         after=args.after,
         sampling=args.sampling,
+        lookalikes_per_taxon=args.lookalikes,
     )
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(f"{args.api_url}/runs", json=spec.model_dump(mode="json"))
@@ -115,7 +116,7 @@ async def discover(args: argparse.Namespace) -> None:
         print(json.dumps(result, indent=2))
 
 
-def main(argv: list[str]) -> None:
+def parse(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Nelson/Tasman discovery and review")
     commands = parser.add_subparsers(dest="command", required=True)
     local = commands.add_parser(
@@ -145,5 +146,15 @@ def main(argv: list[str]) -> None:
     run.add_argument("--api-url", default="http://127.0.0.1:8000")
     run.add_argument("--temporal-address", default="localhost:7234")
     run.add_argument("--wait", action="store_true")
-    args = parser.parse_args(argv)
+    run.add_argument(
+        "--lookalikes",
+        type=int,
+        default=0,
+        help="Lookalike photos per declared lookalike taxon per region (0–3)",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str]) -> None:
+    args = parse(argv)
     asyncio.run(dev(args) if args.command == "dev" else discover(args))
