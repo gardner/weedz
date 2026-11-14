@@ -34,7 +34,11 @@ make review easier. An inaccurate declaration is itself grounds for removal.
 Facts that depend on unmerged work are marked **(pending #n)**:
 
 - **#57 / PR #85**: the intake API and report schema version 1.
-- **#61**: adds `consent.location`, so a location is sent only with explicit consent.
+- **#61** (merged): exact locations are shared by default, and obscured points
+  never leak. It did **not** add a separate location-consent field. A location is
+  sent only when it is in a report the person approved, after seeing it on the
+  approval screen. They can remove it with "Remove location" (`docs/mobile.md`,
+  pending #50).
 - **#59**: the model bundle format, and what (if anything) the device sends when
   it checks for updates.
 - **[#60](https://github.com/gardner/weedz/issues/60)**: what the project may do
@@ -101,9 +105,9 @@ same thing through 5.1.1(ii) and 5.1.5. One onboarding flow serves both:
    with single photos you pick).
 3. **Per-report approval** ([#56](https://github.com/gardner/weedz/issues/56)).
    The app shows a map pin and accuracy circle for the exact point. It has
-   separate controls for "share this location" (`consent.location`, pending #61)
-   and "include photo crop" (`consent.image`, with a licence), plus an optional
-   credit name. The consent wording version is recorded in the report (#57).
+   a "Remove location" control, which takes the location out of the report and
+   sends it back for approval. It also has an "include photo crop" control
+   (`consent.image`, with a licence) and an optional credit name. The consent wording version is recorded in the report (#57).
 
 The same wording, in short form, goes in the purpose strings above, so the OS
 prompt never says less than the screen before it.
@@ -151,8 +155,9 @@ and `READ_EXTERNAL_STORAGE` from the manifest:
   expose it yet. The picker side is delivered through the August 2026 Google Play
   system update. The person sees an
   "Include location info?" prompt. On devices without that update, the picker
-  removes GPS, and the report needs a location placed by hand (#54). Keep
-  `ACCESS_MEDIA_LOCATION` only if Play accepts it without broad media access.
+  removes GPS, and the report needs a location placed by hand (#54). This flavour
+  also drops `ACCESS_MEDIA_LOCATION`. It can't recover GPS from picker results, and
+  declaring it makes Android add `READ_MEDIA_VISUAL_USER_SELECTED`.
   Verify both the API and the policy before shipping.
 - **What is lost**: passive discovery. The app becomes "check photos you suspect".
   Say this honestly in the Play listing.
@@ -414,16 +419,20 @@ Settle this when #59 is designed.
 imposing "further restrictions" on recipients. Apple's App Store terms (the
 Usage Rules in the Apple Media Services Terms) limit how a downloaded app may be
 used and copied: on Apple-branded devices you own or control, under Apple's DRM.
-In 2010 the FSF, acting for a VLC copyright holder, found this incompatible with
-the GPL ([FSF, 2010](https://www.fsf.org/news/2010-05-app-store-compliance)), and
-Apple removed VLC. VLC later returned under a relicensing (MPL-2.0 for libVLC).
+In 2010 the FSF, enforcing its own copyright in GNU Go, found these terms
+incompatible with the GPL
+([FSF, 2010](https://www.fsf.org/news/2010-05-app-store-compliance)). Apple
+removed the app rather than change its terms. In January 2011 Apple also removed
+VLC after a VideoLAN copyright holder complained. VLC returned in 2013, after
+VideoLAN relicensed libVLC under LGPL-2.1-or-later and dual-licensed the iOS app
+(GPL-2.0 and MPL-2.0).
 Apple's terms have not changed in substance. GPLv3 also adds "Installation
 Information" duties for consumer devices (section 6), which iOS signing makes
 awkward.
 
 A copyright holder isn't bound by its own licence. So while the project owns all
 the copyright in `mobile/`, it **can** publish to the App Store. Once outside
-contributions arrive under inbound = outbound GPL (with a DCO, as #32 proposes),
+contributions arrive under inbound = outbound GPL (with a DCO sign-off, as `CONTRIBUTING.md` requires since #32 merged),
 any one contributor can object, and forks can't publish to the App Store at all.
 
 **Google Play** is generally considered compatible. Play's terms don't restrict
@@ -455,7 +464,7 @@ contributions to `mobile/`):
    recommended.
 
 The lowest-friction path that keeps the project's open-source stance is probably
-option 1 or 2, decided at the same time as #32 merges. **Risk if ignored: high**
+option 1 or 2, decided before the first outside contribution to `mobile/`. **Risk if ignored: high**
 for iOS distribution once outside contributions arrive.
 
 ## Privacy policy outline (draft, pending legal review)
@@ -474,8 +483,8 @@ Play's User Data policy.
    on the device. None of this is sent. No analytics, advertising or tracking.
 3. **What we collect, and only when you approve a report** (IPP 3(1)(a)): the
    suspected weed and score, model and app version, capture time, **the exact
-   location and its accuracy** (shared knowingly, with `consent.location`, pending
-   #61), the consent wording version and your choices, an optional credit name, an
+   location and its accuracy** (shown on the approval screen, and left out if you
+   remove it), the consent wording version and your choices, an optional credit name, an
    optional cropped photo (re-encoded on the server with all metadata removed,
    #57), and the device's submitter identity. No free text, contacts, account
    email or advertising IDs.
@@ -526,12 +535,12 @@ Play's User Data policy.
       decided and written into the policy.
 - [ ] GPL and App Store option chosen and recorded in the repo before outside
       contributions to `mobile/`.
-- [ ] #60 (rights) and #61 (`consent.location`) merged. The schema, label, Data safety
+- [ ] #60 (rights) merged. The schema, label, Data safety
       form and policy all match.
 - [ ] Onboarding disclosure screens implemented before any permission prompt, and the
       wording matches the purpose strings.
-- [ ] Per-report approval shows the exact map point and accuracy, with separate location
-      and photo consent (#56).
+- [ ] Per-report approval shows the exact map point and accuracy, with a "Remove
+      location" control and separate photo consent (#56).
 - [ ] "Delete my data" in settings and a web or email deletion route, with the intake
       endpoint for bulk withdrawal and self-revocation added.
 - [ ] Reviewer notes and a demo: how to get a test token, a sample photo library with a
@@ -589,6 +598,6 @@ Play's User Data policy.
   [Information privacy principles](https://www.privacy.org.nz/privacy-principles/),
   [IPP 3A guidance](https://www.privacy.org.nz/resources-and-learning/a-z-topics/ipp3a/),
   [Privacy Amendment Act 2025](https://www.legislation.govt.nz/act/public/2025/53/en/latest/).
-- GPL: [FSF on the App Store and VLC (2010)](https://www.fsf.org/news/2010-05-app-store-compliance),
+- GPL: [FSF on the App Store and GNU Go (2010)](https://www.fsf.org/news/2010-05-app-store-compliance),
   [GPLv3 sections 6, 7 and 10](https://www.gnu.org/licenses/gpl-3.0.html),
   [GPL FAQ: additional permissions](https://www.gnu.org/licenses/gpl-faq.html#GPLIncompatibleLibs).
