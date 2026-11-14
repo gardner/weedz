@@ -79,7 +79,7 @@ updates since 31 August 2026.
 | `INTERNET` | Yes | Upload approved reports and download the model bundle. | — (normal permission) |
 | `READ_MEDIA_VIDEO`, `READ_MEDIA_AUDIO` | **No, explicitly removed** | Flutter media plugins may add these through manifest merge. Remove them with `tools:node="remove"` and check the merged manifest, because Play asks for a declaration for every media permission present. | — |
 | `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` / `ACCESS_BACKGROUND_LOCATION` | **No** | As on iOS, location comes from photo metadata. Keeping these out also keeps the app out of Play's location-permissions policy. | — |
-| `FOREGROUND_SERVICE*` | **No** | Background scanning uses WorkManager with `requiresCharging` and `requiresDeviceIdle` constraints. A foreground service would need a Play Console FGS-type declaration, and the `dataSync` type is time-limited on Android 15+. | — |
+| `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_MEDIA_PROCESSING` | **Only if WorkManager proves too slow** | The default is WorkManager with `requiresCharging` and `requiresDeviceIdle` constraints, plus the in-app scan. `docs/mobile.md` (pending #50) keeps a `mediaProcessing` foreground service as the option for long scans. If it ships, Play needs a foreground-service-type declaration in the Console, with a video of the visible notification, and Android 15+ limits `mediaProcessing` to 6 hours in 24. | Notification: "Checking your photos for weeds on this phone. Nothing is uploaded." |
 | `POST_NOTIFICATIONS` | Optional, later | Only to say "3 possible weeds are ready to review" after a background scan. Asked for when the person turns that on, not at first launch. | "Weedz can tell you when a background check finds a possible weed for you to review." |
 | `CAMERA` | No (not in v1) | — | — |
 
@@ -139,12 +139,17 @@ photos to pick. Plan for refusal.
 A `picker` product flavour drops `READ_MEDIA_IMAGES`, `READ_MEDIA_VISUAL_USER_SELECTED`
 and `READ_EXTERNAL_STORAGE` from the manifest:
 
-- **"Check a batch"**: the person opens the Android Photo Picker (`PickMultipleVisualMedia`,
-  androidx.activity 1.7+) and selects many photos at once, for example a day's walk or an
-  album. The app screens them on the device exactly as before.
+- **"Check a batch"**: the person opens the Android Photo Picker and selects many
+  photos at once, for example a day's walk or an album. The app screens them on the
+  device exactly as before.
 - **Locations**: request location metadata through the photo picker's
-  location-metadata opt-in (`PickVisualMediaRequest.setLocationMetadataAccessRequested`,
-  delivered through the August 2026 Google Play system update). The person sees an
+  location-metadata opt-in. This is **not** in `androidx.activity`'s
+  `PickVisualMediaRequest`. It is `setLocationMetadataAccessRequested` on the
+  separate `androidx.photopicker:photopicker-activity` artefact (1.0.0-alpha03 at
+  the time of writing), and its contract replaces the `androidx.activity` one. It
+  needs a small Kotlin call behind a pigeon interface, because Flutter plugins don't
+  expose it yet. The picker side is delivered through the August 2026 Google Play
+  system update. The person sees an
   "Include location info?" prompt. On devices without that update, the picker
   removes GPS, and the report needs a location placed by hand (#54). Keep
   `ACCESS_MEDIA_LOCATION` only if Play accepts it without broad media access.
@@ -160,12 +165,15 @@ the purpose string and the limited-access behaviour above.
 ## Background work
 
 - **Android**: WorkManager periodic work with charging and idle constraints, done in
-  chunks that can resume, with no foreground service. The OS may delay or skip runs
+  chunks that can resume. A `mediaProcessing` foreground service is used only if
+  that proves too slow, with the extra declarations in the permission table. The OS may delay or skip runs
   (Doze, App Standby buckets). The scan screen shows progress and lets the person
   run the scan in the foreground on demand. See #53.
 - **iOS**: `BGProcessingTaskRequest` with `requiresExternalPower = true`, resumable.
-  iOS gives no guarantee of when (or whether) it runs. The in-app scan is the
-  baseline.
+  iOS gives no guarantee of when (or whether) it runs. On iOS 26, a
+  `BGContinuedProcessingTask` that the person starts can keep a visible scan going
+  after they leave the app. Its identifier must also be listed in
+  `BGTaskSchedulerPermittedIdentifiers`. The in-app scan is the baseline.
 - **Neither platform uploads in the background without approval.** Approved reports
   may be queued and retried in the background. The `PUT /reports/{uuid}` call is
   idempotent (#57).
@@ -203,8 +211,10 @@ claim a device ID is collected.
 
 Apple has no "scientific research" purpose. App Functionality is the closest fit,
 as long as reports serve the app's stated purpose. If #60 lets the project use
-crops to train models, that counts as "Product Personalization" or "Other
-Purposes". Add it **(pending #60)**. "Linked to you" is correct even though no
+crops to train models, that counts as "Other Purposes"
+(`NSPrivacyCollectedDataTypePurposeOther`) on the Photos or Videos row and its
+manifest entry. It is not "Product Personalization", which Apple limits to
+customising what the person sees. Add it **(pending #60)**. "Linked to you" is correct even though no
 name or email is collected, because every report carries a stable submitter
 identity. Choosing "Not linked" would understate it.
 
@@ -534,9 +544,10 @@ Play's User Data policy.
 
 - [ ] `targetSdkVersion` 36.
 - [ ] Merged manifest checked: no `READ_MEDIA_VIDEO`, `READ_MEDIA_AUDIO`,
-      `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION` or
-      foreground-service permissions. `ACCESS_MEDIA_LOCATION` **stays**: it is how the
-      app reads a photo's GPS.
+      `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION` or `ACCESS_BACKGROUND_LOCATION`.
+      `ACCESS_MEDIA_LOCATION` **stays**: it is how the app reads a photo's GPS.
+- [ ] Foreground service: either none is present, or `FOREGROUND_SERVICE_MEDIA_PROCESSING`
+      is declared in the Play Console with a video.
 - [ ] Photo and video permissions declaration submitted with the justification and
       video. The picker-only flavour is ready if it is refused.
 - [ ] `ACCESS_MEDIA_LOCATION` and `setRequireOriginal()` tested on Android 10, 13, 14 and 16.
