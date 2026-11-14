@@ -23,7 +23,7 @@ from weedz.discovery.outcome_report import to_markdown
 from weedz.discovery.outcomes import outcomes
 from weedz.discovery.package_output import package_contents, write
 from weedz.discovery.package_report import NONE_SELECTED
-from weedz.discovery.records import TASK_QUEUE, RunSpec
+from weedz.discovery.records import SPECIES, TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
 from weedz.discovery.store import Store
 from weedz.discovery.study import StudyDefinition, StudyEdit
@@ -36,6 +36,8 @@ from weedz.discovery.study_store import (
 )
 from weedz.discovery.suitability_report import to_markdown as suitability_markdown
 from weedz.discovery.workflows import DiscoveryWorkflow
+from weedz.reference import collection
+from weedz.reference_report import to_markdown as reference_markdown
 
 
 async def worker(root: Path, address: str, stack: AsyncExitStack) -> None:
@@ -188,6 +190,14 @@ def suitability(args: argparse.Namespace) -> None:
     _print(args, result, suitability_markdown(result))
 
 
+def reference(args: argparse.Namespace) -> None:
+    """The run's reviewed examples as a reference collection, with the watchlist's gaps."""
+    from weedz.adapters import pilot_samples  # imports PIL, needed by this command only
+
+    result = collection(args.run, pilot_samples(run_store(args), args.run), SPECIES)
+    _print(args, result, reference_markdown(result))
+
+
 def _record_study(store: Store, args: argparse.Namespace) -> None:
     """Record --file as the run's next study version, refusing an edit whose file is based
     on an older version than the one now standing."""
@@ -301,6 +311,13 @@ def parse(argv: list[str]) -> argparse.Namespace:
     define.add_argument(
         "--base-version", type=int, help="The version your file edits (needed once one exists)"
     )
+    curate = commands.add_parser(
+        "reference",
+        help="Report a run's reviewed examples, their eligible uses and gaps (Markdown)",
+    )
+    curate.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    curate.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    curate.add_argument("--json", type=Path, help="Also write the collection as JSON here")
     bundle = commands.add_parser(
         "package", help="Write the follow-up package of a run's selected leads"
     )
@@ -312,19 +329,15 @@ def parse(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str]) -> None:
     args = parse(argv)
-    if args.command == "references":
-        references(args)
-        return
-    if args.command == "outcomes":
-        report(args)
-        return
-    if args.command == "suitability":
-        suitability(args)
-        return
-    if args.command == "package":
-        package(args)
-        return
-    if args.command == "study":
-        study(args)
+    reports = {
+        "references": references,
+        "outcomes": report,
+        "suitability": suitability,
+        "reference": reference,
+        "package": package,
+        "study": study,
+    }
+    if args.command in reports:
+        reports[args.command](args)
         return
     asyncio.run(dev(args) if args.command == "dev" else discover(args))

@@ -27,6 +27,7 @@ def main() -> None:
         "references",
         "outcomes",
         "package",
+        "reference",
         "study",
         "suitability",
     }:
