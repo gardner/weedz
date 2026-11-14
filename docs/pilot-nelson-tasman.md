@@ -169,7 +169,7 @@ Those 8 are counted apart, not as visits.
 | --- | --- | --- |
 | Useful incidental yield | Not yet measurable | No incidental photo reviewed; usefulness is not judged separately yet (#18) |
 | Reviewer effort per useful finding | Not yet measurable | No useful finding to divide by; no review time recorded |
-| Missed visible targets | Not yet measurable | The 6-photo blind audit sample is not yet audited |
+| Missed visible targets | Not yet measurable | The 6-photo blind audit sample is not yet audited. Even once audited, calling a found weed a miss needs an agreed detection rule (#16) |
 | Novel or earlier evidence | Not yet measurable | No confirmed finding to compare with the DOC snapshot of 14 November 2026 |
 | False-alarm workload | Not yet measurable | No incidental photo reviewed |
 | Follow-up usefulness | Not yet measurable | Intended users' judgements are not recorded (#18, #27) |

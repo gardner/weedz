@@ -195,33 +195,41 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
 
 
 def missed_targets(study: Study) -> dict[str, Any]:
+    """Weeds the blind audit found, with their rank and top suggestion. Calling one a miss
+    needs a detection rule (#16), so this reports evidence, never a miss count."""
     audit = study.export["audit"]
+    key = "missed_visible_targets"
     evidence = {
-        key: audit[key]
-        for key in ["sampled", "audited", "weed_found", "found_as_top_suggestion"]
+        name: audit[name]
+        for name in ["sampled", "audited", "found_as_top_suggestion", "found_not_top_suggestion"]
         + ["disputed", "unsure", "not_blind"]
     }
+    if not audit["sampled"]:
+        return _measure(key, NOT_YET, "There are no incidental photos to audit.")
     if not audit["audited"]:
-        reason = (
-            f"The blind audit sample ({audit['sampled']} photos) is not yet audited."
-            if audit["sampled"]
-            else "There are no incidental photos to audit."
-        )
-        return _measure("missed_visible_targets", NOT_YET, reason, evidence=evidence)
+        reason = f"The blind audit sample ({audit['sampled']} photos) is not yet audited."
+        return _measure(key, NOT_YET, reason, evidence=evidence)
     findings = audit["findings"]
-    top = {f["photo_id"] for f in findings if f["top_suggestion"]}
-    missed = {f["photo_id"] for f in findings} - top
+    if audit["unsure"] == audit["audited"] and not findings:
+        reason = "Every audited photo had an 'unsure' answer and no weed was found."
+        return _measure(key, NOT_YET, reason, evidence=evidence)
+    found = {f["photo_id"] for f in findings}
+    evidence["weeds_found"] = tally([p for p in study.incidental if p["id"] in found])
     evidence["found_queue_ranks"] = sorted({f["queue_rank"] for f in findings})
-    caveats = []
+    caveats = [
+        "No detection rule is agreed yet (#16), so weeds the audit found are reported "
+        "with their queue rank and top suggestion, not as hits or misses."
+    ]
     if audit["remaining"]:
         caveats.append(f"{audit['audited']} of {audit['sampled']} sampled photos audited.")
     if audit["disputed"]:
-        caveats.append(f"{audit['disputed']} audited photos have disputed findings.")
+        caveats.append(f"{_plural(audit['disputed'], 'audited photo')} had disputed findings.")
+    if audit["unsure"]:
+        caveats.append(f"{_plural(audit['unsure'], 'audited photo')} had an 'unsure' answer.")
     return _measure(
-        "missed_visible_targets",
-        PARTIAL if caveats else MEASURED,
-        " ".join(caveats) or None,
-        value=tally([p for p in study.incidental if p["id"] in missed]),
+        key,
+        PARTIAL,
+        " ".join(caveats),
         denominator={"photos": audit["audited"]},
         evidence=evidence,
     )

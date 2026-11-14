@@ -137,9 +137,15 @@ def test_missed_targets_need_an_audit_and_are_partial_while_samples_remain() -> 
     photos = [photo("a", "v1"), photo("b", "v2")]
     missed = measure(outcomes(export(photos, audit=partial)), "missed_visible_targets")
     assert missed["status"] == PARTIAL
-    assert missed["value"] == {"photos": 1, "site_visits": 1, "ungrouped_photos": 0}
+    assert missed["value"] is None
     assert missed["denominator"] == {"photos": 1}
     assert "1 of 2" in missed["reason"]
+    assert missed["evidence"]["weeds_found"] == {
+        "photos": 1,
+        "site_visits": 1,
+        "ungrouped_photos": 0,
+    }
+    assert missed["evidence"]["found_not_top_suggestion"] == 1
     assert missed["evidence"]["found_queue_ranks"] == [2]
 
 
@@ -149,11 +155,25 @@ def test_a_run_without_incidental_photos_has_nothing_to_audit() -> None:
     assert missed["reason"] == "There are no incidental photos to audit."
 
 
-def test_a_fully_audited_undisputed_sample_is_measured() -> None:
+def test_misses_are_not_counted_without_an_agreed_detection_rule() -> None:
     done = audit(sampled=1, audited=1, remaining=0)
     missed = measure(outcomes(export([photo("a", "a")], audit=done)), "missed_visible_targets")
-    assert missed["status"] == MEASURED
-    assert missed["value"] == {"photos": 0, "site_visits": 0, "ungrouped_photos": 0}
+    assert missed["status"] == PARTIAL
+    assert missed["value"] is None
+    assert "#16" in missed["reason"]
+
+
+def test_unsure_audit_answers_are_not_a_measured_zero() -> None:
+    unsure = audit(sampled=2, audited=2, remaining=0, unsure=1)
+    missed = measure(outcomes(export([photo("a", "a")], audit=unsure)), "missed_visible_targets")
+    assert missed["status"] == PARTIAL
+    assert "1 audited photo had an 'unsure' answer" in missed["reason"]
+    all_unsure = audit(sampled=1, audited=1, remaining=0, unsure=1)
+    missed = measure(
+        outcomes(export([photo("a", "a")], audit=all_unsure)), "missed_visible_targets"
+    )
+    assert missed["status"] == NOT_YET
+    assert missed["value"] is None
 
 
 def test_novelty_needs_a_reference_snapshot() -> None:
