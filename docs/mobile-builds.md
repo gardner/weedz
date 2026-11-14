@@ -77,7 +77,8 @@ signing secrets without needing Android keys or deployment URLs. The helper's
 `--ios-signing-check` mode is mutually exclusive with `--release` and deliberately
 embeds an empty development configuration, even if URL variables exist.
 
-This builds an actual signed IPA and uploads the `ios-signing-check` artifact,
+This builds an actual signed IPA, verifies the exported app with
+`codesign --verify --deep --strict`, and uploads the `ios-signing-check` artifact,
 including a README identifying it as an unconfigured signing proof. The IPA uses
 App Store distribution signing; physical-device testing requires a separate
 TestFlight distribution step. Deployment-

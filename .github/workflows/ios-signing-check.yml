@@ -46,6 +46,10 @@ jobs:
           flutter build ipa --release
           --export-options-plist="$RUNNER_TEMP/weedz-signing-check/ios/ExportOptions.plist"
           --dart-define-from-file="$RUNNER_TEMP/weedz-signing-check/config.json"
+      - name: Verify the exported app signature
+        run: |
+          ditto -x -k mobile/build/ios/ipa/*.ipa "$RUNNER_TEMP/weedz-signing-check/verification"
+          codesign --verify --deep --strict "$RUNNER_TEMP/weedz-signing-check/verification"/Payload/*.app
       - name: Label the unconfigured signing-check artifact
         run: |
           mkdir -p "$RUNNER_TEMP/ios-signing-check-artifact"
