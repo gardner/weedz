@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:weedz/domain/report.dart';
 
 /// A fixture file's text, from `test/fixtures` (tests run from the package root).
-String fixtureJson(String name) => File('test/fixtures/$name').readAsStringSync();
+String fixtureJson(String name) =>
+    File('test/fixtures/$name').readAsStringSync();
 
 Consent imageConsent() => Consent(
   wordingVersion: 'consent-2026-11',
@@ -36,6 +37,10 @@ Report fullReport() => Report(
 Report minimalReport() => Report(
   appVersion: '0.1.0+1',
   candidate: Candidate(taxon: 'Ulex europaeus', score: -0.004),
-  model: Screening(modelKey: 'bioclip-2', revision: '2957b322090f9cb17ae72c71981c7218a28d81e0', rankingRevision: 4),
+  model: Screening(
+    modelKey: 'bioclip-2',
+    revision: '2957b322090f9cb17ae72c71981c7218a28d81e0',
+    rankingRevision: 4,
+  ),
   consent: Consent(wordingVersion: 'consent-2026-11', image: false),
 );

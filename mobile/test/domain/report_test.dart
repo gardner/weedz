@@ -17,9 +17,9 @@ void main() {
       expect(json.containsKey('captured_at'), isFalse);
       expect(json.containsKey('location'), isFalse);
       expect(json.containsKey('image'), isFalse);
-      expect((json['model'] as Map).containsKey('score_meaning'), isFalse);
-      expect((json['consent'] as Map).containsKey('licence'), isFalse);
-      expect((json['consent'] as Map).containsKey('credit'), isFalse);
+      expect((json['model']! as Map).containsKey('score_meaning'), isFalse);
+      expect((json['consent']! as Map).containsKey('licence'), isFalse);
+      expect((json['consent']! as Map).containsKey('credit'), isFalse);
     });
 
     test('sends the capture time in UTC with its zone', () {
@@ -29,7 +29,7 @@ void main() {
     });
 
     test('keeps exact coordinates and their accuracy', () {
-      final location = fullReport().toJson()['location'] as Map;
+      final location = fullReport().toJson()['location']! as Map;
       expect(location['latitude'], -41.2706319);
       expect(location['longitude'], 173.2839653);
       expect(location['accuracy_m'], 4.7);
@@ -75,11 +75,8 @@ void main() {
 
     test('a token that does not match the server pattern', () {
       expect(
-        () => Screening(
-          modelKey: 'has space',
-          revision: 'r',
-          rankingRevision: 4,
-        ),
+        () =>
+            Screening(modelKey: 'has space', revision: 'r', rankingRevision: 4),
         throwsArgumentError,
       );
       expect(
@@ -115,7 +112,11 @@ void main() {
         () => Consent(wordingVersion: 'v1', image: false, credit: 'x' * 81),
         throwsArgumentError,
       );
-      final consent = Consent(wordingVersion: 'v1', image: false, credit: ' A ');
+      final consent = Consent(
+        wordingVersion: 'v1',
+        image: false,
+        credit: ' A ',
+      );
       expect(consent.credit, 'A');
     });
 
