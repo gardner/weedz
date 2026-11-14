@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
+import type { Closing, NewReferral } from "../lib/referrals";
 import {
   imageUrl,
   names,
@@ -16,6 +17,7 @@ import {
 import { FindingForm, FindingList } from "./finding-form";
 import JudgementPanel from "./judgements";
 import PhotoStage from "./photo-stage";
+import ReferralPanel from "./referrals";
 import ReviewHistory from "./review-history";
 
 export default function Evidence({
@@ -24,6 +26,8 @@ export default function Evidence({
   onSave,
   onSaveFinding,
   onSaveJudgement,
+  onRefer,
+  onCloseReferral,
   saving,
   references,
   reviewer,
@@ -34,6 +38,8 @@ export default function Evidence({
   onSave: (status: Status, note: string) => Promise<unknown>;
   onSaveFinding: (finding: NewFinding) => Promise<boolean>;
   onSaveJudgement: (judgement: NewJudgement) => Promise<boolean>;
+  onRefer: (referral: NewReferral) => Promise<boolean>;
+  onCloseReferral: (referralId: number, closing: Closing) => Promise<boolean>;
   saving: boolean;
   references: References;
   reviewer: string;
@@ -234,6 +240,13 @@ export default function Evidence({
         reviewer={reviewer}
         blocked={blocked}
         onSave={onSaveJudgement}
+      />
+      <ReferralPanel
+        photo={photo}
+        reviewer={reviewer}
+        blocked={blocked}
+        onRefer={onRefer}
+        onClose={onCloseReferral}
       />
       <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />
     </article>

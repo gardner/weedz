@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { NewFinding } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
 import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
+import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
 import {
   type AuditSummary,
@@ -31,12 +32,18 @@ type Payloads = {
   audit: { finding: string; note: string };
   findings: NewFinding;
   judgements: NewJudgement;
+  referrals: NewReferral & { referrer: string };
+  answered: Closing & { actor: string };
+  withdrawn: Closing & { actor: string };
 };
 const SAVED: Record<keyof Payloads, string> = {
   review: "Review saved locally.",
   audit: "Audit saved locally.",
   findings: "Finding saved locally.",
   judgements: "Judgement saved locally.",
+  referrals: "Referral saved locally.",
+  answered: "Referral answer saved locally.",
+  withdrawn: "Referral withdrawal saved locally.",
 };
 
 export default function ReviewDesk() {
@@ -123,7 +130,10 @@ export default function ReviewDesk() {
   const visits = new Set(groupable.map((photo) => photo.encounter_group ?? photo.id)).size;
   const ungrouped = incidental.length - groupable.length;
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
-  const held = incidental.filter((photo) => heldForAudit(photo, reviewer)).length;
+  const specialist = cohort === "specialist";
+  const held = (specialist ? photos.filter(needsSpecialist) : incidental).filter((photo) =>
+    heldForAudit(photo, reviewer),
+  ).length;
 
   // Time belongs to whoever is reviewing, so a shared browser does not pass it between people.
   const timerKey = [runId, auditing ? "audit" : "review", reviewer.trim(), active?.id ?? ""];
@@ -137,12 +147,16 @@ export default function ReviewDesk() {
     setRunId(id);
   }
 
-  async function submit<K extends keyof Payloads>(kind: K, fields: Payloads[K]) {
+  async function submit<K extends keyof Payloads>(
+    kind: K,
+    fields: Payloads[K],
+    path: string = kind,
+  ) {
     if (!active) return false;
     const measured = effort.snapshot();
     setSaving(true);
     try {
-      await request(`runs/${runId}/photos/${active.id}/${kind}`, {
+      await request(`runs/${runId}/photos/${active.id}/${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -166,6 +180,10 @@ export default function ReviewDesk() {
   const saveAudit = (finding: string, note: string) => submit("audit", { finding, note });
   const saveFinding = (finding: NewFinding) => submit("findings", finding);
   const saveJudgement = (judgement: NewJudgement) => submit("judgements", judgement);
+  const name = reviewer.trim();
+  const refer = (referral: NewReferral) => submit("referrals", { ...referral, referrer: name });
+  const closeReferral = (id: number, closing: Closing) =>
+    submit(closing.action, { ...closing, actor: name }, `referrals/${id}/events`);
 
   return (
     <div className="app-shell">
@@ -296,7 +314,7 @@ export default function ReviewDesk() {
                 <p>
                   {auditing
                     ? "Fixed random sample · screening rank hidden"
-                    : `Highest relative similarity first${held ? ` · ${held} held for blind audit` : ""}`}
+                    : `${specialist ? "Open referrals, longest waiting first" : "Highest relative similarity first"}${held ? ` · ${held} held for blind audit` : ""}`}
                 </p>
               </div>
               <div className="cohort-tabs">
@@ -321,7 +339,7 @@ export default function ReviewDesk() {
                   <option>Nelson</option>
                   <option>Tasman</option>
                 </select>
-                {!auditing && (
+                {!auditing && !specialist && (
                   <select
                     aria-label="Filter review status"
                     value={review}
@@ -375,6 +393,7 @@ export default function ReviewDesk() {
                             ? "Needs review"
                             : photo.review_status}
                         {!auditing && photo.disputed && " · Reviewers disagree"}
+                        {!auditing && needsSpecialist(photo) && " · Needs specialist"}
                         {!auditing && siteVisitNote(photo) && ` · ${siteVisitNote(photo)}`}
                       </small>
                     </span>
@@ -412,6 +431,8 @@ export default function ReviewDesk() {
                 onSave={save}
                 onSaveFinding={saveFinding}
                 onSaveJudgement={saveJudgement}
+                onRefer={refer}
+                onCloseReferral={closeReferral}
                 saving={saving}
                 references={references}
                 reviewer={reviewer}

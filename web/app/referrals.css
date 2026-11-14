@@ -1,0 +1,111 @@
+/* Specialist referrals: each request, its status and its answer, then a response form. */
+.referrals {
+  padding: 0 20px 20px;
+}
+.referrals h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.referrals > button {
+  font-size: 10px;
+  padding: 10px 12px;
+}
+.referral-list {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.referral {
+  border-top: 1px solid #edf1e8;
+  padding: 10px 0;
+  font-size: 10px;
+  color: #617251;
+}
+.referral p {
+  margin: 4px 0;
+  color: #636e5c;
+  line-height: 1.6;
+}
+.referral small {
+  display: block;
+  font-size: 9px;
+  color: #656e5c;
+}
+.referral-heading {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--ink);
+}
+.referral-status {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 650;
+}
+/* Status is spelled out, so colour only reinforces it. */
+.referral-status.open {
+  background: #fbf6e7;
+  color: #6f5a23;
+}
+.referral-status.answered {
+  background: #edf5e6;
+  color: #3f5a2c;
+}
+.referral-status.withdrawn {
+  background: #f0f1ee;
+  color: #575f51;
+}
+.referral .referral-event {
+  padding-left: 8px;
+  border-left: 3px solid #dee5d5;
+}
+.referral-form,
+.referral-response {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.referral-form label,
+.referral-response > label,
+.referral-response legend {
+  display: block;
+  font-size: 10px;
+  color: #617251;
+  margin-bottom: 6px;
+}
+.referral-form select,
+.referral-form input,
+.referral-form textarea,
+.referral-response textarea {
+  width: 100%;
+  margin-bottom: 10px;
+  border: 1px solid #dee5d5;
+  border-radius: 4px;
+  padding: 7px 8px;
+  font-size: 10px;
+  color: var(--ink);
+}
+.referral-form input::placeholder,
+.referral-form textarea::placeholder,
+.referral-response textarea::placeholder {
+  color: #656e5c;
+}
+.referral-response fieldset {
+  border: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+.referral-response fieldset label {
+  display: block;
+  font-size: 10px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.referral-form button,
+.referral-response button {
+  font-size: 10px;
+  padding: 8px 10px;
+}

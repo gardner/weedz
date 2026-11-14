@@ -142,8 +142,9 @@ intended for local development, not shared public hosting.
    scores. An audit counts as blind only if it is that auditor's first answer
    for the photo, and nobody reviewed the photo before it without having audited
    it first. The app lets a sampled photo be reviewed only after the reviewer's
-   own audit, so any other earlier review, recorded finding or judgement (for
-   example, one made before the audit sample existed) means the suggestion may have been seen. Other audits
+   own audit, so any other earlier review, recorded finding, judgement, referral
+   or referral answer (for example, one made before the audit sample existed)
+   means the suggestion may have been seen. Other audits
    are left out of the findings and reported as `not_blind`, and the audit view
    disables the answers once you have audited a photo. Simply opening a photo is
    not recorded, so viewing outside this workflow cannot be detected. The
@@ -228,6 +229,52 @@ intended for local development, not shared public hosting.
    "Reviewers disagree"). Each recorded plant in `findings` carries its own.
    The export's `review_history` carries every judgement event.
    `GET` and `POST /runs/{run}/photos/{photo}/judgements` read and append them.
+8. **Refer what you can't resolve to a specialist.** Under the judgements,
+   *Specialist referrals* lists each request for specialist assessment on the
+   photo. *Refer for specialist assessment* opens a form. Choose the plant
+   referred: the whole photo, or a recorded plant by its finding id. Then give:
+
+   - a required reason: `lookalike`, `cultivated_or_wild`, `poor_view`,
+     `location_or_date` or `other`;
+   - the expertise needed, as free text (there is no list of specialists yet);
+   - a required note saying what is unresolved and what would settle it.
+
+   A referral starts *open*. Someone, usually the specialist under their own
+   name, then *answers* it or *withdraws* it with a required note. That is a
+   further append-only event, never an edit, and only an open referral can be
+   closed: a second answer or withdrawal is refused (409).
+
+   An answer never changes a reviewer's decision or judgement. A specialist who
+   settles the identity records it as their own judgement first. The answer can
+   then cite it (`judgement_ids`). Only the answerer's own judgements on the referred plant (any
+   plant for a whole-photo referral) made since the referral can be cited, and
+   other citations are refused (409).
+
+   The **Needs specialist** queue view lists photos with open referrals, from
+   every cohort and any review status, longest waiting first. It still holds
+   back audit-sample photos you haven't audited, and the blind audit list never
+   shows referrals. Photo rows elsewhere show "Needs specialist".
+
+   Each photo in the run detail and export carries its `referrals`, each with a
+   `status` and its `events`. The export's `review_history` holds the same
+   history. Referral actions are timed like other review work
+   (`measured_referral_actions`, `unmeasured_referral_actions`,
+   `minutes_by_referral_action` and `unmeasured_incidental_referral_actions` in
+   `review_effort`).
+
+   The outcomes report's *Follow-up usefulness* measure counts referrals on
+   incidental photos: open, answered and withdrawn, by reason, with median and
+   longest hours from referral to answer (unknown until one is answered).
+
+   API:
+
+   - `GET` and `POST /runs/{run}/photos/{photo}/referrals` read and open
+     referrals.
+   - `POST /runs/{run}/photos/{photo}/referrals/{id}/events`, with `action`
+     `answered` or `withdrawn`, closes one.
+
+   Names are attribution on this unauthenticated stack (#31), not identity, so
+   an answer is a named person's note, not a verified identification.
 
 Acquisition, screening and export are separate Temporal activities, each with
 timeouts, heartbeats and up to three attempts. Query snapshots and cached photos
@@ -293,7 +340,7 @@ Everything generated is ignored by Git:
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
 | `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, pinned model, weights, library versions, preprocessing and window geometry; safe to delete |
 | `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
-| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings and judgements |
+| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings, judgements and specialist referrals |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 
@@ -345,6 +392,12 @@ that per-dimension disagreement is shown and that a draft does not pass to
 another reviewer. It also checks
 that unsupported claims are disabled with a reason. The accessibility check
 audits the judgements with a required-note hint showing.
+The referrals check refers a recorded plant with a reason and expertise,
+answers an open referral citing a judgement made since it, and withdraws
+another. It checks that the Needs specialist view lists only open referrals,
+holds back an unaudited sample photo until its reviewer has audited it, and
+that the blind audit list never mentions a referral. The accessibility check
+audits the referral form and an open referral's response form.
 The smoke check is read-only against a completed local pilot and verifies filters,
 source-image loading, window toggling, export and mobile layout.
 

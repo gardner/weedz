@@ -2,8 +2,8 @@ import type { Photo } from "./types";
 
 export type Dimension = "identity" | "location" | "history" | "novelty";
 
-/** A reviewer's latest standing judgement on one dimension. */
-export type Standing = { value: string; note: string; created_at: string };
+/** A reviewer's latest standing judgement on one dimension; `id` lets an answer cite it. */
+export type Standing = { id?: number; value: string; note: string; created_at: string };
 export type Judgements = Record<Dimension, Record<string, Standing>>;
 /** Standing judgements on one plant: the suggestion (on the photo) or a recorded plant. */
 export type Judged = { judgements?: Judgements; judgement_disputes?: Dimension[] };

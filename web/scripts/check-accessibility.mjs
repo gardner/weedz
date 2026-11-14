@@ -113,7 +113,10 @@ try {
       },
     ],
     judgements: {
-      identity: { Ben: { value: "confirmed", note: "Leaflets visible", created_at: "" } },
+      identity: {
+        Ben: { value: "confirmed", note: "Leaflets visible", created_at: "" },
+        "Dr Wiri": { id: 5, value: "disputed", note: "", created_at: "2026-11-14T00:00:00+00:00" },
+      },
       location: {
         Ben: { value: "camera_point_only", note: "", created_at: "" },
         Carol: { value: "usable", note: "", created_at: "" },
@@ -122,6 +125,39 @@ try {
       novelty: {},
     },
     judgement_disputes: ["location"],
+    referrals: [
+      {
+        id: 1,
+        finding_id: null,
+        reason: "lookalike",
+        expertise: "Clematis specialist",
+        note: "Could be native Clematis paniculata",
+        referrer: "Ben",
+        created_at: "2026-11-13T00:00:00+00:00",
+        status: "open",
+        events: [],
+      },
+      {
+        id: 2,
+        finding_id: 1,
+        reason: "poor_view",
+        expertise: "",
+        note: "Blurred",
+        referrer: "Ben",
+        created_at: "2026-11-13T00:00:00+00:00",
+        status: "withdrawn",
+        events: [
+          {
+            id: 1,
+            action: "withdrawn",
+            actor: "Ben",
+            note: "Better photo found",
+            judgement_ids: [],
+            created_at: "2026-11-13T01:00:00+00:00",
+          },
+        ],
+      },
+    ],
   });
   const posted = [];
   let photos = [photo("a", "unreviewed"), photo("b", "rejected")];
@@ -148,6 +184,12 @@ try {
   // Audit the judgements with a required-note hint and unavailable claims showing.
   await page.getByLabel("Novelty", { exact: true }).selectOption("verified_new_locality");
   await page.getByText(/needs the verification evidence/).waitFor();
+  // Audit referrals with an open one's response form and the new-referral form showing.
+  await page.getByRole("button", { name: "Refer for specialist assessment" }).click();
+  await page.getByLabel("What is unresolved?").waitFor();
+  // Only the answerer's own judgements can be cited, so answer as their author.
+  await page.getByLabel("Your name").fill("Dr Wiri");
+  await page.getByText("Judgements this answer informed").waitFor();
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
@@ -168,6 +210,7 @@ try {
   assert.deepEqual(phoneSummary, [], `Phone-width WCAG violations:\n${phoneSummary.join("\n")}`);
   await page.setViewportSize({ width: 1400, height: 1000 });
 
+  await page.getByLabel("Your name").fill("");
   // Keyboard only: reach the second photo, then decide without a pointer.
   await page.locator(".photo-row").first().focus();
   await page.keyboard.press("Tab");

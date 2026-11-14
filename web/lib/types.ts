@@ -1,5 +1,6 @@
 import type { Finding } from "./findings";
 import type { Judged } from "./judgements";
+import type { Referral } from "./referrals";
 
 export type Status = "unreviewed" | "confirmed" | "rejected" | "uncertain";
 export type Run = {
@@ -42,6 +43,7 @@ export type Photo = Judged & {
   encounter_linkable?: boolean;
   reference_comparison?: Record<string, ReferenceComparison>;
   findings?: Finding[];
+  referrals?: Referral[];
   scores: {
     best_species?: string;
     similarity?: number;
@@ -121,21 +123,28 @@ export type ReviewEffort = {
   unmeasured_findings?: number;
   measured_judgements?: number;
   unmeasured_judgements?: number;
+  measured_referral_actions?: number;
+  unmeasured_referral_actions?: number;
 };
 
 const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? "" : "s"}`;
 
-/** Measured time on decisions, findings and judgements; untimed ones are listed, never zero. */
+/**
+ * Measured time on decisions, findings, judgements and referral actions; untimed ones are
+ * listed, never zero.
+ */
 export function effortNote(effort: ReviewEffort | undefined): string {
   const untimed = [
     [effort?.unmeasured_decisions ?? 0, "decision"],
     [effort?.unmeasured_findings ?? 0, "finding"],
     [effort?.unmeasured_judgements ?? 0, "judgement"],
+    [effort?.unmeasured_referral_actions ?? 0, "referral action"],
   ] as const;
   const timed =
     (effort?.measured_decisions ?? 0) +
     (effort?.measured_findings ?? 0) +
-    (effort?.measured_judgements ?? 0);
+    (effort?.measured_judgements ?? 0) +
+    (effort?.measured_referral_actions ?? 0);
   if (!effort || (!timed && untimed.every(([count]) => !count))) return "No review time yet";
   return [
     `${effort.total_minutes} min measured review time`,
