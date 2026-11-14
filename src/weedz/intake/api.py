@@ -149,7 +149,11 @@ class IntakeAPI:
             earlier = self.store.admit(submitter, report_id, digest, bool(upload), self.limits)
             if earlier:
                 return earlier, False
-            image = cleaned_image(upload, self.limits) if upload else None
+            try:
+                image = cleaned_image(upload, self.limits) if upload else None
+            except Exception:
+                self.store.refused_admission(submitter, report_id)
+                raise
             return self.store.receive(submitter, report_id, report, digest, image, self.limits)
 
     def get(self, report_id: uuid.UUID, request: Request) -> Receipt:

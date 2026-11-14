@@ -17,7 +17,15 @@ CREATE TABLE IF NOT EXISTS usage(
     submitter INTEGER NOT NULL, report_id TEXT NOT NULL, used_at TEXT NOT NULL,
     image_bytes INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS admissions(
+    submitter INTEGER NOT NULL, report_id TEXT NOT NULL, content_sha256 TEXT NOT NULL,
+    PRIMARY KEY(submitter, report_id)
+);
 """
+
+
+class ReservationConflict(Exception):
+    """An interrupted report id was retried with different content."""
 
 
 class OverBudget(Exception):
@@ -41,6 +49,33 @@ def charge(
     )
 
 
+def reserve(
+    db: sqlite3.Connection,
+    submitter: int,
+    report_id: str,
+    digest: str,
+    image: bool,
+    limits: Limits,
+) -> None:
+    """Reuse an interrupted admission, but never for different report content."""
+    _window(db, submitter, None)
+    row = db.execute(
+        "SELECT content_sha256 FROM admissions WHERE submitter=? AND report_id=?",
+        (submitter, report_id),
+    ).fetchone()
+    if row:
+        if row["content_sha256"] != digest:
+            raise ReservationConflict
+        return
+    charge(db, submitter, report_id, image, limits)
+    db.execute("INSERT INTO admissions VALUES(?,?,?)", (submitter, report_id, digest))
+
+
+def finish(db: sqlite3.Connection, submitter: int, report_id: str) -> None:
+    """Forget the temporary digest after storage, refusal or withdrawal; usage remains."""
+    db.execute("DELETE FROM admissions WHERE submitter=? AND report_id=?", (submitter, report_id))
+
+
 def settle(
     db: sqlite3.Connection, submitter: int, report_id: str, image_bytes: int, limits: Limits
 ) -> None:
@@ -50,12 +85,17 @@ def settle(
     ).fetchone()
     _refuse_unless_fits(_window(db, submitter, latest), image_bytes, limits)
     db.execute("UPDATE usage SET image_bytes=? WHERE rowid=?", (image_bytes, latest))
+    finish(db, submitter, report_id)
 
 
 def _window(db: sqlite3.Connection, submitter: int, leaving_out: int | None) -> list[sqlite3.Row]:
     """A submitter's usage in the last 24 hours, oldest first, after deleting all older
     usage. ``leaving_out`` is the charge being settled, which is counted as the new one."""
     db.execute("DELETE FROM usage WHERE used_at<=?", (stamp(_now() - _DAY),))
+    db.execute(
+        "DELETE FROM admissions WHERE NOT EXISTS (SELECT 1 FROM usage WHERE "
+        "usage.submitter=admissions.submitter AND usage.report_id=admissions.report_id)"
+    )
     return db.execute(
         "SELECT used_at, image_bytes FROM usage WHERE submitter=? AND rowid IS NOT ? "
         "ORDER BY used_at",

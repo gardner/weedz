@@ -104,8 +104,16 @@ class ReportStore:
         with self._transaction() as db:
             earlier = _existing(db, submitter, report_id, digest)
             if earlier is None:
-                budget.charge(db, submitter, report_id, has_image, limits)
+                try:
+                    budget.reserve(db, submitter, report_id, digest, has_image, limits)
+                except budget.ReservationConflict as error:
+                    raise Conflict from error
             return earlier
+
+    def refused_admission(self, submitter: int, report_id: str) -> None:
+        """A completed decoding refusal still costs; it is not a crash reservation."""
+        with self._transaction() as db:
+            budget.finish(db, submitter, report_id)
 
     def receive(
         self,
