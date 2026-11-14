@@ -49,7 +49,7 @@ class Activities:
         self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
         if self.screener is None:
-            self.screener = Screener.load()
+            self.screener = Screener.load(self.store.root / "embeddings")
         previous = next(run["model"] for run in self.store.runs() if run["id"] == run_id)
         if previous and previous != self.screener.metadata:
             raise ValueError(

@@ -59,7 +59,13 @@ class FakeEncoder:
 
 
 def fake_screener() -> Screener:
-    return Screener(FakeEncoder(), lambda _image: torch.zeros(3), lambda prompts: prompts, "hash")
+    return Screener(
+        FakeEncoder(),
+        lambda _image: torch.zeros(3),
+        lambda prompts: prompts,
+        "hash",
+        preprocessing={},
+    )
 
 
 def test_original_subject_explains_a_window_before_a_weed_does(tmp_path: Path) -> None:
