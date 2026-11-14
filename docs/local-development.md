@@ -87,8 +87,13 @@ intended for local development, not shared public hosting.
    and SHA-256 checksum, and deduplicate source photo IDs within a run. Even
    stratified, this is a bounded sample, not a random regional survey: within
    each season the API still returns the newest 100 records.
-3. **Screen.** Load [BioCLIP](https://huggingface.co/imageomics/bioclip) at revision
-   `ce901ab3c6a913f9e9ef94ce6d27761069f4f01c`; retain the weights checksum.
+3. **Screen.** Load the run's pinned model and record its key, revision and
+   weights checksum. New runs use [BioCLIP 2](https://huggingface.co/imageomics/bioclip-2)
+   at revision `2957b322090f9cb17ae72c71981c7218a28d81e0`. `--model bioclip` and
+   runs saved earlier use [BioCLIP](https://huggingface.co/imageomics/bioclip) at
+   `ce901ab3c6a913f9e9ef94ce6d27761069f4f01c`. The first BioCLIP 2 run downloads
+   1.7 GB, and the worker heartbeats throughout so a slow download is not
+   mistaken for a stalled activity.
    Correct EXIF orientation and convert to RGB. Score the whole image, letterboxed
    to a square, and overlapping **square** tiles covering every pixel (photos that
    would need more than 32 tiles have their long axis thinned, and the result's

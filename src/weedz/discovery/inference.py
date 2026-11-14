@@ -181,6 +181,12 @@ def prompt(label: str) -> str:
     return f"a photograph of {label}"
 
 
+def file_sha256(path: Path) -> str:
+    """Hash a large file in chunks rather than reading gigabytes of weights into memory."""
+    with path.open("rb") as handle:
+        return hashlib.file_digest(handle, "sha256").hexdigest()
+
+
 def library_versions() -> dict[str, str]:
     """Versions of the code that decodes and resizes each window and computes its embedding.
 
@@ -279,7 +285,7 @@ class Screener:
             )
         )
         encoder, _, transform = open_clip.create_model_and_transforms(f"local-dir:{path}")
-        weights = hashlib.sha256((path / entry["weights"]).read_bytes()).hexdigest()
+        weights = file_sha256(path / entry["weights"])
         tokenizer = open_clip.get_tokenizer(entry["tokenizer"])
         preprocessing = {**library_versions(), **open_clip.get_model_preprocess_cfg(encoder)}
         return cls(

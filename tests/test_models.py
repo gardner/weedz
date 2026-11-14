@@ -189,3 +189,27 @@ def test_comparison_document_matches_the_committed_benchmark_shape() -> None:
     assert set(entry) == set(committed["models"]["bioclip-2"])
     assert entry["reference_own_target_margins"] == [0.2]
     assert set(entry["rows"][0]) == set(committed["models"]["bioclip-2"]["rows"][0])
+
+
+def test_heartbeats_continue_while_a_slow_model_loads(monkeypatch: pytest.MonkeyPatch) -> None:
+    import time
+
+    from weedz.discovery import activities as module
+
+    beats: list[str] = []
+    monkeypatch.setattr(module.activity, "heartbeat", lambda *details: beats.append(details[0]))
+
+    def slow() -> str:
+        time.sleep(0.35)
+        return "loaded"
+
+    assert module.while_heartbeating(slow, "downloading model", every=0.1) == "loaded"
+    assert len(beats) >= 3
+
+
+def test_weights_are_hashed_in_chunks(tmp_path: Path) -> None:
+    from weedz.discovery.inference import file_sha256
+
+    path = tmp_path / "weights.bin"
+    path.write_bytes(b"x" * 3_000_000)
+    assert file_sha256(path) == hashlib.sha256(b"x" * 3_000_000).hexdigest()
