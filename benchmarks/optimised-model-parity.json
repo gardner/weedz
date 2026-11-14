@@ -1,0 +1,1703 @@
+{
+  "schema": 1,
+  "assessed": "2026-11-14",
+  "issue": "https://github.com/gardner/weedz/issues/52",
+  "related": [
+    "https://github.com/gardner/weedz/issues/51"
+  ],
+  "method": "The 30 pilot photos (with their original-subject comparison, as in a run) and 39 source-labelled lookalike photos (no subject prompt, as in #11) are cut into ranking revision 4 windows. Each pinned model's text tower embeds the fixed prompts once, as a server would for a device. Each image-tower artefact encodes every window in its own process on CPU with 4 threads and batches of up to 16, the first photo warmed up untimed. A candidate's window similarities are read like a run's and compared with the BioCLIP 2 fp32 reference against versioned thresholds. Size is the artefact on disk; peak memory is the encoding process's peak resident set; latency is image encoding only (pre-processing excluded).",
+  "caveats": "Desktop CPU latency and memory are not phone latency or memory: phones differ in CPU, accelerators, runtime and thermal limits, and platform conversion (Core ML, TFLite, ExecuTorch) is deferred to the platform choice (#50). Parity means agreement with the reference on 69 source-labelled photos, not accuracy; the pilot has no independent background-plant labels (#12). A variant that keeps parity here can still diverge on photos unlike these.",
+  "command": "uv run python scripts/compare_optimised.py --pilot-dir <scratch copy of data/pilot> --run nelson-tasman-3e62ad801459 --lookalikes <lookalike dir> --work <scratch dir> --output benchmarks/optimised-model-parity.json",
+  "machine": {
+    "cpu": "AMD Ryzen 9 9950X 16-Core Processor",
+    "threads": 4,
+    "os": "Linux-7.0.0-42-generic-x86_64-with-glibc2.43",
+    "torch": "2.15.0+cpu",
+    "onnxruntime": "1.32.0"
+  },
+  "inputs": {
+    "run": "nelson-tasman-3e62ad801459",
+    "pilot_photos": 30,
+    "lookalike_photos": 39
+  },
+  "thresholds": {
+    "version": 1,
+    "limits": {
+      "max_margin_drift": 0.01,
+      "unexplained_top_changes": 0,
+      "references_lost": 0,
+      "lookalikes_newly_positive": 0,
+      "incidental_queue_swaps": 1
+    },
+    "why": {
+      "max_margin_drift": "Largest change in any photo's margin for any watchlist species. BioCLIP 2's only incidental candidate in the pilot sits at +0.009 and its weakest reference at +0.051, so 0.01 can move a photo that is already at the zero line but cannot push a validated reference to it.",
+      "unexplained_top_changes": "Photos whose top suggestion changes although the reference's winning margin led the candidate's choice by more than twice the drift limit. If every margin moves by at most the drift limit, only such near-ties can swap.",
+      "references_lost": "Reference photos (source-labelled watchlist weeds) that the reference ranks as their own weed with a positive margin but the candidate does not. Every pilot reference passes with both pinned models, so losing one is a regression.",
+      "lookalikes_newly_positive": "Lookalike photos (native or other plants) that newly beat every comparison label as the weed they resemble. Rejecting lookalikes is why BioCLIP 2 became the default (#14), so an optimisation may not give any of that back.",
+      "incidental_queue_swaps": "At each budget, photos in the reference's incidental review queue that the candidate replaces. One swap per budget is tolerated because most incidental margins are negative and close together; more means a reviewer would see a materially different queue."
+    }
+  },
+  "conclusion": "Kept parity: onnx-fp32, torch-fp16. Failed parity: onnx-int8, onnx-int8-per-channel, bioclip-vit-b16, bioclip-vit-b16-onnx-int8. Measured against thresholds version 1.",
+  "reference": {
+    "model": {
+      "model": "imageomics/bioclip-2",
+      "model_key": "bioclip-2",
+      "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+      "weights_sha256": "b7b2bf6fbc95799e42630e394cf95803892ab447c1a8ab629dbc82fbeaf7dfef"
+    },
+    "artefact": "image tower, PyTorch fp32 (what runs use)",
+    "cost": {
+      "artefact_mb": 1216.0,
+      "peak_rss_mb": 1856.1,
+      "peak_rss_above_baseline_mb": 1621.0,
+      "photos": 69,
+      "seconds_per_photo": {
+        "median": 2.881,
+        "p90": 4.56,
+        "mean": 3.049
+      },
+      "milliseconds_per_window": 411.7,
+      "windows_per_photo_median": 7.0
+    }
+  },
+  "variants": {
+    "onnx-fp32": {
+      "model": "imageomics/bioclip-2",
+      "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+      "description": "BioCLIP 2 image tower exported to ONNX, fp32 (export error only)",
+      "cost": {
+        "artefact_mb": 1216.2,
+        "peak_rss_mb": 2216.6,
+        "peak_rss_above_baseline_mb": 2162.4,
+        "photos": 69,
+        "seconds_per_photo": {
+          "median": 1.122,
+          "p90": 1.844,
+          "mean": 1.203
+        },
+        "milliseconds_per_window": 162.4,
+        "windows_per_photo_median": 7.0
+      },
+      "parity": {
+        "photos": 69,
+        "top_suggestion": {
+          "agree": 69,
+          "of": 69,
+          "changed": []
+        },
+        "margins": {
+          "max_abs_drift": 2e-06,
+          "median_abs_drift": 0.0,
+          "zero_crossings": []
+        },
+        "window_similarity_max_abs_drift": 3e-06,
+        "queues": {
+          "incidental": [
+            {
+              "budget": 5,
+              "shared": 5,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 10,
+              "shared": 10,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 20,
+              "shared": 20,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            }
+          ],
+          "pooled": [
+            {
+              "budget": 5,
+              "shared": 5,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 10,
+              "shared": 10,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 20,
+              "shared": 20,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            }
+          ]
+        },
+        "lookalikes": {
+          "reference": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "candidate": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "newly_top": [],
+          "newly_positive": []
+        },
+        "references": {
+          "reference_found": 6,
+          "candidate_found": 6,
+          "lost": []
+        },
+        "checks": {
+          "max_margin_drift": {
+            "value": 2e-06,
+            "limit": 0.01,
+            "passed": true
+          },
+          "unexplained_top_changes": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "references_lost": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "lookalikes_newly_positive": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "incidental_queue_swaps": {
+            "value": 0,
+            "limit": 1,
+            "passed": true
+          }
+        },
+        "passed": true
+      }
+    },
+    "onnx-int8": {
+      "model": "imageomics/bioclip-2",
+      "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+      "description": "ONNX image tower, dynamic int8 weights (onnxruntime, per tensor)",
+      "cost": {
+        "artefact_mb": 306.3,
+        "peak_rss_mb": 896.5,
+        "peak_rss_above_baseline_mb": 842.4,
+        "photos": 69,
+        "seconds_per_photo": {
+          "median": 0.461,
+          "p90": 0.775,
+          "mean": 0.495
+        },
+        "milliseconds_per_window": 66.9,
+        "windows_per_photo_median": 7.0
+      },
+      "parity": {
+        "photos": 69,
+        "top_suggestion": {
+          "agree": 60,
+          "of": 69,
+          "changed": [
+            {
+              "photo_id": "inat-256675146-460262865",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.013502,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256727061-460368453",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.000127,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256864189-460643855",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002038,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459539-461857914",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.010296,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257460208-461859096",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.003851,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-331872487-602149309",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.003033,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-65630163-105666373",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002055,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257323086-461587499",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.000601,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-205725677-363790579",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.010659,
+              "near_tie": true
+            }
+          ]
+        },
+        "margins": {
+          "max_abs_drift": 0.077282,
+          "median_abs_drift": 0.007195,
+          "zero_crossings": [
+            "inat-249962607-446938032",
+            "inat-251631880-450279483"
+          ]
+        },
+        "window_similarity_max_abs_drift": 0.06176,
+        "queues": {
+          "incidental": [
+            {
+              "budget": 5,
+              "shared": 5,
+              "swaps": 0,
+              "max_rank_shift": 2,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 10,
+              "shared": 9,
+              "swaps": 1,
+              "max_rank_shift": 2,
+              "entered": [
+                "inat-257459539-461857914"
+              ],
+              "left": [
+                "inat-256675287-460263038"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 18,
+              "swaps": 2,
+              "max_rank_shift": 5,
+              "entered": [
+                "inat-256912633-460740779",
+                "inat-256918601-460754616"
+              ],
+              "left": [
+                "inat-256675033-460262714",
+                "inat-256675146-460262865"
+              ]
+            }
+          ],
+          "pooled": [
+            {
+              "budget": 5,
+              "shared": 5,
+              "swaps": 0,
+              "max_rank_shift": 1,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 10,
+              "shared": 9,
+              "swaps": 1,
+              "max_rank_shift": 3,
+              "entered": [
+                "inat-231528008-411227230"
+              ],
+              "left": [
+                "inat-256864013-460643540"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 15,
+              "swaps": 5,
+              "max_rank_shift": 10,
+              "entered": [
+                "inat-232209542-412517171",
+                "inat-259114109-465059628",
+                "inat-139730851-239052175",
+                "inat-258310146-463181089",
+                "inat-246862510-440788335"
+              ],
+              "left": [
+                "inat-257222053-461380516",
+                "inat-253256847-453432683",
+                "inat-244396298-435933238",
+                "inat-245883435-438847987",
+                "inat-219959153-389384222"
+              ]
+            }
+          ]
+        },
+        "lookalikes": {
+          "reference": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "candidate": {
+            "top": 33,
+            "positive": 5,
+            "of": 39
+          },
+          "newly_top": [
+            "inat-65630163-105666373",
+            "inat-257323086-461587499",
+            "inat-205725677-363790579"
+          ],
+          "newly_positive": [
+            "inat-249962607-446938032",
+            "inat-251631880-450279483"
+          ]
+        },
+        "references": {
+          "reference_found": 6,
+          "candidate_found": 6,
+          "lost": []
+        },
+        "checks": {
+          "max_margin_drift": {
+            "value": 0.077282,
+            "limit": 0.01,
+            "passed": false
+          },
+          "unexplained_top_changes": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "references_lost": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "lookalikes_newly_positive": {
+            "value": 2,
+            "limit": 0,
+            "passed": false
+          },
+          "incidental_queue_swaps": {
+            "value": 2,
+            "limit": 1,
+            "passed": false
+          }
+        },
+        "passed": false
+      }
+    },
+    "onnx-int8-per-channel": {
+      "model": "imageomics/bioclip-2",
+      "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+      "description": "ONNX image tower, dynamic int8 weights (onnxruntime, per channel)",
+      "cost": {
+        "artefact_mb": 307.5,
+        "peak_rss_mb": 835.8,
+        "peak_rss_above_baseline_mb": 781.6,
+        "photos": 69,
+        "seconds_per_photo": {
+          "median": 0.465,
+          "p90": 0.78,
+          "mean": 0.497
+        },
+        "milliseconds_per_window": 67.1,
+        "windows_per_photo_median": 7.0
+      },
+      "parity": {
+        "photos": 69,
+        "top_suggestion": {
+          "agree": 58,
+          "of": 69,
+          "changed": [
+            {
+              "photo_id": "inat-256675146-460262865",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.013502,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256864189-460643855",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002038,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256913086-460741828",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.000481,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459539-461857914",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.010296,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257460208-461859096",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.003851,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-331872487-602149309",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.003033,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-65630163-105666373",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002055,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-255478831-457833773",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.001346,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-258310146-463181089",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.015686,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257323086-461587499",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.000601,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-205725677-363790579",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.016154,
+              "near_tie": true
+            }
+          ]
+        },
+        "margins": {
+          "max_abs_drift": 0.059823,
+          "median_abs_drift": 0.007324,
+          "zero_crossings": [
+            "inat-256864013-460643540",
+            "inat-249962607-446938032",
+            "inat-232209542-412517171"
+          ]
+        },
+        "window_similarity_max_abs_drift": 0.071308,
+        "queues": {
+          "incidental": [
+            {
+              "budget": 5,
+              "shared": 4,
+              "swaps": 1,
+              "max_rank_shift": 2,
+              "entered": [
+                "inat-256727061-460368453"
+              ],
+              "left": [
+                "inat-331889702-602185404"
+              ]
+            },
+            {
+              "budget": 10,
+              "shared": 9,
+              "swaps": 1,
+              "max_rank_shift": 2,
+              "entered": [
+                "inat-256913086-460741828"
+              ],
+              "left": [
+                "inat-256675287-460263038"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 19,
+              "swaps": 1,
+              "max_rank_shift": 4,
+              "entered": [
+                "inat-256912633-460740779"
+              ],
+              "left": [
+                "inat-256675146-460262865"
+              ]
+            }
+          ],
+          "pooled": [
+            {
+              "budget": 5,
+              "shared": 5,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 10,
+              "shared": 9,
+              "swaps": 1,
+              "max_rank_shift": 5,
+              "entered": [
+                "inat-231528008-411227230"
+              ],
+              "left": [
+                "inat-256864013-460643540"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 15,
+              "swaps": 5,
+              "max_rank_shift": 12,
+              "entered": [
+                "inat-232209542-412517171",
+                "inat-258310146-463181089",
+                "inat-256691045-460294362",
+                "inat-246862510-440788335",
+                "inat-139730851-239052175"
+              ],
+              "left": [
+                "inat-257222053-461380516",
+                "inat-253256847-453432683",
+                "inat-244396298-435933238",
+                "inat-245883435-438847987",
+                "inat-219959153-389384222"
+              ]
+            }
+          ]
+        },
+        "lookalikes": {
+          "reference": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "candidate": {
+            "top": 33,
+            "positive": 5,
+            "of": 39
+          },
+          "newly_top": [
+            "inat-65630163-105666373",
+            "inat-255478831-457833773",
+            "inat-257323086-461587499"
+          ],
+          "newly_positive": [
+            "inat-249962607-446938032",
+            "inat-232209542-412517171"
+          ]
+        },
+        "references": {
+          "reference_found": 6,
+          "candidate_found": 6,
+          "lost": []
+        },
+        "checks": {
+          "max_margin_drift": {
+            "value": 0.059823,
+            "limit": 0.01,
+            "passed": false
+          },
+          "unexplained_top_changes": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "references_lost": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "lookalikes_newly_positive": {
+            "value": 2,
+            "limit": 0,
+            "passed": false
+          },
+          "incidental_queue_swaps": {
+            "value": 1,
+            "limit": 1,
+            "passed": true
+          }
+        },
+        "passed": false
+      }
+    },
+    "torch-fp16": {
+      "model": "imageomics/bioclip-2",
+      "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+      "description": "BioCLIP 2 image tower with fp16 weights and fp16 compute",
+      "cost": {
+        "artefact_mb": 608.1,
+        "peak_rss_mb": 1110.0,
+        "peak_rss_above_baseline_mb": 874.9,
+        "photos": 69,
+        "seconds_per_photo": {
+          "median": 8.071,
+          "p90": 12.817,
+          "mean": 8.576
+        },
+        "milliseconds_per_window": 1158.0,
+        "windows_per_photo_median": 7.0
+      },
+      "parity": {
+        "photos": 69,
+        "top_suggestion": {
+          "agree": 69,
+          "of": 69,
+          "changed": []
+        },
+        "margins": {
+          "max_abs_drift": 0.000591,
+          "median_abs_drift": 9.1e-05,
+          "zero_crossings": []
+        },
+        "window_similarity_max_abs_drift": 0.002096,
+        "queues": {
+          "incidental": [
+            {
+              "budget": 5,
+              "shared": 5,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 10,
+              "shared": 10,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 20,
+              "shared": 20,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            }
+          ],
+          "pooled": [
+            {
+              "budget": 5,
+              "shared": 5,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 10,
+              "shared": 10,
+              "swaps": 0,
+              "max_rank_shift": 0,
+              "entered": [],
+              "left": []
+            },
+            {
+              "budget": 20,
+              "shared": 20,
+              "swaps": 0,
+              "max_rank_shift": 1,
+              "entered": [],
+              "left": []
+            }
+          ]
+        },
+        "lookalikes": {
+          "reference": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "candidate": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "newly_top": [],
+          "newly_positive": []
+        },
+        "references": {
+          "reference_found": 6,
+          "candidate_found": 6,
+          "lost": []
+        },
+        "checks": {
+          "max_margin_drift": {
+            "value": 0.000591,
+            "limit": 0.01,
+            "passed": true
+          },
+          "unexplained_top_changes": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "references_lost": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "lookalikes_newly_positive": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "incidental_queue_swaps": {
+            "value": 0,
+            "limit": 1,
+            "passed": true
+          }
+        },
+        "passed": true
+      }
+    },
+    "bioclip-vit-b16": {
+      "model": "imageomics/bioclip",
+      "revision": "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
+      "description": "Smaller tower: original BioCLIP ViT-B/16, fp32, with its own text",
+      "cost": {
+        "artefact_mb": 344.9,
+        "peak_rss_mb": 876.6,
+        "peak_rss_above_baseline_mb": 641.5,
+        "photos": 69,
+        "seconds_per_photo": {
+          "median": 0.616,
+          "p90": 1.0,
+          "mean": 0.662
+        },
+        "milliseconds_per_window": 89.4,
+        "windows_per_photo_median": 7.0
+      },
+      "parity": {
+        "photos": 69,
+        "top_suggestion": {
+          "agree": 39,
+          "of": 69,
+          "changed": [
+            {
+              "photo_id": "inat-256674952-460262550",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.030231,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-256675033-460262714",
+              "reference": "Clematis vitalba",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.025712,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-256675146-460262865",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.023404,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-256716592-460347209",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.014102,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256727061-460368453",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.000127,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256863810-460643105",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.015331,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256864013-460643540",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.031428,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-256864189-460643855",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002038,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256913086-460741828",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.000481,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256918601-460754616",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.018111,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459474-461857745",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.001978,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459539-461857914",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.010296,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459949-461859480",
+              "reference": "Clematis vitalba",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.023361,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-257460208-461859096",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.019647,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257734181-462389676",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.013839,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-259114109-465059628",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.022605,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-331872487-602149309",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.037541,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-253709796-454331441",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.049498,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-246862510-440788335",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.044567,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-190982193-334923591",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.01486,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-65630163-105666373",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002055,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-244396298-435933238",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.06864,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-245883435-438847987",
+              "reference": "Clematis vitalba",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.041695,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-253256847-453432683",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.049581,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-255478831-457833773",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.001346,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-258310146-463181089",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.015686,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-258085684-462989623",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.02393,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-257323086-461587499",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.000601,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-217640521-385046946",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.049307,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-205725677-363790579",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.010659,
+              "near_tie": true
+            }
+          ]
+        },
+        "margins": {
+          "max_abs_drift": 0.217329,
+          "median_abs_drift": 0.038624,
+          "zero_crossings": [
+            "inat-256716592-460347209",
+            "inat-256727061-460368453",
+            "inat-256808221-460529900",
+            "inat-256862582-460640098",
+            "inat-248320706-443668409",
+            "inat-187198926-327322243",
+            "inat-249962607-446938032",
+            "inat-139730851-239052175",
+            "inat-65630163-105666373",
+            "inat-245883435-438847987",
+            "inat-219959153-389384222",
+            "inat-257222053-461380516",
+            "inat-253256847-453432683",
+            "inat-255478831-457833773",
+            "inat-254430343-455732460",
+            "inat-253139746-453206441",
+            "inat-248036730-443111749",
+            "inat-251631880-450279483",
+            "inat-232209542-412517171",
+            "inat-215417496-380839808"
+          ]
+        },
+        "window_similarity_max_abs_drift": 0.689671,
+        "queues": {
+          "incidental": [
+            {
+              "budget": 5,
+              "shared": 2,
+              "swaps": 3,
+              "max_rank_shift": 12,
+              "entered": [
+                "inat-256862582-460640098",
+                "inat-256808221-460529900",
+                "inat-256727061-460368453"
+              ],
+              "left": [
+                "inat-256691045-460294362",
+                "inat-259114109-465059628",
+                "inat-331889702-602185404"
+              ]
+            },
+            {
+              "budget": 10,
+              "shared": 6,
+              "swaps": 4,
+              "max_rank_shift": 12,
+              "entered": [
+                "inat-256862582-460640098",
+                "inat-257734181-462389676",
+                "inat-256675146-460262865",
+                "inat-257459539-461857914"
+              ],
+              "left": [
+                "inat-256691045-460294362",
+                "inat-331889702-602185404",
+                "inat-256864189-460643855",
+                "inat-256675287-460263038"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 18,
+              "swaps": 2,
+              "max_rank_shift": 16,
+              "entered": [
+                "inat-331872487-602149309",
+                "inat-256912633-460740779"
+              ],
+              "left": [
+                "inat-257459949-461859480",
+                "inat-257460208-461859096"
+              ]
+            }
+          ],
+          "pooled": [
+            {
+              "budget": 5,
+              "shared": 2,
+              "swaps": 3,
+              "max_rank_shift": 11,
+              "entered": [
+                "inat-309664282-558823763",
+                "inat-65630163-105666373",
+                "inat-139730851-239052175"
+              ],
+              "left": [
+                "inat-256682298-460279738",
+                "inat-250240131-447484684",
+                "inat-82387196-135212551"
+              ]
+            },
+            {
+              "budget": 10,
+              "shared": 5,
+              "swaps": 5,
+              "max_rank_shift": 25,
+              "entered": [
+                "inat-65630163-105666373",
+                "inat-139730851-239052175",
+                "inat-256862582-460640098",
+                "inat-254430343-455732460",
+                "inat-251631880-450279483"
+              ],
+              "left": [
+                "inat-256682298-460279738",
+                "inat-139507599-238625461",
+                "inat-248036730-443111749",
+                "inat-190982193-334923591",
+                "inat-256864013-460643540"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 12,
+              "swaps": 8,
+              "max_rank_shift": 32,
+              "entered": [
+                "inat-139730851-239052175",
+                "inat-256862582-460640098",
+                "inat-254430343-455732460",
+                "inat-253139746-453206441",
+                "inat-232209542-412517171",
+                "inat-187198926-327322243",
+                "inat-256716592-460347209",
+                "inat-215417496-380839808"
+              ],
+              "left": [
+                "inat-139507599-238625461",
+                "inat-248036730-443111749",
+                "inat-231528008-411227230",
+                "inat-257222053-461380516",
+                "inat-253256847-453432683",
+                "inat-244396298-435933238",
+                "inat-258015805-462855390",
+                "inat-245883435-438847987"
+              ]
+            }
+          ]
+        },
+        "lookalikes": {
+          "reference": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "candidate": {
+            "top": 32,
+            "positive": 17,
+            "of": 39
+          },
+          "newly_top": [
+            "inat-246862510-440788335",
+            "inat-65630163-105666373",
+            "inat-245883435-438847987",
+            "inat-253256847-453432683",
+            "inat-255478831-457833773",
+            "inat-257323086-461587499",
+            "inat-205725677-363790579"
+          ],
+          "newly_positive": [
+            "inat-248320706-443668409",
+            "inat-187198926-327322243",
+            "inat-249962607-446938032",
+            "inat-139730851-239052175",
+            "inat-65630163-105666373",
+            "inat-245883435-438847987",
+            "inat-219959153-389384222",
+            "inat-257222053-461380516",
+            "inat-253256847-453432683",
+            "inat-255478831-457833773",
+            "inat-254430343-455732460",
+            "inat-253139746-453206441",
+            "inat-251631880-450279483",
+            "inat-232209542-412517171",
+            "inat-215417496-380839808"
+          ]
+        },
+        "references": {
+          "reference_found": 6,
+          "candidate_found": 6,
+          "lost": []
+        },
+        "checks": {
+          "max_margin_drift": {
+            "value": 0.217329,
+            "limit": 0.01,
+            "passed": false
+          },
+          "unexplained_top_changes": {
+            "value": 14,
+            "limit": 0,
+            "passed": false
+          },
+          "references_lost": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "lookalikes_newly_positive": {
+            "value": 15,
+            "limit": 0,
+            "passed": false
+          },
+          "incidental_queue_swaps": {
+            "value": 4,
+            "limit": 1,
+            "passed": false
+          }
+        },
+        "passed": false
+      }
+    },
+    "bioclip-vit-b16-onnx-int8": {
+      "model": "imageomics/bioclip",
+      "revision": "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
+      "description": "Original BioCLIP ViT-B/16 image tower, ONNX, dynamic int8 weights",
+      "cost": {
+        "artefact_mb": 87.3,
+        "peak_rss_mb": 438.4,
+        "peak_rss_above_baseline_mb": 384.1,
+        "photos": 69,
+        "seconds_per_photo": {
+          "median": 0.099,
+          "p90": 0.172,
+          "mean": 0.107
+        },
+        "milliseconds_per_window": 14.4,
+        "windows_per_photo_median": 7.0
+      },
+      "parity": {
+        "photos": 69,
+        "top_suggestion": {
+          "agree": 41,
+          "of": 69,
+          "changed": [
+            {
+              "photo_id": "inat-256675033-460262714",
+              "reference": "Clematis vitalba",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.025712,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-256675146-460262865",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.023404,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-256716592-460347209",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.014102,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256727061-460368453",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.000127,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256863810-460643105",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.015331,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256864013-460643540",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.031428,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-256864189-460643855",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002038,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256918601-460754616",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.018111,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459474-461857745",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.001978,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459539-461857914",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.010296,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257459949-461859480",
+              "reference": "Clematis vitalba",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.023361,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-257460208-461859096",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.019647,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-257734181-462389676",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.013839,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-259114109-465059628",
+              "reference": "Clematis vitalba",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.05284,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-331872487-602149309",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.003033,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-253709796-454331441",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.049498,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-190982193-334923591",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.074348,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-65630163-105666373",
+              "reference": "Clematis vitalba",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.002055,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-244396298-435933238",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.06864,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-247709964-442472472",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.03985,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-245883435-438847987",
+              "reference": "Clematis vitalba",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.041695,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-253256847-453432683",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.049581,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-255478831-457833773",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.001346,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-256683175-460279007",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.034376,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-258085684-462989623",
+              "reference": "Ulex europaeus",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.02393,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-257323086-461587499",
+              "reference": "Cortaderia selloana",
+              "candidate": "Ulex europaeus",
+              "reference_gap": 0.000601,
+              "near_tie": true
+            },
+            {
+              "photo_id": "inat-217640521-385046946",
+              "reference": "Ulex europaeus",
+              "candidate": "Cortaderia selloana",
+              "reference_gap": 0.049307,
+              "near_tie": false
+            },
+            {
+              "photo_id": "inat-205725677-363790579",
+              "reference": "Cortaderia selloana",
+              "candidate": "Clematis vitalba",
+              "reference_gap": 0.016154,
+              "near_tie": true
+            }
+          ]
+        },
+        "margins": {
+          "max_abs_drift": 0.204744,
+          "median_abs_drift": 0.040439,
+          "zero_crossings": [
+            "inat-256716592-460347209",
+            "inat-256727061-460368453",
+            "inat-256862582-460640098",
+            "inat-256864013-460643540",
+            "inat-257459539-461857914",
+            "inat-331872487-602149309",
+            "inat-248320706-443668409",
+            "inat-187198926-327322243",
+            "inat-249962607-446938032",
+            "inat-139730851-239052175",
+            "inat-65630163-105666373",
+            "inat-187198392-327321075",
+            "inat-245883435-438847987",
+            "inat-231528008-411227230",
+            "inat-219959153-389384222",
+            "inat-254430343-455732460",
+            "inat-253139746-453206441",
+            "inat-248036730-443111749",
+            "inat-251631880-450279483",
+            "inat-232209542-412517171",
+            "inat-215417496-380839808"
+          ]
+        },
+        "window_similarity_max_abs_drift": 0.689646,
+        "queues": {
+          "incidental": [
+            {
+              "budget": 5,
+              "shared": 1,
+              "swaps": 4,
+              "max_rank_shift": 13,
+              "entered": [
+                "inat-256862582-460640098",
+                "inat-256727061-460368453",
+                "inat-257459539-461857914",
+                "inat-331872487-602149309"
+              ],
+              "left": [
+                "inat-256864013-460643540",
+                "inat-256691045-460294362",
+                "inat-259114109-465059628",
+                "inat-331889702-602185404"
+              ]
+            },
+            {
+              "budget": 10,
+              "shared": 6,
+              "swaps": 4,
+              "max_rank_shift": 13,
+              "entered": [
+                "inat-256862582-460640098",
+                "inat-257459539-461857914",
+                "inat-331872487-602149309",
+                "inat-257734181-462389676"
+              ],
+              "left": [
+                "inat-256691045-460294362",
+                "inat-331889702-602185404",
+                "inat-256864189-460643855",
+                "inat-256675287-460263038"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 17,
+              "swaps": 3,
+              "max_rank_shift": 16,
+              "entered": [
+                "inat-331872487-602149309",
+                "inat-256918601-460754616",
+                "inat-256674952-460262550"
+              ],
+              "left": [
+                "inat-256913086-460741828",
+                "inat-257459949-461859480",
+                "inat-257460208-461859096"
+              ]
+            }
+          ],
+          "pooled": [
+            {
+              "budget": 5,
+              "shared": 3,
+              "swaps": 2,
+              "max_rank_shift": 16,
+              "entered": [
+                "inat-309664282-558823763",
+                "inat-139730851-239052175"
+              ],
+              "left": [
+                "inat-256682298-460279738",
+                "inat-250240131-447484684"
+              ]
+            },
+            {
+              "budget": 10,
+              "shared": 5,
+              "swaps": 5,
+              "max_rank_shift": 24,
+              "entered": [
+                "inat-139730851-239052175",
+                "inat-65630163-105666373",
+                "inat-256862582-460640098",
+                "inat-254430343-455732460",
+                "inat-251631880-450279483"
+              ],
+              "left": [
+                "inat-256682298-460279738",
+                "inat-139507599-238625461",
+                "inat-248036730-443111749",
+                "inat-190982193-334923591",
+                "inat-256864013-460643540"
+              ]
+            },
+            {
+              "budget": 20,
+              "shared": 11,
+              "swaps": 9,
+              "max_rank_shift": 30,
+              "entered": [
+                "inat-139730851-239052175",
+                "inat-256862582-460640098",
+                "inat-254430343-455732460",
+                "inat-232209542-412517171",
+                "inat-248320706-443668409",
+                "inat-256727061-460368453",
+                "inat-253139746-453206441",
+                "inat-256716592-460347209",
+                "inat-187198926-327322243"
+              ],
+              "left": [
+                "inat-139507599-238625461",
+                "inat-248036730-443111749",
+                "inat-256864013-460643540",
+                "inat-231528008-411227230",
+                "inat-257222053-461380516",
+                "inat-253256847-453432683",
+                "inat-244396298-435933238",
+                "inat-258015805-462855390",
+                "inat-245883435-438847987"
+              ]
+            }
+          ]
+        },
+        "lookalikes": {
+          "reference": {
+            "top": 30,
+            "positive": 3,
+            "of": 39
+          },
+          "candidate": {
+            "top": 28,
+            "positive": 15,
+            "of": 39
+          },
+          "newly_top": [
+            "inat-65630163-105666373",
+            "inat-245883435-438847987",
+            "inat-253256847-453432683",
+            "inat-255478831-457833773",
+            "inat-257323086-461587499"
+          ],
+          "newly_positive": [
+            "inat-248320706-443668409",
+            "inat-187198926-327322243",
+            "inat-249962607-446938032",
+            "inat-139730851-239052175",
+            "inat-65630163-105666373",
+            "inat-187198392-327321075",
+            "inat-245883435-438847987",
+            "inat-219959153-389384222",
+            "inat-254430343-455732460",
+            "inat-253139746-453206441",
+            "inat-251631880-450279483",
+            "inat-232209542-412517171",
+            "inat-215417496-380839808"
+          ]
+        },
+        "references": {
+          "reference_found": 6,
+          "candidate_found": 6,
+          "lost": []
+        },
+        "checks": {
+          "max_margin_drift": {
+            "value": 0.204744,
+            "limit": 0.01,
+            "passed": false
+          },
+          "unexplained_top_changes": {
+            "value": 14,
+            "limit": 0,
+            "passed": false
+          },
+          "references_lost": {
+            "value": 0,
+            "limit": 0,
+            "passed": true
+          },
+          "lookalikes_newly_positive": {
+            "value": 13,
+            "limit": 0,
+            "passed": false
+          },
+          "incidental_queue_swaps": {
+            "value": 4,
+            "limit": 1,
+            "passed": false
+          }
+        },
+        "passed": false
+      }
+    }
+  }
+}

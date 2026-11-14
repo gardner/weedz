@@ -58,6 +58,8 @@ torchvision = { index = "pytorch-cpu" }
 
 [dependency-groups]
 dev = [
+    "onnx>=1.23.2",
+    "onnxruntime>=1.32.0",
     "pre-commit>=4.7.0",
     "pyright>=1.1.414",
     "pytest>=9.2.0",

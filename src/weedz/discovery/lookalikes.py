@@ -52,3 +52,17 @@ def summarize_lookalikes(photos: list[dict[str, Any]]) -> dict[str, Any]:
             "median_confusable_margin": round(statistics.median(margins), 6) if margins else None,
         }
     return {"meaning": MEANING, "by_taxon": by_taxon}
+
+
+def lookalike_photos(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Photos from a lookalike collection's result.json, with their image paths in it."""
+    return [
+        {
+            "id": item["id"],
+            "cohort": "lookalike",
+            "lookalike_taxon": item["lookalike_taxon"],
+            "lookalike_of": item["lookalike_of"],
+            "image": f"images/{item['id'].split('-')[-1]}.jpg",
+        }
+        for item in items
+    ]

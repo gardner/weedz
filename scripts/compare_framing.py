@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from weedz.discovery.framing import compare
+from weedz.discovery.lookalikes import lookalike_photos
 
 BUDGETS = [5, 10, 20]
 METHOD = (
@@ -84,19 +85,6 @@ def document(
         **{key: value for key, value in comparison.items() if key != "photos"},
         "photos": photos,
     }
-
-
-def lookalike_photos(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        {
-            "id": item["id"],
-            "cohort": "lookalike",
-            "lookalike_taxon": item["lookalike_taxon"],
-            "lookalike_of": item["lookalike_of"],
-            "image": f"images/{item['id'].split('-')[-1]}.jpg",
-        }
-        for item in items
-    ]
 
 
 def screen_all(args: argparse.Namespace) -> dict[str, Any]:
