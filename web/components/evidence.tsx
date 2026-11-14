@@ -150,7 +150,8 @@ export default function Evidence({
           <small>
             {references
               ? `${references.dataset.title}, snapshot as of ${references.retrieved_at.slice(0, 10)}. Distance between reported points; a missing record is not evidence of a new locality.`
-              : "Run `uv run main.py references` to load DOC weed records for comparison."}
+              : "Run `uv run main.py references` to load DOC weed records for comparison."}{" "}
+            An unexpected location is a reason to refer to a specialist, not to reject.
           </small>
         </div>
       </div>
