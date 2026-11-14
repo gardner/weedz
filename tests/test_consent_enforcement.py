@@ -7,6 +7,7 @@ from test_reference import note, reasons
 from test_sharing import photo
 
 from weedz.contract import Sample
+from weedz.discovery import package, package_report
 from weedz.discovery.sharing import image_use, shareable_photo
 from weedz.reference import examples
 
@@ -111,3 +112,22 @@ def test_a_withdrawn_photo_is_shared_as_permitting_nothing() -> None:
 
 def test_sourced_photos_carry_no_contributor_limits() -> None:
     assert "contributor_permits" not in shareable_photo(photo())["sharing"]["terms"]
+
+
+def test_a_follow_up_package_tells_the_agency_what_the_contributor_permits() -> None:
+    item = photo(photo_license="cc-by", consent=consented(["review", "agencies"]))
+    entry = package.image(item, [])
+    assert entry["included"] is True
+    assert entry["contributor_permits"] == ["agencies", "review"]
+    source = {key: item[key] for key in ("observer", "attribution")} | {
+        "url": item["source_url"],
+        "photo_license": "cc-by",
+        "observation_license": "cc-by",
+        "observation_terms": "x",
+    }
+    lines = package_report._source({"photo_id": item["id"], "source": source, "image": entry})
+    assert any("permits only: agencies, review" in line for line in lines)
+
+
+def test_a_sourced_photo_in_a_package_carries_no_contributor_limits() -> None:
+    assert "contributor_permits" not in package.image(photo(), [])

@@ -14,7 +14,7 @@ from weedz.discovery.judgements import JUDGEMENTS, disputes, judged_taxon
 from weedz.discovery.leads import selected_leads
 from weedz.discovery.outcome_novelty import RECORD_RELATIVE, level
 from weedz.discovery.records import SPECIES
-from weedz.discovery.sharing import image_use, terms, with_location
+from weedz.discovery.sharing import contributor_limits, image_use, terms, with_location
 
 WINDOW = "Screening window: where the model looked, a search region, not a plant boundary"
 EXTENT = "Reviewer-drawn visible extent of this plant"
@@ -49,7 +49,7 @@ def image(photo: dict[str, Any], detail: list[dict[str, Any]]) -> dict[str, Any]
         "terms": decided.reason,
         "source_url": photo["source_url"],
         "detail": detail,
-    }
+    } | contributor_limits(photo)
 
 
 def link_only(image: dict[str, Any], reason: str) -> dict[str, Any]:

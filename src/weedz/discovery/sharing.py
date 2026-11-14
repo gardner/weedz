@@ -131,10 +131,10 @@ def terms(photo: dict[str, Any]) -> dict[str, Any]:
         "observation_terms": OBSERVATION_TERMS.get(observation_licence)
         or not_admitted(observation_licence),
         "non_commercial": bool({photo_licence, observation_licence} & NON_COMMERCIAL),
-    } | _contributor_limits(photo)
+    } | contributor_limits(photo)
 
 
-def _contributor_limits(photo: dict[str, Any]) -> dict[str, Any]:
+def contributor_limits(photo: dict[str, Any]) -> dict[str, Any]:
     """The uses a contributor permits, so a recipient knows, e.g., not to publish. A
     withdrawn consent permits nothing."""
     given = photo.get("consent")
