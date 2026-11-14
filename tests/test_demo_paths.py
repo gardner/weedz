@@ -70,3 +70,54 @@ def test_broken_sidecar_symlink_is_not_followed_or_overwritten(tmp_path: Path) -
         paths.new_output(output, sidecars=(".json",))
     assert sidecar.is_symlink()
     assert not (repo / "new-metadata.json").exists()
+
+
+def tool_command(tool: str, output: Path, inputs: Path) -> list[str]:
+    import sys
+
+    root = Path(__file__).parents[1]
+    if tool == "audio":
+        arguments = [
+            "--source",
+            str(inputs / "missing-source"),
+            "--model",
+            str(inputs / "missing-checkpoint"),
+            "--text-file",
+            str(inputs / "missing-text.txt"),
+        ]
+        entry = root / "tools/demo-audio/main.py"
+    else:
+        arguments = ["--captures", str(inputs / "missing-captures"), "--ffmpeg", "missing-ffmpeg"]
+        entry = root / "tools/demo-video/render_mobile_preview.py"
+    return [sys.executable, str(entry), *arguments, "--output", str(output)]
+
+
+@pytest.mark.parametrize("tool,extension", [("audio", ".wav"), ("preview", ".mp4")])
+def test_actual_tools_reject_git_outputs_before_loading_inputs(
+    tmp_path: Path, tool: str, extension: str
+) -> None:
+    repo = repository(tmp_path / "repo")
+    alias = tmp_path / "external-looking-alias"
+    alias.symlink_to(repo, target_is_directory=True)
+    output = alias / "new" / f"artifact{extension}"
+    result = subprocess.run(tool_command(tool, output, tmp_path), capture_output=True, text=True)
+    assert result.returncode != 0
+    assert "outside every git worktree" in result.stderr
+    assert not (repo / "new").exists()
+
+
+@pytest.mark.parametrize(
+    "tool,extension,sidecar",
+    [("audio", ".wav", ".json"), ("preview", ".mp4", ".png"), ("preview", ".mp4", ".json")],
+)
+def test_actual_tools_reject_sidecars_before_inference_or_encoding(
+    tmp_path: Path, tool: str, extension: str, sidecar: str
+) -> None:
+    output = tmp_path / f"new{extension}"
+    previous = output.with_suffix(sidecar)
+    previous.write_text("preserve previous artifact")
+    result = subprocess.run(tool_command(tool, output, tmp_path), capture_output=True, text=True)
+    assert result.returncode != 0
+    assert "already exists" in result.stderr
+    assert previous.read_text() == "preserve previous artifact"
+    assert not output.exists()

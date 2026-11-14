@@ -7,28 +7,13 @@ import argparse
 import hashlib
 import json
 import sqlite3
-import subprocess
 from pathlib import Path
 from typing import Any
 
+from demo_paths import outside_git
 from PIL import Image, ImageOps
 
 ADMITTED = {"cc0", "cc-by"}
-
-
-def outside_git(path: Path) -> Path:
-    path = path.resolve()
-    parent = path
-    while not parent.exists():
-        parent = parent.parent
-    found = subprocess.run(
-        ["git", "-C", str(parent), "rev-parse", "--is-inside-work-tree"],
-        capture_output=True,
-        check=False,
-    )
-    if found.returncode == 0:
-        raise ValueError("Demo artifacts must be outside every git worktree")
-    return path
 
 
 def completed_run(copied: sqlite3.Connection, requested: str | None) -> str:

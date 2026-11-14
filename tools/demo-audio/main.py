@@ -5,7 +5,11 @@ import importlib.metadata
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from demo_paths import new_output  # noqa: E402
 
 MODEL_REVISION = "3e28c5151381a722f1d8661b4118c298caa77aa4"
 SOURCE_REVISION = "daa6cb2efe5471f09369229f322d20bb956cb3c3"
@@ -28,8 +32,10 @@ def main() -> None:
     args = parser.parse_args()
     if (args.reference_audio is None) != (args.reference_text_file is None):
         parser.error("Reference audio and its exact transcript must be provided together")
-    if args.output.exists():
-        parser.error("Choose a new output name; existing audio is never overwritten")
+    try:
+        output = new_output(args.output, sidecars=(".json",))
+    except ValueError as error:
+        parser.error(str(error))
     source = args.source.resolve()
     revision = subprocess.check_output(
         ["git", "-C", str(source), "rev-parse", "HEAD"], text=True
@@ -39,7 +45,7 @@ def main() -> None:
     text = args.text_file.read_text().strip()
     if not text:
         parser.error("The narration text file is empty")
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    output.parent.mkdir(parents=True, exist_ok=True)
     command = [
         os.sys.executable,
         str(source / "infer.py"),
@@ -54,7 +60,7 @@ def main() -> None:
         str(args.seed),
         "--no-fast-all",
         "--output",
-        str(args.output.resolve()),
+        str(output),
     ]
     if args.reference_audio is not None:
         command += [
@@ -66,7 +72,8 @@ def main() -> None:
     subprocess.run(command, env={**os.environ, "CUDA_VISIBLE_DEVICES": "0"}, check=True)
     metadata = {
         "model": "BreezeBlue/Breeze-TTS-2",
-        "model_revision": MODEL_REVISION,
+        "expected_model_revision": MODEL_REVISION,
+        "checkpoint_path": str(args.model.resolve()),
         "source_revision": revision,
         "text": text,
         "instruction": VOICE,
@@ -80,7 +87,7 @@ def main() -> None:
             for name in ("torch", "torchaudio", "qwen-tts", "transformers", "soundfile")
         },
     }
-    args.output.with_suffix(".json").write_text(json.dumps(metadata, indent=2) + "\n")
+    output.with_suffix(".json").write_text(json.dumps(metadata, indent=2) + "\n")
 
 
 if __name__ == "__main__":

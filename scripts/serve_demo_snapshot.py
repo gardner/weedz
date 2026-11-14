@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 import uvicorn
-from capture_demo_snapshot import outside_git
+from demo_paths import outside_git
 from fastapi import Request
 from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import RequestResponseEndpoint

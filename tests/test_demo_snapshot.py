@@ -6,6 +6,7 @@ import json
 import sqlite3
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
 SPEC = importlib.util.spec_from_file_location(
@@ -13,7 +14,9 @@ SPEC = importlib.util.spec_from_file_location(
 )
 assert SPEC is not None and SPEC.loader is not None
 script = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(script)
+with pytest.MonkeyPatch.context() as import_path:
+    import_path.syspath_prepend(str(Path(__file__).parents[1] / "scripts"))
+    SPEC.loader.exec_module(script)
 
 
 def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(

@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from urllib.request import urlopen
 
-from capture_demo_snapshot import outside_git
+from demo_paths import outside_git
 
 
 def ready(url: str) -> None:

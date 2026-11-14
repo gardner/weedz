@@ -4,10 +4,14 @@ import argparse
 import json
 import math
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from demo_paths import new_output  # noqa: E402
 
 SIZE = (1920, 1080)
 BACKGROUND = "#153c2f"
@@ -102,11 +106,13 @@ def main() -> None:
     parser.add_argument("--ffmpeg", type=Path, required=True)
     parser.add_argument("--fps", type=int, default=24)
     args = parser.parse_args()
-    if args.output.exists():
-        parser.error("Choose a new output path; an existing preview is never overwritten")
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        output = new_output(args.output, sidecars=(".png", ".json"))
+    except ValueError as error:
+        parser.error(str(error))
+    output.parent.mkdir(parents=True, exist_ok=True)
     slides = [slide(args.captures, index) for index in range(len(STATES))]
-    slides[0].save(args.output.with_suffix(".png"))
+    slides[0].save(output.with_suffix(".png"))
     seconds = 4
     command = [
         str(args.ffmpeg),
@@ -134,7 +140,7 @@ def main() -> None:
         "yuv420p",
         "-movflags",
         "+faststart",
-        str(args.output),
+        str(output),
     ]
     with subprocess.Popen(command, stdin=subprocess.PIPE) as encoder:
         assert encoder.stdin is not None
@@ -155,7 +161,7 @@ def main() -> None:
         encoder.stdin.close()
         if encoder.wait() != 0:
             raise SystemExit("Video encoder failed; inspect the partial artifact before retrying")
-    args.output.with_suffix(".json").write_text(
+    output.with_suffix(".json").write_text(
         json.dumps(
             {
                 "purpose": "Visual-only prototype preview; no network submission",
@@ -170,7 +176,7 @@ def main() -> None:
         )
         + "\n"
     )
-    print(args.output)
+    print(output)
 
 
 if __name__ == "__main__":

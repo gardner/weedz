@@ -12,6 +12,11 @@ The generic voice description does not clone a real person.
 
 Download the pinned checkpoint (including its bundled audio tokenizer) with
 Hugging Face Hub, clone/check out the source revision, and keep both outside Git.
+The runner records the expected checkpoint revision and its resolved local path.
+It verifies the inference-source Git revision, but does not verify that arbitrary
+checkpoint contents match the expected model revision. Preserve download provenance
+when supplying the checkpoint.
+
 Then, from the Weedz repository root:
 
 ```sh
@@ -25,7 +30,8 @@ uv run --project tools/demo-audio python tools/demo-audio/main.py \
 
 The runner uses GPU 0, an eager-compatible path, a fixed seed and a documented
 female voice instruction. It records text, model/source revisions, settings and
-package versions beside each WAV. Existing outputs are never overwritten.
+package versions beside each WAV. Existing outputs or metadata sidecars are never
+overwritten, and resolved output paths inside Git are refused.
 Large model files and generated audio/video must remain outside the repository.
 
 The upstream `qwen-tts` dependency currently requires Transformers 4.57.3 and
