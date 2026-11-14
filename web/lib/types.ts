@@ -3,6 +3,7 @@ import type { Judged } from "./judgements";
 import type { PhotoLeads } from "./leads";
 import type { Limits } from "./limits";
 import type { Referral } from "./referrals";
+import type { ScoreMeaning } from "./score-meaning";
 import type { Study } from "./study";
 
 export type Status = "unreviewed" | "confirmed" | "rejected" | "uncertain";
@@ -119,6 +120,7 @@ export type RunDetail = {
   audit?: AuditSummary;
   references?: References;
   study?: Study | null;
+  score_meaning?: ScoreMeaning;
 };
 
 export type ReviewEffort = {

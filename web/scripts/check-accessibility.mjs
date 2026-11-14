@@ -190,6 +190,29 @@ try {
       },
     ],
   });
+  const scoreMeaning = {
+    declared: true,
+    id: "bioclip-2/ranking-4/meaning-1",
+    model_key: "bioclip-2",
+    ranking_revision: 4,
+    meaning_version: 1,
+    calibrated: false,
+    score: "The margin against the strongest comparison label.",
+    use: "Orders this run's review queue.",
+    not_meaning: ["Not a probability."],
+    operating_point: null,
+    abstention: null,
+    choosing_an_operating_point: "Only on audited development runs.",
+    evidence: [
+      {
+        key: "e",
+        finding: "1 of 24 photos.",
+        source: "benchmarks/x.json",
+        labels: "Source labels",
+      },
+    ],
+    run_evidence: "This run's audit summary.",
+  };
   const posted = [];
   let photos = [photo("a", "unreviewed"), photo("b", "rejected")];
   const limit = { measure: "Coverage and review usability", direction: "at least", unit: "%" };
@@ -239,7 +262,7 @@ try {
       posted.push(request.postDataJSON());
       return route.fulfill({ json: { saved: true } });
     }
-    await route.fulfill({ json: { run, photos, study } });
+    await route.fulfill({ json: { run, photos, study, score_meaning: scoreMeaning } });
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.locator(".photo-row").nth(1).waitFor();
@@ -267,6 +290,9 @@ try {
   );
   await studyPanel.getByRole("button", { name: "Edit study" }).click();
   await studyPanel.getByLabel("Recorded by").waitFor();
+  // Audit the score meaning open, with its statements and evidence showing.
+  await page.locator(".score-meaning summary").click();
+  await page.getByText("1 of 24 photos.").waitFor();
   // Audit the finding form open, with its free-text field and a box error showing.
   await page.getByRole("button", { name: "Record a different or missed plant" }).click();
   await page.getByLabel("Species", { exact: true }).selectOption("other");

@@ -5,6 +5,7 @@ import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/find
 import type { NewJudgement } from "../lib/judgements";
 import type { NewLeadEvent } from "../lib/leads";
 import type { Closing, NewReferral } from "../lib/referrals";
+import type { ScoreMeaning } from "../lib/score-meaning";
 import {
   imageUrl,
   names,
@@ -22,6 +23,7 @@ import { PhotoDates, SearchAreaNote } from "./photo-limits";
 import PhotoStage from "./photo-stage";
 import ReferralPanel from "./referrals";
 import ReviewHistory from "./review-history";
+import { ScorePanel } from "./score-meaning";
 
 export default function Evidence({
   photo,
@@ -34,6 +36,7 @@ export default function Evidence({
   onSelectLead,
   saving,
   references,
+  scoreMeaning,
   reviewer,
   onReviewerChange,
 }: {
@@ -47,6 +50,7 @@ export default function Evidence({
   onSelectLead: (event: NewLeadEvent) => Promise<boolean>;
   saving: boolean;
   references: References;
+  scoreMeaning?: ScoreMeaning;
   reviewer: string;
   onReviewerChange: (name: string) => void;
 }) {
@@ -142,6 +146,7 @@ export default function Evidence({
           </small>
         </div>
       </div>
+      <ScorePanel photo={photo} meaning={scoreMeaning} />
       <div className="review-form">
         <h3>Is the suggested species visible?</h3>
         <p>

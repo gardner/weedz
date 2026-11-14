@@ -43,20 +43,6 @@
   color: #636e57;
   font-size: 9px;
 }
-.score-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 10px;
-  margin: 12px 0;
-}
-.field-notes .score-row span {
-  color: #646f5a;
-}
-.score-row b {
-  font-weight: 500;
-  color: #506d40;
-}
 .field-notes small {
   font-size: 9px;
   color: #656f59;
