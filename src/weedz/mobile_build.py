@@ -217,7 +217,8 @@ def prepare_ios(root: Path, state: Path, env: Mapping[str, str]) -> None:
     write_private(state / "ios/installed-profile.json", json.dumps(str(installed)).encode())
     write_private(installed, profile_path.read_bytes())
     signing = (
-        f"WEEDZ_BUNDLE_IDENTIFIER = {bundle}\nWEEDZ_CODE_SIGN_IDENTITY = Apple Distribution\n"
+        f"WEEDZ_BUNDLE_IDENTIFIER = {bundle}\n"
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution\n"
         f"DEVELOPMENT_TEAM = {team}\nCODE_SIGN_STYLE = Manual\n"
         f"PROVISIONING_PROFILE_SPECIFIER = {info.uuid}\n"
         f'OTHER_CODE_SIGN_FLAGS = $(inherited) --keychain "{state / "ios/signing.keychain-db"}"\n'

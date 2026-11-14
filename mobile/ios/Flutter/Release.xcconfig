@@ -1,5 +1,4 @@
 #include "Generated.xcconfig"
 
 WEEDZ_BUNDLE_IDENTIFIER = org.example.weedz
-WEEDZ_CODE_SIGN_IDENTITY = iPhone Developer
 #include? "Signing.xcconfig"

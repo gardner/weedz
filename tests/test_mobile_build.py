@@ -151,6 +151,10 @@ def test_ios_preparation_and_cleanup_with_a_matching_private_identity(
         "nz.weedz.app": "00000000-0000-0000-0000-000000000001"
     }
     assert "CODE_SIGN_STYLE = Manual" in (root / "mobile/ios/Flutter/Signing.xcconfig").read_text()
+    assert (
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Distribution"
+        in (root / "mobile/ios/Flutter/Signing.xcconfig").read_text()
+    )
     installed = Path(json.loads((state / "ios/installed-profile.json").read_text()))
     assert installed.exists()
     cleanup(root, state, "ios")
