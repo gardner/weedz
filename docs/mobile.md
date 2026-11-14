@@ -283,7 +283,8 @@ JSON over HTTPS, and nothing about it is Flutter-specific.
 ## Privacy properties
 
 These are the properties the design has to keep. #55 owns the full privacy
-design, and #61 decides whether some places need protecting.
+design. #61 settled that locations are shared exactly by default, never
+generalised, and that a point obscured by its source stays obscured.
 
 1. **Nothing leaves the phone without approval of that specific report.** The
    app never uploads photos, the scan index, embeddings or locations. The only
@@ -334,8 +335,14 @@ feature that needs it is built.
   phone is lost.
 - **Locations without accuracy.** Should the app leave the location out, or
   use a stated default (#54)?
-- **Exact location and sensitive places** (#61). Exact coordinates are the
-  product's purpose. Should the app warn when a photo was taken near the
-  person's home, and should the server restrict who sees exact points?
+- **Explicit location consent** ([#91](https://github.com/gardner/weedz/issues/91)).
+  The report is to gain `consent.location`, true exactly when a location is
+  sent, mirroring `consent.image`. When the server accepts it, the Dart
+  `Consent` gains the same field, and `withoutLocation()` sets it to false.
+  Until then the app keeps to the current version-1 schema, which refuses
+  unknown fields.
+- **Contributor-chosen protection** (a follow-up from #61). Should a person be
+  able to mark one report as obscured on the phone, for example a photo taken
+  at home? It would be opt-in per report, not a default.
 - **Cloud-only photos.** Should the app download originals from iCloud or
   Google Photos to scan them? This costs data and time.
