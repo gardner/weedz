@@ -2,12 +2,17 @@
 
 import json
 import logging
+import os
+import sqlite3
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
+from io import BytesIO
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from intake_helpers import jpeg, new_id, report, with_image
+from PIL import Image
 
 from weedz.discovery.access import Access
 from weedz.intake.api import create_intake_app
@@ -237,3 +242,54 @@ def test_reports_are_kept_apart_owner_only_and_offered_for_review_unpublished(
         assert path.stat().st_mode & 0o077 == 0
     assert not (tmp_path / "discovery.sqlite3").exists()
     assert client.get("/openapi.json").status_code in {401, 404}
+
+
+def test_overlong_token_ids_are_refused_not_errors(tmp_path: Path, client: TestClient) -> None:
+    for token in ("weedzsub_" + "9" * 30 + "_x", "weedz_" + "9" * 30 + "_x"):
+        headers = {"Authorization": f"Bearer {token}"}
+        assert client.get(f"/reports/{new_id()}", headers=headers).status_code == 401
+    assert Access(tmp_path).reviewer("weedz_" + "9" * 30 + "_x") is None
+
+
+def test_a_report_over_budget_is_refused_before_its_image_is_decoded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def never(*_args: object) -> bytes:
+        raise AssertionError("decoded an image that the budget refuses")
+
+    monkeypatch.setattr("weedz.intake.api.clean_image", never)
+    client = TestClient(create_intake_app(tmp_path, Limits(reports_per_day=0)))
+    response = client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=auth(tmp_path))
+    assert response.status_code == 429
+
+
+def test_a_crop_that_grows_past_the_limit_when_re_encoded_is_refused(tmp_path: Path) -> None:
+    noise = Image.frombytes("RGB", (300, 300), os.urandom(300 * 300 * 3))
+    out = BytesIO()
+    noise.save(out, "WEBP", quality=1)
+    upload = out.getvalue()
+    client = TestClient(create_intake_app(tmp_path, Limits(max_image_bytes=len(upload) + 1)))
+    response = client.put(f"/reports/{new_id()}", json=with_image(upload), headers=auth(tmp_path))
+    assert response.status_code == 413
+    assert images(tmp_path) == []
+
+
+def test_retry_after_waits_until_enough_image_bytes_expire(tmp_path: Path) -> None:
+    """The oldest report has no image, so its expiry alone frees no image bytes."""
+    headers = auth(tmp_path)
+    client = TestClient(create_intake_app(tmp_path, Limits(image_bytes_per_day=len(jpeg()) * 3)))
+    client.put(f"/reports/{new_id()}", json=report(), headers=headers)
+    client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=headers)
+    now = datetime.now(UTC)
+    with sqlite3.connect(tmp_path / "reports" / "reports.sqlite3") as db:
+        db.execute(
+            "UPDATE reports SET received_at=? WHERE image_bytes=0",
+            ((now - timedelta(hours=23)).isoformat(timespec="microseconds"),),
+        )
+        db.execute(
+            "UPDATE reports SET received_at=?, image_bytes=? WHERE image_bytes>0",
+            ((now - timedelta(hours=1)).isoformat(timespec="microseconds"), len(jpeg()) * 3),
+        )
+    refused = client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=headers)
+    assert refused.status_code == 429
+    assert int(refused.headers["Retry-After"]) > 22 * 3600

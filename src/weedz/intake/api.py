@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 
 from weedz.intake.images import ImageRefused, clean_image
@@ -48,8 +49,8 @@ def parse_report(body: bytes) -> Report:
         raise HTTPException(422, detail) from error
 
 
-def decode_image(report: Report, limits: Limits) -> bytes | None:
-    """The report's crop as metadata-free JPEG bytes, or None when it has none."""
+def uploaded_image(report: Report, limits: Limits) -> bytes | None:
+    """The report's crop as sent, or None when it has none."""
     if report.image is None:
         return None
     try:
@@ -58,10 +59,19 @@ def decode_image(report: Report, limits: Limits) -> bytes | None:
         raise HTTPException(422, "The image is not valid base64") from error
     if len(data) > limits.max_image_bytes:
         raise HTTPException(413, f"A crop is at most {limits.max_image_bytes} bytes")
+    return data
+
+
+def cleaned_image(data: bytes, limits: Limits) -> bytes:
+    """The crop as metadata-free JPEG bytes, which must also keep within the size limit
+    (re-encoding a heavily compressed upload can make it larger)."""
     try:
-        return clean_image(data, limits.max_pixels)
+        cleaned = clean_image(data, limits.max_pixels)
     except ImageRefused as error:
         raise HTTPException(422, str(error)) from error
+    if len(cleaned) > limits.max_image_bytes:
+        raise HTTPException(413, f"Stored as JPEG, the crop exceeds {limits.max_image_bytes} bytes")
+    return cleaned
 
 
 @contextmanager
@@ -86,22 +96,29 @@ class IntakeAPI:
         self.limits = limits
 
     async def put(self, report_id: uuid.UUID, request: Request, response: Response) -> Receipt:
-        submitter: int = request.state.submitter
-        report = parse_report(await read_body(request, self.limits.max_body_bytes))
-        key = str(report_id)
-        # Canonical, so a retry that differs only in spacing or key order is the same report.
-        digest = hashlib.sha256(report.model_dump_json().encode()).hexdigest()
-        with refusals():
-            earlier = self.store.receipt(submitter, key, digest)
-            if earlier:  # a retry: no new work, so no image decoding and no budget
-                return earlier
-            image = decode_image(report, self.limits)
-            receipt, created = self.store.receive(
-                submitter, key, report, digest, image, self.limits
-            )
+        body = await read_body(request, self.limits.max_body_bytes)
+        # Parsing, image work and SQLite block, so they run off the event loop.
+        receipt, created = await run_in_threadpool(
+            self.accept, request.state.submitter, str(report_id), body
+        )
         if created:
             response.status_code = 201
         return receipt
+
+    def accept(self, submitter: int, report_id: str, body: bytes) -> tuple[Receipt, bool]:
+        report = parse_report(body)
+        # Canonical, so a retry that differs only in spacing or key order is the same report.
+        digest = hashlib.sha256(report.model_dump_json().encode()).hexdigest()
+        upload = uploaded_image(report, self.limits)
+        with refusals():
+            # A retry, or a report over budget, costs no image decoding.
+            earlier = self.store.admit(
+                submitter, report_id, digest, len(upload or b""), self.limits
+            )
+            if earlier:
+                return earlier, False
+            image = cleaned_image(upload, self.limits) if upload else None
+            return self.store.receive(submitter, report_id, report, digest, image, self.limits)
 
     def get(self, report_id: uuid.UUID, request: Request) -> Receipt:
         receipt = self.store.receipt(request.state.submitter, str(report_id))

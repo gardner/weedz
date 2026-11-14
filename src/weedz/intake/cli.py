@@ -1,6 +1,7 @@
 """Issue submitter tokens and serve report intake: ``uv run main.py intake ...`` (#57)."""
 
 import argparse
+import uuid
 from pathlib import Path
 
 from weedz.intake.submitters import Submitters
@@ -34,6 +35,15 @@ def revoke(args: argparse.Namespace) -> None:
     print(f"Revoked submitter {args.id}; its reports are kept and it is refused from now on.")
 
 
+def withdraw(args: argparse.Namespace) -> None:
+    """For a person whose device token was lost or revoked, at their request."""
+    from weedz.intake.store import ReportStore
+
+    if ReportStore(args.intake_dir).withdraw(args.submitter, str(args.report)) is None:
+        raise SystemExit(f"No report {args.report} from submitter {args.submitter}")
+    print(f"Withdrew report {args.report}: its image is deleted and its content erased.")
+
+
 def serve(args: argparse.Namespace) -> None:
     import uvicorn
 
@@ -58,6 +68,9 @@ def parse(argv: list[str]) -> argparse.Namespace:
     commands.add_parser("list", help="Show submitters, never their tokens")
     remove = commands.add_parser("revoke", help="Refuse a submitter's token from now on")
     remove.add_argument("--id", type=int, required=True)
+    erase = commands.add_parser("withdraw", help="Withdraw a report for its submitter")
+    erase.add_argument("--submitter", type=int, required=True)
+    erase.add_argument("--report", type=uuid.UUID, required=True)
     run = commands.add_parser("serve", help="Serve the intake API")
     run.add_argument("--host", default="127.0.0.1", help="Loopback by default, for a proxy")
     run.add_argument("--port", type=int, default=8300)
@@ -68,4 +81,5 @@ def parse(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str]) -> None:
     args = parse(argv)
-    {"add": add, "list": listing, "revoke": revoke, "serve": serve}[args.command](args)
+    commands = {"add": add, "list": listing, "revoke": revoke, "withdraw": withdraw, "serve": serve}
+    commands[args.command](args)

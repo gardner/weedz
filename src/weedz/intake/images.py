@@ -8,7 +8,7 @@ is saved as a fresh JPEG with no metadata at all.
 
 from io import BytesIO
 
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageOps
 
 ACCEPTED = {"JPEG", "PNG", "WEBP"}
 
@@ -27,9 +27,11 @@ def clean_image(data: bytes, max_pixels: int) -> bytes:
             if image.width * image.height > max_pixels:
                 raise ImageRefused(f"The crop has more than {max_pixels} pixels")
             upright = ImageOps.exif_transpose(image).convert("RGB")
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
+    except ImageRefused:
+        raise
+    except Exception as error:  # malformed files fail in many ways inside Pillow
         raise ImageRefused("The crop is not a readable image") from error
     bare = Image.frombytes("RGB", upright.size, upright.tobytes())
     out = BytesIO()
-    bare.save(out, "JPEG", quality=90)
+    bare.save(out, "JPEG", quality=85)
     return out.getvalue()

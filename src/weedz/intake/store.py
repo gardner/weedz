@@ -73,12 +73,16 @@ class ReportStore:
         self.images = self.folder / "images"
         self.path = self.folder / "reports.sqlite3"
 
-    @contextmanager
-    def _transaction(self) -> Iterator[sqlite3.Connection]:
+    def _connect(self) -> sqlite3.Connection:
         for folder in (self.folder, self.images):
             folder.mkdir(mode=0o700, parents=True, exist_ok=True)
-        with closing(tokens.connect_private(self.path, SCHEMA)) as db:
-            db.execute("PRAGMA secure_delete=ON")
+        db = tokens.connect_private(self.path, SCHEMA)
+        db.execute("PRAGMA secure_delete=ON")
+        return db
+
+    @contextmanager
+    def _transaction(self) -> Iterator[sqlite3.Connection]:
+        with closing(self._connect()) as db:
             db.execute("BEGIN IMMEDIATE")  # one writer decides each id and budget
             try:
                 yield db
@@ -87,11 +91,22 @@ class ReportStore:
                 raise
             db.commit()
 
-    def receipt(self, submitter: int, report_id: str, digest: str | None = None) -> Receipt | None:
-        """A submitter's own receipt for an id. With a digest, a retry's receipt: Withdrawn
-        or Conflict when the id cannot take that content."""
-        with self._transaction() as db:
-            return _existing(db, submitter, report_id, digest)
+    def receipt(self, submitter: int, report_id: str) -> Receipt | None:
+        """A submitter's own receipt for an id, or None."""
+        with closing(self._connect()) as db:
+            return _existing(db, submitter, report_id, None)
+
+    def admit(
+        self, submitter: int, report_id: str, digest: str, upload_bytes: int, limits: Limits
+    ) -> Receipt | None:
+        """Before any image work: the receipt when this is a retry, None when it is new and
+        within budget. Raises Withdrawn, Conflict or OverBudget. ``receive`` decides again
+        under the write lock; this only spares the server decoding what it would refuse."""
+        with closing(self._connect()) as db:
+            earlier = _existing(db, submitter, report_id, digest)
+            if earlier is None:
+                _check_budget(db, submitter, upload_bytes, limits)
+            return earlier
 
     def receive(
         self,
@@ -148,7 +163,7 @@ class ReportStore:
 
     def active(self) -> list[StoredReport]:
         """Every report received and not withdrawn: unpublished, for review (#58)."""
-        with self._transaction() as db:
+        with closing(self._connect()) as db:
             rows = db.execute(
                 "SELECT * FROM reports WHERE withdrawn_at IS NULL ORDER BY received_at"
             ).fetchall()
@@ -158,10 +173,16 @@ class ReportStore:
                 row["report_id"],
                 row["received_at"],
                 ReportContent.model_validate_json(row["body"]),
-                self.images / row["image_file"] if row["image_file"] else None,
+                self._image(row["image_file"]),
             )
             for row in rows
         ]
+
+    def _image(self, name: str | None) -> Path | None:
+        # Withdrawal deletes the file before erasing the row (privacy first), so a failed
+        # commit can leave a row naming a deleted image: that report has no image.
+        path = self.images / name if name else None
+        return path if path and path.exists() else None
 
     def _write_image(self, image: bytes) -> str:
         name = f"{uuid.uuid4().hex}.jpg"
@@ -191,18 +212,31 @@ def _existing(
 
 
 def _check_budget(db: sqlite3.Connection, submitter: int, image_bytes: int, limits: Limits) -> None:
-    """Refuse a report that would take a submitter past its rolling 24-hour budget.
-    Withdrawn reports keep their tombstone, so they still count."""
-    since = _stamp(datetime.now(UTC) - timedelta(seconds=DAY_SECONDS))
-    count, used, oldest = db.execute(
-        "SELECT COUNT(*), COALESCE(SUM(image_bytes),0), MIN(received_at) FROM reports "
-        "WHERE submitter=? AND received_at>?",
-        (submitter, since),
-    ).fetchone()
-    if count + 1 > limits.reports_per_day or used + image_bytes > limits.image_bytes_per_day:
-        frees = datetime.fromisoformat(oldest) if oldest else datetime.now(UTC)
-        wait = frees + timedelta(seconds=DAY_SECONDS) - datetime.now(UTC)
-        raise OverBudget(max(1, int(wait.total_seconds()) + 1))
+    """Refuse a report that would take a submitter past its rolling 24-hour budget, saying
+    when enough of the window will have expired for it to fit. Withdrawn reports keep
+    their tombstone, so they still count."""
+    now = datetime.now(UTC)
+    rows = db.execute(
+        "SELECT received_at, image_bytes FROM reports WHERE submitter=? AND received_at>? "
+        "ORDER BY received_at",
+        (submitter, _stamp(now - timedelta(seconds=DAY_SECONDS))),
+    ).fetchall()
+    count, used = len(rows), sum(row["image_bytes"] for row in rows)
+
+    def fits() -> bool:
+        return (
+            count + 1 <= limits.reports_per_day and used + image_bytes <= limits.image_bytes_per_day
+        )
+
+    if fits():
+        return
+    wait = timedelta(seconds=DAY_SECONDS)  # if nothing expiring makes room: a whole day
+    for row in rows:
+        count, used = count - 1, used - row["image_bytes"]
+        if fits():
+            wait = datetime.fromisoformat(row["received_at"]) + wait - now
+            break
+    raise OverBudget(max(1, int(wait.total_seconds()) + 1))
 
 
 def _now() -> str:

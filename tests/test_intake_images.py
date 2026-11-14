@@ -53,6 +53,17 @@ def test_too_many_pixels_are_refused_before_decoding() -> None:
         clean_image(jpeg((200, 100)), max_pixels=10_000)
 
 
+def test_unexpected_pillow_errors_are_refusals_not_crashes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def broken(_image: Image.Image) -> Image.Image:
+        raise ValueError("corrupt EXIF IFD")
+
+    monkeypatch.setattr("weedz.intake.images.ImageOps.exif_transpose", broken)
+    with pytest.raises(ImageRefused, match="not a readable image"):
+        clean_image(jpeg(), max_pixels=10_000)
+
+
 def test_bytes_that_are_not_an_image_are_refused() -> None:
     with pytest.raises(ImageRefused, match="not a readable image"):
         clean_image(b"\xff\xd8 truncated", max_pixels=10_000)

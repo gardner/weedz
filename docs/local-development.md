@@ -144,6 +144,7 @@ intake, and a submitter token never works on the review API.
 uv run main.py intake add --label "Pilot phone 1"   # prints the token once
 uv run main.py intake list                          # never shows tokens
 uv run main.py intake revoke --id 3                 # its reports are kept
+uv run main.py intake withdraw --submitter 3 --report <uuid>  # at the person's request
 uv run main.py intake serve --port 8300             # loopback; put HTTPS in front
 ```
 
@@ -165,7 +166,9 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
 - `GET /reports/{uuid}` returns the submitter's own receipt. `DELETE` withdraws
   the report: its image is deleted and its content erased (zeroed in the
   database file), leaving only ids and times so a retry can't bring it back.
-  Another submitter's report is a 404, the same as a missing one.
+  Another submitter's report is a 404, the same as a missing one. If a device
+  token is lost or revoked, the operator can withdraw its reports with
+  `intake withdraw`.
 - Each submitter may send 100 reports and 50 MB of images per rolling 24 hours,
   withdrawn reports included. Past that, the server answers 429 with
   `Retry-After`.

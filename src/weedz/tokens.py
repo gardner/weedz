@@ -31,7 +31,8 @@ def split(token: str, prefix: str) -> tuple[int, str] | None:
     """The id and secret of a token with this prefix, or None for any other string."""
     found, _, rest = token.partition("_")
     token_id, _, secret = rest.partition("_")
-    if found != prefix or not token_id.isdecimal() or not secret:
+    # At most 18 digits, so the id always fits SQLite's 64-bit integer.
+    if found != prefix or not (token_id.isdecimal() and len(token_id) <= 18) or not secret:
         return None
     return int(token_id), secret
 

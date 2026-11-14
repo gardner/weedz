@@ -3,9 +3,13 @@
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
+from intake_helpers import jpeg, new_id, with_image
 
 from weedz import tokens
+from weedz.intake.api import create_intake_app
 from weedz.intake.cli import main, parse
+from weedz.intake.store import ReportStore
 from weedz.intake.submitters import Submitters
 
 
@@ -72,3 +76,26 @@ def test_submitter_hashes_are_compared_in_constant_time(
     assert submitters.submitter("weedzsub_99_wrong") is None
     assert len(calls) == 3
     assert (tmp_path / "submitters.sqlite3").stat().st_mode & 0o077 == 0
+
+
+def test_an_overlong_token_id_is_refused_not_an_error(tmp_path: Path) -> None:
+    assert Submitters(tmp_path).submitter("weedzsub_" + "9" * 30 + "_x") is None
+
+
+def test_an_operator_can_withdraw_a_report_for_a_revoked_device(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A lost device's token is revoked, but its person can still have reports withdrawn."""
+    credential = Submitters(tmp_path).issue("Lost phone")
+    report_id = new_id()
+    client = TestClient(create_intake_app(tmp_path))
+    headers = {"Authorization": f"Bearer {credential.token}"}
+    client.put(f"/reports/{report_id}", json=with_image(jpeg()), headers=headers)
+    Submitters(tmp_path).revoke(credential.id)
+    folder = ["--intake-dir", str(tmp_path)]
+    main(["withdraw", "--submitter", str(credential.id), "--report", report_id, *folder])
+    assert "Withdrew" in capsys.readouterr().out
+    assert ReportStore(tmp_path).active() == []
+    assert list((tmp_path / "reports" / "images").iterdir()) == []
+    with pytest.raises(SystemExit, match="No report"):
+        main(["withdraw", "--submitter", "99", "--report", report_id, *folder])
