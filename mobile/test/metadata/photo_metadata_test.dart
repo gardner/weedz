@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weedz/metadata/photo_metadata.dart';
 import 'package:weedz/domain/report.dart';
+import 'package:weedz/metadata/photo_metadata.dart';
 
 import '../domain/fixtures.dart';
 import 'raw.dart';
