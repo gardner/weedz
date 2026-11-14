@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:weedz/domain/approval.dart';
-import 'package:weedz/domain/report.dart';
 import 'package:weedz/ui/approval/approval_screen.dart';
 import 'package:weedz/ui/theme.dart';
 
@@ -35,7 +34,7 @@ ReportCase receivedCase() => sendingCase().received();
 /// Stands in for the report store: it commits each transition the screen
 /// asks for, and keeps what would have gone over the wire.
 class FakeStore extends ChangeNotifier {
-  FakeStore(this.current);
+  new(this.current);
 
   ReportCase current;
   final changes = <ReportCase>[];

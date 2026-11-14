@@ -100,10 +100,7 @@ void main() {
       foundCase().decline(),
       receivedCase().withdrawn(),
       refusedCase()
-          .revise(
-            id: revisedId,
-            report: refusedCase().report.withoutImage(),
-          )
+          .revise(id: revisedId, report: refusedCase().report.withoutImage())
           .$1,
     ]) {
       await pumpApproval(tester, reportCase);

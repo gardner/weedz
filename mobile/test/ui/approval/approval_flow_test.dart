@@ -28,7 +28,8 @@ void main() {
 
       await tapText(tester, 'Send report');
       expect(store.uploads, hasLength(1));
-      final body = jsonDecode(store.uploads.single.body) as Map<String, Object?>;
+      final body =
+          jsonDecode(store.uploads.single.body) as Map<String, Object?>;
       expect(body['location'], {
         'latitude': -41.2706319,
         'longitude': 173.2839653,
@@ -108,7 +109,7 @@ void main() {
       ]) {
         expect(
           tester.getSemantics(find.text(label)),
-          containsSemantics(hasCheckedState: true, isChecked: false),
+          isSemantics(hasCheckedState: true, isChecked: false),
           reason: label,
         );
       }
@@ -118,9 +119,7 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('sending the photo needs a licence chosen too', (
-      tester,
-    ) async {
+    testWidgets('sending the photo needs a licence chosen too', (tester) async {
       await pumpApproval(tester, foundCase());
       await tapText(tester, 'Send this photo');
       await tapText(tester, 'Share this exact location');
@@ -157,7 +156,10 @@ void main() {
       );
       expect(find.text('Send this photo'), findsNothing);
       expect(find.text('Share this exact location'), findsNothing);
-      expect(find.textContaining('no location with a known accuracy'), findsOne);
+      expect(
+        find.textContaining('no location with a known accuracy'),
+        findsOne,
+      );
       expect(find.textContaining('no photo to send'), findsOne);
       expect(approveButton(tester).onPressed, isNotNull);
     });

@@ -57,10 +57,7 @@ void main() {
     final store = await pumpApproval(tester, foundCase());
     expect(
       tester.getSemantics(find.byKey(const Key('approval-status'))),
-      containsSemantics(
-        isLiveRegion: true,
-        label: 'Waiting for your decision',
-      ),
+      isSemantics(isLiveRegion: true, label: 'Waiting for your decision'),
     );
     expect(find.byIcon(Icons.hourglass_empty), findsOne);
 
@@ -68,7 +65,7 @@ void main() {
     await tester.pump();
     expect(
       tester.getSemantics(find.byKey(const Key('approval-status'))),
-      containsSemantics(isLiveRegion: true, label: 'Approved: ready to send'),
+      isSemantics(isLiveRegion: true, label: 'Approved: ready to send'),
     );
     handle.dispose();
   });
@@ -79,7 +76,7 @@ void main() {
     for (final title in ['Suggested weed', 'Location', 'Photo']) {
       expect(
         tester.getSemantics(find.text(title)),
-        containsSemantics(isHeader: true),
+        isSemantics(isHeader: true),
         reason: title,
       );
     }
