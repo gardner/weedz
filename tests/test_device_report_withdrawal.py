@@ -31,7 +31,7 @@ def test_a_report_missing_from_intake_is_not_erased(tmp_path: Path) -> None:
     send(intake, with_image(jpeg()))
     [before] = synced(tmp_path, intake)
     [after] = synced(tmp_path, tmp_path / "elsewhere")
-    assert not after.get("withdrawn_at") and after["latitude"] == -41.27
+    assert not after["consent"]["withdrawn_at"] and after["latitude"] == -41.27
     assert (tmp_path / "pilot" / after["image_path"]).is_file()
     assert synced(tmp_path, intake) == [after] and after["id"] == before["id"]
 
@@ -73,7 +73,7 @@ def test_a_crop_written_while_its_report_is_withdrawn_is_deleted(
 
     monkeypatch.setattr(device_reports, "_write_private", withdrawn_meanwhile)
     [photo] = synced(tmp_path, intake)
-    assert photo["withdrawn_at"]
+    assert photo["consent"]["withdrawn_at"]
     assert list((tmp_path / "pilot" / "images" / "device").iterdir()) == []
 
 
@@ -85,20 +85,6 @@ def test_a_consented_crop_that_is_gone_is_not_offered(tmp_path: Path) -> None:
     stored.image.unlink()
     [photo] = synced(tmp_path, intake)
     assert photo["image_path"] == "" and photo["device"]["image_consent"] is True
-
-
-def test_a_referral_on_a_withdrawn_report_cannot_be_answered(tmp_path: Path) -> None:
-    intake = tmp_path / "intake"
-    client = TestClient(create_app(tmp_path / "pilot", intake_dir=intake))
-    report_id = send(intake, report())
-    [photo] = client.get(f"/runs/{RUN_ID}").json()["photos"]
-    path = f"/runs/{RUN_ID}/photos/{photo['id']}/referrals"
-    referral = {"reason": "lookalike", "note": "Check", "referrer": "Ana"}
-    referral_id = client.post(path, json=referral).json()["id"]
-    ReportStore(intake).withdraw(1, report_id)
-    answer = {"action": "answered", "actor": "Dr Wiri", "note": "Native"}
-    response = client.post(f"{path}/{referral_id}/events", json=answer)
-    assert response.status_code == 410, response.text
 
 
 def test_without_an_intake_folder_a_stored_device_run_is_not_served(tmp_path: Path) -> None:

@@ -27,6 +27,7 @@ from PIL import Image
 from pydantic import BaseModel
 
 from weedz.discovery.records import SPECIES
+from weedz.discovery.sharing import withdrawn
 from weedz.discovery.store import Store, now
 from weedz.intake.store import ReportStore, StoredReport
 
@@ -56,6 +57,15 @@ class Provenance(BaseModel):
     location_consent: bool
 
 
+class ContributorConsent(BaseModel):
+    """What the person permitted, as the sharing policy reads it (#60). ``withdrawn_at`` is
+    when review learned of the withdrawal; the item then carries no personal detail."""
+
+    version: str
+    uses: list[str]
+    withdrawn_at: str | None = None
+
+
 class DeviceItem(BaseModel):
     """A device report in the shape every review path reads."""
 
@@ -80,8 +90,7 @@ class DeviceItem(BaseModel):
     image_path: str = ""
     sha256: str = ""
     device: Provenance
-    # When review learned of the withdrawal; the item then carries no personal detail.
-    withdrawn_at: str | None = None
+    consent: ContributorConsent
 
 
 def item_id(stored: StoredReport) -> str:
@@ -109,6 +118,9 @@ def item(stored: StoredReport) -> DeviceItem:
         longitude=location.longitude if location else None,
         positional_accuracy_m=location.accuracy_m if location else None,
         coordinate_status="public" if location else "missing",
+        consent=ContributorConsent(
+            version=content.consent.wording_version, uses=sorted(content.consent.uses)
+        ),
         device=Provenance(
             submitter=stored.submitter,
             report_id=stored.report_id,
@@ -214,7 +226,7 @@ def _erased(record: dict) -> dict:
             "image_path": "",
             "sha256": "",
             "device": record["device"] | {"captured_at": None},
-            "withdrawn_at": now(),
+            "consent": record["consent"] | {"withdrawn_at": now()},
         }
     )
 
@@ -299,13 +311,13 @@ def _sync(store: Store, reports: ReportStore) -> None:
             _add(store, stored)
         elif known[identifier].get("image_path"):
             _restore(store, stored, known[identifier])
-    withdrawn = 0
+    gone = 0
     for identifier, record in known.items():
-        if record.get("withdrawn_at"):
-            withdrawn += 1
+        if withdrawn(record):
+            gone += 1
         elif identifier not in active and _withdrawn(reports, record):
             _withdraw(store, identifier, record)
-            withdrawn += 1
+            gone += 1
     _sweep(store)
-    detail = f"{len(active)} reports in review · {withdrawn} withdrawn"
+    detail = f"{len(active)} reports in review · {gone} withdrawn"
     store.status(RUN_ID, "receiving", detail)

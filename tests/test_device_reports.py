@@ -76,6 +76,8 @@ def test_a_report_becomes_a_review_item_with_its_provenance(tmp_path: Path, inta
         "image_consent": True,
         "location_consent": True,
     }
+    # What the person permitted, in the shape the sharing policy reads (#60).
+    assert photo["consent"] == {"version": "2026-11", "uses": ["review"], "withdrawn_at": None}
     assert (photo["photo_license"], photo["observation_license"]) == ("cc-by", "cc-by")
     assert photo["attribution"] == "Aroha"
 
@@ -169,11 +171,13 @@ def test_a_withdrawn_report_leaves_the_queue_and_loses_its_image_but_keeps_histo
     assert after["photos"] == [] and after["withdrawn_reports"] == 1
     assert after["run"]["detail"] == "0 reports in review · 1 withdrawn"
     assert not copy.exists()
-    assert client.get(f"{path}/image").status_code == 403
-    # The append-only history stays, without the image or the location.
-    assert [row["value"] for row in client.get(f"{path}/judgements").json()] == ["confirmed"]
-    [kept] = Store(tmp_path / "pilot").photos(RUN_ID)
-    assert kept["withdrawn_at"] and kept["image_path"] == "" and kept["sha256"] == ""
+    assert client.get(f"{path}/image").status_code == 404
+    # The append-only history stays in the store, without the image or the location;
+    # the review API no longer serves any of it (test_device_report_routes.py).
+    store = Store(tmp_path / "pilot")
+    assert [row["value"] for row in store.judgements(RUN_ID, photo["id"])] == ["confirmed"]
+    [kept] = store.photos(RUN_ID)
+    assert kept["consent"]["withdrawn_at"] and kept["image_path"] == "" and kept["sha256"] == ""
     assert kept["latitude"] is None and kept["observed_on"] is None
     assert kept["attribution"] == "" and kept["device"]["captured_at"] is None
     assert kept["review_status"] == "confirmed"
@@ -185,7 +189,7 @@ def test_a_withdrawn_report_is_not_brought_back(tmp_path: Path, intake: Path) ->
     ReportStore(intake).withdraw(1, report_id)
     synced(tmp_path, intake)
     [photo] = synced(tmp_path, intake)
-    assert photo["withdrawn_at"]
+    assert photo["consent"]["withdrawn_at"]
 
 
 def test_reports_from_one_site_visit_are_grouped(intake: Path, client: TestClient) -> None:
@@ -205,13 +209,20 @@ def test_reports_from_one_site_visit_are_grouped(intake: Path, client: TestClien
 def test_a_device_report_can_become_a_lead_in_the_follow_up_package(
     intake: Path, client: TestClient
 ) -> None:
-    send(intake, with_image(jpeg()))
-    [photo] = detail(client)["photos"]
+    shared = send(intake, with_image(jpeg(), uses=["review", "agencies"]))
+    send(intake, with_image(jpeg()))  # permitted for review only
     lead = {"action": "selected", "selector": "Ana", "reason": "Gorse by the track"}
-    response = client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/leads", json=lead)
-    assert response.status_code == 200, response.text
-    [packaged] = client.get(f"/runs/{RUN_ID}/package").json()["leads"]
-    assert packaged["photo_id"] == photo["id"] and packaged["image"]["included"]
+    for photo in detail(client)["photos"]:
+        response = client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/leads", json=lead)
+        assert response.status_code == 200, response.text
+    leads = client.get(f"/runs/{RUN_ID}/package").json()["leads"]
+    images = {item["photo_id"].endswith(shared): item["image"] for item in leads}
+    # The crop goes to agencies only where the person permitted it (#60).
+    assert images[True]["included"] and images[True]["contributor_permits"] == [
+        "agencies",
+        "review",
+    ]
+    assert not images[False]["included"] and "did not permit" in images[False]["terms"]
 
 
 def test_shared_exports_give_the_point_only_under_the_chosen_licence(
@@ -243,24 +254,3 @@ def test_a_withdrawn_report_leaves_the_follow_up_package(intake: Path, client: T
     client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/leads", json=lead)
     ReportStore(intake).withdraw(1, report_id)
     assert client.get(f"/runs/{RUN_ID}/package").json()["leads"] == []
-
-
-@pytest.mark.parametrize(
-    ("action", "body"),
-    [
-        ("review", {"status": "confirmed", "reviewer": "Ana"}),
-        ("findings", {"kind": "addition", "species": "Ulex europaeus", "reviewer": "Ana"}),
-        ("judgements", {"dimension": "identity", "value": "confirmed", "reviewer": "Ana"}),
-        ("leads", {"action": "selected", "selector": "Ana", "reason": "Worth a visit"}),
-        ("referrals", {"reason": "lookalike", "note": "Check", "referrer": "Ana"}),
-    ],
-)
-def test_nothing_new_is_recorded_on_a_withdrawn_report(
-    intake: Path, client: TestClient, action: str, body: dict
-) -> None:
-    report_id = send(intake, report())
-    [photo] = detail(client)["photos"]
-    ReportStore(intake).withdraw(1, report_id)
-    response = client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/{action}", json=body)
-    assert response.status_code == 410, response.text
-    assert "withdrawn" in response.json()["detail"]

@@ -27,7 +27,7 @@ from weedz.discovery.package_output import archive, package_contents
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
 from weedz.discovery.score_meaning import score_meaning
-from weedz.discovery.sharing import image_use, shareable_export, with_location
+from weedz.discovery.sharing import image_use, shareable_export, with_location, withdrawn
 from weedz.discovery.store import Store, now
 from weedz.discovery.study import NewStudy, StudyDefinition, StudyEdit, StudyLink, terms
 from weedz.discovery.study_store import (
@@ -142,7 +142,7 @@ class ReviewAPI:
         run = self.run(run_id)
         listed = self.store.photos(run_id)
         # Withdrawn device reports leave the queue; their history stays in the export.
-        current = [photo for photo in listed if not photo.get("withdrawn_at")]
+        current = [photo for photo in listed if not withdrawn(photo)]
         references, photos = with_references(self.store.root, current)
         history = review_history(self.store, run_id, photos)
         effort = summarize_effort(photos, history)
@@ -285,7 +285,7 @@ class ReviewAPI:
         return FileResponse(path, media_type="image/jpeg")
 
     def review(self, run_id: str, photo_id: str, decision: Review) -> dict:
-        self.writable(run_id, photo_id)
+        self.photo(run_id, photo_id)
         try:
             self.store.review(
                 run_id,
@@ -300,9 +300,8 @@ class ReviewAPI:
         return {"saved": True}
 
     def audit(self, run_id: str, photo_id: str, answer: Audit) -> dict:
-        photos = self.store.photos(self.run(run_id)["id"])
-        if not any(photo["id"] == photo_id for photo in photos):
-            raise HTTPException(404, "Photo not found")
+        self.photo(run_id, photo_id)
+        photos = self.store.photos(run_id)
         if photo_id not in audit_sample(run_id, photos):
             raise HTTPException(409, "Only audit-sample photos can be audited")
         self.store.audit(
@@ -311,17 +310,12 @@ class ReviewAPI:
         return {"saved": True}
 
     def photo(self, run_id: str, photo_id: str) -> dict:
+        """The photo every photo route reads or acts on. A withdrawn device report is
+        used for nothing further, so to every route it is not there (#58, #119)."""
         photos = self.store.photos(self.run(run_id)["id"])
         photo = next((item for item in photos if item["id"] == photo_id), None)
-        if photo is None:
+        if photo is None or withdrawn(photo):
             raise HTTPException(404, "Photo not found")
-        return photo
-
-    def writable(self, run_id: str, photo_id: str) -> dict:
-        """The photo, if new records may be made on it: not a withdrawn device report."""
-        photo = self.photo(run_id, photo_id)
-        if photo.get("withdrawn_at"):
-            raise HTTPException(410, "This report was withdrawn by the person who sent it")
         return photo
 
     def history(self, run_id: str, photo_id: str) -> list[dict]:
@@ -329,7 +323,7 @@ class ReviewAPI:
         return self.store.reviews(run_id, photo_id)
 
     def record_finding(self, run_id: str, photo_id: str, record: Finding) -> dict:
-        check_finding(self.writable(run_id, photo_id)["scores"], record)
+        check_finding(self.photo(run_id, photo_id)["scores"], record)
         self.store.finding(run_id, photo_id, record)
         return {"saved": True}
 
@@ -337,7 +331,7 @@ class ReviewAPI:
         return self.photo(run_id, photo_id)["findings"]
 
     def record_judgement(self, run_id: str, photo_id: str, record: Judgement) -> dict:
-        snapshot, [photo] = with_references(self.store.root, [self.writable(run_id, photo_id)])
+        snapshot, [photo] = with_references(self.store.root, [self.photo(run_id, photo_id)])
         check_target(photo, record.finding_id)
         reason = unsupported(photo, record)
         if reason:
@@ -351,7 +345,7 @@ class ReviewAPI:
         return self.store.judgements(run_id, photo_id)
 
     def select_lead(self, run_id: str, photo_id: str, record: LeadEvent) -> dict:
-        check_lead(self.writable(run_id, photo_id), record)
+        check_lead(self.photo(run_id, photo_id), record)
         if not record_lead(self.store, run_id, photo_id, record):
             selected = record.action == "selected"
             raise HTTPException(
@@ -360,7 +354,7 @@ class ReviewAPI:
         return {"saved": True}
 
     def refer(self, run_id: str, photo_id: str, record: Referral) -> dict:
-        photo = self.writable(run_id, photo_id)
+        photo = self.photo(run_id, photo_id)
         plants = {plant["id"] for plant in photo["findings"]}
         if record.finding_id is not None and record.finding_id not in plants:
             raise HTTPException(404, "Recorded plant not found on this photo")
@@ -373,7 +367,7 @@ class ReviewAPI:
         self, run_id: str, photo_id: str, referral_id: int, event: ReferralEvent
     ) -> dict:
         """Answer or withdraw an open referral; a closed one stays closed."""
-        self.writable(run_id, photo_id)
+        self.photo(run_id, photo_id)
         referral = next(
             (item for item in self.referrals(run_id, photo_id) if item["id"] == referral_id),
             None,

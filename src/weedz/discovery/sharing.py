@@ -119,7 +119,7 @@ def contributor_refusal(photo: dict[str, Any], use: Use) -> str:
 def image_use(photo: dict[str, Any], use: Use) -> ImageUse:
     """Whether the photo may be shown (review) or included (share), or only linked."""
     device = photo.get("device")
-    if photo.get("withdrawn_at"):
+    if withdrawn(photo):
         return ImageUse("link", WITHDRAWN_REPORT)
     if device and not device["image_consent"]:
         return ImageUse("link", NO_IMAGE_CONSENT)

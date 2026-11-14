@@ -208,11 +208,9 @@ def follow_up_package(
 def _in_export(photos: dict[str, dict[str, Any]], selection: dict[str, Any]) -> bool:
     """Whether the export holds the selected plant. Selections are read after the photos,
     so a plant recorded and selected in between waits for the next package rather than
-    being packaged as some other plant. A withdrawn device report is never packaged."""
+    being packaged as some other plant. A withdrawn report is not among the photos."""
     photo = photos.get(selection["photo_id"])
     target = selection["finding_id"]
-    return (
-        photo is not None
-        and not photo.get("withdrawn_at")
-        and (target is None or any(plant["id"] == target for plant in photo["findings"]))
+    return photo is not None and (
+        target is None or any(plant["id"] == target for plant in photo["findings"])
     )
