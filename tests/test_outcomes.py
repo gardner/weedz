@@ -146,7 +146,10 @@ def test_missed_targets_need_an_audit_and_are_partial_while_samples_remain() -> 
         "ungrouped_photos": 0,
     }
     assert missed["evidence"]["found_not_top_suggestion"] == 1
-    assert missed["evidence"]["found_queue_ranks"] == [2]
+    assert missed["evidence"]["findings"] == [
+        {"photo_id": "a", "species": "Ulex europaeus", "queue_rank": 2, "queue_size": 2}
+        | {"top_suggestion": False}
+    ]
 
 
 def test_a_run_without_incidental_photos_has_nothing_to_audit() -> None:
@@ -209,10 +212,10 @@ def test_novelty_with_a_snapshot_but_no_findings_is_not_yet_measurable() -> None
     assert "no confirmed incidental finding" in novel["reason"]
 
 
-def test_false_alarms_count_rejected_uncertain_and_disputed_leads_with_their_time() -> None:
+def test_rejected_and_inconclusive_reviews_are_reported_with_their_time() -> None:
     photos = [
         photo("a", "v1", review_status="rejected"),
-        photo("b", "v2", review_status="uncertain"),
+        photo("b", "v2", review_status="uncertain", scores={"margin": -0.1}),
         photo("c", "v3", review_status="confirmed", disputed=True),
         photo("d", "v4", review_status="confirmed"),
     ]
@@ -223,20 +226,23 @@ def test_false_alarms_count_rejected_uncertain_and_disputed_leads_with_their_tim
         "d": [event("confirmed", 600)],
     }
     alarms = measure(outcomes(export(photos, history)), "false_alarm_workload")
-    assert alarms["value"]["site_visits"] == 3
+    assert alarms["evidence"]["rejected"]["site_visits"] == 1
+    assert alarms["evidence"]["inconclusive"]["site_visits"] == 2
+    assert alarms["evidence"]["rejected_or_inconclusive_with_positive_margin"]["photos"] == 2
     assert alarms["denominator"]["site_visits"] == 4
     assert alarms["evidence"]["minutes"] == 3.0
     assert alarms["evidence"]["untimed_decisions"] == 1
-    assert alarms["status"] == PARTIAL
     assert "lower bound" in alarms["reason"]
 
 
-def test_false_alarms_are_measured_when_every_lead_is_reviewed_and_timed() -> None:
+def test_false_alarms_are_not_counted_until_proposed_leads_are_defined() -> None:
     photos = [photo("a", "a", review_status="rejected")]
     alarms = measure(
         outcomes(export(photos, {"a": [event("rejected", 60)]})), "false_alarm_workload"
     )
-    assert alarms["status"] == MEASURED
+    assert alarms["status"] == PARTIAL
+    assert alarms["value"] is None
+    assert "#16" in alarms["reason"]
 
 
 def test_follow_up_usefulness_is_not_recorded_yet() -> None:

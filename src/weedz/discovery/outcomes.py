@@ -215,7 +215,11 @@ def missed_targets(study: Study) -> dict[str, Any]:
         return _measure(key, NOT_YET, reason, evidence=evidence)
     found = {f["photo_id"] for f in findings}
     evidence["weeds_found"] = tally([p for p in study.incidental if p["id"] in found])
-    evidence["found_queue_ranks"] = sorted({f["queue_rank"] for f in findings})
+    evidence["findings"] = [
+        {name: f[name] for name in ["photo_id", "species", "queue_rank", "queue_size"]}
+        | {"top_suggestion": f["top_suggestion"]}
+        for f in sorted(findings, key=lambda f: (f["queue_rank"], f["species"]))
+    ]
     caveats = [
         "No detection rule is agreed yet (#16), so weeds the audit found are reported "
         "with their queue rank and top suggestion, not as hits or misses."
@@ -276,23 +280,32 @@ def novel_evidence(study: Study) -> dict[str, Any]:
 
 
 def false_alarms(study: Study) -> dict[str, Any]:
+    """Rejected and inconclusive reviews and their time. Every photo shows a top suggestion
+    and no rule yet decides which are proposed leads (#16), so this is not a count of
+    false alarms."""
     if not study.reviewed:
         return _measure("false_alarm_workload", NOT_YET, NO_REVIEWS)
     rejected = [p for p in study.reviewed if p["review_status"] == "rejected" and not p["disputed"]]
     inconclusive = [p for p in study.reviewed if p["review_status"] == "uncertain" or p["disputed"]]
     minutes, untimed = study.effort(rejected + inconclusive)
-    caveats = study.unreviewed_note()
+    caveats = [
+        "No rule yet decides which suggestions are proposed leads (#16), so rejected and "
+        "inconclusive reviews are reported rather than a false-alarm count.",
+        *study.unreviewed_note(),
+    ]
     if untimed:
         caveats.append(f"{untimed} decisions were not timed, so minutes are a lower bound.")
     return _measure(
         "false_alarm_workload",
-        PARTIAL if caveats else MEASURED,
-        " ".join(caveats) or None,
-        value=tally(rejected + inconclusive),
+        PARTIAL,
+        " ".join(caveats),
         denominator=tally(study.reviewed),
         evidence={
             "rejected": tally(rejected),
             "inconclusive": tally(inconclusive),
+            "rejected_or_inconclusive_with_positive_margin": tally(
+                [p for p in rejected + inconclusive if p["scores"].get("margin", 0) > 0]
+            ),
             "minutes": minutes,
             "untimed_decisions": untimed,
         },
@@ -400,7 +413,7 @@ def _render(value: Any) -> str:
     if isinstance(value, dict):
         return "; ".join(f"{key}: {_render(item)}" for key, item in value.items()) or "none"
     if isinstance(value, list):
-        return ", ".join(map(str, value)) or "none"
+        return " / ".join(map(_render, value)) or "none"
     return str(value)
 
 
