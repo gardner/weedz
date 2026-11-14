@@ -11,6 +11,7 @@ from pathlib import Path
 
 import httpx
 import uvicorn
+from pydantic import ValidationError
 from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
@@ -25,6 +26,8 @@ from weedz.discovery.package_report import NONE_SELECTED
 from weedz.discovery.records import TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
 from weedz.discovery.store import Store
+from weedz.discovery.study import StudyDefinition, StudyEdit
+from weedz.discovery.study_store import link_study, run_study, save_version
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -169,6 +172,30 @@ def report(args: argparse.Namespace) -> None:
         args.json.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
 
 
+def study(args: argparse.Namespace) -> None:
+    """Show the run's study; with --file, record the file as its next version (a new
+    study linked to the run when it has none)."""
+    store = run_store(args)
+    if args.file:
+        if not args.author:
+            raise SystemExit("Name who records this study version with --author")
+        try:
+            definition = StudyDefinition.model_validate_json(args.file.read_text())
+        except ValidationError as error:
+            raise SystemExit(f"Study not recorded: {error}") from error
+        linked = run_study(store, args.run)
+        edit = StudyEdit(
+            definition=definition,
+            author=args.author,
+            base_version=linked["version"] if linked else 0,
+            change_note=args.note,
+        )
+        saved = save_version(store, linked["id"] if linked else None, edit)
+        if not linked:
+            link_study(store, args.run, saved["id"], args.author)
+    print(json.dumps(run_study(store, args.run), indent=2, ensure_ascii=False))
+
+
 def parse(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Nelson/Tasman discovery and review")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -221,6 +248,14 @@ def parse(argv: list[str]) -> argparse.Namespace:
     measures.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     measures.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     measures.add_argument("--json", type=Path, help="Also write the report as JSON here")
+    define = commands.add_parser(
+        "study", help="Show a run's study, or record a new version of it from a JSON file"
+    )
+    define.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    define.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    define.add_argument("--file", type=Path, help="Study definition JSON to record")
+    define.add_argument("--author", help="Who records this version")
+    define.add_argument("--note", default="", help="What changed and why")
     bundle = commands.add_parser(
         "package", help="Write the follow-up package of a run's selected leads"
     )
@@ -240,5 +275,8 @@ def main(argv: list[str]) -> None:
         return
     if args.command == "package":
         package(args)
+        return
+    if args.command == "study":
+        study(args)
         return
     asyncio.run(dev(args) if args.command == "dev" else discover(args))

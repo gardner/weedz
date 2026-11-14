@@ -15,6 +15,7 @@ from weedz.discovery.records import Finding, Photo, RunSpec
 from weedz.discovery.referrals import TABLES as REFERRAL_TABLES
 from weedz.discovery.referrals import Referral, ReferralEvent, with_status
 from weedz.discovery.sharing import refuse_unadmitted
+from weedz.discovery.study import TABLES as STUDY_TABLES
 
 
 def now() -> str:
@@ -131,6 +132,7 @@ class Store:
             """)
             db.executescript(REFERRAL_TABLES)
             db.executescript(LEAD_TABLE)
+            db.executescript(STUDY_TABLES)
             # Databases created before reviewer attribution keep their history unattributed.
             add_missing_column(db, "photos", "review_reviewer")
             add_missing_column(db, "reviews", "reviewer")

@@ -23,6 +23,7 @@ from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
+from weedz.discovery.study_store import run_study
 
 
 def while_heartbeating[T](work: Callable[[], T], detail: str, every: float = 20.0) -> T:
@@ -162,6 +163,8 @@ def export(store: Store, run_id: str) -> dict:
             store.latest_audits(run_id, blind=False),
         ),
         "lead_selections": selections(store, run_id),
+        # The study this run serves, at its latest version (PRD P01).
+        "study": run_study(store, run_id),
         "audit_history": [
             dict(photo_id=photo["id"], events=store.audits(run_id, photo["id"])) for photo in photos
         ],

@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from temporalio.client import Client
 
 from weedz.discovery.activities import export, review_history
+from weedz.discovery.agreed_limits import study_budget
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
@@ -23,6 +24,15 @@ from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review,
 from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
 from weedz.discovery.sharing import image_use, shareable_export, with_location
 from weedz.discovery.store import Store, now
+from weedz.discovery.study import StudyDefinition, StudyEdit, StudyLink
+from weedz.discovery.study_store import (
+    StaleVersion,
+    link_study,
+    run_study,
+    save_version,
+    studies,
+    versions,
+)
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -103,7 +113,17 @@ class ReviewAPI:
     def detail(self, run_id: str) -> dict:
         run = self.run(run_id)
         references, photos = with_references(self.store.root, self.store.photos(run_id))
-        effort = summarize_effort(photos, review_history(self.store, run_id, photos))
+        history = review_history(self.store, run_id, photos)
+        effort = summarize_effort(photos, history)
+        study = run_study(self.store, run_id)
+        if study:
+            audits = [
+                dict(photo_id=photo["id"], events=self.store.audits(run_id, photo["id"]))
+                for photo in photos
+            ]
+            work = {"review_effort": effort, "review_history": history, "audit_history": audits}
+            definition = StudyDefinition.model_validate(study["definition"])
+            study["budget_use"] = study_budget(work, definition)
         sample = audit_sample(run_id, photos)
         blind, late = self.store.latest_audits(run_id), self.store.latest_audits(run_id, False)
         # Per-photo findings stay in the export; the review app sees only counts and who
@@ -125,6 +145,7 @@ class ReviewAPI:
             "review_effort": effort,
             "audit": audit,
             "references": references,
+            "study": study,
         }
 
     def download(self, run_id: str) -> JSONResponse:
@@ -141,6 +162,41 @@ class ReviewAPI:
     def outcomes(self, run_id: str) -> dict:
         self.run(run_id)
         return outcomes(export(self.store, run_id))
+
+    def studies(self) -> list[dict]:
+        return studies(self.store)
+
+    def study(self, study_id: str) -> dict:
+        history = versions(self.store, study_id)
+        if not history:
+            raise HTTPException(404, "Study not found")
+        linked = [item["runs"] for item in studies(self.store) if item["id"] == study_id]
+        return {"id": study_id, "current": history[-1], "versions": history, "runs": linked[0]}
+
+    def create_study(self, edit: StudyEdit) -> dict:
+        return self._save_study(None, edit)
+
+    def edit_study(self, study_id: str, edit: StudyEdit) -> dict:
+        self.study(study_id)
+        return self._save_study(study_id, edit)
+
+    def _save_study(self, study_id: str | None, edit: StudyEdit) -> dict:
+        try:
+            return save_version(self.store, study_id, edit)
+        except StaleVersion as error:
+            raise HTTPException(409, str(error)) from error
+
+    def run_study(self, run_id: str) -> dict | None:
+        self.run(run_id)
+        return run_study(self.store, run_id)
+
+    def link_study(self, run_id: str, link: StudyLink) -> dict:
+        self.run(run_id)
+        try:
+            link_study(self.store, run_id, link.study_id, link.linked_by)
+        except KeyError as error:
+            raise HTTPException(404, "Study not found") from error
+        return {"saved": True}
 
     def package(self, run_id: str) -> dict:
         """The selected leads only, as JSON; photos are in the archive."""
@@ -288,6 +344,12 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.get("/runs/{run_id}")(api.detail)
     app.get("/runs/{run_id}/export")(api.download)
     app.get("/runs/{run_id}/outcomes")(api.outcomes)
+    app.get("/runs/{run_id}/study")(api.run_study)
+    app.post("/runs/{run_id}/study")(api.link_study)
+    app.get("/studies")(api.studies)
+    app.post("/studies", status_code=201)(api.create_study)
+    app.get("/studies/{study_id}")(api.study)
+    app.post("/studies/{study_id}/versions", status_code=201)(api.edit_study)
     app.get("/runs/{run_id}/package")(api.package)
     app.get("/runs/{run_id}/package/archive")(api.package_archive)
     app.get("/runs/{run_id}/photos/{photo_id}/image")(api.image)
