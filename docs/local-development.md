@@ -148,6 +148,13 @@ uv run main.py intake withdraw --submitter 3 --report <uuid>  # at the person's 
 uv run main.py intake serve --port 8300             # loopback; put HTTPS in front
 ```
 
+The intake contract is still pre-pilot: no upload client has shipped. The
+required `consent.location` field intentionally changes v1 (#91). Use a new or
+empty intake store with this contract. If a development store contains older
+reports, withdraw them deliberately before upgrading or migrate them under an
+explicitly agreed retention policy; coordinates alone must never be converted
+into a claim that location consent was given.
+
 The contract, with every request sending `Authorization: Bearer weedzsub_…`:
 
 - `PUT /reports/{uuid}` takes a version-1 report as JSON
