@@ -298,6 +298,21 @@ def test_retry_after_waits_until_enough_image_bytes_expire(tmp_path: Path) -> No
     assert int(refused.headers["Retry-After"]) > 22 * 3600
 
 
+def test_a_crop_is_flushed_to_disk_before_its_report_is_committed(
+    tmp_path: Path, client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    flushed: list[int] = []
+    real = os.fsync
+
+    def record(descriptor: int) -> None:
+        flushed.append(descriptor)
+        real(descriptor)
+
+    monkeypatch.setattr("weedz.intake.store.os.fsync", record)
+    client.put(f"/reports/{new_id()}", json=with_image(jpeg()), headers=auth(tmp_path))
+    assert len(flushed) >= 2  # the file, and the folder that names it
+
+
 def test_crops_orphaned_by_a_crash_are_deleted_when_the_intake_starts(
     tmp_path: Path, client: TestClient
 ) -> None:

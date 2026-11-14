@@ -74,7 +74,8 @@ def test_a_withdrawal_during_an_upload_waits_for_it_and_withdraws_it(
 
 async def call(app: FastAPI, method: str, path: str, secret: str, parts: list) -> int:
     """Drive the app over raw ASGI, sending the body in ``parts``; an asyncio.Event among
-    them holds the rest of the body back until it is set (TestClient sends it at once)."""
+    them holds the rest of the body back until it is set, and a float pauses that many
+    seconds (TestClient sends the body at once)."""
     statuses: list[int] = []
     headers = [(b"authorization", f"Bearer {secret}".encode())]
     headers += [(b"content-type", b"application/json")]
@@ -84,6 +85,9 @@ async def call(app: FastAPI, method: str, path: str, secret: str, parts: list) -
             part = parts.pop(0)
             if isinstance(part, asyncio.Event):
                 await part.wait()
+                continue
+            if isinstance(part, float):
+                await asyncio.sleep(part)
                 continue
             return {"type": "http.request", "body": part, "more_body": bool(parts)}
         if statuses:
@@ -123,7 +127,7 @@ def test_a_withdrawal_while_the_body_is_still_arriving_waits_for_it(tmp_path: Pa
 
 def test_a_stalled_upload_times_out_instead_of_blocking_the_submitter(tmp_path: Path) -> None:
     """A phone that drops off mid-upload must not hold up its own retries and withdrawals."""
-    app = create_intake_app(tmp_path, Limits(body_seconds=0.2))
+    app = create_intake_app(tmp_path, Limits(body_idle_seconds=0.2))
     secret, path = token(tmp_path), f"/reports/{new_id()}"
 
     async def scenario() -> tuple[int, int]:
@@ -134,3 +138,13 @@ def test_a_stalled_upload_times_out_instead_of_blocking_the_submitter(tmp_path: 
         return await stalled, withdrawal
 
     assert asyncio.run(scenario()) == (408, 404)
+
+
+def test_a_slow_but_steady_upload_is_not_cut_off(tmp_path: Path) -> None:
+    """Weak rural signal is slow, not stalled: only a gap between chunks times out."""
+    app = create_intake_app(tmp_path, Limits(body_idle_seconds=0.3))
+    body = json.dumps(with_image(jpeg())).encode()
+    third = len(body) // 3
+    parts = [body[:third], 0.2, body[third : 2 * third], 0.2, body[2 * third :]]
+    status = asyncio.run(call(app, "PUT", f"/reports/{new_id()}", token(tmp_path), parts))
+    assert status == 201

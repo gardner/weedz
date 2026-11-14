@@ -201,6 +201,14 @@ class ReportStore:
         descriptor = os.open(self.images / name, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         with os.fdopen(descriptor, "wb") as out:
             out.write(image)
+            out.flush()
+            os.fsync(out.fileno())
+        # Durable before the report naming it commits, so a 201 never names a lost crop.
+        folder = os.open(self.images, os.O_RDONLY)
+        try:
+            os.fsync(folder)
+        finally:
+            os.close(folder)
         return name
 
 

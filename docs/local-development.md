@@ -168,11 +168,13 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   database file), leaving only ids and times so a retry can't bring it back.
   Another submitter's report is a 404, the same as a missing one. If a device
   token is lost or revoked, the operator can withdraw its reports with
-  `intake withdraw`. For an id not received yet, that records the withdrawal,
-  so the report is refused (410) if it arrives later.
+  `intake withdraw`. An unknown id is an error. If the report may still be on
+  its way, `--not-yet-received` records the withdrawal, so the report is
+  refused (410) if it arrives.
 - One submitter's uploads and withdrawals are handled one at a time. A body
-  that takes more than 60 seconds to arrive gets 408, so a phone that drops off
-  mid-upload doesn't hold up its own retries or withdrawals.
+  that stops arriving for 30 seconds gets 408, so a phone that drops off
+  mid-upload doesn't hold up its own retries or withdrawals. A slow but steady
+  upload is never cut off.
 - Each submitter may send 100 reports and 50 MB of images per rolling 24 hours,
   including withdrawn reports and crops refused after decoding. Past that, the
   server answers 429 with `Retry-After`. Usage records (ids, times and stored

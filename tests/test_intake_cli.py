@@ -106,7 +106,14 @@ def test_an_operator_withdrawal_before_the_report_arrives_refuses_it_later(
     credential = Submitters(tmp_path).issue("Phone")
     report_id = new_id()
     folder = ["--intake-dir", str(tmp_path)]
-    main(["withdraw", "--submitter", str(credential.id), "--report", report_id, *folder])
+    withdraw = ["withdraw", "--submitter", str(credential.id), "--report", report_id, *folder]
+    # A mistyped id is an error, not a reported success, unless the operator says it is
+    # for a report not received yet.
+    with pytest.raises(SystemExit, match="No report"):
+        main(withdraw)
+    with pytest.raises(SystemExit, match="No submitter"):
+        main(["withdraw", "--submitter", "99", "--report", report_id, "--not-yet-received"])
+    main([*withdraw, "--not-yet-received"])
     assert "refused if it arrives" in capsys.readouterr().out
     client = TestClient(create_intake_app(tmp_path))
     headers = {"Authorization": f"Bearer {credential.token}"}

@@ -40,13 +40,19 @@ def withdraw(args: argparse.Namespace) -> None:
     from weedz.intake.store import ReportStore
 
     store, report_id = ReportStore(args.intake_dir), str(args.report)
-    if store.receipt(args.submitter, report_id) is None:
-        print(
-            f"No report {report_id} yet; it is recorded as withdrawn, "
-            "so it is refused if it arrives."
+    if args.not_yet_received:
+        known = {row["id"] for row in Submitters(args.intake_dir).listing()}
+        if args.submitter not in known:
+            raise SystemExit(f"No submitter with id {args.submitter}")
+    if store.withdraw(args.submitter, report_id, args.not_yet_received) is None:
+        raise SystemExit(
+            f"No report {report_id} from submitter {args.submitter}. Check both ids; if the "
+            "report may still be on its way, add --not-yet-received to refuse it on arrival."
         )
-    store.withdraw(args.submitter, report_id, before_arrival=True)
-    print(f"Withdrew report {report_id}: any image is deleted and its content erased.")
+    print(
+        f"Withdrew report {report_id}: any image is deleted and its content erased, and it "
+        "is refused if it arrives again."
+    )
 
 
 def serve(args: argparse.Namespace) -> None:
@@ -76,6 +82,11 @@ def parse(argv: list[str]) -> argparse.Namespace:
     erase = commands.add_parser("withdraw", help="Withdraw a report for its submitter")
     erase.add_argument("--submitter", type=int, required=True)
     erase.add_argument("--report", type=uuid.UUID, required=True)
+    erase.add_argument(
+        "--not-yet-received",
+        action="store_true",
+        help="Record the withdrawal even if the report has not arrived, so it is refused",
+    )
     run = commands.add_parser("serve", help="Serve the intake API")
     run.add_argument("--host", default="127.0.0.1", help="Loopback by default, for a proxy")
     run.add_argument("--port", type=int, default=8300)

@@ -10,7 +10,7 @@ import asyncio
 import base64
 import hashlib
 import uuid
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -26,19 +26,29 @@ from weedz.intake.store import Conflict, Receipt, ReportStore, Withdrawn
 from weedz.intake.submitters import Submitters, require_submitter
 
 
-async def read_body(request: Request, limit: int) -> bytes:
-    """The JSON body, refused past ``limit`` bytes whether or not a length was declared."""
+async def read_body(request: Request, limit: int, idle_seconds: float) -> bytes:
+    """The JSON body, refused past ``limit`` bytes whether or not a length was declared,
+    and with a 408 when no part of it arrives for ``idle_seconds``."""
     if request.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
         raise HTTPException(415, "Send the report as application/json")
     declared = request.headers.get("Content-Length", "")
     if declared.isdecimal() and int(declared) > limit:
         raise HTTPException(413, f"A report is at most {limit} bytes")
-    body = bytearray()
-    async for chunk in request.stream():
+    body, chunks = bytearray(), aiter(request.stream())
+    while chunk := await _next_chunk(chunks, idle_seconds):
         body += chunk
         if len(body) > limit:
             raise HTTPException(413, f"A report is at most {limit} bytes")
     return bytes(body)
+
+
+async def _next_chunk(chunks: AsyncIterator[bytes], idle_seconds: float) -> bytes:
+    """The next part of a body, or b"" at its end."""
+    try:
+        async with asyncio.timeout(idle_seconds):
+            return await anext(chunks, b"")
+    except TimeoutError as error:
+        raise HTTPException(408, "The report stopped arriving") from error
 
 
 def parse_report(body: bytes) -> Report:
@@ -106,11 +116,8 @@ class IntakeAPI:
         # The body is received under the lock too: a withdrawal sent while it arrives waits,
         # and queued uploads are not buffered, as their bodies are not read until their turn.
         async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            try:
-                async with asyncio.timeout(self.limits.body_seconds):
-                    body = await read_body(request, self.limits.max_body_bytes)
-            except TimeoutError as error:
-                raise HTTPException(408, "The report took too long to arrive") from error
+            limits = self.limits
+            body = await read_body(request, limits.max_body_bytes, limits.body_idle_seconds)
             # Parsing, image work and SQLite block, so they run off the event loop.
             receipt, created = await run_in_threadpool(self.accept, submitter, str(report_id), body)
         if created:
