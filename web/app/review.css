@@ -11,7 +11,7 @@
 .review-form #reviewer-help {
   display: block;
   font-size: 9px;
-  color: #8a947f;
+  color: #656e5c;
   margin: 5px 0 12px;
 }
 .dispute {
@@ -39,7 +39,7 @@
 .review-history > p {
   margin: 0;
   font-size: 10px;
-  color: #7a8771;
+  color: #636e5c;
 }
 .review-history ol {
   margin: 0;
@@ -53,10 +53,10 @@
   color: #617251;
 }
 .review-history time {
-  color: #8a947f;
+  color: #656e5c;
 }
 .review-history li p {
   margin: 4px 0 0;
   font-size: 10px;
-  color: #7a8771;
+  color: #636e5c;
 }

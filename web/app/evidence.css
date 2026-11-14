@@ -21,7 +21,7 @@
     10px "DM Sans",
     sans-serif;
   margin-left: 5px;
-  color: #6d7f5d;
+  color: #607052;
 }
 .queue-heading p {
   font-size: 10px;
@@ -44,7 +44,7 @@
   background: none;
   border: 1px solid transparent;
   border-radius: 3px;
-  color: #7d8776;
+  color: #656d5f;
 }
 .cohort-tabs button[aria-pressed="true"] {
   background: #fff;
@@ -102,7 +102,7 @@
 .row-index {
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #82916f;
+  color: #636e54;
   font-size: 8px;
 }
 .photo-row-body strong {
@@ -110,14 +110,14 @@
   font-weight: 600;
 }
 .photo-row-body > span:not(.row-index) {
-  color: #6b7c61;
+  color: #606f57;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .photo-row-body small {
   font-size: 8px;
-  color: #8b947f;
+  color: #666e5c;
 }
 .evidence {
   background: #fff;
@@ -135,7 +135,7 @@
 }
 .evidence-heading .eyebrow {
   font-size: 8px;
-  color: #7c8c70;
+  color: #626e58;
 }
 .evidence h2 {
   font-family: "Manrope", sans-serif;
@@ -148,7 +148,7 @@
   font-style: italic;
   font-size: 11px;
   margin: 0;
-  color: #8a9680;
+  color: #646e5b;
 }
 .badge {
   font-size: 9px;
@@ -159,7 +159,7 @@
 }
 .badge.unreviewed,
 .badge.uncertain {
-  color: #8a6f2c;
+  color: #806729;
   background: #f7f0dc;
   border: 1px solid #ede0b4;
 }
@@ -231,7 +231,7 @@ input[type="checkbox"] {
 }
 .attribution {
   margin: 0 20px 18px;
-  color: #7a8770;
+  color: #656f5c;
   font-size: 9px;
   line-height: 1.6;
   overflow-wrap: anywhere;
@@ -253,7 +253,7 @@ input[type="checkbox"] {
 }
 .context-grid > div > span {
   display: block;
-  color: #819075;
+  color: #636f59;
   text-transform: uppercase;
   letter-spacing: 1px;
   font-size: 8px;
@@ -266,7 +266,7 @@ input[type="checkbox"] {
 }
 .context-grid small {
   display: block;
-  color: #8b9682;
+  color: #646d5c;
   font-size: 9px;
   margin-top: 5px;
 }
@@ -280,7 +280,7 @@ input[type="checkbox"] {
 }
 .review-form p {
   font-size: 10px;
-  color: #7a8771;
+  color: #636e5c;
   line-height: 1.6;
   margin: 0 0 15px;
 }
@@ -300,7 +300,7 @@ textarea {
   color: var(--ink);
 }
 textarea::placeholder {
-  color: #9ba591;
+  color: #646e5a;
 }
 .decision-buttons {
   display: flex;
@@ -329,7 +329,7 @@ textarea::placeholder {
 }
 .review-form > small {
   font-size: 9px;
-  color: #8a947f;
+  color: #656e5c;
   line-height: 1.7;
   display: block;
 }
