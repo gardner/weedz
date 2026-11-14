@@ -20,7 +20,9 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
+from weedz import tokens
 from weedz.intake.budget import OverBudget
+from weedz.intake.deletion import Deletions
 from weedz.intake.images import ImageRefused, clean_image
 from weedz.intake.limits import Limits
 from weedz.intake.schema import Report
@@ -189,25 +191,37 @@ def receipt_missing() -> Receipt:
 
 
 def create_intake_app(root: Path, limits: Limits | None = None) -> FastAPI:
-    """Every route needs a submitter token. No schema or docs are served: the contract
-    is documented in the repository, not advertised by the public endpoint."""
+    """Every route needs a submitter token, with revoked retry allowed only for erasure."""
     limits = limits or Limits()
-    app = FastAPI(
-        title="Weedz report intake",
-        dependencies=[Depends(require_submitter(Submitters(root, limits.sqlite_busy_seconds)))],
-        openapi_url=None,
-        docs_url=None,
-        redoc_url=None,
-    )
+    submitters = Submitters(root, limits.sqlite_busy_seconds)
+    app = FastAPI(title="Weedz report intake", openapi_url=None, docs_url=None, redoc_url=None)
     app.add_middleware(
         BeforeAuthentication, rate=limits.auth_requests_per_second, burst=limits.auth_burst
     )
-    api = IntakeAPI(root, limits)
     app.add_exception_handler(sqlite3.OperationalError, database_busy)
+    api = IntakeAPI(root, limits)
+    deletions = Deletions(root, limits.sqlite_busy_seconds)
+    deletions.resume()
     api.store.sweep()
-    app.put("/reports/{report_id}")(api.put)
-    app.get("/reports/{report_id}")(api.get)
-    app.delete("/reports/{report_id}")(api.delete)
+    authenticated = [Depends(require_submitter(submitters))]
+
+    def delete_submitter(request: Request) -> dict[str, str | None]:
+        submitter = request.state.submitter
+        # A revoked secret can only resume an erasure already requested while active.
+        if (
+            not deletions.started(submitter)
+            and submitters.submitter(tokens.bearer(request)) is None
+        ):
+            raise HTTPException(401, "Send an active submitter token")
+        return deletions.delete(submitter).as_dict()
+
+    app.delete(
+        "/submitter",
+        dependencies=[Depends(require_submitter(submitters, allow_revoked=True))],
+    )(delete_submitter)
+    app.put("/reports/{report_id}", dependencies=authenticated)(api.put)
+    app.get("/reports/{report_id}", dependencies=authenticated)(api.get)
+    app.delete("/reports/{report_id}", dependencies=authenticated)(api.delete)
     return app
 
 

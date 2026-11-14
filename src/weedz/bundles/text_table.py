@@ -42,6 +42,19 @@ def provenance_path(table: Path) -> Path:
     return table.with_name(f"{table.name}.json")
 
 
+# Float32 normalization accumulates rounding error across the embedding dimensions.
+# Accept that noise, but never silently change the vectors that were measured.
+UNIT_TOLERANCE = 1e-5
+
+
+def _check_rows(rows: np.ndarray) -> None:
+    if rows.ndim != 2 or rows.shape[0] != len(prompts()) or rows.shape[1] == 0:
+        raise ValueError(f"Expected nonempty rows for {len(prompts())} prompts, got {rows.shape}")
+    norms = np.linalg.norm(rows.astype(np.float64), axis=1)
+    if not np.isfinite(rows).all() or not np.allclose(norms, 1, rtol=0, atol=UNIT_TOLERANCE):
+        raise ValueError("Text table rows must be finite unit vectors")
+
+
 def save_table(
     out: Path,
     embeddings: Any,
@@ -51,8 +64,7 @@ def save_table(
 ) -> None:
     """Write one float32 row per fixed prompt, and the provenance a bundle checks."""
     rows = np.asarray(embeddings, dtype="<f4")
-    if rows.ndim != 2 or len(rows) != len(prompts()):
-        raise ValueError(f"Expected one row per {len(prompts())} prompts, got shape {rows.shape}")
+    _check_rows(rows)
     out.write_bytes(rows.tobytes(order="C"))
     provenance = {
         "model_key": model_key,
@@ -86,6 +98,9 @@ def table_parts(path: Path, model_key: str) -> tuple[dict[str, Any], dict[str, A
     recorded = _provenance(path, model_key)
     size = path.stat().st_size
     rows = len(prompts())
+    if size == 0 or size % (4 * rows):
+        raise ValueError("Text table size must contain complete nonempty float32 rows")
+    _check_rows(np.fromfile(path, dtype="<f4").reshape(rows, -1))
     entry = {
         "sha256": recorded["table_sha256"],
         "size": size,

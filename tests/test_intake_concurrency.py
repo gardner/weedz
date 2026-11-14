@@ -143,7 +143,7 @@ def test_a_stalled_upload_times_out_instead_of_blocking_the_submitter(tmp_path: 
 
 
 def test_a_slow_but_steady_upload_is_not_cut_off(tmp_path: Path) -> None:
-    """Weak rural signal is slow, not stalled: only a gap between chunks times out."""
+    """Within the total deadline, a steady upload may outlast the idle limit in total."""
     app = create_intake_app(tmp_path, Limits(body_idle_seconds=0.3))
     body = json.dumps(with_image(jpeg())).encode()
     third = len(body) // 3

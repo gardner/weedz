@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 class TurnBusy(Exception):
-    """The preceding operation did not finish within the configured waiting time."""
+    """Local capacity is full, or the preceding operation exceeded the waiting time."""
 
 
 class _LocalAdmission:

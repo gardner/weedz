@@ -66,7 +66,8 @@ def test_one_submitter_cannot_fill_the_local_waiter_capacity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     turns = SubmitterTurns(tmp_path)
-    original, opened = turns._open, []
+    original = turns._open
+    opened: list[int] = []
 
     def count(submitter: int) -> int:
         opened.append(submitter)

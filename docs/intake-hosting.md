@@ -31,7 +31,7 @@ Cancelling a request waits for an already-running storage worker to finish befor
 releasing the lock.
 
 Before opening lock files, each process admits at most two operations for one
-submitter (an owner and one waiter), and 64 operations in total. Further requests
+submitter (including any local owner), and 64 operations in total. Further requests
 get retryable 503 responses immediately, without reading their bodies. Local
 capacity is released on completion, timeout, cancellation or an open failure;
 idle submitter entries are removed. These admission bounds multiply with the
@@ -54,7 +54,7 @@ An upload interrupted after admission can reuse its unexpired daily budget
 reservation only with the same content. Different content under that id gets
 409. Completed decoding refusals still cost budget; repeatedly retrying an invalid
 image is not free. Temporary admission hashes disappear on successful storage,
-refusal or withdrawal, or when their budget window expires during subsequent
+refusal, report withdrawal or bulk device deletion, or when their budget window expires during subsequent
 admission. Existing report withdrawals and withdrawal retries remain possible
 when the daily budget is full.
 
