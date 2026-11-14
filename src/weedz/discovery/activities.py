@@ -15,6 +15,7 @@ from temporalio import activity
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
+from weedz.discovery.limits import CAMERA_TO_PLANT_ALLOWANCE_M, with_limits
 from weedz.discovery.lookalikes import summarize_lookalikes
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import Photo, RunSpec
@@ -143,7 +144,7 @@ def export(store: Store, run_id: str) -> dict:
     return {
         "schema": 1,
         "run": run,
-        "photos": with_encounters(photos),
+        "photos": with_limits(with_encounters(photos), run["created_at"]),
         "references": references,
         "encounters": summarize(photos, encounter_groups(photos)),
         "lookalikes": summarize_lookalikes(photos),
@@ -180,6 +181,13 @@ def export(store: Store, run_id: str) -> dict:
             ),
             "Reference photos are separate; animal photos have no background weed ground truth",
             "Observation coordinates locate the observation, not a confirmed weed",
+            (
+                "Each photo's search area is centred on the observation point, never a "
+                "plant point, with a radius of reported accuracy plus a declared "
+                f"{CAMERA_TO_PLANT_ALLOWANCE_M:g} m camera-to-plant allowance; obscured, "
+                "missing or unknown-accuracy locations have none. A photo shows a plant "
+                "was there when photographed, not that it is there now"
+            ),
             "Known-record comparison is distance and date only, not a novelty verdict; "
             "no infestation area estimate or external publication performed",
             "Site-visit groups link photos by observer, date and distance; not the same plant",

@@ -10,6 +10,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, NamedTuple
 
+from weedz.discovery.limits import search_area_summary
 from weedz.discovery.occurrences import predates
 from weedz.discovery.outcome_novelty import MEANING as JUDGED_MEANING
 from weedz.discovery.outcome_novelty import Plant, any_judged, judged_novelty
@@ -340,8 +341,11 @@ def follow_up(study: Study) -> dict[str, Any]:
         "recorded yet (#18, #27)."
     )
     referrals = study.referrals(study.incidental)
+    areas = search_area_summary([plant.photo for plant in study.watchlist_plants()])
     if not referrals:
-        return _measure("follow_up_usefulness", NOT_YET, f"No referrals yet. {unrecorded}")
+        reason = f"No referrals yet. {unrecorded}"
+        evidence = {"watchlist_finding_search_areas": areas}
+        return _measure("follow_up_usefulness", NOT_YET, reason, evidence=evidence)
     waiting = [
         p
         for p in study.incidental
@@ -358,6 +362,7 @@ def follow_up(study: Study) -> dict[str, Any]:
         evidence={
             "referrals": summarize_referrals(referrals),
             "photos_with_open_referrals": tally(waiting),
+            "watchlist_finding_search_areas": areas,
         },
     )
 
@@ -379,6 +384,7 @@ def completeness(study: Study) -> dict[str, Any]:
         evidence={
             "checked": list(EVIDENCE_FIELDS),
             "missing": {name: count for name, count in missing.items() if count},
+            "search_areas": search_area_summary(photos),
             "with_decision": len(study.reviewed),
         },
     )

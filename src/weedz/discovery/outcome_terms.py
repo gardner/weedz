@@ -3,6 +3,8 @@
 from collections.abc import Callable
 from typing import Any
 
+from weedz.discovery.limits import search_area
+
 MEASURED = "measured"
 PARTIAL = "partially measured"
 NOT_YET = "not yet measurable"
@@ -62,9 +64,8 @@ EVIDENCE_FIELDS: dict[str, Callable[[dict[str, Any]], bool]] = {
     "attribution": lambda p: bool(p.get("attribution")),
     "licence": lambda p: bool(p.get("photo_license")) and bool(p.get("observation_license")),
     "date": lambda p: bool(p.get("observed_on")),
-    "location": lambda p: (
-        p.get("coordinate_status") == "public" and p.get("positional_accuracy_m") is not None
-    ),
+    # A location is complete when it gives a search area (weedz.discovery.limits).
+    "location": lambda p: search_area(p).status == "searchable",
     "checksum": lambda p: bool(p.get("sha256")),
 }
 

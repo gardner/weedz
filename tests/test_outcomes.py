@@ -24,6 +24,8 @@ def photo(pid: str, group: str | None = None, **fields: Any) -> dict[str, Any]:
         "observation_license": "cc-by",
         "observed_on": "2024-01-01",
         "coordinate_status": "public",
+        "latitude": -41.27,
+        "longitude": 173.28,
         "positional_accuracy_m": 10.0,
         "sha256": "abc",
     } | fields
