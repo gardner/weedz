@@ -1,11 +1,11 @@
 """Find external ONNX tensors, including tensors in nested control-flow graphs."""
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from onnx import AttributeProto, GraphProto, TensorProto
+    from onnx import AttributeProto, GraphProto, ModelProto, NodeProto, TensorProto
 
 
 def _attribute_tensors(attribute: "AttributeProto") -> Iterator["TensorProto"]:
@@ -29,9 +29,24 @@ def _graph_tensors(graph: "GraphProto") -> Iterator["TensorProto"]:
     for sparse in graph.sparse_initializer:
         yield sparse.values
         yield sparse.indices
-    for node in graph.node:
+    yield from _node_tensors(graph.node)
+
+
+def _node_tensors(nodes: Iterable["NodeProto"]) -> Iterator["TensorProto"]:
+    for node in nodes:
         for attribute in node.attribute:
             yield from _attribute_tensors(attribute)
+
+
+def _model_tensors(model: "ModelProto") -> Iterator["TensorProto"]:
+    yield from _graph_tensors(model.graph)
+    for function in model.functions:
+        yield from _node_tensors(function.node)
+        for attribute in function.attribute_proto:
+            yield from _attribute_tensors(attribute)
+    for training in model.training_info:
+        yield from _graph_tensors(training.initialization)
+        yield from _graph_tensors(training.algorithm)
 
 
 def references_external_data(path: Path) -> bool:
@@ -40,4 +55,4 @@ def references_external_data(path: Path) -> bool:
     from onnx.external_data_helper import uses_external_data
 
     model = onnx.load(str(path), load_external_data=False)
-    return any(uses_external_data(tensor) for tensor in _graph_tensors(model.graph))
+    return any(uses_external_data(tensor) for tensor in _model_tensors(model))
