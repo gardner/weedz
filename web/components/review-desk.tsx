@@ -28,6 +28,7 @@ import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
 import RunSettings from "./run-settings";
 import StudyPanel from "./study-panel";
+import SuitabilityPanel from "./suitability-panel";
 
 const REVIEWER_KEY = "weedz-reviewer";
 type Payloads = {
@@ -323,6 +324,7 @@ export default function ReviewDesk() {
             }}
             onError={setError}
           />
+          <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />
           <div className="screening-note">
             <span className="note-icon" aria-hidden="true">
               i

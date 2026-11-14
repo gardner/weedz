@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
+import { suitability } from "./suitability-fixture.mjs";
 
 // axe leaves very short text (e.g. a "2" count) as "incomplete" and never checks
 // placeholders, so compute WCAG contrast directly for every text node on a solid colour.
@@ -231,6 +232,7 @@ try {
     const path = new URL(request.url()).pathname;
     if (path === "/api/runs") return route.fulfill({ json: [run] });
     if (path === "/api/studies/terms") return route.fulfill({ json: terms });
+    if (path.endsWith("/suitability")) return route.fulfill({ json: suitability });
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
     if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     if (path.endsWith("/review")) {
@@ -253,6 +255,16 @@ try {
     "the study view meets WCAG AA",
   );
   assert.deepEqual(await lowContrast(page), [], "study view text meets AA contrast");
+  // Audit the source suitability open; it stays open for the full and phone audits below.
+  const suitabilityPanel = page.locator(".suitability-panel");
+  await suitabilityPanel.locator("summary").click();
+  await suitabilityPanel.getByRole("table").waitFor();
+  const suits = await new AxeBuilder({ page }).include(".suitability-panel").analyze();
+  assert.deepEqual(
+    suits.violations.map((v) => v.id),
+    [],
+    "the source suitability meets WCAG AA",
+  );
   await studyPanel.getByRole("button", { name: "Edit study" }).click();
   await studyPanel.getByLabel("Recorded by").waitFor();
   // Audit the finding form open, with its free-text field and a box error showing.
