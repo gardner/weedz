@@ -150,8 +150,14 @@ def photo(**overrides: Any) -> dict[str, Any]:
     } | overrides
 
 
-def parsed(slug: str, gsd: float, start: str, end: str) -> dict[str, Any]:
-    return {"slug": slug, "gsd_m": gsd, "capture_start": start, "capture_end": end}
+def parsed(slug: str, gsd: float, start: str, end: str, bands: str = "rgb") -> dict[str, Any]:
+    return {
+        "slug": slug,
+        "bands": bands,
+        "gsd_m": gsd,
+        "capture_start": start,
+        "capture_end": end,
+    }
 
 
 def test_alignment_picks_the_closest_capture_and_the_finest_within_a_year() -> None:
@@ -163,6 +169,12 @@ def test_alignment_picks_the_closest_capture_and_the_finest_within_a_year() -> N
     ]
     aligned = assess.align(photo(), covering)
     assert aligned["covering"] == 4
+    assert aligned["covering_collections"] == [
+        "season:rgb",
+        "urban:rgb",
+        "old:rgb",
+        "satellite:rgb",
+    ]
     assert aligned["closest"]["slug"] == "season"
     assert aligned["closest"]["gap_days"] == 0
     assert aligned["finest_within_year"]["slug"] == "urban"
@@ -215,11 +227,12 @@ def test_zero_accuracy_is_a_known_accuracy_not_a_missing_one() -> None:
 
 
 def test_assess_lists_only_collections_that_cover_an_assessed_photo() -> None:
-    inside = parsed("season", 0.25, "2024-12-06", "2025-03-27") | {"bands": "rgb"}
-    outside = parsed("elsewhere", 0.25, "2024-12-06", "2025-03-27") | {"bands": "rgb"}
+    inside = parsed("season", 0.25, "2024-12-06", "2025-03-27")
+    outside = parsed("elsewhere", 0.25, "2024-12-06", "2025-03-27")
     far = {"type": "Polygon", "coordinates": [[[50, 50], [60, 50], [60, 60], [50, 50]]]}
     report = assess.assess([photo()], [(inside, SQUARE), (outside, far)])
     assert [item["slug"] for item in report["collections"]] == ["season"]
+    assert report["photos"][0]["covering_collections"] == ["season:rgb"]
     assert report["photos"][0]["closest"]["slug"] == "season"
     assert report["summary"]["captured_inside_window"] == 1
 
@@ -245,3 +258,14 @@ def test_a_run_without_assessable_photos_is_an_error(tmp_path: Path) -> None:
     Store(tmp_path)
     with pytest.raises(SystemExit):
         assess.main(["--store", str(tmp_path), "--run", "missing-run"])
+
+
+def test_rgb_and_nir_products_of_one_survey_are_distinct_collections() -> None:
+    covering = [
+        parsed("season", 0.25, "2024-12-06", "2025-03-27"),
+        parsed("season", 0.25, "2024-12-06", "2025-03-27", bands="rgbnir"),
+    ]
+    assert assess.align(photo(), covering)["covering_collections"] == [
+        "season:rgb",
+        "season:rgbnir",
+    ]

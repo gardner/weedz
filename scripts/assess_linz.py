@@ -142,6 +142,11 @@ def _match(item: Json, observed: date, accuracy_m: float | None) -> Json:
     } | scale(item["gsd_m"], accuracy_m)
 
 
+def collection_key(item: Json) -> str:
+    """A survey's RGB and near-infrared products share a slug, so add the bands."""
+    return f"{item['slug']}:{item['bands']}"
+
+
 def _aerial(item: Json) -> bool:
     return item["gsd_m"] is not None and item["gsd_m"] <= AERIAL_MAX_GSD_M
 
@@ -163,6 +168,7 @@ def align(photo: Json, covering: list[Json]) -> Json:
         "observed_on": photo.get("observed_on"),
         "positional_accuracy_m": accuracy,
         "covering": len(covering),
+        "covering_collections": [collection_key(item) for item in covering],
         "closest": closest,
         "finest_within_year": finest,
     }
@@ -226,9 +232,9 @@ def assess(photos: list[Json], collections: list[tuple[Json, Json]]) -> Json:
     for photo in photos:
         lon, lat = photo["longitude"], photo["latitude"]
         covering = [item for item, area in collections if covers(area, lon, lat)]
-        used.update(item["slug"] + item["bands"] for item in covering)
+        used.update(collection_key(item) for item in covering)
         aligned.append(align(photo, covering))
-    listed = [item for item, _ in collections if item["slug"] + item["bands"] in used]
+    listed = [item for item, _ in collections if collection_key(item) in used]
     return {"summary": summarise(aligned), "collections": listed, "photos": aligned}
 
 
