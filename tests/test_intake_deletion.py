@@ -195,3 +195,17 @@ sys.exit(1)
     )
     assert result.returncode == 0, result.stderr
     assert not ReportStore(tmp_path).active()
+
+
+def test_bulk_erasure_preserves_existing_withdrawal_times(tmp_path: Path) -> None:
+    credential = Submitters(tmp_path).issue("phone")
+    client = TestClient(create_intake_app(tmp_path))
+    headers = {"Authorization": f"Bearer {credential.token}"}
+    report_id = new_id()
+    assert client.put(f"/reports/{report_id}", json=report(), headers=headers).status_code == 201
+    withdrawn = client.delete(f"/reports/{report_id}", headers=headers).json()
+    assert client.delete("/submitter", headers=headers).status_code == 200
+    receipt = ReportStore(tmp_path).receipt(credential.id, report_id)
+    assert receipt is not None
+    assert receipt.withdrawn_at == withdrawn["withdrawn_at"]
+    assert receipt.received_at == withdrawn["received_at"]

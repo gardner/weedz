@@ -51,7 +51,9 @@ retention and sharing policy.
 
 Provide a public deletion contact address or web form in the privacy policy and
 store listing. That public route and the mobile settings screen are still release
-requirements; this API does not by itself provide them.
+requirements tracked in [#107](https://github.com/gardner/weedz/issues/107);
+this API does not by itself provide them. The broader #101 remains open until
+those requirements are met.
 
 1. Verify the request against the operator's original enrollment records. A
    submitter number alone is not proof of ownership. Do not ask for or log the

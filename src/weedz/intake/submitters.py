@@ -73,7 +73,8 @@ class Submitters:
         return [dict(row) for row in rows]
 
     def submitter(self, token: str, *, allow_revoked: bool = False) -> int | None:
-        """The id of the active submitter a token names, or None."""
+        """The authenticated id, normally only while active. ``allow_revoked`` is solely
+        for resuming an already-requested deletion, never for report routes."""
         parts = tokens.split(token, PREFIX)
         if parts is None:
             return None

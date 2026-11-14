@@ -62,7 +62,10 @@ def delete_submitter(args: argparse.Namespace) -> None:
     if args.id not in {row["id"] for row in Submitters(args.intake_dir).listing()}:
         raise SystemExit(f"No submitter with id {args.id}")
     Deletions(args.intake_dir).delete(args.id)
-    print(f"Deleted reports and revoked submitter {args.id}; only id/time tombstones remain.")
+    print(
+        f"Deleted reports and revoked submitter {args.id}; report/deletion id-time records "
+        "and credential records remain (see docs/device-deletion.md)."
+    )
 
 
 def serve(args: argparse.Namespace) -> None:
