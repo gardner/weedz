@@ -14,7 +14,7 @@ import re
 import secrets
 import shutil
 import subprocess
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
@@ -224,15 +224,18 @@ def prepare_ios(root: Path, state: Path, env: Mapping[str, str]) -> None:
     write_private(state / "ios/ExportOptions.plist", plistlib.dumps(export))
 
 
-def cleanup(root: Path, state: Path, platform: str) -> None:
-    if platform == "ios":
-        (root / "mobile/ios/Flutter/Signing.xcconfig").unlink(missing_ok=True)
-        installed = state / "ios/installed-profile.json"
-        if installed.exists():
-            Path(json.loads(installed.read_text())).unlink(missing_ok=True)
-        previous = state / "ios/keychains.json"
-        if previous.exists():
-            run(
+def ios_cleanup_operations(root: Path, state: Path) -> list[Callable[[], object]]:
+    operations: list[Callable[[], object]] = []
+    operations.append(
+        lambda: (root / "mobile/ios/Flutter/Signing.xcconfig").unlink(missing_ok=True)
+    )
+    installed = state / "ios/installed-profile.json"
+    if installed.exists():
+        operations.append(lambda: Path(json.loads(installed.read_text())).unlink(missing_ok=True))
+    previous = state / "ios/keychains.json"
+    if previous.exists():
+        operations.append(
+            lambda: run(
                 [
                     "security",
                     "list-keychains",
@@ -242,10 +245,25 @@ def cleanup(root: Path, state: Path, platform: str) -> None:
                     *json.loads(previous.read_text()),
                 ]
             )
-        keychain = state / "ios/signing.keychain-db"
-        if keychain.exists():
-            run(["security", "delete-keychain", str(keychain)])
-    shutil.rmtree(state, ignore_errors=True)
+        )
+    keychain = state / "ios/signing.keychain-db"
+    if keychain.exists():
+        operations.append(lambda: run(["security", "delete-keychain", str(keychain)]))
+    return operations
+
+
+def cleanup(root: Path, state: Path, platform: str) -> None:
+    operations = ios_cleanup_operations(root, state) if platform == "ios" else []
+    if state.exists():
+        operations.append(lambda: shutil.rmtree(state))
+    failed = False
+    for operation in operations:
+        try:
+            operation()
+        except (BuildError, OSError, ValueError):
+            failed = True  # Attempt every cleanup even when an earlier operation failed.
+    if failed:
+        raise BuildError("Signing cleanup failed; check the temporary runner before reuse")
 
 
 def main() -> None:
