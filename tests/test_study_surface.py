@@ -120,3 +120,12 @@ def test_api_serves_the_screening_terms_a_study_is_checked_against(tmp_path: Pat
         "direction": "at least",
         "unit": "% of incidental photos reviewed",
     }
+
+
+def test_main_routes_the_study_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from weedz import cli as entry
+
+    argv = ["main.py", "study", "--run", "run", "--pilot-dir", str(tmp_path / "none")]
+    monkeypatch.setattr("sys.argv", argv)
+    with pytest.raises(SystemExit, match="No pilot store"):
+        entry.main()

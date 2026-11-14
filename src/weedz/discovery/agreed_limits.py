@@ -29,16 +29,29 @@ UNMEASURED = [
 ]
 
 
-def _share(item: dict[str, Any]) -> Quantity | None:
+def _share(item: dict[str, Any]) -> float | None:
     value, denominator = item["value"], item["denominator"]
     if not value or not denominator or not denominator["photos"]:
         return None
-    return round(100 * value["photos"] / denominator["photos"], 1), False
+    return round(100 * value["photos"] / denominator["photos"], 1)
+
+
+def _complete(item: dict[str, Any]) -> Quantity | None:
+    """Evidence fields do not change with review, so the share is exact."""
+    share = _share(item)
+    return None if share is None else (share, False)
+
+
+def _reviewed(item: dict[str, Any]) -> Quantity | None:
+    """Coverage only grows while photos wait for review, so until then it is a lower bound."""
+    share = _share(item)
+    waiting = share is not None and item["value"]["photos"] < item["denominator"]["photos"]
+    return None if share is None else (share, waiting)
 
 
 # Measures that give a value in their limit's unit today. Usefulness (#18), a detection
 # rule (#16) and follow-up judgements are not recorded yet, so the others give none.
-QUANTITIES = {"evidence_completeness": _share, "coverage": _share}
+QUANTITIES = {"evidence_completeness": _complete, "coverage": _reviewed}
 
 
 def _verdict(terms: LimitTerms, limit: Limit, quantity: Quantity) -> tuple[str, str]:

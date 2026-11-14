@@ -57,8 +57,22 @@ def test_a_limit_not_agreed_gives_no_verdict_even_with_a_measured_value() -> Non
 
 
 def test_a_value_short_of_the_limit_is_not_met() -> None:
+    incomplete = [photo("a", "a", review_status="rejected"), photo("b", "b", sha256="")]
+    study = linked(limits={"evidence_completeness": {"value": 75}})
+    report = outcomes(export(incomplete, study=study))
+    result = measure(report, "evidence_completeness")["limit"]
+    assert (result["measured"], result["verdict"]) == (50.0, "not met")
+
+
+def test_coverage_short_of_its_limit_is_unsettled_while_photos_wait_for_review() -> None:
+    """Coverage only grows as review goes on, so a shortfall is not yet a failure."""
     report = outcomes(reviewed_export(study=linked(limits={"coverage": {"value": 75}})))
-    assert measure(report, "coverage")["limit"]["verdict"] == "not met"
+    result = measure(report, "coverage")["limit"]
+    assert result["verdict"] == "not comparable"
+    assert "lower bound" in result["reason"]
+    every = [photo("a", "a", review_status="rejected")]
+    full = outcomes(export(every, study=linked(limits={"coverage": {"value": 75}})))
+    assert measure(full, "coverage")["limit"]["verdict"] == "met"
 
 
 def test_an_agreed_limit_on_an_unmeasurable_measure_is_not_comparable_with_a_reason() -> None:
@@ -107,7 +121,7 @@ def test_markdown_shows_the_study_limits_and_verdicts() -> None:
     assert "study-1, version 3 (provisional)" in text
     assert "| Agreed limit | Verdict |" in text
     assert "at least 40 % of incidental photos reviewed" in text
-    assert "| met |" in text
+    assert "| met (measured 50) |" in text
     assert "not agreed" in text
     plain = to_markdown(outcomes(reviewed_export()))
     assert "No study is linked to this run" in plain

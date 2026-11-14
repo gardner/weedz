@@ -27,6 +27,14 @@ def _limit(limit: dict[str, Any]) -> str:
     return f"{limit['direction']} {limit['agreed']:g} {limit['unit']}"
 
 
+def _verdict(limit: dict[str, Any]) -> str:
+    if limit["agreed"] is None:
+        return "no verdict"
+    if limit["measured"] is None:
+        return limit["verdict"]
+    return f"{limit['verdict']} (measured {limit['measured']:g})"
+
+
 def _budget(name: str, use: dict[str, Any]) -> str:
     if use["budget"] is None:
         return f"{name}: no budget set ({use['used']:g} used)"
@@ -76,8 +84,7 @@ def to_markdown(report: dict[str, Any]) -> str:
     for item in report["measures"]:
         cells = [item["measure"], item["status"], _render(item["value"])]
         limit = item["limit"]
-        verdict = "no verdict" if limit["agreed"] is None else limit["verdict"]
-        cells += [_render(item["denominator"]), _limit(limit), verdict]
+        cells += [_render(item["denominator"]), _limit(limit), _verdict(limit)]
         cells.append(item["reason"] or "")
         lines.append(f"| {' | '.join(cells)} |")
     lines += ["", "## Evidence"]
