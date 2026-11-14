@@ -43,6 +43,24 @@ void main() {
       expect(metadata.reportCapturedAt, isNull);
     });
 
+    test('a screenshot flag cannot be cleared to release place and time', () {
+      final flags = {PhotoFlag.screenshot};
+      final metadata = PhotoMetadata(
+        location: const MissingLocation(),
+        captureTime: const MissingTime(),
+        gpsTimeCheck: const GpsTimeUnavailable(),
+        flags: flags,
+      );
+      flags.clear();
+      expect(metadata.flags, {PhotoFlag.screenshot});
+      expect(
+        () =>
+            extractPhotoMetadata(iphonePhoto(isScreenshot: true)).flags
+              ..clear(),
+        throwsUnsupportedError,
+      );
+    });
+
     test('flags a photo the platform says was edited', () {
       final metadata = extractPhotoMetadata(iphonePhoto(isEdited: true));
       expect(metadata.flags, {PhotoFlag.edited});

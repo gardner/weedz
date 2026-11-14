@@ -29,12 +29,14 @@ enum PhotoFlag {
 
 @immutable
 final class PhotoMetadata {
-  const new({
+  /// Keeps a copy of [flags] no one can change, so the screenshot rule below
+  /// cannot be undone.
+  new({
     required this.location,
     required this.captureTime,
     required this.gpsTimeCheck,
-    required this.flags,
-  });
+    required Set<PhotoFlag> flags,
+  }) : flags = Set.unmodifiable(flags);
 
   final PhotoLocation location;
   final CaptureTime captureTime;
