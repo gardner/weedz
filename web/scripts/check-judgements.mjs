@@ -37,7 +37,7 @@ try {
     coordinate_status: "missing",
     // Only gorse was compared with records, so only a gorse plant can be judged against them.
     reference_comparison: {
-      "Ulex europaeus": { comparable: true, nearest: null },
+      "Ulex europaeus": { comparable: true, nearest: null, within_radius: 0 },
       "Clematis vitalba": { comparable: false, reason: "Not queried in this reference snapshot" },
     },
     attribution: "Test fixture",
@@ -167,6 +167,11 @@ try {
     .getByLabel("Novelty", { exact: true })
     .locator("option[value=absent_from_references]");
   assert.equal(await absent.isDisabled(), false, "gorse was compared with records");
+  // With no nearby gorse record there is nothing for the photo to be earlier than.
+  const earlier = page
+    .getByLabel("Novelty", { exact: true })
+    .locator("option[value=earlier_than_records]");
+  assert.equal(await earlier.isDisabled(), true);
   assert.match(await section.textContent(), /Ben:\s*Newly noticed in this photo/);
   assert.doesNotMatch(await location.textContent(), /Reviewers disagree/, "no carry-over");
   await page.getByLabel("Novelty", { exact: true }).selectOption("already_recorded");

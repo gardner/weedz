@@ -59,6 +59,8 @@ export type ReferenceComparison = {
   nearest?: { gbif_key: number; distance_m: number; year: number | null } | null;
   within_radius?: number;
   radius_m?: number;
+  earliest_year?: number | null;
+  undated_within_radius?: number;
 };
 
 export type References = { retrieved_at: string; dataset: { title: string } } | null;

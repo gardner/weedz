@@ -1,5 +1,6 @@
 """Identity, location usefulness, historical relevance and novelty are judged separately."""
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -49,11 +50,25 @@ def save(store: Store, photo_id: str, **fields: object) -> None:
     store.judgement("run", photo_id, Judgement.model_validate(judgement(**fields)))
 
 
-def load_references(root: Path, taxon_keys: dict[str, int] = TAXON_KEYS) -> None:
+def nearby(year: int | None, species: str = "Clematis vitalba") -> dict:
+    """A DOC record about 1 km from the test photo."""
+    return {"gbif_key": 1, "species": species, "year": year, "latitude": -41.21} | {
+        "longitude": 173.3,
+        "uncertainty_m": 10,
+        "status": "PRESENT",
+        "event_date": None,
+    }
+
+
+def load_references(
+    root: Path, taxon_keys: dict[str, int] = TAXON_KEYS, records: list[dict] | None = None
+) -> Path:
     folder = root / "references"
-    folder.mkdir()
-    snapshot = {"retrieved_at": "2026-11-14", "records": [], "taxon_keys": taxon_keys}
-    (folder / "doc-weeds-20261114T000000Z.json").write_text(json.dumps(snapshot))
+    folder.mkdir(exist_ok=True)
+    snapshot = {"retrieved_at": "2026-11-14", "records": records or [], "taxon_keys": taxon_keys}
+    path = folder / f"doc-weeds-20261114T00000{len(list(folder.iterdir()))}Z.json"
+    path.write_text(json.dumps(snapshot))
+    return path
 
 
 def test_every_dimension_has_an_explicit_unassessed_value() -> None:
@@ -162,8 +177,6 @@ def test_record_relative_novelty_needs_a_comparable_reference_snapshot(tmp_path:
     assert client.post(path, json=absent).status_code == 409
     load_references(tmp_path)
     assert client.post(path, json=absent).status_code == 200
-    earlier = judgement(dimension="novelty", value="earlier_than_records")
-    assert client.post(path, json=earlier).status_code == 200
     usable = judgement(dimension="location", value="usable")
     assert client.post(path, json=usable).status_code == 200
 
@@ -257,9 +270,43 @@ def test_novelty_against_records_needs_the_judged_plant_compared(tmp_path: Path)
     gorse, typed = add_finding(store, photo_id), add_finding(store, photo_id, species=None)
     client = TestClient(create_app(tmp_path))
     path = f"/runs/run/photos/{photo_id}/judgements"
-    for value in ["absent_from_references", "earlier_than_records"]:
+    for value in ["absent_from_references"]:
         claim = judgement(dimension="novelty", value=value)
         assert client.post(path, json=claim).status_code == 409, value
         # Free text names no taxon the records were checked against.
         assert client.post(path, json=claim | {"finding_id": typed}).status_code == 409, value
         assert client.post(path, json=claim | {"finding_id": gorse}).status_code == 200, value
+
+
+def test_novelty_claims_must_agree_with_the_comparison(tmp_path: Path) -> None:
+    _store, photo_id = store_with_photo(tmp_path, **PUBLIC)  # observed 2024-06-01
+    client = TestClient(create_app(tmp_path))
+    path = f"/runs/run/photos/{photo_id}/judgements"
+    absent = judgement(dimension="novelty", value="absent_from_references")
+    earlier = judgement(dimension="novelty", value="earlier_than_records")
+    load_references(tmp_path)
+    # With no nearby record there is nothing to be earlier than.
+    assert client.post(path, json=earlier).status_code == 409
+    load_references(tmp_path, records=[nearby(2015)])
+    assert client.post(path, json=absent).status_code == 409, "a nearby record exists"
+    assert client.post(path, json=earlier).status_code == 409, "the record is older"
+    load_references(tmp_path, records=[nearby(2025), nearby(None)])
+    assert client.post(path, json=earlier).status_code == 409, "an undated record could be older"
+    load_references(tmp_path, records=[nearby(2025)])
+    assert client.post(path, json=earlier).status_code == 200
+
+
+def test_each_judgement_keeps_the_reference_snapshot_it_was_made_against(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path, **PUBLIC)
+    client = TestClient(create_app(tmp_path))
+    path = f"/runs/run/photos/{photo_id}/judgements"
+    assert client.post(path, json=judgement()).status_code == 200
+    snapshot = load_references(tmp_path)
+    absent = judgement(dimension="novelty", value="absent_from_references")
+    assert client.post(path, json=absent).status_code == 200
+    load_references(tmp_path, records=[nearby(2015)])  # a newer snapshot arrives later
+    first, second = store.judgements("run", photo_id)
+    assert first["reference_snapshot"] is None
+    assert second["reference_snapshot"] == hashlib.sha256(snapshot.read_bytes()).hexdigest()
+    standing = store.photos("run")[0]["judgements"]["novelty"]["Ana"]
+    assert standing["reference_snapshot"] == second["reference_snapshot"]

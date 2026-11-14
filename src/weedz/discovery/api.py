@@ -173,12 +173,13 @@ class ReviewAPI:
         return self.photo(run_id, photo_id)["findings"]
 
     def record_judgement(self, run_id: str, photo_id: str, record: Judgement) -> dict:
-        _, [photo] = with_references(self.store.root, [self.photo(run_id, photo_id)])
+        snapshot, [photo] = with_references(self.store.root, [self.photo(run_id, photo_id)])
         check_target(photo, record)
         reason = unsupported(photo, record)
         if reason:
             raise HTTPException(409, reason)
-        self.store.judgement(run_id, photo_id, record)
+        basis = snapshot["snapshot_sha256"] if snapshot else None
+        self.store.judgement(run_id, photo_id, record, basis)
         return {"saved": True}
 
     def judgements(self, run_id: str, photo_id: str) -> list[dict]:

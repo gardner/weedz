@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from weedz.discovery.occurrences import predates
 from weedz.discovery.records import ReviewerName
 
 Dimension = Literal["identity", "location", "history", "novelty"]
@@ -71,9 +72,22 @@ def _dated(photo: dict[str, Any], _taxon: str | None) -> bool:
     return bool(photo.get("observed_on"))
 
 
+def _comparison(photo: dict[str, Any], taxon: str | None) -> dict[str, Any]:
+    """The judged plant's comparison with the records, empty when it was not compared."""
+    found = (photo.get("reference_comparison") or {}).get(taxon or "", {})
+    return found if found.get("comparable") else {}
+
+
 def _compared(photo: dict[str, Any], taxon: str | None) -> bool:
-    comparisons = photo.get("reference_comparison") or {}
-    return bool(taxon and comparisons.get(taxon, {}).get("comparable"))
+    return bool(_comparison(photo, taxon))
+
+
+def _no_nearby_record(photo: dict[str, Any], taxon: str | None) -> bool:
+    return _comparison(photo, taxon).get("within_radius") == 0
+
+
+def _before_nearby_records(photo: dict[str, Any], taxon: str | None) -> bool:
+    return predates(photo, _comparison(photo, taxon))
 
 
 def judged_taxon(photo: dict[str, Any], finding_id: int | None) -> str | None:
@@ -96,8 +110,19 @@ PHOTO_REQUIREMENTS: dict[tuple[str, str], list[Requirement]] = {
     ("location", "usable"): [(_located, "The observation location is obscured or missing")],
     ("history", "recent_evidence"): [(_dated, UNDATED)],
     ("history", "historical_evidence"): [(_dated, UNDATED)],
-    ("novelty", "absent_from_references"): [(_compared, UNCOMPARED)],
-    ("novelty", "earlier_than_records"): [(_dated, UNDATED), (_compared, UNCOMPARED)],
+    ("novelty", "absent_from_references"): [
+        (_compared, UNCOMPARED),
+        (_no_nearby_record, "A reference record of this species lies within the radius"),
+    ],
+    ("novelty", "earlier_than_records"): [
+        (_dated, UNDATED),
+        (_compared, UNCOMPARED),
+        (
+            _before_nearby_records,
+            "The photo is not earlier than every dated record within the radius, or a "
+            "record there is undated or none exists",
+        ),
+    ],
 }
 
 
@@ -133,6 +158,7 @@ def standing_judgements(events: list[Any]) -> dict[Target, dict[str, dict[str, d
                 "value": event["value"],
                 "note": event["note"],
                 "created_at": event["created_at"],
+                "reference_snapshot": event["reference_snapshot"],
             }
     return standing
 

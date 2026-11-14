@@ -88,18 +88,36 @@ type Requirement = (photo: Photo, taxon: string | null) => boolean;
 const located: Requirement = (photo) =>
   photo.coordinate_status === "public" && photo.latitude != null;
 const dated: Requirement = (photo) => Boolean(photo.observed_on);
-const compared: Requirement = (photo, taxon) =>
-  Boolean(taxon && photo.reference_comparison?.[taxon]?.comparable);
+const comparison = (photo: Photo, taxon: string | null) => {
+  const found = taxon ? photo.reference_comparison?.[taxon] : undefined;
+  return found?.comparable ? found : undefined;
+};
+const compared: Requirement = (photo, taxon) => Boolean(comparison(photo, taxon));
+const noNearbyRecord: Requirement = (photo, taxon) => comparison(photo, taxon)?.within_radius === 0;
+/** Earlier than every nearby dated record; an undated one could be older. */
+const beforeNearbyRecords: Requirement = (photo, taxon) => {
+  const found = comparison(photo, taxon);
+  const earliest = found?.earliest_year;
+  if (!found || found.undated_within_radius || !earliest || !photo.observed_on) return false;
+  return Number(photo.observed_on.slice(0, 4)) < earliest;
+};
 const UNDATED = "the photo date is unknown";
 const UNCOMPARED = "no reference records were compared for this plant here";
 const REQUIREMENTS: Record<string, [Requirement, string][]> = {
   "location:usable": [[located, "the observation location is obscured or missing"]],
   "history:recent_evidence": [[dated, UNDATED]],
   "history:historical_evidence": [[dated, UNDATED]],
-  "novelty:absent_from_references": [[compared, UNCOMPARED]],
+  "novelty:absent_from_references": [
+    [compared, UNCOMPARED],
+    [noNearbyRecord, "a reference record of this species lies within the radius"],
+  ],
   "novelty:earlier_than_records": [
     [dated, UNDATED],
     [compared, UNCOMPARED],
+    [
+      beforeNearbyRecords,
+      "the photo is not earlier than every dated record nearby, or one is undated or none exists",
+    ],
   ],
 };
 

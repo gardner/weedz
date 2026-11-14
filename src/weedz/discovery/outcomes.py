@@ -10,6 +10,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from weedz.discovery.occurrences import predates
+
 MEASURED = "measured"
 PARTIAL = "partially measured"
 NOT_YET = "not yet measurable"
@@ -296,15 +298,6 @@ def _comparison(photo: dict[str, Any], species: str) -> dict[str, Any] | None:
     return found if found and found["comparable"] else None
 
 
-def _predates(photo: dict[str, Any], found: dict[str, Any]) -> bool:
-    """Observed in an earlier year than every declared record within the radius; an
-    undated nearby record could be older, so it rules the claim out."""
-    earliest, observed = found.get("earliest_year"), photo.get("observed_on")
-    if found.get("undated_within_radius", 0) or not (earliest and observed):
-        return False
-    return int(observed[:4]) < earliest
-
-
 def novel_evidence(study: Study) -> dict[str, Any]:
     references = study.export.get("references")
     key = "novel_or_earlier_evidence"
@@ -326,7 +319,7 @@ def novel_evidence(study: Study) -> dict[str, Any]:
         return _measure(key, NOT_YET, reason, evidence=evidence)
     evidence["radius_m"] = sorted({found["radius_m"] for _, found in compared})
     unrecorded = [p for p, found in compared if found["within_radius"] == 0]
-    earlier = [p for p, found in compared if _predates(p, found)]
+    earlier = [p for p, found in compared if predates(p, found)]
     evidence["no_record_nearby"] = tally(unrecorded)
     evidence["earlier_than_nearby_records"] = tally(earlier)
     reason = (

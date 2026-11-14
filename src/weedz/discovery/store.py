@@ -116,6 +116,7 @@ class Store:
                     finding_id INTEGER REFERENCES findings(id),
                     dimension TEXT NOT NULL, value TEXT NOT NULL, note TEXT NOT NULL,
                     reviewer TEXT NOT NULL, effort_seconds REAL, created_at TEXT NOT NULL,
+                    reference_snapshot TEXT,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
             """)
@@ -316,12 +317,16 @@ class Store:
             ).fetchall()
         return [finding_row(row) for row in rows]
 
-    def judgement(self, run_id: str, photo_id: str, record: Judgement) -> None:
-        """Append a reviewer's judgement on one dimension; never edited or deleted."""
+    def judgement(
+        self, run_id: str, photo_id: str, record: Judgement, reference_snapshot: str | None = None
+    ) -> None:
+        """Append a reviewer's judgement on one dimension; never edited or deleted.
+        `reference_snapshot` is the SHA-256 of the reference records it was made against."""
         with self.connect() as db:
             db.execute(
                 "INSERT INTO judgements(run_id,photo_id,finding_id,dimension,value,note,"
-                "reviewer,effort_seconds,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                "reviewer,effort_seconds,created_at,reference_snapshot) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?)",
                 (
                     run_id,
                     photo_id,
@@ -332,6 +337,7 @@ class Store:
                     record.reviewer,
                     record.effort_seconds,
                     now(),
+                    reference_snapshot,
                 ),
             )
 

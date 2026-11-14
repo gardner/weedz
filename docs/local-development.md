@@ -211,7 +211,13 @@ intended for local development, not shared public hosting.
    records needs this photo to have been compared with the snapshot for the
    judged plant's own watchlist species. A free-text taxon, or a species the
    snapshot did not query, is never compared, so its novelty against records
-   stays unassessed. Judgements are append-only, attributed and
+   stays unassessed. The claim must also agree with that comparison:
+   *absent from the reference records* needs no record of the species within
+   5 km. *Earlier than the available records* needs at least one nearby record,
+   every nearby record dated, and a photo year earlier than all of them. These
+   are the same rules the outcomes report uses. Each judgement keeps the SHA-256
+   of the snapshot loaded when it was saved (`reference_snapshot`, null when
+   none was), so a later snapshot never changes what a claim was made against. Judgements are append-only, attributed and
    timed (`measured_judgements`, `unmeasured_judgements`,
    `minutes_by_judgement_dimension` and `unmeasured_incidental_judgements` in
    `review_effort`). Each reviewer's latest judgement stands. `unassessed`

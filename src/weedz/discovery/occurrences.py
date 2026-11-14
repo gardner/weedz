@@ -176,6 +176,15 @@ def _compare_species(photo: dict[str, Any], records: list[dict[str, Any]]) -> di
     }
 
 
+def predates(photo: dict[str, Any], found: dict[str, Any]) -> bool:
+    """Observed in an earlier year than every declared record within the radius; an
+    undated nearby record could be older, so it rules the claim out."""
+    earliest, observed = found.get("earliest_year"), photo.get("observed_on")
+    if found.get("undated_within_radius", 0) or not (earliest and observed):
+        return False
+    return int(observed[:4]) < earliest
+
+
 def _compare_one(
     photo: dict[str, Any], records: list[dict[str, Any]], species: str, reason: str | None
 ) -> dict[str, Any]:
