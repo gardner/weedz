@@ -301,7 +301,11 @@ accuracy within 5 km; other photos are marked not compared, with a reason. The
 evidence panel shows this for the suggested species.
 
 This is a distance comparison, not a novelty verdict. A missing record is not
-an absence, and neither point locates a plant. The 14 November 2026 snapshot
+an absence, and neither point locates a plant. Known records never filter or
+reorder the queue (PRD P11). Screening sees only the image and its original
+subject, and the queue follows the margin. An unexpected location is a reason to
+refer the photo to a specialist (step 8), not to reject it. The evidence panel
+says so under *Known records*. The 14 November 2026 snapshot
 (51 old man's beard, 4 pampas, 147 gorse records) is sparse near the pilot
 photos: nearest records are typically 7–70 km away and mostly from the late
 1990s. "No nearby record" therefore says more about the reference set than about
@@ -329,6 +333,32 @@ Photo sets are counted as independent site visits, and ungrouped photos are kept
 apart. "Unknown" means unmeasured, not zero. A confirmed review shows only that
 the species is visible, not that the finding is useful (#18), and a reference
 distance is not a novelty claim.
+
+The *Novel or earlier evidence* measure has two parts, reported side by side.
+Both cover the same plants: confirmed suggestions and recorded watchlist plants.
+
+- **Computed comparison.** Its value counts plants with no record within 5 km,
+  or observed in an earlier year than every record within it. It needs a
+  reference snapshot.
+- **Judged novelty.** The evidence's `judged_novelty` tallies, as site visits,
+  each plant's level from its reviewers' standing judgements (step 7):
+
+  - When reviewers' values differ, the plant counts as `disputed`, never as a
+    level.
+  - A plant nobody judged counts as `unassessed`.
+  - Only a `verified_new_locality` with its verification note counts as a new
+    locality. `verified_new_localities` lists each claim's photo, finding id
+    (none for the suggestion), reviewer and note.
+  - `record_relative_judged_against_another_snapshot` counts plants whose
+    *absent from the reference records* or *earlier than the available records*
+    claim was made against a snapshot other than the one loaded now, so they
+    can be rechecked.
+
+  Judged levels are reported even without a snapshot.
+
+The measure is partially measured once either part has something to report,
+and not yet measurable when neither does. Judged levels are reviewer opinions,
+never a first-occurrence claim.
 
 ## Files and evidence
 
