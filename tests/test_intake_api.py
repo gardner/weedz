@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from intake_helpers import jpeg, new_id, report, with_image
-from PIL import Image
+from PIL import Image, PngImagePlugin
 
 from weedz.discovery.access import Access
 from weedz.intake.api import create_intake_app
@@ -335,3 +335,16 @@ def test_crops_orphaned_by_a_crash_are_deleted_when_the_intake_starts(
     stray.write_bytes(jpeg())
     create_intake_app(tmp_path)
     assert images(tmp_path) == [kept]
+
+
+def test_the_daily_image_budget_counts_the_stored_crop_not_the_upload(tmp_path: Path) -> None:
+    """Metadata that is stripped, never stored, does not use up the budget."""
+    text = PngImagePlugin.PngInfo()
+    text.add_text("Notes", "x" * 50_000)
+    out = BytesIO()
+    Image.new("RGB", (20, 20)).save(out, "PNG", pnginfo=text)
+    client = TestClient(create_intake_app(tmp_path, Limits(image_bytes_per_day=10_000)))
+    response = client.put(
+        f"/reports/{new_id()}", json=with_image(out.getvalue()), headers=auth(tmp_path)
+    )
+    assert response.status_code == 201

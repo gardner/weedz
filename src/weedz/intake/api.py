@@ -115,10 +115,8 @@ class IntakeAPI:
         digest = hashlib.sha256(report.model_dump_json().encode()).hexdigest()
         upload = uploaded_image(report, self.limits)
         with refusals():
-            # A retry, or a report over budget, costs no image decoding.
-            earlier = self.store.admit(
-                submitter, report_id, digest, len(upload or b""), self.limits
-            )
+            # A retry, or a report already over budget, costs no image decoding.
+            earlier = self.store.admit(submitter, report_id, digest, bool(upload), self.limits)
             if earlier:
                 return earlier, False
             image = cleaned_image(upload, self.limits) if upload else None

@@ -97,15 +97,16 @@ class ReportStore:
             return _existing(db, submitter, report_id, None)
 
     def admit(
-        self, submitter: int, report_id: str, digest: str, upload_bytes: int, limits: Limits
+        self, submitter: int, report_id: str, digest: str, has_image: bool, limits: Limits
     ) -> Receipt | None:
         """Before any image work: the receipt when this is a retry, None when it is new and
-        within budget. Raises Withdrawn, Conflict or OverBudget. ``receive`` decides again
-        under the write lock; this only spares the server decoding what it would refuse."""
+        within budget. Raises Withdrawn, Conflict or OverBudget. Only the stored crop counts
+        against the image budget and its size is not known yet, so a crop is counted here
+        as one byte; ``receive`` decides exactly, under the write lock."""
         with closing(self._connect()) as db:
             earlier = _existing(db, submitter, report_id, digest)
             if earlier is None:
-                _check_budget(db, submitter, upload_bytes, limits)
+                _check_budget(db, submitter, int(has_image), limits)
             return earlier
 
     def receive(
