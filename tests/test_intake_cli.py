@@ -112,7 +112,9 @@ def test_an_operator_withdrawal_before_the_report_arrives_refuses_it_later(
     with pytest.raises(SystemExit, match="No report"):
         main(withdraw)
     with pytest.raises(SystemExit, match="No submitter"):
-        main(["withdraw", "--submitter", "99", "--report", report_id, "--not-yet-received"])
+        main(
+            ["withdraw", "--submitter", "99", "--report", report_id, "--not-yet-received", *folder]
+        )
     main([*withdraw, "--not-yet-received"])
     assert "refused if it arrives" in capsys.readouterr().out
     client = TestClient(create_intake_app(tmp_path))
