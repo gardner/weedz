@@ -43,9 +43,9 @@ mobile/
     inference/     the Dart side of the image encoder (a Pigeon interface)
     metadata/      capture time and location per photo, with quality states (#54)
     reports/       building reports from scan results
-    ui/            the shared theme (ui/theme.dart) and screens; ui/approval/
-                   is the approval screen (#56)
-    upload/        the intake client, secure token storage, retries (#57)
+    ui/            the shared theme and approval/settings screens (#56, #107)
+    device/        secure enrollment and restartable deletion (#107)
+    upload/        planned report intake client and retries (#57)
     models/        downloading and verifying model artefacts (#59)
     main.dart
   pigeons/         Pigeon definitions for typed platform channels
