@@ -6,12 +6,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:weedz/domain/approval.dart';
 import 'package:weedz/domain/report.dart';
 
-/// What each action does; the store commits the transition (#57).
+/// What each action does; the store commits the transition (#57). Decline
+/// and withdraw receive the case the person was asked about, which may be
+/// out of date by the time they confirm.
 typedef ActionHandlers = ({
   VoidCallback approve,
   VoidCallback send,
-  VoidCallback decline,
-  VoidCallback withdraw,
+  ValueChanged<ReportCase> decline,
+  ValueChanged<ReportCase> withdraw,
   void Function(Report Function(Report) change) revise,
 });
 
@@ -109,7 +111,7 @@ class ApprovalActions extends StatelessWidget {
           'again.',
       keep: 'Keep deciding',
       act: 'Decline report',
-      then: handlers.decline,
+      then: () => handlers.decline(reportCase),
     ),
     child: const Text('Decline'),
   );
@@ -124,7 +126,7 @@ class ApprovalActions extends StatelessWidget {
           'be recalled.',
       keep: 'Keep it',
       act: 'Withdraw',
-      then: handlers.withdraw,
+      then: () => handlers.withdraw(reportCase),
     ),
     child: const Text('Withdraw report'),
   );

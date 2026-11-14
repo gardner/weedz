@@ -25,13 +25,6 @@ class SectionTitle extends StatelessWidget {
   );
 }
 
-String _formatTime(DateTime time) {
-  final utc = time.toUtc();
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${utc.year}-${two(utc.month)}-${two(utc.day)} '
-      '${two(utc.hour)}:${two(utc.minute)} UTC';
-}
-
 /// The suggested weed, worded as a suggestion, with what its score means.
 class SuggestionSection extends StatelessWidget {
   const new({required this.report, super.key});
@@ -69,7 +62,8 @@ class SuggestionSection extends StatelessWidget {
         Text(
           capturedAt == null
               ? 'The photo has no capture time, so none is sent.'
-              : 'Taken ${_formatTime(capturedAt)}',
+              // Exactly as sent (`Report.toJson`), to the millisecond.
+              : 'Taken ${capturedAt.toUtc().toIso8601String()} (UTC)',
         ),
       ],
     );
@@ -182,9 +176,7 @@ class PhotoSection extends StatelessWidget {
     if (report.image == null || licence == null) {
       return 'The photo is not sent.';
     }
-    final credit = report.consent.credit;
-    return 'The photo is sent under ${licenceLabels[licence]}'
-        '${credit == null ? '' : ', credited to $credit'}.';
+    return 'The photo is sent under ${licenceLabels[licence]}.';
   }
 }
 

@@ -105,6 +105,11 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
     widget.onRevised(retired, revision);
   }
 
+  /// Whether the report is still as it was when the person was asked to
+  /// confirm: a send can finish, or be refused, while a dialog is open.
+  bool _isStill(ReportCase asked) =>
+      asked.id == _case.id && asked.status == _case.status;
+
   @override
   Widget build(BuildContext context) {
     final report = _case.report;
@@ -134,6 +139,8 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
                 onChoose: choose,
               ),
               const SizedBox(height: 16),
+              if (report.consent.credit case final credit?)
+                Text('Your credit name, sent with this report: $credit.'),
               Text(
                 'Consent wording ${report.consent.wordingVersion}.',
                 style: Theme.of(context).textTheme.bodySmall,
@@ -144,8 +151,12 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
                 handlers: (
                   approve: _approve,
                   send: () => widget.onSend(_case),
-                  decline: () => widget.onChanged(_case.decline()),
-                  withdraw: () => widget.onWithdraw(_case),
+                  decline: (asked) {
+                    if (_isStill(asked)) widget.onChanged(_case.decline());
+                  },
+                  withdraw: (asked) {
+                    if (_isStill(asked)) widget.onWithdraw(_case);
+                  },
                   revise: _revise,
                 ),
               ),

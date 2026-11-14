@@ -9,23 +9,15 @@ library;
 import 'package:material_ui/material_ui.dart';
 import 'package:weedz/domain/report.dart';
 
-/// Metres, without a needless ".0".
-String formatMetres(double metres) {
-  final rounded = (metres * 10).round() / 10;
-  return rounded == rounded.roundToDouble()
-      ? rounded.toStringAsFixed(0)
-      : rounded.toStringAsFixed(1);
-}
-
 /// One sentence a screen reader reads for [location].
 String locationSentence(Location location) =>
     'Exact location in this report: latitude ${location.latitude}, '
     'longitude ${location.longitude}, accurate to within '
-    '${formatMetres(location.accuracyM)} metres.';
+    '${location.accuracyM} metres.';
 
-/// The coordinates as stored (full precision, exactly what is sent), the
-/// accuracy, and the diagram. A screen reader hears one sentence for all of
-/// it, from [locationSentence].
+/// The coordinates and accuracy as stored (full precision, never rounded:
+/// exactly what is sent), and the diagram. A screen reader hears one
+/// sentence for all of it, from [locationSentence].
 class LocationView extends StatelessWidget {
   const new({required this.location, super.key});
 
@@ -34,7 +26,7 @@ class LocationView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final metres = formatMetres(location.accuracyM);
+    final metres = '${location.accuracyM}';
     return Semantics(
       container: true,
       label: locationSentence(location),
