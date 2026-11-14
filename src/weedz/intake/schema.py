@@ -74,6 +74,8 @@ class Consent(Part):
 
     wording_version: Token
     image: bool
+    # Explicit agreement to share the exact point, independently of image consent.
+    location: bool
     # The cropped image's licence: one the collection admits, and only with image consent.
     licence: str | None = None
     credit: Credit | None = None
@@ -102,6 +104,12 @@ class ReportContent(Part):
     captured_at: AwareDatetime | None = None
     location: Location | None = None
     consent: Consent
+
+    @model_validator(mode="after")
+    def location_only_with_consent(self) -> "ReportContent":
+        if (self.location is not None) != self.consent.location:
+            raise ValueError("A location is sent only with location consent, and consent needs one")
+        return self
 
     @field_validator("captured_at")
     @classmethod

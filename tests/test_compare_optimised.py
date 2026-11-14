@@ -3,6 +3,7 @@
 Tiny stand-in image towers keep these tests offline; no screening model is downloaded.
 """
 
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -168,3 +169,51 @@ def test_artefacts_are_cached_per_weights_libraries_and_export_settings(tmp_path
     fingerprint = json.loads((folder / "provenance.json").read_text())
     assert fingerprint["weights_sha256"] == "w" * 64
     assert fingerprint["export"] == script.EXPORT
+
+
+def test_a_single_file_artefact_records_the_hash_a_bundle_gate_checks(tmp_path: Path) -> None:
+    single = tmp_path / "visual-fp16.pt"
+    single.write_bytes(b"weights")
+    assert script.artefact_sha256(single) == hashlib.sha256(b"weights").hexdigest()
+    split = tmp_path / "visual.onnx"
+    split.write_bytes(b"graph")
+    (tmp_path / "visual.onnx.data").write_bytes(b"external weights")
+    assert script.artefact_sha256(split) is None, "an artefact in several files ships as none"
+
+
+def test_every_artefact_records_how_it_runs_so_a_bundle_need_not_be_told() -> None:
+    assert set(script.RUNTIME) == set(script.ARTEFACTS)
+    assert script.RUNTIME["fp16"] == {
+        "format": "torch",
+        "precision": "fp16",
+        "input_dtype": "float16",
+    }
+    assert script.RUNTIME["int8"]["input_dtype"] == "float32"
+
+
+def test_an_onnx_graph_whose_weights_live_elsewhere_records_no_hash(tmp_path: Path) -> None:
+    """External data written under another name (e.g. the exporter's partial name) is
+    found from the graph's own references, not from file names."""
+    import onnx
+    from onnx import TensorProto, helper, numpy_helper
+
+    weight = numpy_helper.from_array(np.ones((2, 2), dtype=np.float32), "weight")
+    graph = helper.make_graph(
+        [helper.make_node("MatMul", ["pixels", "weight"], ["embedding"])],
+        "tower",
+        [helper.make_tensor_value_info("pixels", TensorProto.FLOAT, [1, 2])],
+        [helper.make_tensor_value_info("embedding", TensorProto.FLOAT, [1, 2])],
+        [weight],
+    )
+    path = tmp_path / "visual.onnx"
+    onnx.save_model(
+        helper.make_model(graph),
+        str(path),
+        save_as_external_data=True,
+        location="visual.partial.onnx.data",
+        size_threshold=0,
+    )
+    assert script.artefact_sha256(path) is None
+    inline = tmp_path / "inline.onnx"
+    onnx.save_model(helper.make_model(graph), str(inline))
+    assert script.artefact_sha256(inline) == hashlib.sha256(inline.read_bytes()).hexdigest()

@@ -20,3 +20,7 @@ node_modules/
 .next/
 *.tsbuildinfo
 web/.env.local
+
+# Bundle signing keys belong outside the repo (#59); this only catches accidents.
+*.ed25519
+*.pem

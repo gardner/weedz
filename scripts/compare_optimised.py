@@ -27,6 +27,7 @@ from typing import Any, cast
 
 import numpy as np
 
+from weedz.discovery.inference import file_sha256
 from weedz.discovery.parity import THRESHOLDS, compare, encoding_cost
 
 ENCODER = Path(__file__).with_name("encode_variant.py")
@@ -46,6 +47,16 @@ ARTEFACTS = {
     "onnx": ("onnx", "visual.onnx"),
     "int8": ("onnx", "visual-int8.onnx"),
     "int8-per-channel": ("onnx", "visual-int8-per-channel.onnx"),
+}
+# How each artefact runs, as encode_variant runs it: a bundle reads this from the parity
+# record rather than trusting a publisher to restate it (#59). Torch towers take input in
+# their parameters' dtype.
+RUNTIME = {
+    "fp32": {"format": "torch", "precision": "fp32", "input_dtype": "float32"},
+    "fp16": {"format": "torch", "precision": "fp16", "input_dtype": "float16"},
+    "onnx": {"format": "onnx", "precision": "fp32", "input_dtype": "float32"},
+    "int8": {"format": "onnx", "precision": "int8", "input_dtype": "float32"},
+    "int8-per-channel": {"format": "onnx", "precision": "int8", "input_dtype": "float32"},
 }
 VARIANTS: dict[str, dict[str, str]] = {
     "onnx-fp32": {
@@ -319,8 +330,30 @@ def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]
     return {"metadata": screener.metadata, "texts": texts, "pixels": pixels, "folder": folder}
 
 
+def _references_external_data(path: Path) -> bool:
+    """Whether an ONNX graph keeps any tensor in another file, whatever that file is named
+    (the exporter may name it after its temporary output, or after each tensor)."""
+    import onnx
+    from onnx.external_data_helper import uses_external_data
+
+    model = onnx.load(str(path), load_external_data=False)
+    tensors = [*model.graph.initializer]
+    tensors += [a.t for node in model.graph.node for a in node.attribute if a.HasField("t")]
+    return any(uses_external_data(tensor) for tensor in tensors)
+
+
+def artefact_sha256(path: Path) -> str | None:
+    """The hash a bundle's parity gate checks (#59), or None for an artefact split across
+    files (ONNX external data), which cannot be shipped as one content-addressed file."""
+    if any(other != path for other in path.parent.glob(f"{path.name}*")):
+        return None
+    if path.suffix == ".onnx" and _references_external_data(path):
+        return None
+    return file_sha256(path)
+
+
 def measure(model: Mapping[str, Any], artefact: str, ids: list[str], layout: dict) -> tuple:
-    """Encode every photo with one artefact; its screening results and cost."""
+    """Encode every photo with one artefact; its screening results, cost and hash."""
     kind, file = ARTEFACTS[artefact]
     path = model["folder"] / file
     out = model["folder"] / f"embeddings-{artefact}.npz"
@@ -332,7 +365,7 @@ def measure(model: Mapping[str, Any], artefact: str, ids: list[str], layout: dic
     cost = encoding_cost(
         size, stats["peak_rss_bytes"], stats["baseline_rss_bytes"], stats["seconds"], windows
     )
-    return results(embeddings, model["texts"], layout), cost
+    return results(embeddings, model["texts"], layout), cost, artefact_sha256(path)
 
 
 def machine() -> dict[str, Any]:
@@ -360,17 +393,20 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     for item in chosen.values():
         needed.setdefault(item["model"], set()).add(item["artefact"])
     models = {key: prepare(key, photos, args.work, wanted) for key, wanted in needed.items()}
-    reference, reference_cost = measure(
+    reference, reference_cost, _ = measure(
         models[REFERENCE["model"]], REFERENCE["artefact"], ids, layout
     )
     variants = {}
     for name, item in chosen.items():
-        candidate, cost = measure(models[item["model"]], item["artefact"], ids, layout)
+        candidate, cost, digest = measure(models[item["model"]], item["artefact"], ids, layout)
         model = models[item["model"]]["metadata"]
         variants[name] = {
             "model": model["model"],
             "revision": model["revision"],
             "description": item["description"],
+            # The exact bytes measured, so only they can pass the bundle parity gate (#59).
+            "artefact_sha256": digest,
+            "runtime": RUNTIME[item["artefact"]],
             "cost": cost,
             "parity": compare(reference, candidate, photos),
         }
