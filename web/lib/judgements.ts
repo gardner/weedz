@@ -84,13 +84,15 @@ export const NOTE_REQUIRED: Record<string, string> = {
   "history:no_longer_present": "Say who reported the plant gone, and when.",
 };
 
-const located = (photo: Photo) => photo.coordinate_status === "public" && photo.latitude != null;
-const dated = (photo: Photo) => Boolean(photo.observed_on);
-const compared = (photo: Photo) =>
-  Object.values(photo.reference_comparison ?? {}).some((comparison) => comparison.comparable);
+type Requirement = (photo: Photo, taxon: string | null) => boolean;
+const located: Requirement = (photo) =>
+  photo.coordinate_status === "public" && photo.latitude != null;
+const dated: Requirement = (photo) => Boolean(photo.observed_on);
+const compared: Requirement = (photo, taxon) =>
+  Boolean(taxon && photo.reference_comparison?.[taxon]?.comparable);
 const UNDATED = "the photo date is unknown";
-const UNCOMPARED = "no reference records can be compared with this photo";
-const REQUIREMENTS: Record<string, [(photo: Photo) => boolean, string][]> = {
+const UNCOMPARED = "no reference records were compared for this plant here";
+const REQUIREMENTS: Record<string, [Requirement, string][]> = {
   "location:usable": [[located, "the observation location is obscured or missing"]],
   "history:recent_evidence": [[dated, UNDATED]],
   "history:historical_evidence": [[dated, UNDATED]],
@@ -101,9 +103,18 @@ const REQUIREMENTS: Record<string, [(photo: Photo) => boolean, string][]> = {
   ],
 };
 
-/** Why this photo cannot support a value, mirroring the API's check; null when it can. */
-export function unavailable(photo: Photo, dimension: Dimension, value: string): string | null {
-  const unmet = (REQUIREMENTS[`${dimension}:${value}`] ?? []).find(([met]) => !met(photo));
+/**
+ * Why this photo cannot support a value for the judged plant (its watchlist species, or
+ * null for free text), mirroring the API's check; null when it can.
+ */
+export function unavailable(
+  photo: Photo,
+  taxon: string | null,
+  dimension: Dimension,
+  value: string,
+): string | null {
+  const requirements = REQUIREMENTS[`${dimension}:${value}`] ?? [];
+  const unmet = requirements.find(([met]) => !met(photo, taxon));
   return unmet ? unmet[1] : null;
 }
 

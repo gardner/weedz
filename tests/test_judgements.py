@@ -34,8 +34,9 @@ def store_with_photo(
     return store, photo.id
 
 
-def add_finding(store: Store, photo_id: str, species: str = "Ulex europaeus") -> int:
-    record = {"kind": "addition", "species": species, "reviewer": "Ben"}
+def add_finding(store: Store, photo_id: str, species: str | None = "Ulex europaeus") -> int:
+    taxon = {"species": species} if species else {"other_taxon": "Clematis paniculata"}
+    record = {"kind": "addition", "reviewer": "Ben"} | taxon
     store.finding("run", photo_id, Finding.model_validate(record))
     return store.findings("run", photo_id)[-1]["id"]
 
@@ -48,10 +49,10 @@ def save(store: Store, photo_id: str, **fields: object) -> None:
     store.judgement("run", photo_id, Judgement.model_validate(judgement(**fields)))
 
 
-def load_references(root: Path) -> None:
+def load_references(root: Path, taxon_keys: dict[str, int] = TAXON_KEYS) -> None:
     folder = root / "references"
     folder.mkdir()
-    snapshot = {"retrieved_at": "2026-11-14", "records": [], "taxon_keys": TAXON_KEYS}
+    snapshot = {"retrieved_at": "2026-11-14", "records": [], "taxon_keys": taxon_keys}
     (folder / "doc-weeds-20261114T000000Z.json").write_text(json.dumps(snapshot))
 
 
@@ -247,3 +248,18 @@ def test_a_judgement_targets_the_suggestion_or_one_of_the_photos_plants(tmp_path
     plant = add_finding(store, photo_id)
     assert client.post(path, json=judgement(finding_id=plant)).status_code == 200
     assert client.post(path, json=judgement(finding_id=plant + 1)).status_code == 404
+
+
+def test_novelty_against_records_needs_the_judged_plant_compared(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path, **PUBLIC)
+    # The snapshot queried gorse only, so the suggested old man's beard was not compared.
+    load_references(tmp_path, {"Ulex europaeus": TAXON_KEYS["Ulex europaeus"]})
+    gorse, typed = add_finding(store, photo_id), add_finding(store, photo_id, species=None)
+    client = TestClient(create_app(tmp_path))
+    path = f"/runs/run/photos/{photo_id}/judgements"
+    for value in ["absent_from_references", "earlier_than_records"]:
+        claim = judgement(dimension="novelty", value=value)
+        assert client.post(path, json=claim).status_code == 409, value
+        # Free text names no taxon the records were checked against.
+        assert client.post(path, json=claim | {"finding_id": typed}).status_code == 409, value
+        assert client.post(path, json=claim | {"finding_id": gorse}).status_code == 200, value

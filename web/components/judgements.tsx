@@ -16,7 +16,7 @@ import { names, type Photo } from "../lib/types";
 type Save = (judgement: NewJudgement) => Promise<boolean>;
 
 const SUGGESTION = "suggestion";
-type Plant = { key: string; label: string; judged: Judged };
+type Plant = { key: string; label: string; taxon: string | null; judged: Judged };
 
 /**
  * Identity, location usefulness, historical relevance and novelty, each judged and saved
@@ -38,11 +38,12 @@ export default function JudgementPanel({
   const plants: Plant[] = (photo.findings ?? []).map((plant) => ({
     key: String(plant.id),
     label: `${kindLabels[plant.kind]}: ${findingName(plant)} (${plant.reviewer})`,
+    taxon: plant.species,
     judged: plant,
   }));
   if (suggestion) {
     const label = `Suggested: ${names[suggestion] ?? suggestion}`;
-    plants.unshift({ key: SUGGESTION, label, judged: photo });
+    plants.unshift({ key: SUGGESTION, label, taxon: suggestion, judged: photo });
   }
   const [chosen, setChosen] = useState(SUGGESTION);
   const plant = plants.find(({ key }) => key === chosen) ?? plants[0];
@@ -76,6 +77,7 @@ export default function JudgementPanel({
               dimension={key}
               photo={photo}
               findingId={plant.key === SUGGESTION ? null : Number(plant.key)}
+              taxon={plant.taxon}
               judged={plant.judged}
               reviewer={reviewer}
               blocked={blocked}
@@ -96,6 +98,7 @@ function JudgementRow({
   dimension,
   photo,
   findingId,
+  taxon,
   judged,
   reviewer,
   blocked,
@@ -104,6 +107,7 @@ function JudgementRow({
   dimension: Dimension;
   photo: Photo;
   findingId: number | null;
+  taxon: string | null;
   judged: Judged;
   reviewer: string;
   blocked: boolean;
@@ -119,7 +123,7 @@ function JudgementRow({
   const required = NOTE_REQUIRED[`${dimension}:${value}`];
   const missing = Boolean(required) && !note.trim();
   const unsupported = info.values
-    .map(([key, label]) => [label, unavailable(photo, dimension, key)] as const)
+    .map(([key, label]) => [label, unavailable(photo, taxon, dimension, key)] as const)
     .filter(([, reason]) => reason);
   return (
     <div className="judgement">
@@ -150,7 +154,11 @@ function JudgementRow({
           onChange={(event) => setValue(event.target.value)}
         >
           {info.values.map(([key, label]) => (
-            <option key={key} value={key} disabled={Boolean(unavailable(photo, dimension, key))}>
+            <option
+              key={key}
+              value={key}
+              disabled={Boolean(unavailable(photo, taxon, dimension, key))}
+            >
               {label}
             </option>
           ))}

@@ -35,6 +35,11 @@ try {
     photo_license: "cc0",
     // No public location and no reference snapshot: some claims cannot be made.
     coordinate_status: "missing",
+    // Only gorse was compared with records, so only a gorse plant can be judged against them.
+    reference_comparison: {
+      "Ulex europaeus": { comparable: true, nearest: null },
+      "Clematis vitalba": { comparable: false, reason: "Not queried in this reference snapshot" },
+    },
     attribution: "Test fixture",
     findings: [
       {
@@ -158,6 +163,10 @@ try {
   const target = page.getByLabel("Plant being judged");
   assert.match(await target.locator("option:checked").textContent(), /Suggested.*Old man's beard/);
   await target.selectOption("7");
+  const absent = page
+    .getByLabel("Novelty", { exact: true })
+    .locator("option[value=absent_from_references]");
+  assert.equal(await absent.isDisabled(), false, "gorse was compared with records");
   assert.match(await section.textContent(), /Ben:\s*Newly noticed in this photo/);
   assert.doesNotMatch(await location.textContent(), /Reviewers disagree/, "no carry-over");
   await page.getByLabel("Novelty", { exact: true }).selectOption("already_recorded");

@@ -208,8 +208,10 @@ intended for local development, not shared public hosting.
    support are disabled in the app, with the reason, and refused by the API
    (409): a usable location needs public coordinates; recent or historical
    evidence and "earlier than records" need a photo date; and novelty against
-   records needs a reference snapshot the photo can be compared with. Without
-   one, novelty stays unassessed. Judgements are append-only, attributed and
+   records needs this photo to have been compared with the snapshot for the
+   judged plant's own watchlist species. A free-text taxon, or a species the
+   snapshot did not query, is never compared, so its novelty against records
+   stays unassessed. Judgements are append-only, attributed and
    timed (`measured_judgements`, `unmeasured_judgements`,
    `minutes_by_judgement_dimension` and `unmeasured_incidental_judgements` in
    `review_effort`). Each reviewer's latest judgement stands. `unassessed`

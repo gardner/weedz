@@ -63,26 +63,35 @@ class Judgement(BaseModel):
         return self
 
 
-def _located(photo: dict[str, Any]) -> bool:
+def _located(photo: dict[str, Any], _taxon: str | None) -> bool:
     return photo.get("coordinate_status") == "public" and photo.get("latitude") is not None
 
 
-def _dated(photo: dict[str, Any]) -> bool:
+def _dated(photo: dict[str, Any], _taxon: str | None) -> bool:
     return bool(photo.get("observed_on"))
 
 
-def _compared(photo: dict[str, Any]) -> bool:
+def _compared(photo: dict[str, Any], taxon: str | None) -> bool:
     comparisons = photo.get("reference_comparison") or {}
-    return any(comparison.get("comparable") for comparison in comparisons.values())
+    return bool(taxon and comparisons.get(taxon, {}).get("comparable"))
 
 
-Requirement = tuple[Callable[[dict[str, Any]], bool], str]
+def judged_taxon(photo: dict[str, Any], finding_id: int | None) -> str | None:
+    """The watchlist species a judgement is about; None for free text or no suggestion."""
+    if finding_id is None:
+        return photo["scores"].get("best_species")
+    return next(
+        (plant["species"] for plant in photo["findings"] if plant["id"] == finding_id), None
+    )
+
+
+Requirement = tuple[Callable[[dict[str, Any], str | None], bool], str]
 UNDATED = "The photo date is unknown"
 UNCOMPARED = (
-    "No reference snapshot can be compared with this photo, so novelty against records "
+    "No reference records were compared for this plant here, so novelty against records "
     "stays unassessed"
 )
-# What the photo itself must offer before a claim can be recorded.
+# What the photo, and its comparison for the judged plant, must offer before a claim.
 PHOTO_REQUIREMENTS: dict[tuple[str, str], list[Requirement]] = {
     ("location", "usable"): [(_located, "The observation location is obscured or missing")],
     ("history", "recent_evidence"): [(_dated, UNDATED)],
@@ -93,9 +102,11 @@ PHOTO_REQUIREMENTS: dict[tuple[str, str], list[Requirement]] = {
 
 
 def unsupported(photo: dict[str, Any], record: Judgement) -> str | None:
-    """Why the photo cannot support this judgement, or None. Needs reference comparisons."""
+    """Why the photo cannot support this judgement on its plant, or None. Needs the
+    photo's reference comparisons; free-text taxa are never compared with records."""
+    taxon = judged_taxon(photo, record.finding_id)
     for satisfied, reason in PHOTO_REQUIREMENTS.get((record.dimension, record.value), []):
-        if not satisfied(photo):
+        if not satisfied(photo, taxon):
             return reason
     return None
 
