@@ -269,3 +269,13 @@ def test_rgb_and_nir_products_of_one_survey_are_distinct_collections() -> None:
         "season:rgb",
         "season:rgbnir",
     ]
+
+
+@pytest.mark.parametrize(("start", "end"), [("2024-12-06", None), (None, "2025-03-27")])
+def test_a_half_open_capture_window_is_unknown_timing_not_a_crash(
+    start: str | None, end: str | None
+) -> None:
+    item = {"slug": "open", "bands": "rgb", "gsd_m": 0.25}
+    aligned = assess.align(photo(), [item | {"capture_start": start, "capture_end": end}])
+    assert aligned["covering"] == 1
+    assert aligned["closest"] is None

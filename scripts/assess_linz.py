@@ -157,7 +157,12 @@ def align(photo: Json, covering: list[Json]) -> Json:
     matches = []
     if photo.get("observed_on"):
         observed = date.fromisoformat(photo["observed_on"])
-        dated = [item for item in covering if _aerial(item) and item["capture_start"]]
+        # STAC permits open-ended intervals; a half-known window has unknown timing.
+        dated = [
+            item
+            for item in covering
+            if _aerial(item) and item["capture_start"] and item["capture_end"]
+        ]
         matches = [_match(item, observed, accuracy) for item in dated]
     near = [match for match in matches if abs(match["gap_days"]) <= YEAR]
     closest = min(matches, key=lambda m: (abs(m["gap_days"]), m["gsd_m"]), default=None)

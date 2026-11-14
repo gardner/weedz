@@ -321,11 +321,13 @@ that store the script stops with an error rather than reporting zero photos.
 - **Four Tasman riverbed photos** lie outside that survey's capture area.
   Their nearest aerial capture is the 0.1 m Tasman River Valleys Flood survey,
   198 days later and after the July 2025 floods.
-- **Ten of the 12 Nelson photos have no contemporary capture.** Their nearest
-  is 0.1 m in May 2025, 141 days later. The finest is 0.075 m in December 2025,
-  336 days later. One other Nelson photo falls on the Tasman survey's edge. Two
-  photos, one per region, have no sub-metre capture within a year. Both have
-  about 1.6 km accuracy. Across all photos, the
+- **Eleven of the 12 Nelson photos have no contemporary capture.** The only
+  exception falls on the Tasman survey's edge. For ten of the eleven, the
+  nearest capture is 0.1 m in May 2025, 140–141 days later, and the finest is
+  0.075 m in December 2025, 335–336 days later. The eleventh, with 1,634 m
+  accuracy, has its nearest sub-metre capture in December 2022, 732 days earlier.
+  Two photos, one per region, have no sub-metre capture within a year. Both
+  have about 1.6 km accuracy. Across all photos, the
   nearest sub-metre capture has a median gap of 141 days.
 - **Resolution:** at 0.25 m a 1 m clump is 4 pixels across and a 3 m clump
   12 pixels. At 0.075–0.1 m they are 10–40 pixels. A clump can be seen as a
