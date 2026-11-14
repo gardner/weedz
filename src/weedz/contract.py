@@ -107,7 +107,7 @@ class Annotation(Contract):
     # people, e.g. one reviewer records a plant and others judge its identity.
     author: str | None = None
     # A collection, never a joined string: a name may itself contain any separator.
-    reviewers: tuple[str, ...] = ()
+    reviewers: tuple[Text, ...] = ()
     recorded_at: str | None = None
     note: str = ""
     model: Text | None = None

@@ -183,3 +183,11 @@ def test_reviewer_names_stay_distinct_even_with_separators_in_them() -> None:
     first = Sample.model_validate(sample(annotations=[one])).annotations[0].reviewers
     second = Sample.model_validate(sample(annotations=[two])).annotations[0].reviewers
     assert first != second
+
+
+@pytest.mark.parametrize("blank", ["", " "])
+def test_every_reviewer_name_must_be_real_text(blank: str) -> None:
+    with pytest.raises(ValidationError):
+        Sample.model_validate(
+            sample(annotations=[annotation(origin="reviewer", author="Carol", reviewers=[blank])])
+        )
