@@ -184,6 +184,7 @@ screening of the library is **not** collected. Approved reports are.
 | Contact Info: **Name** | Yes (optional) | Yes | No | App Functionality | The optional credit name. Remove this row if #60 drops credit names. |
 | Identifiers: **User ID** | Yes | Yes | No | App Functionality | The submitter token (`weedzsub_…`). The server keeps only a hash, but it links reports to one submitter. |
 | Identifiers: Device ID | No | — | — | — | No IDFA, IDFV or hardware IDs are sent. |
+| Diagnostics, Usage Data, Contacts, Health, Financial, Browsing, Search | No | — | — | — | Re-check if a crash reporter or analytics is ever added. None are planned. |
 
 **Why the submitter token is a User ID, not a Device ID.** The token is installed
 on one device, but it is not a device identifier. It is not derived from the
@@ -196,9 +197,9 @@ an identifiable person, such as an account ID". Apple's Device ID and Play's
 Device or other IDs are meant for advertising IDs, IDFV, IMEI, Android ID and
 similar, none of which are sent. If enrolment ever becomes anonymous
 self-service, so that no one can link the token to a person, review this
-choice. Declaring both categories is always acceptable, because over-declaring
-is never a violation.
-| Diagnostics, Usage Data, Contacts, Health, Financial, Browsing, Search | No | — | — | — | Re-check if a crash reporter or analytics is ever added. None are planned. |
+choice. Settle the category before submitting, rather than ticking both: the
+stores require declarations to be accurate, and ticking both would wrongly
+claim a device ID is collected.
 
 Apple has no "scientific research" purpose. App Functionality is the closest fit,
 as long as reports serve the app's stated purpose. If #60 lets the project use
@@ -345,12 +346,12 @@ preparing reports, is not collected and is not declared as such.
 | Personal info: **Name** | Yes | See note | Yes | No | App functionality | Optional credit name. |
 | Personal info: **User IDs** | Yes | No | Yes: sent only with an approved report | No | App functionality, Fraud prevention, security and compliance | Submitter token: authentication, revocation, per-submitter abuse limits. See the Apple section for why this is not a device ID. |
 | App activity: **Other user-generated content** | Yes | See note | Yes: sent only when a report is approved | No | App functionality | The report: taxon, score, capture time, model ids, consent. |
-
-Every row is **optional** in Play's sense. A person can scan, browse
-candidates and use the app indefinitely without approving a report. Nothing
-leaves the device until they approve one.
 | App info and performance | No | — | — | — | — | No crash or analytics SDK. Re-check if one is added. |
 | Device or other IDs | No | — | — | — | — | — |
+
+Every collected row is **optional** in Play's sense. A person can scan, browse
+candidates and use the app indefinitely without approving a report. Nothing
+leaves the device until they approve one.
 
 **"Shared"** means transferred to a third party. On Play, a transfer the user
 initiates and expects, or one to a service provider acting for us (hosting), is
