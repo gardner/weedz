@@ -137,7 +137,7 @@ def test_a_stalled_upload_times_out_instead_of_blocking_the_submitter(tmp_path: 
         withdrawal = await asyncio.wait_for(call(app, "DELETE", path, secret, []), 5)
         return await stalled, withdrawal
 
-    assert asyncio.run(scenario()) == (408, 404)
+    assert asyncio.run(scenario()) == (408, 200)
 
 
 def test_a_slow_but_steady_upload_is_not_cut_off(tmp_path: Path) -> None:

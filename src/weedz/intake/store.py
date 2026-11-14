@@ -144,15 +144,23 @@ class ReportStore:
         return Receipt(report_id, "received", received, None, name is not None), True
 
     def withdraw(
-        self, submitter: int, report_id: str, before_arrival: bool = False
+        self,
+        submitter: int,
+        report_id: str,
+        before_arrival: bool = False,
+        limits: Limits | None = None,
     ) -> Receipt | None:
         """Delete the image and erase the content of a submitter's own report. With
         ``before_arrival``, an id not yet received is recorded as withdrawn, so a report
-        still on its way is refused when it arrives (for the operator, who acts from outside
-        the API's per-submitter turns)."""
+        still on its way is refused when it arrives. Both the device API and the operator
+        can record this intent before an upload arrives."""
         with self._transaction() as db:
             row = _row(db, submitter, report_id)
             if row is None and before_arrival:
+                # Device-created tombstones cost a new record; trusted operators may
+                # bypass the budget. Existing withdrawals and retries never cost.
+                if limits is not None:
+                    budget.charge(db, submitter, report_id, False, limits)
                 now = _now()
                 db.execute(
                     "INSERT INTO reports VALUES(?,?,?,NULL,NULL,NULL,?)",
