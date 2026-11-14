@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { imageUrl, names, type Photo, type Run, request, type Status } from "../lib/types";
 import Evidence from "./evidence";
 
+const REVIEWER_KEY = "weedz-reviewer";
+
 export default function ReviewDesk() {
   const requestGeneration = useRef(0);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -21,6 +23,7 @@ export default function ReviewDesk() {
   const [starting, setStarting] = useState(false);
   const [limit, setLimit] = useState(12);
   const [before, setBefore] = useState("2024-12-31");
+  const [reviewer, setReviewer] = useState("");
   const run = runs.find((item) => item.id === runId);
 
   const refresh = useCallback(async () => {
@@ -44,6 +47,23 @@ export default function ReviewDesk() {
       if (generation === requestGeneration.current) setLoading(false);
     }
   }, [runId]);
+
+  useEffect(() => {
+    try {
+      setReviewer(localStorage.getItem(REVIEWER_KEY) ?? "");
+    } catch {
+      // Storage can be unavailable; the name is then entered each session.
+    }
+  }, []);
+
+  function changeReviewer(name: string) {
+    setReviewer(name);
+    try {
+      localStorage.setItem(REVIEWER_KEY, name.trim());
+    } catch {
+      // Not remembered, but still sent with this session's decisions.
+    }
+  }
 
   useEffect(() => {
     void refresh();
@@ -73,7 +93,7 @@ export default function ReviewDesk() {
       await request(`runs/${runId}/photos/${active.id}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, note }),
+        body: JSON.stringify({ status, note, reviewer: reviewer.trim() }),
       });
       setNotice("Review saved locally.");
       await refresh();
@@ -346,6 +366,7 @@ export default function ReviewDesk() {
                         {photo.review_status === "unreviewed"
                           ? "Needs review"
                           : photo.review_status}
+                        {photo.disputed && " · Reviewers disagree"}
                       </small>
                     </span>
                   </button>
@@ -368,6 +389,8 @@ export default function ReviewDesk() {
                 runId={runId}
                 onSave={save}
                 saving={saving}
+                reviewer={reviewer}
+                onReviewerChange={changeReviewer}
               />
             ) : (
               <div className="evidence empty-evidence">
