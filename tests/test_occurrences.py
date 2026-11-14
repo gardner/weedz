@@ -140,3 +140,58 @@ def test_unknown_or_imprecise_photo_locations_are_not_comparable() -> None:
 def test_records_at_the_same_distance_do_not_break_the_comparison() -> None:
     twins = [record(1, -41.2737, 2015), record(2, -41.2737, 2016)]
     assert compare(photo(), twins)["Ulex europaeus"]["within_radius"] == 2
+
+
+def test_references_command_writes_a_snapshot_under_the_pilot_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from weedz import cli
+    from weedz.discovery import cli as discovery_cli
+
+    seen: list[httpx.Request] = []
+    real_client = httpx.Client
+
+    def mocked_client(**kwargs: Any) -> httpx.Client:
+        return real_client(transport=transport({}, seen), headers=kwargs.get("headers"))
+
+    monkeypatch.setattr(discovery_cli.httpx, "Client", mocked_client)
+    monkeypatch.setattr("sys.argv", ["weedz", "references", "--pilot-dir", str(tmp_path)])
+    cli.main()
+    assert latest_snapshot(tmp_path) is not None
+    assert "User-Agent" in seen[0].headers
+    assert "doc-weeds-" in capsys.readouterr().out
+
+
+def test_run_detail_and_export_carry_the_comparison_and_its_as_of_date(tmp_path: Path) -> None:
+    from fastapi.testclient import TestClient
+    from test_discovery import observation
+
+    from weedz.discovery.activities import export
+    from weedz.discovery.api import create_app
+    from weedz.discovery.records import RunSpec
+    from weedz.discovery.source import photo_from_observation
+    from weedz.discovery.store import Store
+
+    store = Store(tmp_path)
+    store.create_run("run", RunSpec())
+    public = observation() | {"obscured": False}
+    saved = photo_from_observation(public, "Nelson", "incidental")
+    assert saved is not None
+    store.save_photos("run", [saved])
+    client = TestClient(create_app(tmp_path))
+    assert client.get("/runs/run").json()["references"] is None
+    assert export(store, "run")["references"] is None
+
+    gorse = TAXON_KEYS["Ulex europaeus"]
+    pages = {gorse: [[gbif(1, lat=-41.21, lon=173.3)]]}
+    at = datetime(2026, 11, 14, tzinfo=UTC)
+    fetch_snapshot(tmp_path, httpx.Client(transport=transport(pages, [])), at, pause=0)
+    detail = client.get("/runs/run").json()
+    assert detail["references"]["retrieved_at"] == at.isoformat()
+    assert "records" not in detail["references"]
+    comparison = detail["photos"][0]["reference_comparison"]["Ulex europaeus"]
+    assert comparison["nearest"]["gbif_key"] == 1
+    assert (
+        export(store, "run")["photos"][0]["reference_comparison"]
+        == detail["photos"][0]["reference_comparison"]
+    )

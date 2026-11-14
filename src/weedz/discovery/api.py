@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from temporalio.client import Client
 
 from weedz.discovery.activities import export
+from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import TASK_QUEUE, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
@@ -45,7 +46,9 @@ class ReviewAPI:
         return {"id": run_id}
 
     def detail(self, run_id: str) -> dict:
-        return {"run": self.run(run_id), "photos": self.store.photos(run_id)}
+        run = self.run(run_id)
+        references, photos = with_references(self.store.root, self.store.photos(run_id))
+        return {"run": run, "photos": photos, "references": references}
 
     def download(self, run_id: str) -> JSONResponse:
         self.run(run_id)

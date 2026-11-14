@@ -170,3 +170,13 @@ def compare(photo: dict[str, Any], records: list[dict[str, Any]]) -> dict[str, d
         species: _compare_species(photo, [row for row in records if row["species"] == species])
         for species in SPECIES
     }
+
+
+def with_references(root: Path, photos: list[dict[str, Any]]) -> tuple[dict | None, list[dict]]:
+    """The latest snapshot's metadata, and photos annotated with their comparison."""
+    snapshot = latest_snapshot(root)
+    if snapshot is None:
+        return None, photos
+    records = snapshot["records"]
+    metadata = {key: value for key, value in snapshot.items() if key != "records"}
+    return metadata, [photo | {"reference_comparison": compare(photo, records)} for photo in photos]

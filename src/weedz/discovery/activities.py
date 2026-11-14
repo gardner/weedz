@@ -9,6 +9,7 @@ from typing import Any
 
 from temporalio import activity
 
+from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
@@ -88,10 +89,12 @@ def export(store: Store, run_id: str) -> dict:
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
+    references, photos = with_references(store.root, store.photos(run_id))
     return {
         "schema": 1,
         "run": run,
-        "photos": store.photos(run_id),
+        "photos": photos,
+        "references": references,
         "review_history": [
             dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"]))
             for photo in store.photos(run_id)
