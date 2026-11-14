@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from intake_helpers import jpeg, new_id, report, with_image
 from test_device_reports import send, synced
+from test_study_surface import body
 
 from weedz.discovery import cli, device_reports
 from weedz.discovery.api import create_app
@@ -187,6 +188,11 @@ def test_the_device_run_claims_no_historical_query(tmp_path: Path) -> None:
     assert dates["query_period"] is None and dates["corpus"]["sampling"] is None
     assert dates["years_without_photos"] == [] and dates["seasons_without_photos"] == []
     assert not any("unassessed, not weed-free" in note for note in dates["notes"])
+    # A study period reaching past 2024 is not "outside" a query that never ran.
+    study = body(period_start="2020-01-01", period_end="2026-12-31") | {"run_id": RUN_ID}
+    assert client.post("/studies", json=study).status_code == 201
+    linked = client.get(f"/runs/{RUN_ID}/suitability").json()["dates"]
+    assert not any("query period" in note for note in linked["notes"])
 
 
 def test_syncs_take_turns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
