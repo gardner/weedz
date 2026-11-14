@@ -4,7 +4,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from temporalio.client import Client
 
 from weedz.discovery.activities import export, review_history
@@ -16,9 +16,10 @@ from weedz.discovery.leads import LeadEvent, lead_state, record_lead, selections
 from weedz.discovery.limits import with_limits
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.outcomes import outcomes
+from weedz.discovery.package_output import archive, package_contents
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
-from weedz.discovery.store import Store
+from weedz.discovery.store import Store, now
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -135,6 +136,24 @@ class ReviewAPI:
         self.run(run_id)
         return outcomes(export(self.store, run_id))
 
+    def _package(self, run_id: str) -> tuple[dict, dict[str, bytes]]:
+        self.run(run_id)
+        try:
+            return package_contents(self.store, run_id, now())
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from error
+
+    def package(self, run_id: str) -> dict:
+        """The selected leads only, as JSON; photos are in the archive."""
+        return self._package(run_id)[0]
+
+    def package_archive(self, run_id: str) -> Response:
+        return Response(
+            archive(self._package(run_id)[1]),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{run_id}-follow-up.zip"'},
+        )
+
     def image(self, run_id: str, photo_id: str) -> FileResponse:
         photo = self.photo(run_id, photo_id)
         path = (self.store.root / photo["image_path"]).resolve()
@@ -248,6 +267,8 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.get("/runs/{run_id}")(api.detail)
     app.get("/runs/{run_id}/export")(api.download)
     app.get("/runs/{run_id}/outcomes")(api.outcomes)
+    app.get("/runs/{run_id}/package")(api.package)
+    app.get("/runs/{run_id}/package/archive")(api.package_archive)
     app.get("/runs/{run_id}/photos/{photo_id}/image")(api.image)
     app.post("/runs/{run_id}/photos/{photo_id}/review")(api.review)
     app.get("/runs/{run_id}/photos/{photo_id}/reviews")(api.history)
