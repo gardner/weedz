@@ -45,6 +45,18 @@ def level(by_reviewer: dict[str, dict[str, Any]]) -> str:
     return values.pop() if len(values) == 1 else "disputed"
 
 
+def new_localities(plant: Plant, by_reviewer: dict[str, dict[str, Any]]) -> list[dict]:
+    """Each reviewer's verified new locality with its note; a recorded plant is named by
+    its finding id, the suggestion by none."""
+    where = {"photo_id": plant.photo["id"]}
+    if plant.finding_id is not None:
+        where["finding_id"] = plant.finding_id
+    return [
+        where | {"reviewer": reviewer, "note": judgement["note"]}
+        for reviewer, judgement in by_reviewer.items()
+    ]
+
+
 def judged_novelty(plants: list[Plant], snapshot: str | None) -> dict[str, Any]:
     """Tallies per judged level, each verified new locality with its note, and plants
     with a record-relative claim made against a snapshot other than `snapshot`."""
@@ -56,11 +68,7 @@ def judged_novelty(plants: list[Plant], snapshot: str | None) -> dict[str, Any]:
         found = level(by_reviewer)
         by_level[found].append(plant.photo)
         if found == NEW_LOCALITY:
-            localities += [
-                {"photo_id": plant.photo["id"], "finding_id": plant.finding_id}
-                | {"reviewer": reviewer, "note": judgement["note"]}
-                for reviewer, judgement in by_reviewer.items()
-            ]
+            localities += new_localities(plant, by_reviewer)
         if any(
             judgement["value"] in RECORD_RELATIVE
             and judgement.get("reference_snapshot") != snapshot

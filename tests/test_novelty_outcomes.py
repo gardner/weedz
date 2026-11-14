@@ -75,8 +75,10 @@ def test_only_a_noted_verification_is_a_new_locality_and_its_note_is_shown() -> 
     assert evidence["judged_novelty"]["verified_new_locality"]["photos"] == 1
     assert evidence["judged_novelty"]["unassessed"]["photos"] == 1
     assert evidence["verified_new_localities"] == [
-        {"photo_id": "a", "finding_id": None, "reviewer": "Ana", "note": note}
+        {"photo_id": "a", "reviewer": "Ana", "note": note}
     ]
+    text = to_markdown(outcomes(export(photos, references=REFERENCES)))
+    assert f"verified_new_localities: photo_id: a; reviewer: Ana; note: {note}" in text
 
 
 def test_recorded_watchlist_plants_are_judged_by_their_own_judgements() -> None:
