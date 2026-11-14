@@ -37,6 +37,32 @@ def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
     return decisions
 
 
+# An audit is blind only if it is the auditor's first answer for the photo (after it the
+# photo is released into their ranked queue) and no one reviewed the photo before it
+# without having audited it first. The app lets a sampled photo be reviewed only after the
+# reviewer's own audit, so any other earlier review, such as one made before the sample
+# existed, means the suggestion may have been seen.
+AUDITS_BY_BLINDNESS = """
+SELECT a.photo_id, a.reviewer, a.finding FROM audits a
+WHERE a.run_id = ? AND (
+    NOT EXISTS (
+        SELECT 1 FROM audits earlier WHERE earlier.run_id = a.run_id
+        AND earlier.photo_id = a.photo_id AND earlier.reviewer = a.reviewer
+        AND earlier.id < a.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM reviews r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
+        AND r.created_at <= a.created_at AND NOT EXISTS (
+            SELECT 1 FROM audits own WHERE own.run_id = r.run_id
+            AND own.photo_id = r.photo_id AND own.reviewer = r.reviewer
+            AND own.created_at < r.created_at
+        )
+    )
+) = ?
+ORDER BY a.id
+"""
+
+
 class Store:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
@@ -216,18 +242,9 @@ class Store:
             ]
 
     def latest_audits(self, run_id: str, blind: bool = True) -> dict[str, dict[str, str]]:
-        """Each auditor's latest finding per photo, as reviewer_decisions does for reviews.
-
-        An audit is blind only if it came before the photo's first review event, when the
-        suggestion could not yet have been seen. `blind=False` returns the later audits.
-        """
+        """Each auditor's latest blind (or, with `blind=False`, later) finding per photo."""
         with self.connect() as db:
-            rows = db.execute(
-                "SELECT a.photo_id, a.reviewer, a.finding FROM audits a WHERE a.run_id=? "
-                "AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.run_id=a.run_id "
-                "AND r.photo_id=a.photo_id AND r.created_at<=a.created_at) = ? ORDER BY a.id",
-                (run_id, blind),
-            ).fetchall()
+            rows = db.execute(AUDITS_BY_BLINDNESS, (run_id, blind)).fetchall()
         findings: dict[str, dict[str, str]] = {}
         for row in rows:
             findings.setdefault(row["photo_id"], {})[row["reviewer"]] = row["finding"]

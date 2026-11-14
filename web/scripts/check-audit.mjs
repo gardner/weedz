@@ -111,6 +111,9 @@ try {
   assert.equal(posted[0].reviewer, "Ana");
   assert.equal(typeof posted[0].effort_seconds, "number");
   await page.getByText("1 of 1 sampled photos audited").waitFor();
+  // Only the first answer is blind: the photo is now in Ana's ranked queue.
+  await expect(gorse).toBeDisabled();
+  await page.getByText("Your blind answer is recorded.").waitFor();
 
   // Once Ana has audited it, it rejoins her ranked queue, and the audit selection is not
   // carried over.

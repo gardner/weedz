@@ -103,9 +103,29 @@ def test_a_later_none_from_another_auditor_does_not_erase_a_found_weed(tmp_path:
     assert summary["audited"] == 1
     assert summary["weed_found"] == 1
     assert summary["disputed"] == 1
+
+
+def test_only_an_auditors_first_answer_is_blind(tmp_path: Path) -> None:
+    # After her first audit the photo is released into Ana's ranked queue, so a
+    # re-answer may follow seeing the suggestion even without a recorded review.
+    store = run_with_photos(tmp_path)
+    target = sorted(audit_sample("run", store.photos("run")))[0]
     store.audit("run", target, "none", "", "Ana")
-    summary = summarize_audit(queue, audit_sample("run", queue), store.latest_audits("run"), {})
-    assert (summary["weed_found"], summary["disputed"]) == (0, 0)
+    store.audit("run", target, "Ulex europaeus", "", "Ana")
+    assert store.latest_audits("run") == {target: {"Ana": "none"}}
+    assert store.latest_audits("run", blind=False) == {target: {"Ana": "Ulex europaeus"}}
+
+
+def test_a_review_by_someone_who_already_audited_does_not_unblind_others(
+    tmp_path: Path,
+) -> None:
+    store = run_with_photos(tmp_path)
+    target = sorted(audit_sample("run", store.photos("run")))[0]
+    store.audit("run", target, "none", "", "Ana")
+    store.review("run", target, "confirmed", "", "Ana")
+    store.audit("run", target, "Ulex europaeus", "", "Ben")
+    assert store.latest_audits("run") == {target: {"Ana": "none", "Ben": "Ulex europaeus"}}
+    assert store.latest_audits("run", blind=False) == {}
 
 
 def margin(name: str, value: float) -> dict:
@@ -157,7 +177,7 @@ def test_audits_after_the_photo_was_reviewed_are_not_counted_as_blind(tmp_path: 
     assert set(late) == {seen}
     summary = summarize_audit(queue, sample, blind, late)
     assert (summary["audited"], summary["weed_found"], summary["not_blind"]) == (1, 1, 1)
-    assert "after the photo was first reviewed" in summary["meaning"]
+    assert "first answer" in summary["meaning"]
 
 
 def test_detail_lists_who_audited_each_photo_without_findings(tmp_path: Path) -> None:

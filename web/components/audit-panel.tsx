@@ -28,7 +28,9 @@ export default function AuditPanel({
   saving: boolean;
 }) {
   const [note, setNote] = useState("");
-  const blocked = saving || !reviewer.trim();
+  // Only a first answer is blind: once audited, the photo joins this reviewer's ranked queue.
+  const answered = auditedBy(photo, reviewer);
+  const blocked = saving || !reviewer.trim() || answered;
   return (
     <article className="evidence audit-panel">
       <div className="evidence-heading">
@@ -41,9 +43,7 @@ export default function AuditPanel({
               : "Audit sample"}
           </p>
         </div>
-        <span className="badge">
-          {auditedBy(photo, reviewer) ? "You audited this" : "Not yet audited by you"}
-        </span>
+        <span className="badge">{answered ? "You audited this" : "Not yet audited by you"}</span>
       </div>
       <div className="image-stage">
         <Image
@@ -104,7 +104,11 @@ export default function AuditPanel({
             Unsure
           </button>
         </div>
-        <small>Audits are saved separately from suggestion reviews, with your name and time.</small>
+        <small>
+          {answered
+            ? "Your blind answer is recorded. Use suggestion review for any later judgement."
+            : "Audits are saved separately from suggestion reviews, with your name and time."}
+        </small>
       </div>
     </article>
   );
