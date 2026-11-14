@@ -95,3 +95,41 @@ def test_a_completed_image_budget_refusal_cannot_decode_for_free(
     assert client.put(path, json=body, headers=headers).status_code == 429
     assert decoded == [1], "A completed refusal must spend its report charge"
     assert client.put(path, json=report(), headers=headers).status_code == 429
+
+
+def test_reservation_expiring_during_decoding_is_charged_again_before_storage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sqlite3
+    from datetime import UTC, datetime, timedelta
+
+    from intake_helpers import jpeg, with_image
+
+    from weedz.intake import budget
+    from weedz.intake.images import clean_image
+
+    now = datetime.now(UTC)
+    clock = [now]
+    monkeypatch.setattr(budget, "_now", lambda: clock[0])
+    limits, report_id = Limits(reports_per_day=1), new_id()
+    secret, store = token(tmp_path), ReportStore(tmp_path)
+    body = with_image(jpeg())
+    parsed = Report.model_validate_json(json.dumps(body))
+    digest = hashlib.sha256(parsed.model_dump_json().encode()).hexdigest()
+    store.admit(1, report_id, digest, True, limits)
+    with sqlite3.connect(store.path) as db:
+        almost_a_day = now - timedelta(days=1) + timedelta(seconds=1)
+        db.execute("UPDATE usage SET used_at=?", (budget.stamp(almost_a_day),))
+
+    def cross_expiry(data: bytes, max_pixels: int) -> bytes:
+        clock[0] = now + timedelta(seconds=2)
+        return clean_image(data, max_pixels)
+
+    monkeypatch.setattr("weedz.intake.api.clean_image", cross_expiry)
+    client = TestClient(create_intake_app(tmp_path, limits))
+    headers = {"Authorization": f"Bearer {secret}"}
+    assert client.put(f"/reports/{report_id}", json=body, headers=headers).status_code == 201
+    with sqlite3.connect(store.path) as db:
+        rows = db.execute("SELECT image_bytes FROM usage").fetchall()
+        assert len(rows) == 1 and rows[0][0] > 0
+    assert client.put(f"/reports/{new_id()}", json=report(), headers=headers).status_code == 429

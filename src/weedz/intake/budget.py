@@ -45,7 +45,7 @@ def charge(
     _refuse_unless_fits(_window(db, submitter, None), int(image), limits)
     db.execute(
         "INSERT INTO usage(submitter, report_id, used_at) VALUES(?,?,?)",
-        (submitter, report_id, stamp(datetime.now(UTC))),
+        (submitter, report_id, stamp(_now())),
     )
 
 
@@ -96,7 +96,14 @@ def settle(
         "SELECT MAX(rowid) FROM usage WHERE submitter=? AND report_id=?", (submitter, report_id)
     ).fetchone()
     _refuse_unless_fits(_window(db, submitter, latest), image_bytes, limits)
-    db.execute("UPDATE usage SET image_bytes=? WHERE rowid=?", (image_bytes, latest))
+    updated = db.execute("UPDATE usage SET image_bytes=? WHERE rowid=?", (image_bytes, latest))
+    if not updated.rowcount:
+        # An interrupted admission can be retried just before its rolling-day expiry.
+        # If decoding crosses that boundary, charge the actual stored crop afresh.
+        db.execute(
+            "INSERT INTO usage(submitter,report_id,used_at,image_bytes) VALUES(?,?,?,?)",
+            (submitter, report_id, stamp(_now()), image_bytes),
+        )
     finish(db, submitter, report_id)
 
 
