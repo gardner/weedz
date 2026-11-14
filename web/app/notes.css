@@ -2,7 +2,7 @@
   padding: 15px 1px;
 }
 .field-notes .eyebrow {
-  color: #8b987e;
+  color: #636f58;
   font-size: 8px;
 }
 .field-notes h3 {
@@ -16,7 +16,7 @@
 .field-notes p {
   font-size: 11px;
   line-height: 1.8;
-  color: #7b8971;
+  color: #636e5b;
   margin: 0 0 15px;
 }
 .notes-rule {
@@ -40,7 +40,7 @@
   margin-bottom: 4px;
 }
 .watch-species em {
-  color: #93a086;
+  color: #636e57;
   font-size: 9px;
 }
 .score-row {
@@ -51,7 +51,7 @@
   margin: 12px 0;
 }
 .field-notes .score-row span {
-  color: #7c8a70;
+  color: #646f5a;
 }
 .score-row b {
   font-weight: 500;
@@ -59,7 +59,7 @@
 }
 .field-notes small {
   font-size: 9px;
-  color: #939e86;
+  color: #656f59;
   line-height: 1.6;
   display: block;
 }
@@ -72,7 +72,7 @@
   justify-content: space-between;
   gap: 20px;
   font-size: 8px;
-  color: #9ba48f;
+  color: #656e5a;
   letter-spacing: 1px;
 }
 .error-banner {
