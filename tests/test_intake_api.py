@@ -207,7 +207,10 @@ def test_tokens_are_never_logged_or_echoed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # URL-safe secrets can contain underscores, including a one-character suffix.
-    monkeypatch.setattr(tokens, "new_secret", lambda: "fixed_test_secret_with_underscores_e")
+    secrets = iter(
+        ("fixed_active_secret_with_underscores_e", "fixed_revoked_secret_with_underscores_e")
+    )
+    monkeypatch.setattr(tokens, "new_secret", lambda: next(secrets))
     submitters = Submitters(tmp_path)
     credential = submitters.issue("Phone")
     revoked = submitters.issue("Old")
