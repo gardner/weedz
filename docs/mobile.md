@@ -190,9 +190,10 @@ The rules are already code in `mobile/lib/domain/approval.dart`:
 
 ```text
 found ─► pending ──approve──► approved ──send──► sending ──receipt──► received ──► withdrawn
-            │  ▲                 │                  │
-            │  └──── any edit ───┘                  └─ no answer: back to approved,
-            │                                          same report id
+            │  ▲                 │               │  ▲
+            │  └──── any edit ───┘     no answer │  │ send again: same id, same content
+            │                                    ▼  │
+            │                                 unanswered ──► withdrawn
             └──decline──► declined (final; also from approved)
 ```
 
@@ -212,6 +213,9 @@ found ─► pending ──approve──► approved ──send──► sending
   and in the domain model an `Upload` comes only from `startSending()`. That
   call freezes an approved `ReportCase` and returns its body as JSON text, all
   in one step.
+- **Once sent, a report is frozen.** After a send with no answer, the server
+  may already have the report, so its id must keep meaning that content. The
+  report can only be sent again unchanged, or withdrawn.
 - **Declining is final** for that report. Declined photos are remembered so
   they are not suggested again under the same model.
 - **After sending**, the receipt is kept. The person can withdraw the report
@@ -255,7 +259,7 @@ JSON over HTTPS, and nothing about it is Flutter-specific.
   | 410 | Withdrawn | Mark the report withdrawn |
   | 413, 415, 422 | Refused as too big or malformed | Keep it, show why, never retry it as is |
   | 429 | Over the daily budget | Retry after `Retry-After` |
-  | Network error, 5xx | No answer | Back to approved, then retry with backoff under the same id |
+  | Network error, 5xx | No answer | Mark it unanswered: frozen, since the server may have it. Retry with backoff under the same id, or withdraw |
 
 - **Receipt:** `GET /reports/{id}`. **Withdraw:** `DELETE /reports/{id}`.
 - **Token storage:** the submitter token lives in

@@ -20,13 +20,17 @@ enum ApprovalStatus {
   /// The person approved this exact report; it may be sent.
   approved,
 
-  /// Being sent. Frozen until the server answers.
+  /// Being sent. Frozen from here on: the id now stands for this content.
   sending,
+
+  /// Sent without an answer, so the server may have it. It can only be sent
+  /// again, unchanged under the same id, or withdrawn.
+  unanswered,
 
   /// The server has it and returned a receipt.
   received,
 
-  /// Withdrawn from the server.
+  /// Withdrawn: not on the server, and never sent again.
   withdrawn,
 }
 
@@ -64,8 +68,11 @@ final class ReportCase {
   final ApprovalStatus status;
 
   /// Whether this report may be on its way to the server.
-  bool get maySend =>
-      status == ApprovalStatus.approved || status == ApprovalStatus.sending;
+  bool get maySend => const {
+    ApprovalStatus.approved,
+    ApprovalStatus.sending,
+    ApprovalStatus.unanswered,
+  }.contains(status);
 
   /// Replaces the report. A change needs approving again; an unchanged
   /// report keeps its status.
@@ -84,28 +91,34 @@ final class ReportCase {
     'decline',
   );
 
-  /// Freezes the approved report for sending and returns the request to
-  /// send. Both happen in one step, so no [Upload] exists for a report that
-  /// can still be edited or declined.
+  /// Freezes the approved report for sending (or sends an unanswered one
+  /// again) and returns the request to send. Both happen in one step, so no
+  /// [Upload] exists for a report that can still be edited or declined.
   (ReportCase, Upload) startSending() {
     final sending = _move(
-      {ApprovalStatus.approved},
+      {ApprovalStatus.approved, ApprovalStatus.unanswered},
       ApprovalStatus.sending,
       'send',
     );
     return (sending, Upload._(id, jsonEncode(report.toJson())));
   }
 
-  /// The send did not get an answer: still approved, to retry under [id].
+  /// The send got no answer. The report stays frozen, since the server may
+  /// have stored it under [id].
   ReportCase sendFailed() =>
-      _move({ApprovalStatus.sending}, ApprovalStatus.approved, 'fail');
+      _move({ApprovalStatus.sending}, ApprovalStatus.unanswered, 'fail');
 
   ReportCase received() =>
       _move({ApprovalStatus.sending}, ApprovalStatus.received, 'receive');
 
-  /// Withdrawn by the person, or found withdrawn on the server (410).
+  /// Withdrawn by the person (`DELETE`, after which a 404 also means it is
+  /// not there), or found withdrawn on the server (410).
   ReportCase withdrawn() => _move(
-    {ApprovalStatus.sending, ApprovalStatus.received},
+    {
+      ApprovalStatus.sending,
+      ApprovalStatus.unanswered,
+      ApprovalStatus.received,
+    },
     ApprovalStatus.withdrawn,
     'withdraw',
   );

@@ -89,10 +89,22 @@ void main() {
       expect(sent(upload), fullReport().toJson());
     });
 
-    test('a failed send stays approved, so a retry reuses the same id', () {
-      final retry = sending().sendFailed();
-      expect(retry.status, ApprovalStatus.approved);
-      expect(retry.startSending().$2.id, id);
+    test('a send without an answer stays frozen: retry or withdraw', () {
+      // The server may have stored it: its id must keep meaning this content.
+      final unanswered = sending().sendFailed();
+      expect(unanswered.status, ApprovalStatus.unanswered);
+      expect(unanswered.maySend, isTrue);
+      expect(
+        () => unanswered.edit(fullReport().withoutLocation()),
+        throwsStateError,
+      );
+      expect(unanswered.decline, throwsStateError);
+      expect(unanswered.approve, throwsStateError);
+      final (retrying, upload) = unanswered.startSending();
+      expect(retrying.status, ApprovalStatus.sending);
+      expect(upload.id, id);
+      expect(sent(upload), fullReport().toJson());
+      expect(unanswered.withdrawn().status, ApprovalStatus.withdrawn);
     });
 
     test('ends with the receipt, after which only withdrawal remains', () {
