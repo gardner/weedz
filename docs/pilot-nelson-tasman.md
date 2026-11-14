@@ -77,8 +77,6 @@ beard suggestions in particular need botanical review of diagnostic features,
 such as flowering time, plume colour and leaf form, before they count as leads.
 These are small, source-labelled samples, not reviewed false-positive rates.
 
-The next experiment should include original-subject taxon prompts as stronger
-comparison labels, independently reviewed native lookalikes and genuine
 ### Ranking revision 3: re-screen of the same photos
 
 The gannet failure was not a one-off. In 10 of 24 incidental photos a target
