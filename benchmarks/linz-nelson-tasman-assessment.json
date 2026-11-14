@@ -1,0 +1,2140 @@
+{
+  "schema": 1,
+  "issue": "https://github.com/gardner/weedz/issues/34",
+  "command": "uv run python scripts/assess_linz.py",
+  "assessed": "2026-11-14",
+  "catalog": "https://nz-imagery.s3.ap-southeast-2.amazonaws.com/catalog.json",
+  "run": "nelson-tasman-3e62ad801459",
+  "candidates": 61,
+  "aerial_max_gsd_m": 1.0,
+  "summary": {
+    "photos": 24,
+    "undated": 0,
+    "covered": 24,
+    "captured_inside_window": 8,
+    "within_year": 22,
+    "accuracy_unknown": 4,
+    "accuracy_over_20m": 9,
+    "accuracy_m": {
+      "min": 3.0,
+      "median": 18.5,
+      "max": 1634.0
+    },
+    "closest_gap_days": {
+      "min": 0,
+      "median": 141.0,
+      "max": 1476
+    }
+  },
+  "collections": [
+    {
+      "slug": "nelson_2008-2009_0.5m",
+      "title": "Nelson 0.5m Rural Aerial Photos (2008-2009)",
+      "href": "./nelson/nelson_2008-2009_0.5m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.5,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping"
+      ],
+      "capture_start": "2009-01-01",
+      "capture_end": "2009-01-31",
+      "collection_checksum": "12205cd8414f43cadc033ef0eb3e91e030144dfb5cb7ad1860b5b46c51374c17295b",
+      "capture_area_checksum": "1220570a52b648924f0467323fd60b96d711d1172b83d022da3ecfa1f8c5000aafab"
+    },
+    {
+      "slug": "nelson_2014_0.4m",
+      "title": "Nelson 0.4m Rural Aerial Photos (2014)",
+      "href": "./nelson/nelson_2014_0.4m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.4,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping"
+      ],
+      "capture_start": "2014-02-01",
+      "capture_end": "2014-02-28",
+      "collection_checksum": "1220088a316abda506b5ae6a788aa9b773ed9a7efc141a7d9f9290b5ab49ba0cab9a",
+      "capture_area_checksum": "12203d279b57a9109427427ba8bf5cf68e97dc630eb23416c9aa74da34d38fa68ed7"
+    },
+    {
+      "slug": "nelson_2014_0.4m",
+      "title": "Nelson 0.4m Near-Infrared Aerial Photos (2014)",
+      "href": "./nelson/nelson_2014_0.4m/rgbnir/2193/collection.json",
+      "category": "near-infrared-aerial-photos",
+      "bands": "rgbnir",
+      "gsd_m": 0.4,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping"
+      ],
+      "capture_start": "2014-02-01",
+      "capture_end": "2014-02-28",
+      "collection_checksum": "12202f49a2ce2a2c1d6cee850dd372542cf8f28181e7139ac40906ebfa86304ecc5f",
+      "capture_area_checksum": "1220f087fe2d4e2fbade0bbf75bd0c2005ea1d3400abef0ec00d3b04e00186c2b333"
+    },
+    {
+      "slug": "nelson_2018-2019_0.3m",
+      "title": "Nelson 0.3m Rural Aerial Photos (2018-2019)",
+      "href": "./nelson/nelson_2018-2019_0.3m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2019-01-16",
+      "capture_end": "2019-02-03",
+      "collection_checksum": "1220fbdcc8e7978c5e2030a378448ec4dc2da0bdb64729fbbdb0e74dd3c8c599ba28",
+      "capture_area_checksum": "1220f0979929ef279479640a34190e31669bbf417230714f181c70a44f206bc8a7ac"
+    },
+    {
+      "slug": "nelson_2022_0.075m",
+      "title": "Nelson 0.075m Urban Aerial Photos (2022)",
+      "href": "./nelson/nelson_2022_0.075m/rgb/2193/collection.json",
+      "category": "urban-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.075,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2022-01-15",
+      "capture_end": "2022-01-16",
+      "collection_checksum": "1220d6b7ea220b91723bfcb54cd1ebcb4ae6f096c9a8ca37a0b81b959e9e1939dc5b",
+      "capture_area_checksum": "1220edfb27df419d9bf68bff5112165a6fb88b04808655306f1cf6952e2b2065f2c8"
+    },
+    {
+      "slug": "nelson_2022_0.25m",
+      "title": "Nelson 0.25m Rural Aerial Photos (2022)",
+      "href": "./nelson/nelson_2022_0.25m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.25,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2022-12-29",
+      "capture_end": "2022-12-29",
+      "collection_checksum": "122095479bf7545ab53b71213e7e5203c40b3235596492f35afed4b947a20f0cad6c",
+      "capture_area_checksum": "122026b2a517e7b9ac2378bb212e29273980bf0d9d477d93c086c31818704f529637"
+    },
+    {
+      "slug": "nelson_2023_0.075m",
+      "title": "Nelson 0.075m Urban Aerial Photos (2023)",
+      "href": "./nelson/nelson_2023_0.075m/rgb/2193/collection.json",
+      "category": "urban-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.075,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2023-10-25",
+      "capture_end": "2023-11-12",
+      "collection_checksum": "1220d34662bee5c5c379e766ae829faebbfa04cbf5d5c34c5d37f74ac5fdb7223347",
+      "capture_area_checksum": "1220edfb27df419d9bf68bff5112165a6fb88b04808655306f1cf6952e2b2065f2c8"
+    },
+    {
+      "slug": "nelson_2025_0.075m",
+      "title": "Nelson 0.075m Urban Aerial Photos (2025)",
+      "href": "./nelson/nelson_2025_0.075m/rgb/2193/collection.json",
+      "category": "urban-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.075,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2025-12-01",
+      "capture_end": "2025-12-04",
+      "collection_checksum": "1220c202d6ea48f7f357f790512afafbd0dca808f72780316d7185ca41877e44dd92",
+      "capture_area_checksum": "1220edfb27df419d9bf68bff5112165a6fb88b04808655306f1cf6952e2b2065f2c8"
+    },
+    {
+      "slug": "nelson_2025_0.075m",
+      "title": "Nelson 0.075m Near-Infrared Aerial Photos (2025)",
+      "href": "./nelson/nelson_2025_0.075m/rgbnir/2193/collection.json",
+      "category": "near-infrared-aerial-photos",
+      "bands": "rgbnir",
+      "gsd_m": 0.075,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2025-12-01",
+      "capture_end": "2025-12-04",
+      "collection_checksum": "122031c2301cda9c17ec192bc6ede13791f09de4db0c696f22eb7ac036eec601028a",
+      "capture_area_checksum": "1220edfb27df419d9bf68bff5112165a6fb88b04808655306f1cf6952e2b2065f2c8"
+    },
+    {
+      "slug": "nelson_2025_0.1m",
+      "title": "Nelson 0.1m Ancillary Aerial Photos (2025)",
+      "href": "./nelson/nelson_2025_0.1m/rgb/2193/collection.json",
+      "category": "ancillary-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.1,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council"
+      ],
+      "producers": [
+        "Landpro"
+      ],
+      "capture_start": "2025-05-20",
+      "capture_end": "2025-05-23",
+      "collection_checksum": "1220ef26946b9267e9be23bb4257ddb488731cc97ce717c21ea03ee7dfb8d25c5387",
+      "capture_area_checksum": "122084b4b5ecf10863be73ba47892eff755edd0cb48d98c2dcc153d0310caacafc55"
+    },
+    {
+      "slug": "top-of-the-south-flood_2022_0.15m",
+      "title": "Top of the South Flood 0.15m Aerial Photos (2022)",
+      "href": "./nelson/top-of-the-south-flood_2022_0.15m/rgb/2193/collection.json",
+      "category": "ancillary-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.15,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Nelson City Council",
+        "Tasman District Council",
+        "New Zealand Transport Agency Waka Kotahi"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2022-08-23",
+      "capture_end": "2022-09-06",
+      "collection_checksum": "122068b761dbf13e45adbc4b95fea45be7767e8016d6dcafc31807bd18213420eafe",
+      "capture_area_checksum": "12209352f3c1f7e24dc89d8b419bb05ae1b0c2adaf94957d1a80d1ca8dfe3d7430f7"
+    },
+    {
+      "slug": "new-zealand_2020-2021_10m",
+      "title": "New Zealand 10m Satellite Imagery (2020-2021)",
+      "href": "./new-zealand/new-zealand_2020-2021_10m/rgb/2193/collection.json",
+      "category": "satellite-imagery",
+      "bands": "rgb",
+      "gsd_m": 10,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Sinergise"
+      ],
+      "producers": [
+        "European Space Agency"
+      ],
+      "capture_start": "2020-09-01",
+      "capture_end": "2021-04-30",
+      "collection_checksum": "12206dfcd9c6284d4b82ea5bccbae348387ae5f51a3e9ffa3add04bbe15ff440b0f0",
+      "capture_area_checksum": "122073046cd8e27bd806039bb14211d4a23839d8b0e594db84b0e6872e079929fc8b"
+    },
+    {
+      "slug": "new-zealand_2021-2022_10m",
+      "title": "New Zealand 10m Satellite Imagery (2021-2022)",
+      "href": "./new-zealand/new-zealand_2021-2022_10m/rgb/2193/collection.json",
+      "category": "satellite-imagery",
+      "bands": "rgb",
+      "gsd_m": 10,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Sinergise"
+      ],
+      "producers": [
+        "European Space Agency"
+      ],
+      "capture_start": "2021-09-01",
+      "capture_end": "2022-04-30",
+      "collection_checksum": "122054cf0c8e101ecfa38fc6597380dedbc4338cfcb5444bbd08254452c6635ca948",
+      "capture_area_checksum": "1220b785a805d8adffa5316d56b933ef2635c991627b637fcc09c9c77ee74d6a14d7"
+    },
+    {
+      "slug": "new-zealand_2022-2023_10m",
+      "title": "New Zealand 10m Satellite Imagery (2022-2023)",
+      "href": "./new-zealand/new-zealand_2022-2023_10m/rgb/2193/collection.json",
+      "category": "satellite-imagery",
+      "bands": "rgb",
+      "gsd_m": 10,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Planet"
+      ],
+      "producers": [
+        "European Space Agency"
+      ],
+      "capture_start": "2022-09-01",
+      "capture_end": "2023-04-30",
+      "collection_checksum": "1220b4f856f2aea217c93801664c8503ad1fadb8d28cbba003d1c7611516b3f09ff8",
+      "capture_area_checksum": "1220b785a805d8adffa5316d56b933ef2635c991627b637fcc09c9c77ee74d6a14d7"
+    },
+    {
+      "slug": "new-zealand_2023-2024_10m",
+      "title": "New Zealand 10m Satellite Imagery (2023-2024)",
+      "href": "./new-zealand/new-zealand_2023-2024_10m/rgb/2193/collection.json",
+      "category": "satellite-imagery",
+      "bands": "rgb",
+      "gsd_m": 10,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Planet"
+      ],
+      "producers": [
+        "European Space Agency"
+      ],
+      "capture_start": "2023-09-01",
+      "capture_end": "2024-04-30",
+      "collection_checksum": "1220b9f71c9ecc5a1cc65551f49891f00bc66df7fe12f9beae0b99a46f9fe9c0da3d",
+      "capture_area_checksum": "1220a23cd056919e015ae815eb9049a86cb4fce06abd18d52cc8f464b9ca696b428d"
+    },
+    {
+      "slug": "new-zealand_2024-2025_10m",
+      "title": "New Zealand 10m Satellite Imagery (2024-2025)",
+      "href": "./new-zealand/new-zealand_2024-2025_10m/rgb/2193/collection.json",
+      "category": "satellite-imagery",
+      "bands": "rgb",
+      "gsd_m": 10,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Planet"
+      ],
+      "producers": [
+        "European Space Agency"
+      ],
+      "capture_start": "2024-09-01",
+      "capture_end": "2025-04-30",
+      "collection_checksum": "1220cd6c36ded4180968763fcbc40d89ecb2946de4c8aff4ea7b7b1f826f6a88aa9d",
+      "capture_area_checksum": "1220c26197eaeab7a17fc4208e136f0a4fe01e0937daca803d5949b32c754f550bfc"
+    },
+    {
+      "slug": "new-zealand_2025-2026_10m",
+      "title": "New Zealand 10m Satellite Imagery (2025-2026)",
+      "href": "./new-zealand/new-zealand_2025-2026_10m/rgb/2193/collection.json",
+      "category": "satellite-imagery",
+      "bands": "rgb",
+      "gsd_m": 10,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Planet"
+      ],
+      "producers": [
+        "European Space Agency"
+      ],
+      "capture_start": "2025-09-01",
+      "capture_end": "2026-04-30",
+      "collection_checksum": "1220a18c5cef69dd3c0bdf607937c6946a4647b822d1026b34dce8f3c695930dbf46",
+      "capture_area_checksum": "1220b49d6643a5fdbb0e4d8c06e8211c1d65ec0079d3a49d6065a098df30e9a03a24"
+    },
+    {
+      "slug": "tasman-river-valleys-flood_2025_0.1m",
+      "title": "Tasman River Valleys Flood 0.1m Aerial Photos (2025)",
+      "href": "./tasman/tasman-river-valleys-flood_2025_0.1m/rgb/2193/collection.json",
+      "category": "ancillary-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.1,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2025-07-17",
+      "capture_end": "2025-07-17",
+      "collection_checksum": "1220cd13f329b57436b9ac50fa39bfc0fc014b4afce401b65468347fca2e734137ba",
+      "capture_area_checksum": "1220e6560e3953b98438b1bab0aab3e916abe2ca6e62848620adb777596fe3a170e0"
+    },
+    {
+      "slug": "tasman_2001-2002_1m",
+      "title": "Tasman 1m Rural Aerial Photos (2001-2002)",
+      "href": "./tasman/tasman_2001-2002_1m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 1,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping"
+      ],
+      "capture_start": "2001-09-01",
+      "capture_end": "2002-04-30",
+      "collection_checksum": "122024a05006668b9c910bc4be03f94a3dd11e4bc679cb46c233f2e4097f08f1ca56",
+      "capture_area_checksum": "1220c6fb0df783b8e4710e08a636a77ee10603ea19488d72d93584ba1fe53253ba74"
+    },
+    {
+      "slug": "tasman_2004-2005_1m",
+      "title": "Tasman 1m Rural Aerial Photos (2004-2005)",
+      "href": "./tasman/tasman_2004-2005_1m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 1,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping"
+      ],
+      "capture_start": "2004-09-01",
+      "capture_end": "2005-04-30",
+      "collection_checksum": "122087b7933ed75c373f29d1c92597db8f1a6aa978a5ecb227eca9063e6fac396233",
+      "capture_area_checksum": "1220d69bd8e9513f56916b422bbec2f09cfa8f769175df02b4f1fda8a16714d4f23b"
+    },
+    {
+      "slug": "tasman_2006-2007_1m",
+      "title": "Tasman 1m Rural Aerial Photos (2006-2007)",
+      "href": "./tasman/tasman_2006-2007_1m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 1,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping"
+      ],
+      "capture_start": "2006-07-01",
+      "capture_end": "2006-07-31",
+      "collection_checksum": "1220a0441c6f6b716bc2a93a4d9e2f796c9563f1752063afde42c4ceb4a0dbe612e8",
+      "capture_area_checksum": "12201d6f928c23a1a89aad4a831a871d195f3b9cf78ae8cf6017f2e2d57c197db0df"
+    },
+    {
+      "slug": "tasman_2012-2013_0.4m",
+      "title": "Tasman 0.4m Rural Aerial Photos (2012-2013)",
+      "href": "./tasman/tasman_2012-2013_0.4m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.4,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping"
+      ],
+      "capture_start": "2012-10-01",
+      "capture_end": "2012-11-30",
+      "collection_checksum": "1220ca03bce6d333ee56480ac95c923a6226083b40c0c81e328c2e80604a43a20f62",
+      "capture_area_checksum": "1220c0d318ba17c2d5a8b465d839f7b310d1ee01e0ba37ddf04b6f5dfe0110447689"
+    },
+    {
+      "slug": "tasman_2015-2016_0.3m",
+      "title": "Tasman 0.3m Rural Aerial Photos (2015-2016)",
+      "href": "./tasman/tasman_2015-2016_0.3m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "AAM NZ"
+      ],
+      "capture_start": "2015-11-13",
+      "capture_end": "2016-01-09",
+      "collection_checksum": "12200710ae448fb9acbe4a5dd2fd873272d1815dbb13fc537f75f4bbe0f8fb7c9073",
+      "capture_area_checksum": "122031af8e06e888319bcdd3d3aab99df1dfb8d0cf83f8361d285d976030bce4eb94"
+    },
+    {
+      "slug": "tasman_2015-2016_0.3m",
+      "title": "Tasman 0.3m Near-Infrared Aerial Photos (2015-2016)",
+      "href": "./tasman/tasman_2015-2016_0.3m/rgbnir/2193/collection.json",
+      "category": "near-infrared-aerial-photos",
+      "bands": "rgbnir",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "AAM NZ"
+      ],
+      "capture_start": "2015-11-13",
+      "capture_end": "2016-01-09",
+      "collection_checksum": "1220db563bc4280c379289a6e3cd1bf160ffa27aba078dc023583f7e6f78081f03fd",
+      "capture_area_checksum": "1220f409f2e49bc01c414f576d0ebba0a5479a871324d018533b0299978786f650ff"
+    },
+    {
+      "slug": "tasman_2016-2017_0.3m",
+      "title": "Tasman 0.3m Rural Aerial Photos (2016-2017)",
+      "href": "./tasman/tasman_2016-2017_0.3m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "AAM NZ",
+        "Tasman District Council"
+      ],
+      "producers": [
+        "AAM NZ"
+      ],
+      "capture_start": "2016-12-08",
+      "capture_end": "2017-02-05",
+      "collection_checksum": "12207b4d974854e6b84394618fd983dd68a266d1a0cc48fd05719bb9dfc049b38b80",
+      "capture_area_checksum": "122091009e666f182a24389e97cf920e14c042994ecbfcff396970960ad2c90091ee"
+    },
+    {
+      "slug": "tasman_2016-2017_0.3m",
+      "title": "Tasman 0.3m Near-Infrared Aerial Photos (2016-2017)",
+      "href": "./tasman/tasman_2016-2017_0.3m/rgbnir/2193/collection.json",
+      "category": "near-infrared-aerial-photos",
+      "bands": "rgbnir",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council, AAM NZ"
+      ],
+      "producers": [
+        "AAM NZ"
+      ],
+      "capture_start": "2016-12-08",
+      "capture_end": "2017-02-05",
+      "collection_checksum": "12207aac73a027bceb39f4aba9d10246646f36a6bacdb6c3594e389b2c11a2d982b7",
+      "capture_area_checksum": "12201a82ef6b4961be4173861961585aabf8bc362a16e98f975405404fecc0ffe780"
+    },
+    {
+      "slug": "tasman_2018-2019_0.3m",
+      "title": "Tasman 0.3m Rural Aerial Photos (2018-2019)",
+      "href": "./tasman/tasman_2018-2019_0.3m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2019-01-02",
+      "capture_end": "2019-04-03",
+      "collection_checksum": "12204e1014209d78e8a2c4037033ee32e47bd4802b86933f2f926c28768745139ec5",
+      "capture_area_checksum": "1220701b1fad73c7a59761e1c28a8208786fd76c34603a49a53b7a4150c163bfedf2"
+    },
+    {
+      "slug": "tasman_2018-2019_0.3m",
+      "title": "Tasman 0.3m Near-Infrared Aerial Photos (2018-2019)",
+      "href": "./tasman/tasman_2018-2019_0.3m/rgbnir/2193/collection.json",
+      "category": "near-infrared-aerial-photos",
+      "bands": "rgbnir",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2019-01-02",
+      "capture_end": "2019-04-03",
+      "collection_checksum": "122036308b7948d60ea1110fcd35b77f58740464b7de0ac5e186464af99ab2bb7d3a",
+      "capture_area_checksum": "1220288989bfd424a120859d31afa61f007cb281cdba59b3e7e86aaeac8b50740c0d"
+    },
+    {
+      "slug": "tasman_2020_0.3m",
+      "title": "Tasman 0.3m Rural Aerial Photos (2020)",
+      "href": "./tasman/tasman_2020_0.3m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2020-01-16",
+      "capture_end": "2020-12-16",
+      "collection_checksum": "1220d2603c27565c4a3114e5742a755c96c3ec69d47a1f52c41e1a45028c4131ad81",
+      "capture_area_checksum": "12207f9520f105768122168f689815de13f3bc941b65ca9795dc33eecd717b59dcca"
+    },
+    {
+      "slug": "tasman_2020_0.3m",
+      "title": "Tasman 0.3m Near-Infrared Aerial Photos (2020)",
+      "href": "./tasman/tasman_2020_0.3m/rgbnir/2193/collection.json",
+      "category": "near-infrared-aerial-photos",
+      "bands": "rgbnir",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2020-01-16",
+      "capture_end": "2020-12-16",
+      "collection_checksum": "1220d6cc49f932d11d97d15b79450a66446d6430c397aec0416150067addf627ff9f",
+      "capture_area_checksum": "12203feae0faacd70709e1df1afd99d80c9805cf653ef660f4629af7f4b8336a1c60"
+    },
+    {
+      "slug": "tasman_2022-2023_0.25m",
+      "title": "Tasman 0.25m Rural Aerial Photos (2022-2023)",
+      "href": "./tasman/tasman_2022-2023_0.25m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.25,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2022-10-01",
+      "capture_end": "2023-03-31",
+      "collection_checksum": "12200d1afe2b73a0396225fc6dafde3416445c3fefce573f90786f44d121e748c650",
+      "capture_area_checksum": "1220444d8d4aee31008ba43308fc842e04057a95c769e6c0f35b41f0ae807458c185"
+    },
+    {
+      "slug": "tasman_2022_0.3m",
+      "title": "Tasman 0.3m Rural Aerial Photos (2022)",
+      "href": "./tasman/tasman_2022_0.3m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.3,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2022-01-30",
+      "capture_end": "2022-03-15",
+      "collection_checksum": "1220e22417b3a294f497548b2e54544300d4d668f60f8e723d44e3110bf7a081bfa4",
+      "capture_area_checksum": "12209ba2842cf80d6db660f6c78a660f31d1ea784a70df0c8d2c5c4445cd5cd8e365"
+    },
+    {
+      "slug": "tasman_2024-2025_0.25m",
+      "title": "Tasman 0.25m Rural Aerial Photos (2024-2025)",
+      "href": "./tasman/tasman_2024-2025_0.25m/rgb/2193/collection.json",
+      "category": "rural-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.25,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2024-12-06",
+      "capture_end": "2025-03-27",
+      "collection_checksum": "1220dbf4cbd4238d616de36853d4c91069cfb9c695af25da92d10bce627657933811",
+      "capture_area_checksum": "1220ac0ae538ce8ace31a683cf4ba7ac74d27885b0d3c2b29562a4434fc33997f313"
+    },
+    {
+      "slug": "tasman_2024-2025_0.25m",
+      "title": "Tasman 0.25m Near-Infrared Aerial Photos (2024-2025)",
+      "href": "./tasman/tasman_2024-2025_0.25m/rgbnir/2193/collection.json",
+      "category": "near-infrared-aerial-photos",
+      "bands": "rgbnir",
+      "gsd_m": 0.25,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Tasman District Council"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "2024-12-06",
+      "capture_end": "2025-03-27",
+      "collection_checksum": "1220d90c9b241e632141a3d99a000c294c92ef9c348ffed2c03a8d4aedbbd098ed3c",
+      "capture_area_checksum": "12209b2d4d47c0cd5a077a2e9b7a1e717186d9ecb4c843385b1a64d6a064e6f21f0e"
+    },
+    {
+      "slug": "tasman_marlborough_nelson_sn25020_2000_0.75m",
+      "title": "Tasman / Marlborough / Nelson 0.75m SN25020 (2000)",
+      "href": "./tasman/tasman_marlborough_nelson_sn25020_2000_0.75m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.75,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "2000-01-13",
+      "capture_end": "2000-02-28",
+      "collection_checksum": "1220fb49bbf5c396912f7e2ea0c443fc894fadf4d3f5316048b5ed027d61a649fd87",
+      "capture_area_checksum": "1220377df671d86c472cf452ff8fe0bf767878e67d35e2643526ef420e6f3d17c316"
+    },
+    {
+      "slug": "tasman_sn12391a_1996-2000_0.4m",
+      "title": "Tasman 0.4m SN12391A (1996-2000)",
+      "href": "./tasman/tasman_sn12391a_1996-2000_0.4m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.4,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "Aerial Surveys"
+      ],
+      "capture_start": "1996-09-17",
+      "capture_end": "2000-02-28",
+      "collection_checksum": "1220bd711a97ebfb9543910213e31e2894d151adcd8ca05f6a0f814fee6d78e55018",
+      "capture_area_checksum": "122052cc2129b6cca87efabe2594f3870948d7c58be8945980fe271d8068d04c9abd"
+    },
+    {
+      "slug": "tasman_sn8531_1985-1986_0.375m",
+      "title": "Tasman 0.375m SN8531 (1985-1986)",
+      "href": "./tasman/tasman_sn8531_1985-1986_0.375m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.375,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "1985-09-13",
+      "capture_end": "1986-01-31",
+      "collection_checksum": "122036d3be12c06c4877a79aec5e0f976431eb49973d0a6ed71cd49b04f8caa759bc",
+      "capture_area_checksum": "1220147d730c7fefcb05010408194f4ebd7817cf68930d49f8c6315c900504ee13ec"
+    },
+    {
+      "slug": "tasman_sn8821_1991_0.6m",
+      "title": "Tasman 0.6m SN8821 (1991)",
+      "href": "./tasman/tasman_sn8821_1991_0.6m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.6,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "1991-02-05",
+      "capture_end": "1991-02-05",
+      "collection_checksum": "1220b759c443a062c5a5b56afdb06f025f33dae789694b5b90aa7deefcc96542a4be",
+      "capture_area_checksum": "12204c97568ab55e1e1016a190bb6941d87fdd3152f5551c2fc3d44bc687bcaa7176"
+    },
+    {
+      "slug": "tasman_snc25049_2000_0.75m",
+      "title": "Tasman 0.75m SNC25049 (2000)",
+      "href": "./tasman/tasman_snc25049_2000_0.75m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.75,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "2000-12-05",
+      "capture_end": "2000-12-05",
+      "collection_checksum": "1220ed1fca5ff2897788a7b82ce01cd2b8b5757e750fdc871a7fa33b75d141b34634",
+      "capture_area_checksum": "122054c3f61776705808ea1e5559f409106dec44b32d6bad4da4da75e440d487b80f"
+    },
+    {
+      "slug": "tasman_snc30002_2002_0.75m",
+      "title": "Tasman 0.75m SNC30002 (2002)",
+      "href": "./tasman/tasman_snc30002_2002_0.75m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.75,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "2002-02-21",
+      "capture_end": "2002-02-21",
+      "collection_checksum": "122001f45b9119f69b8765c27ba1053580b3c0e91b1725e6787351fd8f808b6b86af",
+      "capture_area_checksum": "1220ab5685e2a2a4202cec8147c05d3250fd5d238cc35d352bb6752a5848ff0e6214"
+    },
+    {
+      "slug": "tasman_snc5676_1980-1981_0.64m",
+      "title": "Tasman 0.64m SNC5676 (1980-1981)",
+      "href": "./tasman/tasman_snc5676_1980-1981_0.64m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.64,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "1980-01-30",
+      "capture_end": "1981-01-11",
+      "collection_checksum": "1220f41a7ce669140f5594940d5765dca31d23440151a5f9822cbae4bda858f1a7a5",
+      "capture_area_checksum": "12207b2ec4786261da66745eea905e336f6b4ada1302029258a1e9bbca195fecdde2"
+    },
+    {
+      "slug": "tasman_west-coast_sn8409_1984-1985_0.375m",
+      "title": "Tasman / West Coast 0.375m SN8409 (1984-1985)",
+      "href": "./tasman/tasman_west-coast_sn8409_1984-1985_0.375m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.375,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "1984-11-07",
+      "capture_end": "1985-03-09",
+      "collection_checksum": "12204fc20d3d6e23b8b76252daeaf3cc4d830e355364479e5acadb3e8a6c6e97f808",
+      "capture_area_checksum": "1220af2012c5bba5bdacb6351ad9868b772e15aecb651896868a82235f3c0858fa80"
+    },
+    {
+      "slug": "tasman_west-coast_snc50452_2004-2005_0.64m",
+      "title": "Tasman / West Coast 0.64m SNC50452 (2004-2005)",
+      "href": "./tasman/tasman_west-coast_snc50452_2004-2005_0.64m/rgb/2193/collection.json",
+      "category": "scanned-aerial-photos",
+      "bands": "rgb",
+      "gsd_m": 0.64,
+      "license": "CC-BY-4.0",
+      "licensors": [
+        "Toitū Te Whenua Land Information New Zealand",
+        "Ministry for Primary Industries"
+      ],
+      "producers": [
+        "New Zealand Aerial Mapping",
+        "SKYVUW"
+      ],
+      "capture_start": "2004-11-19",
+      "capture_end": "2005-04-06",
+      "collection_checksum": "1220a5b7e60c6ea3804ad4dea5c78cdd9efb8704e4f2f17f42cd1cfc7bcd7314f230",
+      "capture_area_checksum": "12207876261038e4a0ab738b4ec7c1384c81500a1a8194cc72b9865be52cc965d168"
+    }
+  ],
+  "photos": [
+    {
+      "id": "inat-256674952-460262550",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 5.0,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 50.0,
+        "search_area_vs_3m_clump": 11.1
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": 66.66666666666667,
+        "search_area_vs_3m_clump": 11.1
+      }
+    },
+    {
+      "id": "inat-256675033-460262714",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 4.0,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 40.0,
+        "search_area_vs_3m_clump": 7.1
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": 53.333333333333336,
+        "search_area_vs_3m_clump": 7.1
+      }
+    },
+    {
+      "id": "inat-256675146-460262865",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 8.0,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 80.0,
+        "search_area_vs_3m_clump": 28.4
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": 106.66666666666667,
+        "search_area_vs_3m_clump": 28.4
+      }
+    },
+    {
+      "id": "inat-256675287-460263038",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 4.0,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 40.0,
+        "search_area_vs_3m_clump": 7.1
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": 53.333333333333336,
+        "search_area_vs_3m_clump": 7.1
+      }
+    },
+    {
+      "id": "inat-256691045-460294362",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 1634.0,
+      "covering": 12,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2022_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2022-12-29",
+        "capture_end": "2022-12-29",
+        "gap_days": -732,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 6536.0,
+        "search_area_vs_3m_clump": 1186647.1
+      },
+      "finest_within_year": null
+    },
+    {
+      "id": "inat-256716592-460347209",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": null,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      }
+    },
+    {
+      "id": "inat-256727061-460368453",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": null,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      }
+    },
+    {
+      "id": "inat-256808221-460529900",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 8.0,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 80.0,
+        "search_area_vs_3m_clump": 28.4
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": 106.66666666666667,
+        "search_area_vs_3m_clump": 28.4
+      }
+    },
+    {
+      "id": "inat-256862582-460640098",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 17.0,
+      "covering": 21,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman-river-valleys-flood_2025_0.1m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_sn8531_1985-1986_0.375m:rgb",
+        "tasman_snc30002_2002_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 68.0,
+        "search_area_vs_3m_clump": 128.4
+      },
+      "finest_within_year": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 170.0,
+        "search_area_vs_3m_clump": 128.4
+      }
+    },
+    {
+      "id": "inat-256863810-460643105",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 6.0,
+      "covering": 20,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman-river-valleys-flood_2025_0.1m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2006-2007_1m:rgb",
+        "tasman_2016-2017_0.3m:rgb",
+        "tasman_2016-2017_0.3m:rgbnir",
+        "tasman_2020_0.3m:rgb",
+        "tasman_2020_0.3m:rgbnir",
+        "tasman_2022-2023_0.25m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_sn8531_1985-1986_0.375m:rgb",
+        "tasman_sn8821_1991_0.6m:rgb",
+        "tasman_snc25049_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 60.0,
+        "search_area_vs_3m_clump": 16.0
+      },
+      "finest_within_year": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 60.0,
+        "search_area_vs_3m_clump": 16.0
+      }
+    },
+    {
+      "id": "inat-256864013-460643540",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 5.0,
+      "covering": 19,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman-river-valleys-flood_2025_0.1m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2006-2007_1m:rgb",
+        "tasman_2016-2017_0.3m:rgb",
+        "tasman_2016-2017_0.3m:rgbnir",
+        "tasman_2020_0.3m:rgb",
+        "tasman_2020_0.3m:rgbnir",
+        "tasman_2022-2023_0.25m:rgb",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_sn8531_1985-1986_0.375m:rgb",
+        "tasman_sn8821_1991_0.6m:rgb",
+        "tasman_snc25049_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 50.0,
+        "search_area_vs_3m_clump": 11.1
+      },
+      "finest_within_year": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 50.0,
+        "search_area_vs_3m_clump": 11.1
+      }
+    },
+    {
+      "id": "inat-256864136-460643767",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 3.0,
+      "covering": 19,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman-river-valleys-flood_2025_0.1m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2006-2007_1m:rgb",
+        "tasman_2016-2017_0.3m:rgb",
+        "tasman_2016-2017_0.3m:rgbnir",
+        "tasman_2020_0.3m:rgb",
+        "tasman_2020_0.3m:rgbnir",
+        "tasman_2022-2023_0.25m:rgb",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_sn8531_1985-1986_0.375m:rgb",
+        "tasman_sn8821_1991_0.6m:rgb",
+        "tasman_snc25049_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 30.0,
+        "search_area_vs_3m_clump": 4.0
+      },
+      "finest_within_year": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 30.0,
+        "search_area_vs_3m_clump": 4.0
+      }
+    },
+    {
+      "id": "inat-256864189-460643855",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 4.0,
+      "covering": 19,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman-river-valleys-flood_2025_0.1m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2006-2007_1m:rgb",
+        "tasman_2016-2017_0.3m:rgb",
+        "tasman_2016-2017_0.3m:rgbnir",
+        "tasman_2020_0.3m:rgb",
+        "tasman_2020_0.3m:rgbnir",
+        "tasman_2022-2023_0.25m:rgb",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_sn8531_1985-1986_0.375m:rgb",
+        "tasman_sn8821_1991_0.6m:rgb",
+        "tasman_snc25049_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 40.0,
+        "search_area_vs_3m_clump": 7.1
+      },
+      "finest_within_year": {
+        "slug": "tasman-river-valleys-flood_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-07-17",
+        "capture_end": "2025-07-17",
+        "gap_days": 198,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 40.0,
+        "search_area_vs_3m_clump": 7.1
+      }
+    },
+    {
+      "id": "inat-256912633-460740779",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 51.0,
+      "covering": 21,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2004-2005_1m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_snc30002_2002_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb",
+        "tasman_west-coast_sn8409_1984-1985_0.375m:rgb",
+        "tasman_west-coast_snc50452_2004-2005_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 204.0,
+        "search_area_vs_3m_clump": 1156.0
+      },
+      "finest_within_year": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 204.0,
+        "search_area_vs_3m_clump": 1156.0
+      }
+    },
+    {
+      "id": "inat-256913086-460741828",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 48.0,
+      "covering": 21,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2004-2005_1m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_snc30002_2002_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb",
+        "tasman_west-coast_sn8409_1984-1985_0.375m:rgb",
+        "tasman_west-coast_snc50452_2004-2005_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 192.0,
+        "search_area_vs_3m_clump": 1024.0
+      },
+      "finest_within_year": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 192.0,
+        "search_area_vs_3m_clump": 1024.0
+      }
+    },
+    {
+      "id": "inat-256918601-460754616",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 100.0,
+      "covering": 20,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_sn8531_1985-1986_0.375m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 1000.0,
+        "search_area_vs_3m_clump": 4444.4
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": 1333.3333333333335,
+        "search_area_vs_3m_clump": 4444.4
+      }
+    },
+    {
+      "id": "inat-257459474-461857745",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 195.0,
+      "covering": 17,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2004-2005_1m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_west-coast_sn8409_1984-1985_0.375m:rgb",
+        "tasman_west-coast_snc50452_2004-2005_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 780.0,
+        "search_area_vs_3m_clump": 16900.0
+      },
+      "finest_within_year": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 780.0,
+        "search_area_vs_3m_clump": 16900.0
+      }
+    },
+    {
+      "id": "inat-257459539-461857914",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 64.0,
+      "covering": 17,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2004-2005_1m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_west-coast_sn8409_1984-1985_0.375m:rgb",
+        "tasman_west-coast_snc50452_2004-2005_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 256.0,
+        "search_area_vs_3m_clump": 1820.4
+      },
+      "finest_within_year": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 256.0,
+        "search_area_vs_3m_clump": 1820.4
+      }
+    },
+    {
+      "id": "inat-257459949-461859480",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 284.0,
+      "covering": 19,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2004-2005_1m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb",
+        "tasman_west-coast_sn8409_1984-1985_0.375m:rgb",
+        "tasman_west-coast_snc50452_2004-2005_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 1136.0,
+        "search_area_vs_3m_clump": 35847.1
+      },
+      "finest_within_year": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 1136.0,
+        "search_area_vs_3m_clump": 35847.1
+      }
+    },
+    {
+      "id": "inat-257460208-461859096",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 282.0,
+      "covering": 19,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2004-2005_1m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb",
+        "tasman_west-coast_sn8409_1984-1985_0.375m:rgb",
+        "tasman_west-coast_snc50452_2004-2005_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 1128.0,
+        "search_area_vs_3m_clump": 35344.0
+      },
+      "finest_within_year": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": 1128.0,
+        "search_area_vs_3m_clump": 35344.0
+      }
+    },
+    {
+      "id": "inat-257734181-462389676",
+      "region": "Tasman",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": 1623.0,
+      "covering": 12,
+      "covering_collections": [
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2001-2002_1m:rgb",
+        "tasman_2020_0.3m:rgb",
+        "tasman_2020_0.3m:rgbnir",
+        "tasman_sn12391a_1996-2000_0.4m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb",
+        "tasman_west-coast_snc50452_2004-2005_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2020_0.3m",
+        "gsd_m": 0.3,
+        "capture_start": "2020-01-16",
+        "capture_end": "2020-12-16",
+        "gap_days": -1476,
+        "pixels_across": {
+          "1m": 3.3333333333333335,
+          "3m": 10.0
+        },
+        "accuracy_radius_px": 5410.0,
+        "search_area_vs_3m_clump": 1170724.0
+      },
+      "finest_within_year": null
+    },
+    {
+      "id": "inat-259114109-465059628",
+      "region": "Nelson",
+      "observed_on": "2024-12-30",
+      "positional_accuracy_m": 20.0,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 141,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": 200.0,
+        "search_area_vs_3m_clump": 177.8
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 336,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": 266.6666666666667,
+        "search_area_vs_3m_clump": 177.8
+      }
+    },
+    {
+      "id": "inat-331872487-602149309",
+      "region": "Nelson",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": null,
+      "covering": 19,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "nelson_2025_0.1m",
+        "gsd_m": 0.1,
+        "capture_start": "2025-05-20",
+        "capture_end": "2025-05-23",
+        "gap_days": 140,
+        "pixels_across": {
+          "1m": 10.0,
+          "3m": 30.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 335,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      }
+    },
+    {
+      "id": "inat-331889702-602185404",
+      "region": "Nelson",
+      "observed_on": "2024-12-31",
+      "positional_accuracy_m": null,
+      "covering": 28,
+      "covering_collections": [
+        "nelson_2008-2009_0.5m:rgb",
+        "nelson_2014_0.4m:rgb",
+        "nelson_2014_0.4m:rgbnir",
+        "nelson_2018-2019_0.3m:rgb",
+        "nelson_2022_0.075m:rgb",
+        "nelson_2022_0.25m:rgb",
+        "nelson_2023_0.075m:rgb",
+        "nelson_2025_0.075m:rgb",
+        "nelson_2025_0.075m:rgbnir",
+        "nelson_2025_0.1m:rgb",
+        "top-of-the-south-flood_2022_0.15m:rgb",
+        "new-zealand_2020-2021_10m:rgb",
+        "new-zealand_2021-2022_10m:rgb",
+        "new-zealand_2022-2023_10m:rgb",
+        "new-zealand_2023-2024_10m:rgb",
+        "new-zealand_2024-2025_10m:rgb",
+        "new-zealand_2025-2026_10m:rgb",
+        "tasman_2012-2013_0.4m:rgb",
+        "tasman_2015-2016_0.3m:rgb",
+        "tasman_2015-2016_0.3m:rgbnir",
+        "tasman_2018-2019_0.3m:rgb",
+        "tasman_2018-2019_0.3m:rgbnir",
+        "tasman_2022_0.3m:rgb",
+        "tasman_2024-2025_0.25m:rgb",
+        "tasman_2024-2025_0.25m:rgbnir",
+        "tasman_marlborough_nelson_sn25020_2000_0.75m:rgb",
+        "tasman_sn8531_1985-1986_0.375m:rgb",
+        "tasman_snc5676_1980-1981_0.64m:rgb"
+      ],
+      "closest": {
+        "slug": "tasman_2024-2025_0.25m",
+        "gsd_m": 0.25,
+        "capture_start": "2024-12-06",
+        "capture_end": "2025-03-27",
+        "gap_days": 0,
+        "pixels_across": {
+          "1m": 4.0,
+          "3m": 12.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      },
+      "finest_within_year": {
+        "slug": "nelson_2025_0.075m",
+        "gsd_m": 0.075,
+        "capture_start": "2025-12-01",
+        "capture_end": "2025-12-04",
+        "gap_days": 335,
+        "pixels_across": {
+          "1m": 13.333333333333334,
+          "3m": 40.0
+        },
+        "accuracy_radius_px": null,
+        "search_area_vs_3m_clump": null
+      }
+    }
+  ]
+}
