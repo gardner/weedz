@@ -61,6 +61,9 @@ export default function ReviewDesk() {
       if (generation === requestGeneration.current) setLoading(false);
     }
   }, [runId]);
+  // A save that finishes after a run change must reload the run now selected.
+  const latestRefresh = useRef(refresh);
+  latestRefresh.current = refresh;
 
   useEffect(() => {
     try {
@@ -126,7 +129,7 @@ export default function ReviewDesk() {
       });
       effort.clear(measured);
       setNotice("Review saved locally.");
-      await refresh();
+      await latestRefresh.current();
     } catch (failure) {
       setError(String(failure));
     } finally {
