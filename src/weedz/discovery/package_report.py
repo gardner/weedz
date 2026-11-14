@@ -123,11 +123,15 @@ def _comparison(comparison: dict[str, Any]) -> list[str]:
         return [*lines, f"**Comparison:** {comparison['note']}."]
     nearest = near["nearest"]
     found = f"nearest {nearest['distance_m']} m away" if nearest else "none on record"
-    years = f"{near['earliest_year'] or '?'}–{near['latest_year'] or '?'}"
+    years = (
+        f" ({near['earliest_year'] or '?'}–{near['latest_year'] or '?'})"
+        if near["within_radius"]
+        else ""
+    )
     return [
         *lines,
         f"**Comparison:** {plural(near['within_radius'], 'reference record')} within "
-        f"{near['radius_m']:g} m ({years}); {found}. Against {snapshot['snapshot_file']}, "
+        f"{near['radius_m']:g} m{years}; {found}. Against {snapshot['snapshot_file']}, "
         f"retrieved {snapshot['retrieved_at']}, SHA-256 {snapshot['snapshot_sha256']}.",
     ]
 
@@ -169,7 +173,14 @@ def _lead(number: int, lead: dict[str, Any]) -> list[str]:
         _site_visit(lead["site_visit"]),
     ]
     heading = f"## Lead {number}: {_name(lead['candidate'])}, {lead['region']}"
-    return [heading, "", *(line for section in sections for line in [*section, ""])]
+    return [heading, "", *(line for section in sections for line in _paragraphs(section))]
+
+
+def _paragraphs(section: list[str]) -> list[str]:
+    """Each line its own paragraph, except a table's rows, which stay together."""
+    if section[0].startswith("|"):
+        return [*section, ""]
+    return [part for line in section for part in (line, "")]
 
 
 def to_markdown(package: dict[str, Any]) -> str:

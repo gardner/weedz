@@ -97,3 +97,12 @@ def test_cli_rejects_an_unknown_run(tmp_path: Path) -> None:
     store_with_photo(tmp_path, SCREENED)
     with pytest.raises(SystemExit, match="No run"):
         cli.main(["package", "--run", "missing", "--pilot-dir", str(tmp_path), "--out", "x"])
+
+
+def test_main_routes_the_package_command(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from weedz import cli as entry
+
+    argv = ["main.py", "package", "--run", "run", "--pilot-dir", str(tmp_path / "none")]
+    monkeypatch.setattr("sys.argv", argv + ["--out", str(tmp_path / "out")])
+    with pytest.raises(SystemExit, match="No pilot store"):
+        entry.main()
