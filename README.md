@@ -54,6 +54,11 @@ API key is needed. Source requests are rate-limited and model inference is local
 
 See [local operation and pilot limits](docs/local-development.md) for the actual
 processing steps, exports, ports, model provenance and verification commands.
+
+The [mobile app architecture](docs/mobile.md) describes the Flutter app that
+scans a phone's photos on the device and sends only the reports its person
+approves; its scaffold is in [`mobile/`](mobile).
+
 The [first Nelson/Tasman run](docs/pilot-nelson-tasman.md) completed screening of
 30 real photos. Its highest-ranked incidental suggestion is an obvious false
 alarm, so independent review and a stronger screening comparison come before scale.

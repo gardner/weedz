@@ -6,6 +6,7 @@ on:
       - "main.py"
       - "src/**"
       - "tests/**"
+      - "mobile/test/fixtures/**"
       - "scripts/**"
       - "pyproject.toml"
       - "uv.lock"
