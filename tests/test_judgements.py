@@ -169,6 +169,15 @@ def test_claims_the_photo_cannot_support_are_refused(tmp_path: Path) -> None:
         assert client.post(path, json=body).status_code == 200, body
 
 
+def test_a_usable_location_needs_a_known_accuracy(tmp_path: Path) -> None:
+    _store, photo_id = store_with_photo(tmp_path, **PUBLIC, positional_accuracy=None)
+    client = TestClient(create_app(tmp_path))
+    path = f"/runs/run/photos/{photo_id}/judgements"
+    response = client.post(path, json=judgement(dimension="location", value="usable"))
+    assert response.status_code == 409
+    assert "accuracy" in response.json()["detail"]
+
+
 def test_record_relative_novelty_needs_a_comparable_reference_snapshot(tmp_path: Path) -> None:
     _store, photo_id = store_with_photo(tmp_path, **PUBLIC)
     client = TestClient(create_app(tmp_path))

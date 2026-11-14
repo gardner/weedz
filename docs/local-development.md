@@ -142,8 +142,9 @@ intended for local development, not shared public hosting.
    scores. An audit counts as blind only if it is that auditor's first answer
    for the photo, and nobody reviewed the photo before it without having audited
    it first. The app lets a sampled photo be reviewed only after the reviewer's
-   own audit, so any other earlier review, recorded finding or judgement (for
-   example, one made before the audit sample existed) means the suggestion may have been seen. Other audits
+   own audit, so any other earlier review, recorded finding, judgement, referral
+   or referral answer (for example, one made before the audit sample existed)
+   means the suggestion may have been seen. Other audits
    are left out of the findings and reported as `not_blind`, and the audit view
    disables the answers once you have audited a photo. Simply opening a photo is
    not recorded, so viewing outside this workflow cannot be detected. The
@@ -206,7 +207,8 @@ intended for local development, not shared public hosting.
    resolve it, and *reported no longer present* needs a note saying who reported
    it gone and when. Missing notes are rejected (422). Claims the photo cannot
    support are disabled in the app, with the reason, and refused by the API
-   (409): a usable location needs public coordinates; recent or historical
+   (409): a usable location needs a search area (public coordinates with a
+   reported accuracy; see *Location and date limits* below); recent or historical
    evidence and "earlier than records" need a photo date; and novelty against
    records needs this photo to have been compared with the snapshot for the
    judged plant's own watchlist species. A free-text taxon, or a species the
@@ -228,6 +230,52 @@ intended for local development, not shared public hosting.
    "Reviewers disagree"). Each recorded plant in `findings` carries its own.
    The export's `review_history` carries every judgement event.
    `GET` and `POST /runs/{run}/photos/{photo}/judgements` read and append them.
+8. **Refer what you can't resolve to a specialist.** Under the judgements,
+   *Specialist referrals* lists each request for specialist assessment on the
+   photo. *Refer for specialist assessment* opens a form. Choose the plant
+   referred: the whole photo, or a recorded plant by its finding id. Then give:
+
+   - a required reason: `lookalike`, `cultivated_or_wild`, `poor_view`,
+     `location_or_date` or `other`;
+   - the expertise needed, as free text (there is no list of specialists yet);
+   - a required note saying what is unresolved and what would settle it.
+
+   A referral starts *open*. Someone, usually the specialist under their own
+   name, then *answers* it or *withdraws* it with a required note. That is a
+   further append-only event, never an edit, and only an open referral can be
+   closed: a second answer or withdrawal is refused (409).
+
+   An answer never changes a reviewer's decision or judgement. A specialist who
+   settles the identity records it as their own judgement first. The answer can
+   then cite it (`judgement_ids`). Only the answerer's own judgements on the referred plant (any
+   plant for a whole-photo referral) made since the referral can be cited, and
+   other citations are refused (409).
+
+   The **Needs specialist** queue view lists photos with open referrals, from
+   every cohort and any review status, longest waiting first. It still holds
+   back audit-sample photos you haven't audited, and the blind audit list never
+   shows referrals. Photo rows elsewhere show "Needs specialist".
+
+   Each photo in the run detail and export carries its `referrals`, each with a
+   `status` and its `events`. The export's `review_history` holds the same
+   history. Referral actions are timed like other review work
+   (`measured_referral_actions`, `unmeasured_referral_actions`,
+   `minutes_by_referral_action` and `unmeasured_incidental_referral_actions` in
+   `review_effort`).
+
+   The outcomes report's *Follow-up usefulness* measure counts referrals on
+   incidental photos: open, answered and withdrawn, by reason, with median and
+   longest hours from referral to answer (unknown until one is answered).
+
+   API:
+
+   - `GET` and `POST /runs/{run}/photos/{photo}/referrals` read and open
+     referrals.
+   - `POST /runs/{run}/photos/{photo}/referrals/{id}/events`, with `action`
+     `answered` or `withdrawn`, closes one.
+
+   Names are attribution on this unauthenticated stack (#31), not identity, so
+   an answer is a named person's note, not a verified identification.
 
 Acquisition, screening and export are separate Temporal activities, each with
 timeouts, heartbeats and up to three attempts. Query snapshots and cached photos
@@ -254,7 +302,11 @@ accuracy within 5 km; other photos are marked not compared, with a reason. The
 evidence panel shows this for the suggested species.
 
 This is a distance comparison, not a novelty verdict. A missing record is not
-an absence, and neither point locates a plant. The 14 November 2026 snapshot
+an absence, and neither point locates a plant. Known records never filter or
+reorder the queue (PRD P11). Screening sees only the image and its original
+subject, and the queue follows the margin. An unexpected location is a reason to
+refer the photo to a specialist (step 8), not to reject it. The evidence panel
+says so under *Known records*. The 14 November 2026 snapshot
 (51 old man's beard, 4 pampas, 147 gorse records) is sparse near the pilot
 photos: nearest records are typically 7–70 km away and mostly from the late
 1990s. "No nearby record" therefore says more about the reference set than about
@@ -283,6 +335,32 @@ apart. "Unknown" means unmeasured, not zero. A confirmed review shows only that
 the species is visible, not that the finding is useful (#18), and a reference
 distance is not a novelty claim.
 
+The *Novel or earlier evidence* measure has two parts, reported side by side.
+Both cover the same plants: confirmed suggestions and recorded watchlist plants.
+
+- **Computed comparison.** Its value counts plants with no record within 5 km,
+  or observed in an earlier year than every record within it. It needs a
+  reference snapshot.
+- **Judged novelty.** The evidence's `judged_novelty` tallies, as site visits,
+  each plant's level from its reviewers' standing judgements (step 7):
+
+  - When reviewers' values differ, the plant counts as `disputed`, never as a
+    level.
+  - A plant nobody judged counts as `unassessed`.
+  - Only a `verified_new_locality` with its verification note counts as a new
+    locality. `verified_new_localities` lists each claim's photo, finding id
+    (none for the suggestion), reviewer and note.
+  - `record_relative_judged_against_another_snapshot` counts plants whose
+    *absent from the reference records* or *earlier than the available records*
+    claim was made against a snapshot other than the one loaded now, so they
+    can be rechecked.
+
+  Judged levels are reported even without a snapshot.
+
+The measure is partially measured once either part has something to report,
+and not yet measurable when neither does. Judged levels are reviewer opinions,
+never a first-occurrence claim.
+
 ## Files and evidence
 
 Everything generated is ignored by Git:
@@ -293,12 +371,55 @@ Everything generated is ignored by Git:
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
 | `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, pinned model, weights, library versions, preprocessing and window geometry; safe to delete |
 | `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
-| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings and judgements |
+| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings, judgements and specialist referrals |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 
 An observation coordinate describes the original observation, not a located weed.
-Obscured/missing coordinates and positional accuracy remain explicit. Native
+Obscured/missing coordinates and positional accuracy remain explicit.
+
+### Location and date limits
+
+For PRD P09, each photo in the run detail and export carries `limits`, computed in
+`src/weedz/discovery/limits.py`. The evidence panel shows them as *Dates* and
+*Search area*.
+
+- **Search area** (`limits.search_area`):
+  - The `centre` is the observation point, where the photographer was. It is
+    never a plant point.
+  - `radius_m` is the reported positional accuracy plus
+    `CAMERA_TO_PLANT_ALLOWANCE_M` (100 m). iNaturalist records no camera bearing,
+    pose or focal distance, and hosted photos have no EXIF, so the distance from
+    the camera to a background plant is unknown. The 100 m is a declared planning
+    allowance, not a measurement. A telephoto background can be farther, so the
+    area is where to start looking, not a bound.
+  - `site_context` is true when accuracy is 20 m or better. At that accuracy
+    aerial imagery can show the site's context, but never the plant
+    ([LINZ assessment](datasets.md)).
+  - Obscured, missing and unknown-accuracy locations have `status` `obscured`,
+    `missing` or `accuracy_unknown` and a `reason`, with no centre or radius.
+    The obscured point is never shown or used.
+- **Dates** (`limits.dates`):
+  - `photographed`, `uploaded` and `screened` are kept distinct. `screened` is
+    when the photo was last scored (the photo's `screened_at`). It is null before
+    screening, and for photos scored before this was recorded.
+  - `photographed` is kept as the source gave it, even a partial date such as
+    `2024-06`.
+  - `days_photo_to_upload` and `days_photo_to_screening` give the gaps. They are
+    null unless both dates are full calendar days.
+  - `current_presence` says that, if the plant is visible, the photo shows it
+    was there on its capture date, not that it is there now. For an undated
+    photo, it says the photo can show neither. It is conditional because a
+    candidate is not a confirmed plant.
+
+The outcomes report uses the same rule:
+
+- *Evidence and review completeness* counts a location as complete only when it
+  gives a search area, and lists `search_areas` by status.
+- *Follow-up usefulness* lists `watchlist_finding_search_areas` for confirmed
+  and recorded watchlist plants, counted per photo.
+
+A reviewer's location and history judgements (step 7) remain separate opinions. Native
 lookalikes, indistinct plants and locations with no nearby known weed record are
 still reviewable. Photos by the same observer on the same observed date, with public coordinates
 within 250 m once both accuracy radii are allowed for, form one site visit. The
@@ -345,6 +466,15 @@ that per-dimension disagreement is shown and that a draft does not pass to
 another reviewer. It also checks
 that unsupported claims are disabled with a reason. The accessibility check
 audits the judgements with a required-note hint showing.
+The referrals check refers a recorded plant with a reason and expertise,
+answers an open referral citing a judgement made since it, and withdraws
+another. It checks that the Needs specialist view lists only open referrals,
+holds back an unaudited sample photo until its reviewer has audited it, and
+that the blind audit list never mentions a referral. The accessibility check
+audits the referral form and an open referral's response form.
+The limits check shows a searchable photo's radius, labelled observation point,
+allowance and three dates. It also checks that an obscured photo shows no point
+or radius, and that an unknown-accuracy photo shows no radius.
 The smoke check is read-only against a completed local pilot and verifies filters,
 source-image loading, window toggling, export and mobile layout.
 

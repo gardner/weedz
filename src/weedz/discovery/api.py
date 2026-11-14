@@ -12,9 +12,11 @@ from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.judgements import Judgement, unsupported
+from weedz.discovery.limits import with_limits
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.outcomes import outcomes
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
+from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
 
@@ -99,7 +101,7 @@ class ReviewAPI:
         audit = summarize_audit(photos, sample, blind, late)
         del audit["findings"]
         photos = [photo | audit_state(photo["id"], sample, blind, late) for photo in photos]
-        photos = with_encounters(photos)
+        photos = with_limits(with_encounters(photos))
         return {
             "run": run,
             "photos": photos,
@@ -186,6 +188,36 @@ class ReviewAPI:
         self.photo(run_id, photo_id)
         return self.store.judgements(run_id, photo_id)
 
+    def refer(self, run_id: str, photo_id: str, record: Referral) -> dict:
+        photo = self.photo(run_id, photo_id)
+        plants = {plant["id"] for plant in photo["findings"]}
+        if record.finding_id is not None and record.finding_id not in plants:
+            raise HTTPException(404, "Recorded plant not found on this photo")
+        return {"saved": True, "id": self.store.refer(run_id, photo_id, record)}
+
+    def referrals(self, run_id: str, photo_id: str) -> list[dict]:
+        return self.photo(run_id, photo_id)["referrals"]
+
+    def close_referral(
+        self, run_id: str, photo_id: str, referral_id: int, event: ReferralEvent
+    ) -> dict:
+        """Answer or withdraw an open referral; a closed one stays closed."""
+        referral = next(
+            (item for item in self.referrals(run_id, photo_id) if item["id"] == referral_id),
+            None,
+        )
+        if referral is None:
+            raise HTTPException(404, "Referral not found on this photo")
+        judgements = self.store.judgements(run_id, photo_id)
+        reason = uncitable(referral, judgements, event)
+        if reason:
+            raise HTTPException(409, reason)
+        try:
+            self.store.close_referral(run_id, photo_id, referral_id, event)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from error
+        return {"saved": True}
+
 
 def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app = FastAPI(title="Weedz regional review", version="0.2.0")
@@ -203,4 +235,7 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.get("/runs/{run_id}/photos/{photo_id}/findings")(api.findings)
     app.post("/runs/{run_id}/photos/{photo_id}/judgements")(api.record_judgement)
     app.get("/runs/{run_id}/photos/{photo_id}/judgements")(api.judgements)
+    app.post("/runs/{run_id}/photos/{photo_id}/referrals")(api.refer)
+    app.get("/runs/{run_id}/photos/{photo_id}/referrals")(api.referrals)
+    app.post("/runs/{run_id}/photos/{photo_id}/referrals/{referral_id}/events")(api.close_referral)
     return app

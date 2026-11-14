@@ -24,6 +24,8 @@ def photo(pid: str, group: str | None = None, **fields: Any) -> dict[str, Any]:
         "observation_license": "cc-by",
         "observed_on": "2024-01-01",
         "coordinate_status": "public",
+        "latitude": -41.27,
+        "longitude": 173.28,
         "positional_accuracy_m": 10.0,
         "sha256": "abc",
     } | fields
@@ -400,3 +402,63 @@ def test_reviewer_added_watchlist_plants_are_non_blind_missed_evidence() -> None
         "site_visits": 1,
         "ungrouped_photos": 0,
     }
+
+
+def referred(
+    reason: str, at: str, closed: tuple[str, str] | None = None, seconds: float | None = 60
+) -> dict[str, Any]:
+    """A referral opened at `at`, closed by an untimed (action, time) event when given."""
+    events = []
+    if closed:
+        action, when = closed
+        events = [
+            {"action": action, "actor": "Dr Wiri", "created_at": when, "effort_seconds": None}
+        ]
+    status = closed[0] if closed else "open"
+    return {"reason": reason, "status": status, "created_at": at, "referrer": "Ana"} | {
+        "effort_seconds": seconds,
+        "events": events,
+    }
+
+
+def test_follow_up_counts_specialist_referrals_and_answer_turnaround() -> None:
+    run = export([photo("a", "a"), photo("b", "b")])
+    day = "2026-11-0{}T{:02d}:00:00+00:00".format
+    run["review_history"][0]["referrals"] = [
+        referred("lookalike", day(1, 0), ("answered", day(1, 6))),
+        referred("lookalike", day(2, 0), ("answered", day(3, 0))),
+        referred("poor_view", day(2, 0), ("withdrawn", day(2, 1))),
+    ]
+    run["review_history"][1]["referrals"] = [referred("cultivated_or_wild", day(4, 0))]
+    follow_up = measure(outcomes(run), "follow_up_usefulness")
+    assert follow_up["status"] == PARTIAL
+    assert follow_up["value"] is None, "a referral is not a useful lead by itself"
+    referrals = follow_up["evidence"]["referrals"]
+    assert (referrals["referred"], referrals["open"]) == (4, 1)
+    assert (referrals["answered"], referrals["withdrawn"]) == (2, 1)
+    assert referrals["by_reason"] == {"lookalike": 2, "poor_view": 1, "cultivated_or_wild": 1}
+    assert referrals["answer_turnaround_hours"] == {"median": 15.0, "longest": 24.0}
+    assert follow_up["evidence"]["photos_with_open_referrals"]["photos"] == 1
+    assert "#27" in follow_up["reason"]
+
+
+def test_turnaround_is_unknown_until_a_referral_is_answered() -> None:
+    run = export([photo("a", "a")])
+    run["review_history"][0]["referrals"] = [referred("other", "2026-11-01T00:00:00+00:00")]
+    referrals = measure(outcomes(run), "follow_up_usefulness")["evidence"]["referrals"]
+    assert referrals["answer_turnaround_hours"] is None
+
+
+def test_time_on_referrals_is_reviewer_effort() -> None:
+    run = export([photo("a", "a", review_status="rejected")], {"a": [event("rejected", 60)]})
+    run["review_history"][0]["referrals"] = [
+        referred("lookalike", "2026-11-01T00:00:00Z", ("answered", "2026-11-02T00:00:00Z"), 30)
+    ]
+    report = outcomes(run)
+    effort = measure(report, "reviewer_effort_per_useful_finding")["evidence"]
+    assert effort["incidental_minutes"] == 1.5
+    assert effort["timed_incidental_referral_actions"] == 1
+    assert effort["untimed_incidental_referral_actions"] == 1
+    alarms = measure(report, "false_alarm_workload")
+    assert alarms["evidence"]["untimed_referral_actions"] == 1
+    assert "1 referral action was not timed" in alarms["reason"]

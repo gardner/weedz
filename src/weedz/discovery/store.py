@@ -11,6 +11,8 @@ from typing import Any
 
 from weedz.discovery.judgements import Judgement, judged, standing_judgements
 from weedz.discovery.records import Finding, Photo, RunSpec
+from weedz.discovery.referrals import TABLES as REFERRAL_TABLES
+from weedz.discovery.referrals import Referral, ReferralEvent, with_status
 
 
 def now() -> str:
@@ -44,10 +46,10 @@ def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
 
 # An audit is blind only if it is the auditor's first answer for the photo (after it the
 # photo is released into their ranked queue) and no one reviewed the photo, or recorded a
-# finding or judgement on it, before it without having audited it first. The app lets a
-# sampled photo be reviewed only after the reviewer's own audit, so any other earlier
-# review, finding or judgement, such as one made before the sample existed, means the
-# suggestion may have been seen.
+# finding, judgement or referral on it (or answered one), before it without having audited
+# it first. The app lets a sampled photo be reviewed only after the reviewer's own audit,
+# so any other earlier review, finding, judgement or referral, such as one made before
+# the sample existed, means the suggestion may have been seen.
 AUDITS_BY_BLINDNESS = """
 SELECT a.photo_id, a.reviewer, a.finding FROM audits a
 WHERE a.run_id = ? AND (
@@ -61,6 +63,9 @@ WHERE a.run_id = ? AND (
             SELECT run_id, photo_id, reviewer, created_at FROM reviews
             UNION ALL SELECT run_id, photo_id, reviewer, created_at FROM findings
             UNION ALL SELECT run_id, photo_id, reviewer, created_at FROM judgements
+            UNION ALL SELECT run_id, photo_id, referrer, created_at FROM referrals
+            UNION ALL SELECT f.run_id, f.photo_id, e.actor, e.created_at
+            FROM referral_events e JOIN referrals f ON f.id = e.referral_id
         ) r WHERE r.run_id = a.run_id AND r.photo_id = a.photo_id
         AND r.created_at <= a.created_at AND NOT EXISTS (
             SELECT 1 FROM audits own WHERE own.run_id = r.run_id
@@ -120,11 +125,14 @@ class Store:
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
             """)
+            db.executescript(REFERRAL_TABLES)
             # Databases created before reviewer attribution keep their history unattributed.
             add_missing_column(db, "photos", "review_reviewer")
             add_missing_column(db, "reviews", "reviewer")
             # Earlier decisions were not timed: NULL means unmeasured, never zero effort.
             add_missing_column(db, "reviews", "effort_seconds", "REAL")
+            # When each photo was last scored; NULL before this was recorded or before screening.
+            add_missing_column(db, "photos", "screened_at", "TEXT")
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -183,6 +191,10 @@ class Store:
             judgements = db.execute(
                 "SELECT * FROM judgements WHERE run_id=? ORDER BY id", (run_id,)
             ).fetchall()
+            referred = self._referrals(db, run_id)
+        referrals: dict[str, list[dict]] = {}
+        for item in referred:
+            referrals.setdefault(item["photo_id"], []).append(item)
         decisions = reviewer_decisions(events)
         standing = standing_judgements(judgements)
         counts = Counter(event["photo_id"] for event in events)
@@ -194,6 +206,7 @@ class Store:
             dict(
                 json.loads(row["record"]),
                 scores=json.loads(row["scores"]),
+                screened_at=row["screened_at"],
                 review_status=row["review_status"],
                 review_note=row["review_note"],
                 review_reviewer=row["review_reviewer"],
@@ -201,6 +214,7 @@ class Store:
                 disputed=len(set(decisions.get(row["id"], {}).values())) > 1,
                 review_count=counts[row["id"]],
                 findings=findings.get(row["id"], []),
+                referrals=referrals.get(row["id"], []),
                 **judged(standing, (row["id"], None)),
             )
             for row in rows
@@ -209,8 +223,8 @@ class Store:
     def score(self, run_id: str, photo_id: str, scores: dict) -> None:
         with self.connect() as db:
             db.execute(
-                "UPDATE photos SET scores=? WHERE run_id=? AND id=?",
-                (json.dumps(scores), run_id, photo_id),
+                "UPDATE photos SET scores=?, screened_at=? WHERE run_id=? AND id=?",
+                (json.dumps(scores), now(), run_id, photo_id),
             )
 
     def review(
@@ -350,3 +364,82 @@ class Store:
                     (run_id, photo_id),
                 )
             ]
+
+    @staticmethod
+    def _referrals(
+        db: sqlite3.Connection, run_id: str, photo_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        """A run's referrals (or one photo's), oldest first, with status and events."""
+        where = "r.run_id=?" + (" AND r.photo_id=?" if photo_id else "")
+        values = (run_id, photo_id) if photo_id else (run_id,)
+        rows = db.execute(f"SELECT * FROM referrals r WHERE {where} ORDER BY id", values)
+        events: dict[int, list[dict]] = {}
+        for event in db.execute(
+            "SELECT e.* FROM referral_events e JOIN referrals r ON r.id = e.referral_id "
+            f"WHERE {where} ORDER BY e.id",
+            values,
+        ):
+            cited = json.loads(event["judgement_ids"])
+            events.setdefault(event["referral_id"], []).append(dict(event, judgement_ids=cited))
+        return [with_status(dict(row), events.get(row["id"], [])) for row in rows]
+
+    def referrals(self, run_id: str, photo_id: str) -> list[dict]:
+        with self.connect() as db:
+            return self._referrals(db, run_id, photo_id)
+
+    def refer(self, run_id: str, photo_id: str, record: Referral) -> int:
+        """Open a referral for specialist assessment; returns its id."""
+        with self.connect() as db:
+            cursor = db.execute(
+                "INSERT INTO referrals(run_id,photo_id,finding_id,reason,expertise,note,"
+                "referrer,effort_seconds,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                (
+                    run_id,
+                    photo_id,
+                    record.finding_id,
+                    record.reason,
+                    record.expertise,
+                    record.note,
+                    record.referrer,
+                    record.effort_seconds,
+                    now(),
+                ),
+            )
+            return cursor.lastrowid or 0
+
+    def close_referral(
+        self, run_id: str, photo_id: str, referral_id: int, event: ReferralEvent
+    ) -> None:
+        """Answer or withdraw an open referral of this photo. The insert itself checks the
+        referral is still open, so two closes at once cannot both succeed."""
+        with self.connect() as db:
+            cursor = db.execute(
+                "INSERT INTO referral_events(referral_id,action,actor,note,judgement_ids,"
+                "effort_seconds,created_at) SELECT id,?,?,?,?,?,? FROM referrals "
+                "WHERE id=? AND run_id=? AND photo_id=? AND NOT EXISTS "
+                "(SELECT 1 FROM referral_events WHERE referral_id=referrals.id)",
+                (
+                    event.action,
+                    event.actor,
+                    event.note,
+                    json.dumps(event.judgement_ids),
+                    event.effort_seconds,
+                    now(),
+                    referral_id,
+                    run_id,
+                    photo_id,
+                ),
+            )
+            if cursor.rowcount:
+                return
+            found = next(
+                (
+                    item
+                    for item in self._referrals(db, run_id, photo_id)
+                    if item["id"] == referral_id
+                ),
+                None,
+            )
+        if found is None:
+            raise KeyError(referral_id)
+        raise ValueError(f"This referral is already {found['status']}")

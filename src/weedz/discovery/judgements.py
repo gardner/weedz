@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from weedz.discovery.limits import search_area
 from weedz.discovery.occurrences import predates
 from weedz.discovery.records import ReviewerName
 
@@ -65,7 +66,7 @@ class Judgement(BaseModel):
 
 
 def _located(photo: dict[str, Any], _taxon: str | None) -> bool:
-    return photo.get("coordinate_status") == "public" and photo.get("latitude") is not None
+    return search_area(photo).status == "searchable"
 
 
 def _dated(photo: dict[str, Any], _taxon: str | None) -> bool:
@@ -107,7 +108,9 @@ UNCOMPARED = (
 )
 # What the photo, and its comparison for the judged plant, must offer before a claim.
 PHOTO_REQUIREMENTS: dict[tuple[str, str], list[Requirement]] = {
-    ("location", "usable"): [(_located, "The observation location is obscured or missing")],
+    ("location", "usable"): [
+        (_located, "The observation location is obscured, missing or of unknown accuracy")
+    ],
     ("history", "recent_evidence"): [(_dated, UNDATED)],
     ("history", "historical_evidence"): [(_dated, UNDATED)],
     ("novelty", "absent_from_references"): [
@@ -155,6 +158,7 @@ def standing_judgements(events: list[Any]) -> dict[Target, dict[str, dict[str, d
             by_reviewer.pop(event["reviewer"], None)
         else:
             by_reviewer[event["reviewer"]] = {
+                "id": event["id"],
                 "value": event["value"],
                 "note": event["note"],
                 "created_at": event["created_at"],

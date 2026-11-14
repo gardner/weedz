@@ -33,8 +33,14 @@ try {
     observed_on: "2019-05-01",
     scores: { best_species: "Clematis vitalba", box: [0, 0, 200, 150], width: 400, height: 300 },
     photo_license: "cc0",
-    // No public location and no reference snapshot: some claims cannot be made.
-    coordinate_status: "missing",
+    // A public point of unknown accuracy has no search area, so it is not a usable location.
+    coordinate_status: "public",
+    latitude: -41.2,
+    longitude: 173.3,
+    positional_accuracy_m: null,
+    limits: {
+      search_area: { status: "accuracy_unknown", reason: "Location accuracy not supplied" },
+    },
     // Only gorse was compared with records, so only a gorse plant can be judged against them.
     reference_comparison: {
       "Ulex europaeus": { comparable: true, nearest: null, within_radius: 0 },
@@ -135,10 +141,10 @@ try {
     "note returns to the standing note on save",
   );
 
-  // A camera point is not a plant point: a missing location cannot be judged usable.
+  // A camera point is not a plant point: a location with no search area is not usable.
   const usable = page.getByLabel("Location usefulness").locator("option[value=usable]");
   assert.equal(await usable.isDisabled(), true);
-  assert.match(await location.textContent(), /obscured or missing/);
+  assert.match(await location.textContent(), /obscured, missing or of unknown accuracy/);
 
   // Without comparable reference records, novelty against records is unavailable.
   const novelty = page.getByLabel("Novelty", { exact: true });
