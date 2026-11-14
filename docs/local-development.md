@@ -48,8 +48,9 @@ Non-default connections use `discover --api-url` and `--temporal-address`.
 
 Stop the development stack with Ctrl+C. Restart with the same `--pilot-dir` to
 resume workflow history and retain photos and decisions. This stack binds its
-services locally and provides no authentication or multi-user reviewer identity;
-it is intended for local development, not shared public hosting.
+services locally and provides no authentication. Reviewers type their name, which is
+recorded with each decision as attribution, not verified identity. The stack is
+intended for local development, not shared public hosting.
 
 ## What the workflow actually does
 
@@ -74,7 +75,9 @@ it is intended for local development, not shared public hosting.
    lose detail. This does not establish viewpoint invariance.
 4. **Rank for inspection.** Compare each target's cosine similarity against the
    strongest comparison prompt in the same window. Comparisons include native
-   clematis, toetoe, mānuka, broom, general vegetation and animals. Select the
+   clematis, toetoe, mānuka, broom, general vegetation, animals, open sky,
+   water, shore and rock, plus the photo's own original-subject taxon (never a
+   watchlist target, so references are not compared with themselves). Select the
    largest target-minus-comparison margin across windows and species. Save all
    window similarities, target results, dimensions and the selected window.
    A positive margin is not an established detection threshold. Every acquired
@@ -83,7 +86,45 @@ it is intended for local development, not shared public hosting.
 5. **Export and review.** Write a reproducible run manifest, then mark screening
    completed. Next.js exposes sources, windows, dates, location uncertainty,
    reference separation, filters and decisions. Confirm/reject/uncertain decisions
-   and notes append local review history; activity retries preserve them. The
+   and notes append local review history with the reviewer's name; activity
+   retries preserve them. When reviewers' latest decisions differ, the photo is
+   marked "Reviewers disagree" with each person's decision. Decisions saved before
+   attribution existed show "Reviewer not recorded". Each decision also records
+   active review time on that photo. Time is counted only while the tab is
+   visible, and it stops counting after 10 minutes without input. The export's
+   `review_effort` reports minutes by decision and reviewer, and incidental minutes
+   per "Species visible" photo. Untimed earlier decisions are listed as unmeasured,
+   never as zero, and any untimed incidental decision withholds the per-photo rate.
+   Photos where reviewers disagree are not counted as "Species visible".
+   Confirmation is not a useful-finding measure. The **Audit sample** view lists
+   a fixed random quarter of incidental photos, chosen from run and photo ids so
+   screening rank plays no part. It hides the suggestion, search window and
+   scores, and asks "Is any watchlist weed visible?". Audits are stored apart
+   from suggestion reviews, and each auditor's blind finding is kept. A photo
+   counts as a found weed if any auditor's blind finding names a species, and
+   photos where auditors' findings differ are counted as disputed. A sampled
+   photo is held out of each reviewer's ranked Incidental queue until that
+   reviewer has audited it (with no name entered, every sampled photo is held),
+   and each view keeps its own open photo, so no auditor sees its suggestion
+   first. This is a workflow guard on a local, unauthenticated stack, not access
+   control: names are not verified and anyone with the API can still read the
+   scores. An audit counts as blind only if it is that auditor's first answer
+   for the photo, and nobody reviewed the photo before it without having audited
+   it first. The app lets a sampled photo be reviewed only after the reviewer's
+   own audit, so any other earlier review (for example, one made before the
+   audit sample existed) means the suggestion may have been seen. Other audits
+   are left out of the findings and reported as `not_blind`, and the audit view
+   disables the answers once you have audited a photo. Simply opening a photo is
+   not recorded, so viewing outside this workflow cannot be detected. The
+   sample itself comes from run and photo ids, so it is fixed from the moment a
+   run starts. The run detail gives audit counts and who
+   audited each photo; only the export lists findings.
+   There is no calibrated detection threshold yet, so neither gives a hit or
+   miss verdict. For each found weed the export reports the photo's 1-based
+   rank in the incidental queue (by margin, highest first) out of all incidental
+   photos, and whether the found species was the top suggestion shown. With a
+   small sample this bounds, rather than estimates, how often weeds are ranked
+   low. The
    API export includes current decisions and site-visit groups, while the completion manifest records
    the state at screening completion.
 

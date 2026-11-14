@@ -46,8 +46,32 @@ positive comparison margin does not establish plant presence. This concrete
 failure argues against automatically accepting these rankings or scaling this
 method as a validated detector.
 
-The next experiment should include original-subject taxon prompts as stronger
-comparison labels, independently reviewed native lookalikes and genuine
+### Ranking revision 3: re-screen of the same photos
+
+The gannet failure was not a one-off. In 10 of 24 incidental photos a target
+beat every comparison prompt, and the top four all chose a top-row window,
+mostly as pampas grass. Pale sky, sea and shore textures had no better
+explanation on offer. The comparisons also ignored the photo's own subject.
+Ranking revision 3 ([#10](https://github.com/gardner/weedz/issues/10)) adds
+the original-subject taxon as a per-photo comparison (never for a watchlist
+target) and fixed sky, water, shore and rock prompts.
+
+The same 30 photos and checksums were re-screened with the same weights. The
+results are recorded in the [re-screen summary](../benchmarks/nelson-tasman-rescreen-r3.json).
+
+| Check | Revision 2 | Revision 3 |
+| --- | --- | --- |
+| Incidental photos with a positive margin | 10 of 24 | 2 of 24 |
+| Gannet margin (pampas) | +0.041, sky window | −0.102 |
+| References ranking their source-labelled target first | 6 of 6 | 6 of 6, margins unchanged |
+
+Two positives remain. The Tanguru chafer window is a pink fibrous non-plant
+surface, so it is probably a false alarm. The South Island pied oystercatcher
+window shows riverbed vegetation, which is reviewable but unverified. Fewer
+positives is not higher recall: nothing here measures missed weeds, and 30
+unreviewed photos give no accuracy estimate.
+
+The next experiment should include independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.
 Retain low-ranked photos for missed-weed review. Compare whole-frame and regional
 analysis at a fixed reviewer budget before deciding whether a stronger model or
