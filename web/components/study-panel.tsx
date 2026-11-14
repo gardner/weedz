@@ -107,12 +107,15 @@ export default function StudyPanel({
   runId,
   study,
   reviewer,
+  locked = false,
   onSaved,
   onError,
 }: {
   runId: string;
   study: Study | null;
   reviewer: string;
+  /** The reviewer is signed in, so versions are recorded under their name only. */
+  locked?: boolean;
   onSaved: (message: string) => Promise<void> | void;
   onError: (message: string) => void;
 }) {
@@ -167,6 +170,7 @@ export default function StudyPanel({
           terms={terms}
           initial={study?.definition ?? EMPTY}
           reviewer={reviewer.trim() || lastAuthor}
+          locked={locked}
           saving={saving}
           onSave={save}
           onCancel={() => setBase(undefined)}

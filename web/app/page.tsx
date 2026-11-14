@@ -1,5 +1,5 @@
-import ReviewDesk from "../components/review-desk";
+import SessionGate from "../components/session-gate";
 
 export default function Home() {
-  return <ReviewDesk />;
+  return <SessionGate />;
 }

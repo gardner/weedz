@@ -83,7 +83,7 @@ ReviewerName = Annotated[str, StringConstraints(strip_whitespace=True, min_lengt
 
 class Review(BaseModel):
     status: ReviewStatus
-    # Attribution on a local stack, not authentication; see issue #31 for remote review.
+    # Self-declared on a local stack; the signed-in reviewer under --access tokens (#31).
     reviewer: ReviewerName
     note: str = Field(default="", max_length=4000)
     # Active, visible time on this photo measured by the review app; None when not measured.

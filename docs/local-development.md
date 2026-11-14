@@ -55,10 +55,81 @@ a separate `lookalike` cohort, and the export's `lookalikes` summary shows how
 often each passes as the weed it resembles.
 
 Stop the development stack with Ctrl+C. Restart with the same `--pilot-dir` to
-resume workflow history and retain photos and decisions. This stack binds its
-services locally and provides no authentication. Reviewers type their name, which is
-recorded with each decision as attribution, not verified identity. The stack is
-intended for local development, not shared public hosting.
+resume workflow history and retain photos and decisions. By default (`--access
+local`) the stack binds its services to this computer and asks no one to sign in.
+Reviewers type their name, which is recorded with each decision as attribution, not
+verified identity. For reviewers elsewhere, see [Remote reviewers](#remote-reviewers).
+
+### Remote reviewers
+
+Partner specialists and volunteers can review from their own browser without
+running the stack. Each one gets a personal invite token. Under `--access tokens`,
+every request needs a token, and every record (review, audit, finding,
+judgement, referral, lead selection, study version and study link) is saved
+under the name the token was issued to. The API refuses a record that names
+anyone else, with 403.
+
+Invite, list and revoke reviewers from the command line on the host:
+
+```sh
+uv run main.py reviewers add --name "Ana Smith"   # prints the token once
+uv run main.py reviewers list                     # never shows tokens
+uv run main.py reviewers revoke --id 3            # refused from the next request
+```
+
+Send each token privately, for example in a password manager share or an
+end-to-end encrypted message, not in a shared channel. A token is
+`weedz_<id>_<secret>`: 256 random bits. Only the SHA-256 of the secret is kept,
+in `access.sqlite3` in the pilot folder (owner-only permissions). It is kept apart
+from `discovery.sqlite3` so that copying or sharing the evidence store never
+carries credentials. Tokens are compared in constant time. They are never logged,
+returned by the API, or printed again after `add`. Revoke a token that has been
+lost or shared, then send a new one. All `reviewers` commands take `--pilot-dir`.
+
+Start the stack with sign-in required:
+
+```sh
+uv run main.py dev --access tokens
+```
+
+To queue runs from the command line on the host, set your own token in the
+environment, never as an argument: `WEEDZ_REVIEWER_TOKEN=weedz_… uv run main.py
+discover …`.
+
+The API always listens on 127.0.0.1; only the review app talks to it. The review
+app also listens on 127.0.0.1 unless `--web-host` is given. `dev` refuses a
+non-loopback `--web-host` without `--access tokens`. Put an HTTPS reverse proxy in
+front of the review app on the same machine, and leave everything else
+unexposed. With [Caddy](https://caddyserver.com/), which obtains and renews the
+certificate automatically, the whole configuration (`Caddyfile`) is:
+
+```
+review.example.org {
+	reverse_proxy 127.0.0.1:3001
+}
+```
+
+Reviewers open `https://review.example.org` and paste their token into the
+sign-in form. The app exchanges it for an `HttpOnly`, `SameSite=Strict` session
+cookie, so page scripts never hold it. The cookie is marked `Secure` on any
+non-loopback host or when the proxy sends `X-Forwarded-Proto: https`. Plain HTTP
+beyond this computer cannot sign in. The form will not send a token from a page
+that is not a secure context, and the app refuses a sign-in that did not arrive
+over HTTPS or from this computer. Keep the proxy's defaults of passing the
+original `Host` header through and setting `X-Forwarded-Proto`. The app's proxy refuses writes, and sign-ins,
+that a browser marks as started by another site. Sign out clears the cookie in
+that browser only; to stop a token working everywhere, revoke it.
+
+What this does not do yet: there are no roles, so any signed-in reviewer can
+queue a regional run or edit a study, as anyone can locally. Tokens do not
+expire until revoked, and sign-ins are not rate-limited (guessing a 256-bit
+token is infeasible). The Temporal UI and the API docs are not served to remote
+reviewers: the docs are switched off under `--access tokens`. `dev` still runs
+`next dev`. A VPN or tailnet (WireGuard, Tailscale) can sit in front as an extra
+network layer, but it identifies devices, not reviewers, so keep the tokens.
+Hosting, the domain and any single sign-on provider are the project owner's
+decisions; see issue #31. The sharing rules are unchanged: obscured coordinates
+are never served in either mode, and nothing is published on anyone's behalf.
 
 ## What the workflow actually does
 
@@ -872,6 +943,11 @@ another. It checks that the Needs specialist view lists only open referrals,
 holds back an unaudited sample photo until its reviewer has audited it, and
 that the blind audit list never mentions a referral. The accessibility check
 audits the referral form and an open referral's response form.
+The sign-in check signs in with a reviewer token, checks that the name field is
+fixed to the signed-in reviewer and sent with a decision, and signs out. The
+session-cookie check covers the cookie flags and refuses malformed tokens. The
+accessibility check audits the sign-in form with an error showing, at desktop
+and phone widths, and the signed-in desk.
 The limits check shows a searchable photo's radius, labelled observation point,
 allowance and three dates. It also checks that an obscured photo shows no point
 or radius, and that an unknown-accuracy photo shows no radius.

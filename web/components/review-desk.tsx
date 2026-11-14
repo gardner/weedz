@@ -8,6 +8,7 @@ import type { NewLeadEvent } from "../lib/leads";
 import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
+import { useReviewer } from "../lib/reviewer";
 import type { ScoreMeaning } from "../lib/score-meaning";
 import type { Study } from "../lib/study";
 import {
@@ -32,7 +33,6 @@ import { ScreeningNote } from "./score-meaning";
 import StudyPanel from "./study-panel";
 import SuitabilityPanel from "./suitability-panel";
 
-const REVIEWER_KEY = "weedz-reviewer";
 type Payloads = {
   review: { status: Status; note: string };
   audit: { finding: string; note: string };
@@ -56,7 +56,14 @@ const SAVED: Record<keyof Payloads, string> = {
 // Choosing what to follow up is not timed: its time stays with the next timed action.
 const UNTIMED = new Set<keyof Payloads>(["leads"]);
 
-export default function ReviewDesk() {
+/** With `signedInAs`, the API requires tokens and every record carries that name. */
+export default function ReviewDesk({
+  signedInAs,
+  onSignOut,
+}: {
+  signedInAs?: string;
+  onSignOut?: () => void;
+}) {
   const requestGeneration = useRef(0);
   const [runs, setRuns] = useState<Run[]>([]);
   const [runId, setRunId] = useState("");
@@ -77,7 +84,7 @@ export default function ReviewDesk() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [reviewer, setReviewer] = useState("");
+  const [reviewer, changeReviewer] = useReviewer(signedInAs);
   const run = runs.find((item) => item.id === runId);
 
   const refresh = useCallback(async () => {
@@ -109,23 +116,6 @@ export default function ReviewDesk() {
   // A save that finishes after a run change must reload the run now selected.
   const latestRefresh = useRef(refresh);
   latestRefresh.current = refresh;
-
-  useEffect(() => {
-    try {
-      setReviewer(localStorage.getItem(REVIEWER_KEY) ?? "");
-    } catch {
-      // Storage can be unavailable; the name is then entered each session.
-    }
-  }, []);
-
-  function changeReviewer(name: string) {
-    setReviewer(name);
-    try {
-      localStorage.setItem(REVIEWER_KEY, name.trim());
-    } catch {
-      // Not remembered, but still sent with this session's decisions.
-    }
-  }
 
   useEffect(() => {
     void refresh();
@@ -234,6 +224,14 @@ export default function ReviewDesk() {
           <div className="pilot-line" />
           <p>Finding plants in photos taken for something else.</p>
         </div>
+        {signedInAs && (
+          <div className="signed-in">
+            Signed in as <strong>{signedInAs}</strong>
+            <button type="button" onClick={onSignOut}>
+              Sign out
+            </button>
+          </div>
+        )}
         <div className="sidebar-footer">
           <span className="live-dot" /> Open source. Public good.
           <small>Non-commercial conservation research</small>
@@ -323,6 +321,7 @@ export default function ReviewDesk() {
             runId={runId}
             study={study}
             reviewer={reviewer}
+            locked={!changeReviewer}
             onSaved={async (message) => {
               setNotice(message);
               await latestRefresh.current();

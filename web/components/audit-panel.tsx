@@ -23,7 +23,8 @@ export default function AuditPanel({
   runId: string;
   summary?: AuditSummary;
   reviewer: string;
-  onReviewerChange: (name: string) => void;
+  /** Undefined when the name is fixed by sign-in. */
+  onReviewerChange?: (name: string) => void;
   onSave: (finding: string, note: string) => Promise<unknown>;
   saving: boolean;
 }) {
@@ -76,8 +77,9 @@ export default function AuditPanel({
           onChange={(event) => {
             // An unsent draft belongs to the previous name; never show it to another auditor.
             setNote("");
-            onReviewerChange(event.target.value);
+            onReviewerChange?.(event.target.value);
           }}
+          readOnly={!onReviewerChange}
           maxLength={80}
           autoComplete="name"
         />

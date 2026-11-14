@@ -2,10 +2,11 @@
 
 import argparse
 import asyncio
+import ipaddress
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, suppress
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
+from weedz.discovery.access import Access
 from weedz.discovery.activities import Activities, export
 from weedz.discovery.api import create_app
 from weedz.discovery.occurrences import fetch_snapshot
@@ -60,8 +62,23 @@ async def worker(root: Path, address: str, stack: AsyncExitStack) -> None:
     )
 
 
+def check_binding(access: str, host: str) -> None:
+    """Without reviewer tokens, the review app listens only on this computer."""
+    loopback = host == "localhost"
+    with suppress(ValueError):
+        loopback = loopback or ipaddress.ip_address(host).is_loopback
+    if access == "local" and not loopback:
+        raise SystemExit(
+            f"Refusing to serve the review app on {host} without sign-in. Invite reviewers "
+            "(uv run main.py reviewers add) and pass --access tokens, behind HTTPS."
+        )
+
+
 async def dev(args: argparse.Namespace) -> None:
+    check_binding(args.access, args.web_host)
     root = args.pilot_dir.resolve()
+    if args.access == "tokens" and not Access(root).reviewers():
+        print("No reviewers invited yet: uv run main.py reviewers add --name NAME", flush=True)
     root.mkdir(parents=True, exist_ok=True)
     async with AsyncExitStack() as stack:
         await stack.enter_async_context(
@@ -83,7 +100,7 @@ async def dev(args: argparse.Namespace) -> None:
                 "next",
                 "dev",
                 "--hostname",
-                "127.0.0.1",
+                args.web_host,
                 "--port",
                 str(args.web_port),
                 cwd=web,
@@ -101,19 +118,27 @@ async def dev(args: argparse.Namespace) -> None:
 
             stack.push_async_callback(stop_web)
         print(
-            f"Review: http://127.0.0.1:{args.web_port} · "
+            f"Review: http://{args.web_host}:{args.web_port} ({args.access} access) · "
             f"Temporal: http://127.0.0.1:{args.temporal_ui_port}",
             flush=True,
         )
         server = uvicorn.Server(
             uvicorn.Config(
-                create_app(root, address),
+                create_app(root, address, args.access),
+                # Only the review app talks to the API, so it never leaves this computer.
                 host="127.0.0.1",
                 port=args.api_port,
                 log_level="info",
             )
         )
         await server.serve()
+
+
+def api_headers() -> dict[str, str]:
+    """A reviewer token from WEEDZ_REVIEWER_TOKEN for an API run with --access tokens. Read
+    from the environment, not an option, so it never shows in the process list."""
+    token = os.environ.get("WEEDZ_REVIEWER_TOKEN", "").strip()
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 async def discover(args: argparse.Namespace) -> None:
@@ -126,7 +151,7 @@ async def discover(args: argparse.Namespace) -> None:
         lookalikes_per_taxon=args.lookalikes,
         model=args.model,
     )
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30, headers=api_headers()) as client:
         response = await client.post(f"{args.api_url}/runs", json=spec.model_dump(mode="json"))
         response.raise_for_status()
         run_id = response.json()["id"]
@@ -254,6 +279,15 @@ def parse(argv: list[str]) -> argparse.Namespace:
     local.add_argument("--temporal-port", type=int, default=7234)
     local.add_argument("--temporal-ui-port", type=int, default=8234)
     local.add_argument("--no-web", action="store_true")
+    local.add_argument(
+        "--access",
+        choices=["local", "tokens"],
+        default="local",
+        help="local: self-declared names, this computer only; tokens: invited reviewers sign in",
+    )
+    local.add_argument(
+        "--web-host", default="127.0.0.1", help="Review app address (non-loopback needs tokens)"
+    )
     run = commands.add_parser("discover", help="Queue a bounded historical regional run")
     run.add_argument(
         "--limit", type=int, default=12, help="Animal-subject photos per region (1–50)"
