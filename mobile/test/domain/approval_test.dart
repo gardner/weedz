@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weedz/domain/approval.dart';
 
@@ -7,13 +9,18 @@ const id = '0b6f3f43-8c55-4a52-9d1e-6a1f0c7d2e11';
 
 ReportCase found() => ReportCase.found(id: id, report: fullReport());
 
+ReportCase sending() => found().approve().startSending().$1;
+
+Map<String, Object?> sent(Upload upload) =>
+    jsonDecode(upload.body) as Map<String, Object?>;
+
 void main() {
   group('A found report', () {
     test('waits for the person, and may not be sent', () {
       final found_ = found();
       expect(found_.status, ApprovalStatus.pending);
       expect(found_.maySend, isFalse);
-      expect(found_.upload, throwsStateError);
+      expect(found_.startSending, throwsStateError);
     });
 
     test('needs a lower-case UUID the device chose', () {
@@ -33,9 +40,10 @@ void main() {
       final approved = found().approve();
       expect(approved.status, ApprovalStatus.approved);
       expect(approved.maySend, isTrue);
-      final upload = approved.upload();
+      final (frozen, upload) = approved.startSending();
+      expect(frozen.status, ApprovalStatus.sending);
       expect(upload.id, id);
-      expect(upload.body, fullReport().toJson());
+      expect(sent(upload), fullReport().toJson());
     });
 
     test('is undone by any edit, which needs approving again', () {
@@ -43,7 +51,8 @@ void main() {
       expect(edited.status, ApprovalStatus.pending);
       expect(edited.maySend, isFalse);
       expect(edited.report.location, isNull);
-      expect(edited.approve().upload().body.containsKey('location'), isFalse);
+      final (_, upload) = edited.approve().startSending();
+      expect(sent(upload).containsKey('location'), isFalse);
     });
 
     test('an edit that changes nothing keeps the approval', () {
@@ -58,32 +67,36 @@ void main() {
         expect(declined.status, ApprovalStatus.declined);
         expect(declined.maySend, isFalse);
         expect(declined.approve, throwsStateError);
+        expect(declined.startSending, throwsStateError);
         expect(() => declined.edit(fullReport()), throwsStateError);
       }
     });
   });
 
   group('Sending', () {
-    test('starts only from approval', () {
-      expect(found().startSending, throwsStateError);
-      expect(found().approve().startSending().status, ApprovalStatus.sending);
+    test('freezes the case in the same step that yields the upload', () {
+      // There is no way to hold an Upload for a case that can still change.
+      final (frozen, _) = found().approve().startSending();
+      expect(() => frozen.edit(fullReport()), throwsStateError);
+      expect(frozen.decline, throwsStateError);
+      expect(frozen.startSending, throwsStateError);
+      expect(frozen.maySend, isTrue);
+    });
+
+    test('an upload is JSON text, so it cannot be changed after approval', () {
+      final (_, upload) = found().approve().startSending();
+      expect(upload.body, isA<String>());
+      expect(sent(upload), fullReport().toJson());
     });
 
     test('a failed send stays approved, so a retry reuses the same id', () {
-      final retry = found().approve().startSending().sendFailed();
+      final retry = sending().sendFailed();
       expect(retry.status, ApprovalStatus.approved);
-      expect(retry.upload().id, id);
-    });
-
-    test('freezes the report: no edits or declining in flight', () {
-      final sending = found().approve().startSending();
-      expect(() => sending.edit(fullReport()), throwsStateError);
-      expect(sending.decline, throwsStateError);
-      expect(sending.maySend, isTrue);
+      expect(retry.startSending().$2.id, id);
     });
 
     test('ends with the receipt, after which only withdrawal remains', () {
-      final received = found().approve().startSending().received();
+      final received = sending().received();
       expect(received.status, ApprovalStatus.received);
       expect(received.maySend, isFalse);
       expect(() => received.edit(fullReport()), throwsStateError);
@@ -91,8 +104,7 @@ void main() {
     });
 
     test('a report withdrawn elsewhere (410) ends withdrawn', () {
-      final sending = found().approve().startSending();
-      expect(sending.withdrawn().status, ApprovalStatus.withdrawn);
+      expect(sending().withdrawn().status, ApprovalStatus.withdrawn);
     });
   });
 

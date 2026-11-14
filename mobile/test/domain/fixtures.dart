@@ -6,6 +6,9 @@ import 'package:weedz/domain/report.dart';
 String fixtureJson(String name) =>
     File('test/fixtures/$name').readAsStringSync();
 
+/// The start of a JPEG (the fixture's crop), enough for the header checks.
+Crop jpegCrop() => Crop.fromBase64('/9j/4AAQSkZJRgABAQ==');
+
 Consent imageConsent() => Consent(
   wordingVersion: 'consent-2026-11',
   image: true,
@@ -30,7 +33,7 @@ Report fullReport() => Report(
     accuracyM: 4.7,
   ),
   consent: imageConsent(),
-  image: '/9j/4AAQSkZJRgABAQ==',
+  image: jpegCrop(),
 );
 
 /// Only the required fields.

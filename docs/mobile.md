@@ -208,9 +208,10 @@ found ─► pending ──approve──► approved ──send──► sending
   - the consent wording and the licence they choose for the crop.
 - **The person can remove details before approving.** "Remove location" and
   "Don't send the photo" both change the report, so it needs approving again.
-  An approved report cannot change silently: in the domain model only an
-  approved `ReportCase` can produce an `Upload`, and any edit returns it to
-  pending.
+  An approved report cannot change silently. Any edit returns it to pending,
+  and in the domain model an `Upload` comes only from `startSending()`. That
+  call freezes an approved `ReportCase` and returns its body as JSON text, all
+  in one step.
 - **Declining is final** for that report. Declined photos are remembered so
   they are not suggested again under the same model.
 - **After sending**, the receipt is kept. The person can withdraw the report
@@ -238,7 +239,9 @@ JSON over HTTPS, and nothing about it is Flutter-specific.
     and 4096 × 4096 pixels.
   - The crop is JPEG, PNG or WebP. The app re-encodes it from pixels, so no
     EXIF, XMP or GPS travels in it, even though the server strips metadata
-    too.
+    too. The domain `Crop` type checks the format, the byte limit and strict
+    padded base64. The crop's pixel size comes from the screening window that
+    produced it.
   - `test/fixtures/report_v1.json` is the contract fixture. The Dart test checks
     the model against it, and `tests/test_mobile_contract.py` validates it with
     the server's Pydantic `Report`.
@@ -271,7 +274,7 @@ design, and #61 decides whether some places need protecting.
    app never uploads photos, the scan index, embeddings or locations. The only
    things it sends are approved reports, and requests to fetch receipts or
    withdraw. The type system enforces the first part: an `Upload` exists only
-   for an approved `ReportCase`.
+   for an approved `ReportCase`, frozen in the same step.
 2. **What is shown is what is sent.** The approval screen renders the report
    that will be serialised, including its exact coordinates and accuracy. Any
    change needs approving again.

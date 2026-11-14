@@ -122,18 +122,11 @@ void main() {
 
     test('an image without image consent, and image consent without one', () {
       expect(
-        () => minimalReport().copyWith(image: 'AAAA'),
+        () => minimalReport().copyWith(image: jpegCrop()),
         throwsArgumentError,
       );
       expect(
         () => minimalReport().copyWith(consent: imageConsent()),
-        throwsArgumentError,
-      );
-    });
-
-    test('an image that is not standard base64', () {
-      expect(
-        () => minimalReport().copyWith(consent: imageConsent(), image: 'a b'),
         throwsArgumentError,
       );
     });

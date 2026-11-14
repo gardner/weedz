@@ -1,9 +1,11 @@
 /// The life of one found report, from the scan to the server (#56, #57).
 ///
 /// The rule it enforces: nothing is sent unless the person approved exactly
-/// this report. Any edit undoes approval, and only an approved report yields
-/// an [Upload].
+/// this report. Any edit undoes approval, and an [Upload] exists only for a
+/// report frozen for sending in the same step, as immutable JSON text.
 library;
+
+import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:weedz/domain/report.dart';
@@ -32,13 +34,16 @@ final _uuid = RegExp(
   r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
 );
 
-/// What goes over the wire: `PUT /reports/{id}` with [body] as JSON.
+/// What goes over the wire: `PUT /reports/{id}` with [body].
 @immutable
 final class Upload {
   const new _(this.id, this.body);
 
   final String id;
-  final Map<String, Object?> body;
+
+  /// The approved report as JSON text: a String, so nothing can change it
+  /// between approval and sending.
+  final String body;
 }
 
 @immutable
@@ -79,8 +84,17 @@ final class ReportCase {
     'decline',
   );
 
-  ReportCase startSending() =>
-      _move({ApprovalStatus.approved}, ApprovalStatus.sending, 'send');
+  /// Freezes the approved report for sending and returns the request to
+  /// send. Both happen in one step, so no [Upload] exists for a report that
+  /// can still be edited or declined.
+  (ReportCase, Upload) startSending() {
+    final sending = _move(
+      {ApprovalStatus.approved},
+      ApprovalStatus.sending,
+      'send',
+    );
+    return (sending, Upload._(id, jsonEncode(report.toJson())));
+  }
 
   /// The send did not get an answer: still approved, to retry under [id].
   ReportCase sendFailed() =>
@@ -95,12 +109,6 @@ final class ReportCase {
     ApprovalStatus.withdrawn,
     'withdraw',
   );
-
-  /// The request to send, available only while approved.
-  Upload upload() {
-    _expect({ApprovalStatus.approved}, 'upload');
-    return Upload._(id, report.toJson());
-  }
 
   ReportCase _move(Set<ApprovalStatus> from, ApprovalStatus to, String verb) {
     _expect(from, verb);

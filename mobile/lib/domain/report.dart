@@ -8,6 +8,9 @@
 library;
 
 import 'package:meta/meta.dart';
+import 'package:weedz/domain/crop.dart';
+
+export 'package:weedz/domain/crop.dart' show Crop;
 
 const schemaVersion = 1;
 
@@ -23,7 +26,6 @@ const admittedLicences = {'cc0', 'cc-by', 'cc-by-nc'};
 
 final _token = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$');
 final _meaningId = RegExp(r'^[a-z0-9][a-z0-9./-]{0,119}$');
-final _base64 = RegExp(r'^[A-Za-z0-9+/]+={0,2}$');
 
 void _check(bool ok, String name, Object? value, String rule) {
   if (!ok) throw ArgumentError.value(value, name, rule);
@@ -235,15 +237,8 @@ final class Report {
     this.location,
     this.image,
   }) : appVersion = _checkToken(appVersion, 'appVersion') {
-    final image_ = image;
     _check(
-      image_ == null || _base64.hasMatch(image_),
-      'image',
-      '<crop>',
-      'Not standard base64',
-    );
-    _check(
-      (image_ != null) == consent.image,
+      (image != null) == consent.image,
       'image',
       '<crop>',
       'An image is sent only with image consent, and consent needs one',
@@ -257,8 +252,8 @@ final class Report {
   final Location? location;
   final Consent consent;
 
-  /// The crop as standard base64.
-  final String? image;
+  /// The crop, sent as standard base64.
+  final Crop? image;
 
   /// This report with some parts replaced (to remove a part, use
   /// [withoutLocation] or [withoutImage]).
@@ -266,7 +261,7 @@ final class Report {
     DateTime? capturedAt,
     Location? location,
     Consent? consent,
-    String? image,
+    Crop? image,
   }) => Report(
     appVersion: appVersion,
     candidate: candidate,
@@ -304,7 +299,7 @@ final class Report {
     'captured_at': ?capturedAt?.toUtc().toIso8601String(),
     'location': ?location?.toJson(),
     'consent': consent.toJson(),
-    'image': ?image,
+    'image': ?image?.base64,
   };
 
   @override
