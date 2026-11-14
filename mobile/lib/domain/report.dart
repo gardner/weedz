@@ -2,9 +2,9 @@
 /// server's contract (`src/weedz/intake/schema.py`, issue #57).
 ///
 /// Each part refuses, when built, what the server's schema refuses on its
-/// own. One check depends on the server's clock and is not repeated here: a
-/// capture time more than a day ahead is refused (422).
-/// [Report.withoutCapturedAt] lets such a report be revised.
+/// own. Capture times more than a day ahead of the device clock are refused.
+/// The server checks its own clock too; [Report.withoutCapturedAt] lets a
+/// report be revised if the clocks disagree.
 ///
 /// The location is exact on purpose (it is what makes a report useful for
 /// science) and always carries its accuracy. It is where
@@ -288,7 +288,18 @@ final class Report {
     this.capturedAt,
     this.location,
     this.image,
+    DateTime Function()? clock,
   }) : appVersion = _checkToken(appVersion, 'appVersion') {
+    final captured = capturedAt;
+    _check(
+      captured == null ||
+          !captured.isAfter(
+            (clock ?? DateTime.now)().add(const Duration(days: 1)),
+          ),
+      'capturedAt',
+      captured,
+      'Must be no more than one day in the future',
+    );
     _check(
       (image != null) == consent.image,
       'image',

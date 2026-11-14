@@ -175,7 +175,12 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   that were permitted (never the credit name), so a retry can't bring it back
   and the history shows what was agreed and when it ended. Receipts show the
   wording and uses.
-  Another submitter's report is a 404, the same as a missing one. If a device
+  `GET` for another submitter's report is a 404, the same as a missing one.
+  Device `DELETE` records a tombstone even before an upload arrives, so a late
+  `PUT` gets 410. Creating a new tombstone counts toward the daily report
+  budget (429 means retry after `Retry-After`); withdrawing an existing
+  report or repeating a withdrawal is always allowed. This is scoped to the authenticated submitter, even when
+  another device uses the same report id. If a device
   token is lost or revoked, the operator can withdraw its reports with
   `intake withdraw`. An unknown id is an error. If the report may still be on
   its way, `--not-yet-received` records the withdrawal, so the report is
