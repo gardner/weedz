@@ -192,6 +192,8 @@ try {
   });
   const posted = [];
   let photos = [photo("a", "unreviewed"), photo("b", "rejected")];
+  // "local", "sign-in" (the API wants a token) or a signed-in reviewer's name.
+  let session = "local";
   const limit = { measure: "Coverage and review usability", direction: "at least", unit: "%" };
   const terms = {
     regions: ["Nelson", "Tasman"],
@@ -230,6 +232,13 @@ try {
   await page.route("**/api/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    if (path === "/api/session" && session === "sign-in") {
+      return route.fulfill({ status: 401, json: { detail: "That token is not valid." } });
+    }
+    if (path === "/api/session") {
+      const signedIn = { mode: "tokens", reviewer: session };
+      return route.fulfill({ json: session === "local" ? { mode: "local" } : signedIn });
+    }
     if (path === "/api/runs") return route.fulfill({ json: [run] });
     if (path === "/api/studies/terms") return route.fulfill({ json: terms });
     if (path.endsWith("/suitability")) return route.fulfill({ json: suitability });
@@ -373,6 +382,38 @@ try {
     "empty states meet WCAG AA",
   );
   assert.deepEqual(await lowContrast(page), [], "empty-state text meets AA contrast");
+  // Remote review: the sign-in form with an error showing, at desktop and phone widths,
+  // then the desk with who is signed in.
+  session = "sign-in";
+  await page.reload();
+  await page.getByLabel("Reviewer token").fill("weedz_1_wrong");
+  await page.keyboard.press("Enter");
+  await page.getByRole("alert").waitFor();
+  for (const width of [1400, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const signIn = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
+    assert.deepEqual(
+      signIn.violations.map((v) => v.id),
+      [],
+      `sign-in meets WCAG AA at ${width}px`,
+    );
+    assert.deepEqual(await lowContrast(page), [], `sign-in text meets AA contrast at ${width}px`);
+  }
+  session = "Ana";
+  await page.setViewportSize({ width: 1400, height: 1000 });
+  await page.reload();
+  await page.getByRole("button", { name: "Sign out" }).waitFor();
+  const signedIn = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  assert.deepEqual(
+    signedIn.violations.map((v) => v.id),
+    [],
+    "the signed-in desk meets WCAG AA",
+  );
+  assert.deepEqual(await lowContrast(page), [], "signed-in text meets AA contrast");
   console.log("No WCAG 2.2 AA violations; the core decision works from the keyboard.");
 } finally {
   await browser.close();

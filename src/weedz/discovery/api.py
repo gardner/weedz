@@ -4,11 +4,13 @@ import tempfile
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from temporalio.client import Client
 
+from weedz.discovery.access import Access, require_reviewer, session
 from weedz.discovery.activities import export, review_history
 from weedz.discovery.agreed_limits import study_budget
 from weedz.discovery.audit import audit_sample, summarize_audit
@@ -351,8 +353,22 @@ class ReviewAPI:
         return {"saved": True}
 
 
-def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
-    app = FastAPI(title="Weedz regional review", version="0.2.0")
+def create_app(
+    root: Path,
+    temporal_address: str = "localhost:7234",
+    access: Literal["local", "tokens"] = "local",
+) -> FastAPI:
+    """In "local" mode names are self-declared; in "tokens" mode every request needs a
+    reviewer's invite token and records carry that reviewer's name (issue #31)."""
+    locked = access == "tokens"
+    app = FastAPI(
+        title="Weedz regional review",
+        version="0.2.0",
+        dependencies=[Depends(require_reviewer(Access(root)))] if locked else [],
+        # The schema and its docs are for local development, not for remote reviewers.
+        openapi_url=None if locked else "/openapi.json",
+    )
+    app.get("/session")(session)
     api = ReviewAPI(root, temporal_address)
     app.get("/runs")(api.runs)
     app.post("/runs", status_code=202)(api.start)

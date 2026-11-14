@@ -16,6 +16,7 @@ export default function StudyForm({
   terms,
   initial,
   reviewer,
+  locked,
   saving,
   onSave,
   onCancel,
@@ -23,6 +24,7 @@ export default function StudyForm({
   terms: StudyTerms;
   initial: StudyDefinition;
   reviewer: string;
+  locked: boolean;
   saving: boolean;
   onSave: (definition: StudyDefinition, author: string, note: string) => void;
   onCancel: () => void;
@@ -220,7 +222,11 @@ export default function StudyForm({
         <legend>Record this version</legend>
         <label>
           Recorded by
-          <input value={author} onChange={(event) => setAuthor(event.target.value)} />
+          <input
+            value={author}
+            onChange={(event) => setAuthor(event.target.value)}
+            readOnly={locked}
+          />
         </label>
         <label>
           What changed and why
