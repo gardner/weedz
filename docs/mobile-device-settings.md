@@ -50,8 +50,12 @@ configuration changes cannot accidentally send an old credential to a different
 service. Enrollment and pending-deletion state use one encrypted secure-storage
 value. iOS uses non-synchronizing, device-only Keychain access while unlocked.
 Android uses the platform Keystore-backed cipher, a dedicated storage namespace,
-`resetOnError: false`, and disabled Android backup. No plaintext token is stored in
-app preferences. Storage errors preserve the record and block replacement.
+`resetOnError: false`, and disabled Android cloud backup. Explicit legacy backup
+and Android 12+ data-extraction rules exclude shared preferences from cloud backup
+and device-to-device transfer, including the ciphertext, wrapped keys and plugin
+configuration. `allowBackup=false` alone does not exclude transfer on every device
+([Android backup rules](https://developer.android.com/identity/data/autobackup)).
+No plaintext token is stored in app preferences. Storage errors preserve the record and block replacement.
 
 `flutter_secure_storage` 11.2 acknowledges Android writes after `apply()`. A small
 background native method then calls synchronous `commit()` for the dedicated

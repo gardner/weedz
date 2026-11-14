@@ -4,8 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:weedz/device/device_record.dart';
 
 /// Device-only Keychain on iOS, encrypted Keystore-backed storage on Android.
-/// Android backup is disabled in the manifest; tokens never enter app
-/// preferences.
+/// Credential preferences are excluded from Android backup and device transfer.
+/// Plaintext tokens never enter app preferences.
 final class SecureDeviceRecordStore implements DeviceRecordStore {
   const new();
 
