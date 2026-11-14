@@ -85,8 +85,14 @@ def test_a_completed_image_budget_refusal_cannot_decode_for_free(
         return clean_image(data, max_pixels)
 
     monkeypatch.setattr("weedz.intake.api.clean_image", count)
+
+    def unavailable(store: ReportStore, submitter: int, report_id: str) -> None:
+        raise OSError("A second cleanup write cannot acquire the database")
+
+    monkeypatch.setattr(ReportStore, "refused_admission", unavailable)
     client = TestClient(
-        create_intake_app(tmp_path, Limits(reports_per_day=1, image_bytes_per_day=1))
+        create_intake_app(tmp_path, Limits(reports_per_day=1, image_bytes_per_day=1)),
+        raise_server_exceptions=False,
     )
     headers = {"Authorization": f"Bearer {token(tmp_path)}"}
     path, body = f"/reports/{new_id()}", with_image(jpeg())

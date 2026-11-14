@@ -156,13 +156,7 @@ class IntakeAPI:
             except Exception:
                 self.store.refused_admission(submitter, report_id)
                 raise
-            try:
-                return self.store.receive(submitter, report_id, report, digest, image, self.limits)
-            except OverBudget:
-                # Decoding completed and the actual crop size did not fit. Retain the
-                # usage charge, but do not let a retry decode on that reservation again.
-                self.store.refused_admission(submitter, report_id)
-                raise
+            return self.store.receive(submitter, report_id, report, digest, image, self.limits)
 
     def get(self, report_id: uuid.UUID, request: Request) -> Receipt:
         receipt = self.store.receipt(request.state.submitter, str(report_id))

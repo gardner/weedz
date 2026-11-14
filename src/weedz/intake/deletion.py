@@ -87,6 +87,7 @@ class Deletions:
             )
             db.execute("DELETE FROM usage WHERE submitter=?", (submitter,))
             db.execute("DELETE FROM admissions WHERE submitter=?", (submitter,))
+            db.execute("DELETE FROM pending_report_erasures WHERE submitter=?", (submitter,))
             # Crashed uploads can leave crops without any committed owner row. Sweep
             # them under the same writer lock before claiming that erasure completed.
             self.store._sweep(db)

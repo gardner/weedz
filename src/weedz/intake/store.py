@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS reports(
     content_sha256 TEXT, body TEXT, image_file TEXT, withdrawn_at TEXT,
     PRIMARY KEY(submitter, report_id)
 );
+CREATE TABLE IF NOT EXISTS pending_report_erasures(
+    submitter INTEGER NOT NULL, report_id TEXT NOT NULL, PRIMARY KEY(submitter, report_id)
+);
 """
     + budget.SCHEMA
     + DELETION_SCHEMA
@@ -132,6 +135,8 @@ class ReportStore:
         """Store a report that ``admit`` charged (True), or return the receipt of the same
         one received before (False). Raises Withdrawn, Conflict or OverBudget."""
         name = None
+        receipt: Receipt | None = None
+        refused: budget.OverBudget | None = None
         try:
             with self._transaction() as db:
                 if is_deleting(db, submitter):
@@ -139,18 +144,29 @@ class ReportStore:
                 existing = _existing(db, submitter, report_id, digest)
                 if existing:
                     return existing, False
-                budget.settle(db, submitter, report_id, len(image or b""), limits)
-                received = _now()
-                name = self._write_image(image) if image else None
-                content = report.model_dump_json(exclude={"image"})
-                row = (submitter, report_id, received, digest, content, name)
-                db.execute("INSERT INTO reports VALUES(?,?,?,?,?,?,NULL)", row)
+                try:
+                    budget.settle(db, submitter, report_id, len(image or b""), limits)
+                except budget.OverBudget as error:
+                    # Commit the completed refusal's cleanup before releasing the writer
+                    # lock. Raising inside this transaction would roll it back again.
+                    budget.finish(db, submitter, report_id)
+                    refused = error
+                else:
+                    received = _now()
+                    name = self._write_image(image) if image else None
+                    content = report.model_dump_json(exclude={"image"})
+                    row = (submitter, report_id, received, digest, content, name)
+                    db.execute("INSERT INTO reports VALUES(?,?,?,?,?,?,NULL)", row)
+                    receipt = Receipt(report_id, "received", received, None, name is not None)
         except BaseException:
             # Not committed, so no image is left behind without its report.
             if name:
                 (self.images / name).unlink(missing_ok=True)
             raise
-        return Receipt(report_id, "received", received, None, name is not None), True
+        if refused is not None:
+            raise refused
+        assert receipt is not None
+        return receipt, True
 
     def withdraw(
         self,
@@ -176,6 +192,7 @@ class ReportStore:
             if is_deleting(db, submitter):
                 raise Withdrawn
             row = _row(db, submitter, report_id)
+            pending = row is None or row["withdrawn_at"] is None or _has_content(row)
             if row is None:
                 if not before_arrival:
                     return False
@@ -193,18 +210,35 @@ class ReportStore:
                     (_now(), submitter, report_id),
                 )
             budget.finish(db, submitter, report_id)
+            if pending:
+                db.execute(
+                    "INSERT OR IGNORE INTO pending_report_erasures VALUES(?,?)",
+                    (submitter, report_id),
+                )
         return True
 
     def _erase_withdrawal(self, submitter: int, report_id: str) -> Receipt:
         with self._transaction() as db:
             row = _row(db, submitter, report_id)
             assert row is not None and row["withdrawn_at"]
+            pending = db.execute(
+                "SELECT 1 FROM pending_report_erasures WHERE submitter=? AND report_id=?",
+                (submitter, report_id),
+            ).fetchone()
+            if pending is None and not _has_content(row):
+                return Receipt.of(row)
             if row["image_file"]:
                 (self.images / row["image_file"]).unlink(missing_ok=True)
-                self._sync_images()
             db.execute(
                 "UPDATE reports SET body=NULL,content_sha256=NULL,image_file=NULL "
                 "WHERE submitter=? AND report_id=?",
+                (submitter, report_id),
+            )
+            # A failed upload can leave pixels without a committed owner row. Sweep
+            # those under the writer lock before acknowledging physical erasure.
+            self._sweep(db)
+            db.execute(
+                "DELETE FROM pending_report_erasures WHERE submitter=? AND report_id=?",
                 (submitter, report_id),
             )
             return Receipt(report_id, "withdrawn", row["received_at"], row["withdrawn_at"], False)
@@ -214,7 +248,9 @@ class ReportStore:
         with closing(self._connect()) as db:
             pending = db.execute(
                 "SELECT submitter,report_id FROM reports WHERE withdrawn_at IS NOT NULL "
-                "AND (body IS NOT NULL OR content_sha256 IS NOT NULL OR image_file IS NOT NULL)"
+                "AND (body IS NOT NULL OR content_sha256 IS NOT NULL OR image_file IS NOT NULL "
+                "OR EXISTS (SELECT 1 FROM pending_report_erasures p WHERE "
+                "p.submitter=reports.submitter AND p.report_id=reports.report_id))"
             ).fetchall()
         for row in pending:
             self._erase_withdrawal(row["submitter"], row["report_id"])
@@ -293,6 +329,10 @@ class ReportStore:
             os.fsync(folder)
         finally:
             os.close(folder)
+
+
+def _has_content(row: sqlite3.Row) -> bool:
+    return any(row[name] is not None for name in ("body", "content_sha256", "image_file"))
 
 
 def _row(db: sqlite3.Connection, submitter: int, report_id: str) -> sqlite3.Row | None:

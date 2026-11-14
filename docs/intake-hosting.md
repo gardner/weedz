@@ -47,7 +47,9 @@ from specialist reads and refusing late uploads. It then deletes and fsyncs the
 crop and erases content and its hash. A successful `DELETE` response confirms
 that physical erasure finished. If the process stops between those steps, the
 report remains logically withdrawn and its receipt exposes no crop. Startup or a
-repeated `DELETE` finishes the physical erasure. A previously returned specialist
+repeated `DELETE` finishes the physical erasure. A small pending-erasure record
+keeps even unknown-id withdrawals retryable if orphan cleanup fails; it is removed
+only after the writer-locked sweep succeeds. Completed retries skip the sweep. A previously returned specialist
 snapshot cannot be recalled; callers must not cache report content beyond its use.
 
 An upload interrupted after admission can reuse its unexpired daily budget

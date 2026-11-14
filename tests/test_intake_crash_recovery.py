@@ -116,3 +116,60 @@ def test_image_open_collision_never_removes_an_existing_crop(
     with pytest.raises(FileExistsError):
         store._write_image(b"new crop")
     assert existing.read_bytes() == b"another report's crop"
+
+
+def test_withdrawal_sweeps_a_crop_when_failed_write_cleanup_also_failed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret, report_id = token(tmp_path), new_id()
+    headers, path = {"Authorization": f"Bearer {secret}"}, f"/reports/{report_id}"
+    client = TestClient(create_intake_app(tmp_path), raise_server_exceptions=False)
+    original_sync, original_unlink = ReportStore._sync_images, Path.unlink
+    failed_sync: list[bool] = []
+    failed_unlink: list[bool] = []
+
+    def fail_sync_once(store: ReportStore) -> None:
+        if not failed_sync:
+            failed_sync.append(True)
+            raise OSError("Write interrupted")
+        original_sync(store)
+
+    def fail_unlink_once(file: Path, missing_ok: bool = False) -> None:
+        if file.suffix == ".jpg" and not failed_unlink:
+            failed_unlink.append(True)
+            raise OSError("Cleanup temporarily unavailable")
+        original_unlink(file, missing_ok=missing_ok)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(ReportStore, "_sync_images", fail_sync_once)
+        patch.setattr(Path, "unlink", fail_unlink_once)
+        assert client.put(path, json=with_image(jpeg()), headers=headers).status_code == 500
+    assert len(list(ReportStore(tmp_path).images.iterdir())) == 1
+    assert client.delete(path, headers=headers).status_code == 200
+    assert list(ReportStore(tmp_path).images.iterdir()) == []
+
+
+@pytest.mark.parametrize("restart", [False, True])
+def test_unknown_id_erasure_retries_failed_sweep_but_completed_retries_do_not_scan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, restart: bool
+) -> None:
+    secret = token(tmp_path)
+    headers, path = {"Authorization": f"Bearer {secret}"}, f"/reports/{new_id()}"
+    client = TestClient(create_intake_app(tmp_path), raise_server_exceptions=False)
+    store = ReportStore(tmp_path)
+    (store.images / "orphan.jpg").write_bytes(b"private pixels")
+
+    def interrupted(store: ReportStore, db: sqlite3.Connection) -> None:
+        raise OSError("Sweep unavailable")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(ReportStore, "_sweep", interrupted)
+        assert client.delete(path, headers=headers).status_code == 500
+    if restart:
+        client = TestClient(create_intake_app(tmp_path), raise_server_exceptions=False)
+    completed = client.delete(path, headers=headers)
+    assert completed.status_code == 200
+    assert list(store.images.iterdir()) == []
+    with monkeypatch.context() as patch:
+        patch.setattr(ReportStore, "_sweep", interrupted)
+        assert client.delete(path, headers=headers).json() == completed.json()
