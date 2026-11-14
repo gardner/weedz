@@ -230,11 +230,12 @@ def _lineage_roots(samples: list[Sample]) -> dict[str, str]:
     roots: dict[str, str] = {}
     for sample in samples:
         current, visited = sample.id, {sample.id}
-        while (parent := parents.get(current)) and parent not in visited:
+        while parent := parents.get(current):
+            if parent in visited:
+                raise ValueError(f"{sample.id} has a cyclic parent_id lineage")
+            # An ancestor outside the release has no entry, which ends the walk there.
             current = parent
             visited.add(parent)
-            if parent not in parents:  # an ancestor outside the release
-                break
         roots[sample.id] = current
     return roots
 

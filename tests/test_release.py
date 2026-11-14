@@ -352,6 +352,15 @@ def test_a_grandchild_shares_its_root_lineage() -> None:
         build_release(samples, spec(), recorded_at=WHEN)
 
 
+def test_cyclic_lineage_metadata_is_refused() -> None:
+    samples = sites("a", "c", "d")
+    first, last = samples[0].id, samples[-1].id
+    samples[0] = samples[0].model_copy(update={"parent_id": last})
+    samples[-1] = samples[-1].model_copy(update={"parent_id": first})
+    with pytest.raises(ValueError, match="cyclic parent_id lineage"):
+        build_release(samples, spec(), recorded_at=WHEN)
+
+
 def test_binary_evidence_needs_one_target_taxon() -> None:
     samples = sites("a", "c", "d")
     other = point("absent", taxon="Ulex europaeus")
