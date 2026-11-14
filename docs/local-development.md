@@ -784,9 +784,12 @@ a public point is shared exactly, with its accuracy, in every output. It is
 not generalised to a grid or withheld by audience (#61 records why that was
 rejected). The limits below are hard constraints: they protect locations that
 are not ours to reveal, or that would overstate what is known.
-`tests/test_location_privacy.py` calls every review-API route, and the
-package archive, for an obscured observation, and finds its point in none of
-them.
+`tests/test_location_privacy.py` calls each review-API GET route that returns
+photo data, and unpacks the package archive, for an obscured observation. It
+finds the point in none of them. Each other GET route is listed with the
+reason it carries no location, so a new route fails the test until someone
+classifies it. Image bytes carry no location: iNaturalist strips metadata from
+hosted photos, and device crops are re-encoded.
 
 - An obscured point is never served, not even to the review app. iNaturalist
   displaces it on purpose, so passing it on would present an invented

@@ -10,6 +10,7 @@ import zipfile
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from starlette.routing import Route
 from test_judgements import (
     PUBLIC,
     SCREENED,
@@ -27,19 +28,33 @@ from weedz.discovery.api import create_app
 # Distinctive digits, so a match can only be this point.
 OBSCURED = {"location": "-41.27391,173.28417", "positional_accuracy": 7}
 DIGITS = ("41.27391", "173.28417")
-GET_ROUTES = [
+CHECKED = {
     "/runs",
-    "/runs/run",
-    "/runs/run/export",
-    "/runs/run/outcomes",
-    "/runs/run/suitability",
-    "/runs/run/study",
-    "/runs/run/package",
-    "/runs/run/photos/{photo}/reviews",
-    "/runs/run/photos/{photo}/findings",
-    "/runs/run/photos/{photo}/judgements",
-    "/runs/run/photos/{photo}/referrals",
-]
+    "/runs/{run_id}",
+    "/runs/{run_id}/export",
+    "/runs/{run_id}/outcomes",
+    "/runs/{run_id}/suitability",
+    "/runs/{run_id}/study",
+    "/runs/{run_id}/package",
+    "/runs/{run_id}/photos/{photo_id}/reviews",
+    "/runs/{run_id}/photos/{photo_id}/findings",
+    "/runs/{run_id}/photos/{photo_id}/judgements",
+    "/runs/{run_id}/photos/{photo_id}/referrals",
+}
+# Every other GET route, with why it cannot carry a photo's location as text.
+EXEMPT = {
+    "/session": "who is signed in; no photo data",
+    "/studies": "study definitions; no photos",
+    "/studies/terms": "study vocabulary; no photos",
+    "/studies/{study_id}": "a study definition; no photos",
+    "/runs/{run_id}/package/archive": "unpacked and checked by archive_text",
+    "/runs/{run_id}/photos/{photo_id}/image": "image bytes: iNaturalist strips hosted "
+    "photos' metadata (docs/datasets.md), and device crops are re-encoded (#57)",
+    "/openapi.json": "the API schema",
+    "/docs": "the API docs page",
+    "/docs/oauth2-redirect": "the API docs page",
+    "/redoc": "the API docs page",
+}
 
 
 def reviewed_lead(root: Path, **fields: object) -> tuple[TestClient, str]:
@@ -65,10 +80,20 @@ def archive_text(client: TestClient) -> str:
         )
 
 
+def test_every_get_route_is_checked_or_exempted_with_a_reason(tmp_path: Path) -> None:
+    """A new GET route fails here until someone decides whether it can carry a point."""
+    served = {
+        route.path
+        for route in create_app(tmp_path).routes
+        if isinstance(route, Route) and "GET" in (route.methods or ())
+    }
+    assert served == CHECKED | set(EXEMPT)
+
+
 def test_no_route_reveals_an_obscured_point(tmp_path: Path) -> None:
     client, photo_id = reviewed_lead(tmp_path, **OBSCURED)
-    for route in GET_ROUTES:
-        response = client.get(route.format(photo=photo_id))
+    for route in sorted(CHECKED):
+        response = client.get(route.format(run_id="run", photo_id=photo_id))
         assert response.status_code == 200, route
         assert not any(digits in response.text for digits in DIGITS), route
     assert not any(digits in archive_text(client) for digits in DIGITS)
