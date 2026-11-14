@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from test_judgements import store_with_photo
 from test_leads import select
+from test_sharing_surface import force_licence
 
 from weedz.discovery import cli
 from weedz.discovery.api import create_app
@@ -57,7 +58,8 @@ def test_a_permitted_photo_is_packaged_from_its_retained_copy(tmp_path: Path) ->
 
 
 def test_a_photo_whose_licence_does_not_permit_sharing_is_left_out(tmp_path: Path) -> None:
-    store, _photo_id = selected_store(tmp_path, photo_license="cc-by-nd")
+    store, photo_id = selected_store(tmp_path)
+    force_licence(store, photo_id, "cc-by-nd")
     _package, photos = package_contents(store, "run", "2026-11-14")
     assert photos == {}
 

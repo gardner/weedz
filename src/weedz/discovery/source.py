@@ -14,8 +14,9 @@ from PIL import Image
 from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.records import REGIONS, SPECIES, Photo, RunSpec
 from weedz.discovery.sampling import season_windows, select_across_strata
+from weedz.discovery.sharing import ADMITTED
 
-LICENSES = {"cc0", "cc-by", "cc-by-nc"}
+LICENSES = set(ADMITTED)
 HEADERS = {"User-Agent": "Weedz/0.1 (open-source non-commercial conservation research)"}
 
 

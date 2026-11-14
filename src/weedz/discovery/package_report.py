@@ -66,7 +66,7 @@ def _source(lead: dict[str, Any]) -> list[str]:
         f"**Source:** <{source['url']}> by {_inline(source['observer'])}. "
         f"{_inline(source['attribution'])}. "
         f"Photo licence {source['photo_license']}; observation licence "
-        f"{source['observation_license']}.",
+        f"{source['observation_license']}. {source['observation_terms']}.",
     ]
     if image["included"]:
         lines.append(f"![Photo {lead['photo_id']}]({image['file']}) {image['terms']}.")

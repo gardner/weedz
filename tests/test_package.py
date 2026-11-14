@@ -8,13 +8,14 @@ from test_discovery import observation
 from test_judgements import PUBLIC, add_finding, load_references, nearby, save, store_with_photo
 from test_leads import select
 from test_referrals import refer
+from test_sharing_surface import force_licence
 
 from weedz.discovery.activities import export
 from weedz.discovery.judgements import Judgement
 from weedz.discovery.leads import selections
 from weedz.discovery.package import follow_up_package
 from weedz.discovery.package_report import to_markdown
-from weedz.discovery.records import Finding, Photo
+from weedz.discovery.records import Finding
 from weedz.discovery.source import photo_from_observation
 from weedz.discovery.store import Store
 
@@ -191,13 +192,17 @@ def test_an_image_is_packaged_only_when_its_licence_permits(tmp_path: Path) -> N
     assert image["included"] is True and image["file"] == f"photos/{photo_id}.jpg"
     assert "non-commercial" in image["terms"]
     assert image["detail"][0]["box"] == WINDOW
-    saved = Photo.model_validate(store.photos("run")[0])
-    store.save_photos("run", [saved.model_copy(update={"photo_license": "cc-by-nd"})])
+    force_licence(store, photo_id, "cc-by-nd")
     image = only_lead(store)["image"]
     assert image["included"] is False and image["file"] is None
     assert "link" in image["terms"].lower()
+    assert "no-derivatives" in image["terms"]
     lead = only_lead(store)
     assert lead["source"]["url"].startswith("https://www.inaturalist.org/observations/")
+    # The observation's own licence conditions travel too, not only its code.
+    assert "non-commercial" in lead["source"]["observation_terms"]
+    package = package_of(store)
+    assert lead["source"]["observation_terms"] in to_markdown(package)
     assert lead["source"]["attribution"] == "Example observer (CC BY-NC 4.0)"
 
 
@@ -229,3 +234,17 @@ def test_a_selection_newer_than_the_export_is_left_for_the_next_package(
     assert [(lead["photo_id"], lead["finding_id"]) for lead in package["leads"]] == [
         (photo_id, None)
     ]
+
+
+def test_a_lead_never_carries_a_point_the_sharing_policy_withholds(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path, SCREENED, **PUBLIC)
+    select(store, photo_id)
+    assert only_lead(store)["limits"]["search_area"]["centre"] == [-41.2, 173.3]
+    force_licence(store, photo_id, "cc-by-nd", field="observation_license")
+    area = only_lead(store)["limits"]["search_area"]
+    assert area["status"] == "withheld"
+    assert area["centre"] is None and area["radius_m"] is None
+    assert "observation licence" in area["reason"]
+    markdown = to_markdown(package_of(store))
+    assert "173.3" not in markdown
+    assert "not searchable" in markdown
