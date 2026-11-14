@@ -10,9 +10,10 @@ String fixtureJson(String name) =>
 Crop jpegCrop() => Crop.fromBase64('/9j/4AAQSkZJRgABAQ==');
 
 Consent imageConsent({bool location = true}) => Consent(
-  wordingVersion: 'consent-2026-11',
+  wordingVersion: '2026-11',
   image: true,
   location: location,
+  uses: const {'review'},
   licence: 'cc-by',
   credit: 'A. Contributor',
 );
@@ -46,9 +47,5 @@ Report minimalReport() => Report(
     revision: '2957b322090f9cb17ae72c71981c7218a28d81e0',
     rankingRevision: 4,
   ),
-  consent: Consent(
-    wordingVersion: 'consent-2026-11',
-    image: false,
-    location: false,
-  ),
+  consent: Consent(wordingVersion: '2026-11', image: false, location: false),
 );

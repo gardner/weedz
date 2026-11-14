@@ -30,7 +30,7 @@ def test_an_invite_is_stored_only_as_a_hash(tmp_path: Path) -> None:
     assert invite.reviewer == "Ana"
     assert invite.token.startswith(f"weedz_{invite.id}_")
     assert invite.token not in repr(invite)
-    secret = invite.token.rsplit("_", 1)[-1]
+    secret = invite.token.split("_", 2)[2]
     with sqlite3.connect(tmp_path / "access.sqlite3") as db:
         rows = db.execute("SELECT * FROM reviewer_tokens").fetchall()
     assert secret not in repr(rows)
@@ -237,5 +237,5 @@ def test_tokens_are_never_logged(tmp_path: Path, caplog: pytest.LogCaptureFixtur
         json={"status": "confirmed", "reviewer": "Ben"},
         headers=bearer(token),
     )
-    secret = token.rsplit("_", 1)[-1]
+    secret = token.split("_", 2)[2]
     assert secret not in caplog.text

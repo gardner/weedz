@@ -72,6 +72,9 @@ def _source(lead: dict[str, Any]) -> list[str]:
         lines.append(f"![Photo {lead['photo_id']}]({image['file']}) {image['terms']}.")
     else:
         lines.append(f"**Photo:** {image['terms']}.")
+    if (permits := image.get("contributor_permits")) is not None:
+        allowed = ", ".join(permits) or "nothing further (withdrawn)"
+        lines.append(f"The photo's contributor permits only: {allowed}.")
     lines += [
         f"Detail, box {box['box']} in image pixels (left, top, right, bottom): {box['is']}."
         for box in image["detail"]

@@ -10,7 +10,12 @@ carries its accuracy. Nothing here, or anywhere in the project, publishes to a s
 
 from typing import Any, Literal, NamedTuple
 
+from weedz.consent import Permission, refusal
+
 Use = Literal["review", "share"]
+# The permission each use needs from a photo's contributor (docs/report-consent.md): every
+# outbound path goes to agencies and partners; none publishes.
+NEEDS: dict[Use, Permission] = {"review": "review", "share": "agencies"}
 
 # Photo licences the collection admits (docs/datasets.md, "Project purpose and source
 # reuse"), each with what sharing a photo under it requires.
@@ -41,6 +46,7 @@ RESERVED = (
 )
 UNKNOWN = "Not admitted: the licence {licence} is not one the collection accepts"
 WITHHELD = {
+    "withdrawn": "Withheld: the photo's contributor withdrew the report",
     "obscured": "Withheld: the source obscured this location, so its displaced point is "
     "never passed on",
     "not_public": "Withheld: the source did not mark this location public",
@@ -101,6 +107,15 @@ def refuse_unadmitted(photo_license: str, observation_license: str) -> None:
             raise ValueError(f"Refused {kind} licence {licence!r}. {not_admitted(licence)}")
 
 
+def contributor_refusal(photo: dict[str, Any], use: Use) -> str:
+    """Why the photo's contributor did not permit this use, or "" (#60). A sourced photo
+    has no consent record and is governed by its licence alone."""
+    given = photo.get("consent")
+    if not given:
+        return ""
+    return refusal(given["uses"], given.get("withdrawn_at"), NEEDS[use])
+
+
 def image_use(photo: dict[str, Any], use: Use) -> ImageUse:
     """Whether the photo may be shown (review) or included (share), or only linked."""
     device = photo.get("device")
@@ -112,6 +127,8 @@ def image_use(photo: dict[str, Any], use: Use) -> ImageUse:
     terms = ADMITTED.get(licence or "")
     if terms is None:
         return ImageUse("link", not_admitted(licence))
+    if refused := contributor_refusal(photo, use):
+        return ImageUse("link", refused)
     return ImageUse("show" if use == "review" else "include", terms)
 
 
@@ -128,10 +145,26 @@ def terms(photo: dict[str, Any]) -> dict[str, Any]:
         "observation_terms": OBSERVATION_TERMS.get(observation_licence)
         or not_admitted(observation_licence),
         "non_commercial": bool({photo_licence, observation_licence} & NON_COMMERCIAL),
-    }
+    } | contributor_limits(photo)
+
+
+def contributor_limits(photo: dict[str, Any]) -> dict[str, Any]:
+    """The uses a contributor permits, so a recipient knows, e.g., not to publish. A
+    withdrawn consent permits nothing."""
+    given = photo.get("consent")
+    if not given:
+        return {}
+    return {"contributor_permits": [] if given.get("withdrawn_at") else sorted(given["uses"])}
+
+
+def withdrawn(photo: dict[str, Any]) -> bool:
+    """Whether the photo's contributor withdrew it: from then on nothing of it leaves."""
+    return bool((photo.get("consent") or {}).get("withdrawn_at"))
 
 
 def _withheld(photo: dict[str, Any], use: Use) -> str:
+    if withdrawn(photo):
+        return WITHHELD["withdrawn"]
     if photo.get("coordinate_status") == "obscured":
         return WITHHELD["obscured"]
     if photo.get("coordinate_status") != "public":
@@ -190,6 +223,6 @@ def shareable_export(export: dict[str, Any]) -> dict[str, Any]:
     """The run export as it may leave the reviewer's machine: points withheld by the
     location rule, and each photo's terms and image decision stated."""
     return export | {
-        "photos": [shareable_photo(photo) for photo in export["photos"]],
+        "photos": [shareable_photo(photo) for photo in export["photos"] if not withdrawn(photo)],
         "sharing": SHARING,
     }

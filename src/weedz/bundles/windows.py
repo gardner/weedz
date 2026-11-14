@@ -80,7 +80,7 @@ RULE = (
     "over the eligible windows (the whole frame and every non-featureless tile), and the "
     "window giving it is the target's box (the first such window on a tie). The top "
     "suggestion is the target with the largest margin (the first in watchlist order on a "
-    "tie). Each example gives similarities per window, one column per text_table row, in "
+    "tie). Examples use synthetic reduced tables with 3 target and 2 comparison columns, in "
     "integer units; margins are in the same units."
 )
 # Windows x (3 targets, 2 comparisons), in thousandths. The second puts the strongest

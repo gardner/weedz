@@ -22,6 +22,7 @@ from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
 from weedz.discovery.score_meaning import pin_meaning, score_meaning
+from weedz.discovery.sharing import withdrawn
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
 from weedz.discovery.study_store import run_study
@@ -140,7 +141,11 @@ def export(store: Store, run_id: str) -> dict:
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
-    references, photos = with_references(store.root, store.photos(run_id))
+    # A withdrawn report is used for nothing further, so nothing is derived from it (#60).
+    every = store.photos(run_id)
+    live = [photo for photo in every if not withdrawn(photo)]
+    references, photos = with_references(store.root, live)
+    kept = {photo["id"] for photo in photos}
     history = review_history(store, run_id, photos)
     result = {
         "schema": 1,
@@ -160,11 +165,14 @@ def export(store: Store, run_id: str) -> dict:
         "review_effort": summarize_effort(photos, history),
         "audit": summarize_audit(
             photos,
-            audit_sample(run_id, photos),
+            # Drawn from every photo, as the review app draws it, less the withdrawn.
+            audit_sample(run_id, every) & kept,
             store.latest_audits(run_id),
             store.latest_audits(run_id, blind=False),
         ),
-        "lead_selections": selections(store, run_id),
+        "lead_selections": [
+            event for event in selections(store, run_id) if event["photo_id"] in kept
+        ],
         # The study this run serves, at its latest version (PRD P01).
         "study": run_study(store, run_id),
         "audit_history": [
