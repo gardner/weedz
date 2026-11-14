@@ -74,7 +74,9 @@ it is intended for local development, not shared public hosting.
    lose detail. This does not establish viewpoint invariance.
 4. **Rank for inspection.** Compare each target's cosine similarity against the
    strongest comparison prompt in the same window. Comparisons include native
-   clematis, toetoe, mānuka, broom, general vegetation and animals. Select the
+   clematis, toetoe, mānuka, broom, general vegetation, animals, open sky,
+   water, shore and rock, plus the photo's own original-subject taxon (never a
+   watchlist target, so references are not compared with themselves). Select the
    largest target-minus-comparison margin across windows and species. Save all
    window similarities, target results, dimensions and the selected window.
    A positive margin is not an established detection threshold. Every acquired
