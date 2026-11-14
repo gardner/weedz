@@ -122,7 +122,7 @@ class ReviewAPI:
                 for photo in photos
             ]
             work = {"review_effort": effort, "review_history": history, "audit_history": audits}
-            definition = StudyDefinition.model_validate(study["definition"])
+            definition = StudyDefinition.stored(study["definition"])
             study["budget_use"] = study_budget(work, definition)
         sample = audit_sample(run_id, photos)
         blind, late = self.store.latest_audits(run_id), self.store.latest_audits(run_id, False)

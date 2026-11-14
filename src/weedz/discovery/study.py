@@ -11,7 +11,14 @@ difference from the code is listed rather than hidden.
 from datetime import date
 from typing import Annotated, Any, Literal, NamedTuple
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    ValidationInfo,
+    model_validator,
+)
 
 from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.outcome_terms import CONDITIONS
@@ -131,11 +138,18 @@ class StudyDefinition(BaseModel):
     limits: dict[str, Limit] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def consistent(self) -> "StudyDefinition":
+    def consistent(self, info: ValidationInfo) -> "StudyDefinition":
         if self.status == "agreed" and not (self.question and self.partner):
             raise ValueError("An agreed study needs a question and a partner")
         if self.period_start and self.period_end and self.period_start > self.period_end:
             raise ValueError("The study period must start on or before its end")
+        # A stored version was checked when recorded; the code may have changed since,
+        # and `differences` then names what it no longer covers.
+        if not (info.context or {}).get("stored"):
+            self._check_against_code()
+        return self
+
+    def _check_against_code(self) -> None:
         mark = "not yet screened (screened: false)"
         regions = [(item.name, item.screened) for item in self.regions]
         _check_in_code(regions, set(REGIONS), "not a screened region", mark)
@@ -148,7 +162,11 @@ class StudyDefinition(BaseModel):
                 raise ValueError(f"Unknown outcome measure {key!r}")
             if LIMITS[key].percent and limit.value > 100:
                 raise ValueError(f"The {key} limit is a percentage, at most 100")
-        return self
+
+    @classmethod
+    def stored(cls, data: dict[str, Any]) -> "StudyDefinition":
+        """A recorded version, read whatever the screening code covers now."""
+        return cls.model_validate(data, context={"stored": True})
 
 
 class StudyEdit(BaseModel):
@@ -207,6 +225,14 @@ def open_decisions(study: StudyDefinition) -> list[str]:
     ]
 
 
+def _no_longer(names: list[tuple[str, bool]], known: set[str]) -> list[str]:
+    return [
+        f"{name} was screened when recorded, but the screening no longer covers it"
+        for name, screened in names
+        if screened and name not in known
+    ]
+
+
 def _screening_gaps(study: StudyDefinition) -> list[str]:
     watched = {item.species for item in study.watchlist}
     explained = {item.taxon for item in study.lookalikes if item.rationale}
@@ -216,6 +242,11 @@ def _screening_gaps(study: StudyDefinition) -> list[str]:
         for name in SPECIES
         if name not in watched
     ]
+    notes += _no_longer([(item.species, item.screened) for item in study.watchlist], set(SPECIES))
+    notes += _no_longer([(item.name, item.screened) for item in study.regions], set(REGIONS))
+    notes += _no_longer(
+        [(item.taxon, item.screened) for item in study.lookalikes], set(LOOKALIKE_NAMES)
+    )
     notes += [
         f"{item.species} is in the watchlist but not yet screened"
         for item in study.watchlist

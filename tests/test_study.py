@@ -195,3 +195,17 @@ def test_runs_link_to_a_study_and_the_latest_link_stands(tmp_path: Path) -> None
     assert listed[second]["runs"] == ["run"]
     with pytest.raises(KeyError):
         link_study(store, "run", "study-missing", "Ana")
+
+
+def test_a_stored_study_still_reads_after_the_screening_code_changes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = Store(tmp_path)
+    store.create_run("run", RunSpec())
+    link_study(store, "run", save_version(store, None, edit())["id"], "Ana")
+    monkeypatch.setattr("weedz.discovery.study.SPECIES", {"Ulex europaeus": "Gorse"})
+    linked = run_study(store, "run")
+    assert linked is not None
+    assert any("Clematis vitalba" in note and "no longer" in note for note in linked["differences"])
+    with pytest.raises(ValidationError, match="not in the screening watchlist"):
+        StudyDefinition.model_validate(definition())

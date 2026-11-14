@@ -433,7 +433,7 @@ def outcomes(export: dict[str, Any]) -> dict[str, Any]:
     run = export["run"]
     references = export.get("references") or {}
     linked = export.get("study")
-    definition = StudyDefinition.model_validate(linked["definition"]) if linked else None
+    definition = StudyDefinition.stored(linked["definition"]) if linked else None
     return {
         "schema": 1,
         "run_id": run["id"],

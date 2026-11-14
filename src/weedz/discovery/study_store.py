@@ -115,7 +115,7 @@ def run_study(store: Store, run_id: str) -> dict[str, Any] | None:
     if link is None:
         return None
     current = versions(store, link["study_id"])[-1]
-    definition = StudyDefinition.model_validate(current["definition"])
+    definition = StudyDefinition.stored(current["definition"])
     run = next((item for item in store.runs() if item["id"] == run_id), None)
     spec = RunSpec.from_saved(run["spec"]) if run else None
     return current | {
