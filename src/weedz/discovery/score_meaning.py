@@ -16,8 +16,8 @@ LABELS = "Source labels from iNaturalist observations, not expert review"
 SCORE = (
     "The margin: the target weed's image/text cosine similarity minus the strongest "
     "comparison label's (native lookalikes, general vegetation, animals, sky, water, "
-    "shore, rock and the photo's own original subject) in the same window, taking the "
-    "best window of the whole frame and its overlapping tiles."
+    "shore, rock and, for animal photos, the photo's own original subject) in the same "
+    "window, taking the best window of the whole frame and its overlapping tiles."
 )
 USE = (
     "Orders this run's review queue, highest first, and picks the top suggestion shown "
