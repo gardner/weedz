@@ -54,9 +54,9 @@ retention and sharing policy.
 ## Lost-phone operator procedure
 
 Provide a public deletion contact address or web form in the privacy policy and
-store listing. That public route and the mobile settings screen are still release
-requirements tracked in [#107](https://github.com/gardner/weedz/issues/107);
-this API does not by itself provide them. The broader #101 remains open until
+store listing. The app now provides [deletion settings](mobile-device-settings.md); publishing
+and verifying the real public route is still a release requirement tracked in
+[#107](https://github.com/gardner/weedz/issues/107). This API does not publish it. The broader #101 remains open until
 those requirements are met.
 
 1. Verify the request against the operator's original enrollment records. A
@@ -73,11 +73,18 @@ those requirements are met.
 `intake revoke` continues to revoke access **without** deleting reports. It is
 useful for a compromised credential, but is not a data-deletion operation.
 
-## Mobile integration contract
+## Mobile settings and deployment
 
-The future settings action should ask the person to confirm deletion, stop upload
-retries, call `DELETE /submitter`, and retain the credential privately until the
-completion receipt is confirmed. Show a recoverable pending state after a failed
-request; do not claim success because uploads now receive 401. After confirmation,
-clear the credential and local submitted-report receipts as the mobile privacy
-design requires. Local photo-library originals are never deleted by this API.
+[Mobile Settings](mobile-device-settings.md) implements secure pilot enrollment,
+confirmation, durable pending intent, authenticated deletion and restart recovery.
+The client retains the credential after errors and clears it only after a valid
+completed receipt. It never modifies photo-library originals. There is no report
+upload worker yet; that future worker must share the enrollment's deletion barrier
+and stop uploads/retries while deletion is pending.
+
+Configure the real HTTPS intake and public deletion request URLs through the
+GitHub Actions secrets documented in [mobile builds](mobile-builds.md). A secret
+containing a URL does not publish the route: the publisher must verify that the
+public page reaches the operator procedure above and link it in the privacy policy
+and store listing. Issue #107 remains open for actual deployment/public-route and
+real-device secure-storage/deletion/accessibility verification.

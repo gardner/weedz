@@ -4,6 +4,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Store releases require upload signing; development APKs use the debug build type.
+val signedRelease = System.getenv("WEEDZ_SIGNED_RELEASE") == "true"
+val releaseRequested = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+require(!releaseRequested || signedRelease) { "Release builds require the mobile-release workflow signing configuration" }
+fun signingSetting(name: String): String = System.getenv(name)?.takeIf { it.isNotEmpty() }
+    ?: error("Missing release signing setting: $name")
+
 android {
     namespace = "org.example.weedz"
     compileSdk = flutter.compileSdkVersion
@@ -16,7 +23,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "org.example.weedz"
+        applicationId = if (signedRelease) signingSetting("ANDROID_APPLICATION_ID") else "org.example.weedz"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -29,11 +36,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (signedRelease) {
+            create("upload") {
+                storeFile = file(signingSetting("WEEDZ_ANDROID_KEYSTORE_PATH"))
+                require(storeFile!!.isFile) { "Release keystore file is missing" }
+                storePassword = signingSetting("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = signingSetting("ANDROID_KEY_ALIAS")
+                keyPassword = signingSetting("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            if (signedRelease) signingConfig = signingConfigs.getByName("upload")
         }
     }
 }
