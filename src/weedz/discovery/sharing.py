@@ -46,6 +46,7 @@ RESERVED = (
 )
 UNKNOWN = "Not admitted: the licence {licence} is not one the collection accepts"
 WITHHELD = {
+    "withdrawn": "Withheld: the photo's contributor withdrew the report",
     "obscured": "Withheld: the source obscured this location, so its displaced point is "
     "never passed on",
     "not_public": "Withheld: the source did not mark this location public",
@@ -143,7 +144,14 @@ def contributor_limits(photo: dict[str, Any]) -> dict[str, Any]:
     return {"contributor_permits": [] if given.get("withdrawn_at") else sorted(given["uses"])}
 
 
+def withdrawn(photo: dict[str, Any]) -> bool:
+    """Whether the photo's contributor withdrew it: from then on nothing of it leaves."""
+    return bool((photo.get("consent") or {}).get("withdrawn_at"))
+
+
 def _withheld(photo: dict[str, Any], use: Use) -> str:
+    if withdrawn(photo):
+        return WITHHELD["withdrawn"]
     if photo.get("coordinate_status") == "obscured":
         return WITHHELD["obscured"]
     if photo.get("coordinate_status") != "public":
@@ -202,6 +210,6 @@ def shareable_export(export: dict[str, Any]) -> dict[str, Any]:
     """The run export as it may leave the reviewer's machine: points withheld by the
     location rule, and each photo's terms and image decision stated."""
     return export | {
-        "photos": [shareable_photo(photo) for photo in export["photos"]],
+        "photos": [shareable_photo(photo) for photo in export["photos"] if not withdrawn(photo)],
         "sharing": SHARING,
     }

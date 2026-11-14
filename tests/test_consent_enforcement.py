@@ -8,7 +8,7 @@ from test_sharing import photo
 
 from weedz.contract import Sample
 from weedz.discovery import package, package_report
-from weedz.discovery.sharing import image_use, shareable_photo
+from weedz.discovery.sharing import image_use, location, shareable_export, shareable_photo
 from weedz.reference import examples
 
 WITHDRAWN_AT = "2026-11-14T00:00:00Z"
@@ -131,3 +131,36 @@ def test_a_follow_up_package_tells_the_agency_what_the_contributor_permits() -> 
 
 def test_a_sourced_photo_in_a_package_carries_no_contributor_limits() -> None:
     assert "contributor_permits" not in package.image(photo(), [])
+
+
+def test_a_withdrawn_photo_never_gives_its_location() -> None:
+    item = photo(consent=consented(["review", "agencies"], WITHDRAWN_AT))
+    for use in ("review", "share"):
+        decided = location(item, use)
+        assert decided.latitude is None and "withdrew" in decided.withheld
+
+
+def test_a_withdrawn_photo_is_left_out_of_shared_exports() -> None:
+    kept = photo(id="kept", consent=consented(["review", "agencies"]))
+    gone = photo(id="gone", consent=consented(["review", "agencies"], WITHDRAWN_AT))
+    shared = shareable_export({"photos": [kept, gone, photo(id="sourced")]})
+    assert [item["id"] for item in shared["photos"]] == ["kept", "sourced"]
+
+
+def test_a_withdrawn_photo_is_left_out_of_follow_up_packages() -> None:
+    gone = photo(id="gone", findings=[], consent=consented(["review", "agencies"], WITHDRAWN_AT))
+    export = {
+        "photos": [gone],
+        "run": {"id": "r", "created_at": "t", "model": "m"},
+        "references": None,
+    }
+    selection = {
+        "id": 1,
+        "action": "selected",
+        "photo_id": "gone",
+        "finding_id": None,
+        "selector": "kim",
+        "reason": "",
+        "created_at": "t",
+    }
+    assert package.follow_up_package(export, [selection], "t")["leads"] == []
