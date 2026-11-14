@@ -29,7 +29,7 @@ const dates = {
   days_photo_to_upload: 2,
   days_photo_to_screening: 896,
   current_presence:
-    "If the plant is visible, the photo shows it was there on 2024-06-01, not that it is there now",
+    "If the plant is visible, the photo shows it was there when photographed (2024-06-01), not that it is there now",
 };
 const notSearchable = (status, reason) => ({
   status,

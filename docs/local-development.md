@@ -403,8 +403,10 @@ For PRD P09, each photo in the run detail and export carries `limits`, computed 
   - `photographed`, `uploaded` and `screened` are kept distinct. `screened` is
     when the photo was last scored (the photo's `screened_at`). It is null before
     screening, and for photos scored before this was recorded.
-  - `days_photo_to_upload` and `days_photo_to_screening` give the gaps, and are
-    null when a date is unknown.
+  - `photographed` is kept as the source gave it, even a partial date such as
+    `2024-06`.
+  - `days_photo_to_upload` and `days_photo_to_screening` give the gaps. They are
+    null unless both dates are full calendar days.
   - `current_presence` says that, if the plant is visible, the photo shows it
     was there on its capture date, not that it is there now. For an undated
     photo, it says the photo can show neither. It is conditional because a

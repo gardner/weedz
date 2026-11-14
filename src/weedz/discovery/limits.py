@@ -89,38 +89,44 @@ def search_area(photo: dict[str, Any]) -> SearchArea:
 
 
 def _day(value: str | None) -> date | None:
-    return date.fromisoformat(value[:10]) if value else None
+    """A full calendar day, or None: sources can give partial dates such as "2024-06"."""
+    try:
+        return date.fromisoformat(value[:10]) if value else None
+    except ValueError:
+        return None
 
 
 def _days(start: date | None, end: date | None) -> int | None:
     return (end - start).days if start and end else None
 
 
-def _presence(photographed: date | None) -> str:
-    if photographed is None:
+def _presence(photographed: str | None) -> str:
+    if not photographed:
         return (
             "Photo date unknown: even if the plant is visible, the photo cannot show "
             "when it was there, nor whether it is there now"
         )
     return (
-        f"If the plant is visible, the photo shows it was there on {photographed.isoformat()}, "
-        "not that it is there now"
+        "If the plant is visible, the photo shows it was there when photographed "
+        f"({photographed}), not that it is there now"
     )
 
 
 def limits(photo: dict[str, Any]) -> Limits:
-    """The photo's search area and dates; it was screened when it was last scored."""
-    photographed, uploaded = _day(photo.get("observed_on")), _day(photo.get("uploaded_at"))
+    """The photo's search area and dates; it was screened when it was last scored. The
+    capture date is kept as the source gave it, and day gaps need full dates."""
+    observed = (photo.get("observed_on") or "")[:10] or None
+    photographed, uploaded = _day(observed), _day(photo.get("uploaded_at"))
     screened = _day(photo.get("screened_at"))
     return Limits(
         search_area=search_area(photo),
         dates=Dates(
-            photographed=photographed.isoformat() if photographed else None,
+            photographed=observed,
             uploaded=uploaded.isoformat() if uploaded else None,
             screened=screened.isoformat() if screened else None,
             days_photo_to_upload=_days(photographed, uploaded),
             days_photo_to_screening=_days(photographed, screened),
-            current_presence=_presence(photographed),
+            current_presence=_presence(observed),
         ),
     )
 

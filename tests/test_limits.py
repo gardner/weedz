@@ -86,6 +86,15 @@ def test_dates_are_distinct_with_their_gaps_and_no_presumed_presence() -> None:
     assert dates.current_presence.startswith("If the plant is visible")
 
 
+def test_a_partial_date_is_kept_as_given_without_inventing_day_gaps() -> None:
+    for partial in ["2024-06", "2024", "not a date"]:
+        dates = limits(photo(observed_on=partial)).dates
+        assert dates.photographed == partial
+        assert (dates.days_photo_to_upload, dates.days_photo_to_screening) == (None, None)
+        assert partial in dates.current_presence
+        assert dates.current_presence.startswith("If the plant is visible")
+
+
 def test_a_photo_not_yet_screened_has_no_screening_date() -> None:
     dates = limits(photo(screened_at=None)).dates
     assert (dates.screened, dates.days_photo_to_screening) == (None, None)
