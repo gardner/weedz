@@ -9,7 +9,9 @@ export type Run = {
 export type Photo = {
   id: string;
   region: string;
-  cohort: "incidental" | "reference";
+  cohort: "incidental" | "reference" | "lookalike";
+  lookalike_taxon?: string | null;
+  lookalike_of?: string | null;
   reference_species: string | null;
   original_taxon: string;
   original_common_name: string;

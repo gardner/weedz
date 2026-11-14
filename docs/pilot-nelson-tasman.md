@@ -41,21 +41,29 @@ were screened with the same model and ranking
 ([#11](https://github.com/gardner/weedz/issues/11), [summary](../benchmarks/nelson-tasman-lookalikes.json)).
 That was up to three per taxon per region.
 
-| Lookalike | Resembles | Ranked as that weed | Median margin |
-| --- | --- | --- | --- |
-| Toetoe (*Austroderia*) | Pampas | **5 of 6** | +0.044 |
-| *Clematis foetida* | Old man's beard | 2 of 3 | +0.006 |
-| *Clematis forsteri* | Old man's beard | 3 of 6 | −0.002 |
-| Puawhānanga (*C. paniculata*) | Old man's beard | 1 of 6 | −0.013 |
-| Broom, mānuka, kānuka | Gorse | 0 of 18 | −0.049 to −0.091 |
+Every photo has a top suggestion, which is the watchlist species with the largest
+margin, and the review desk shows it whatever the margin's sign. A positive
+margin means that weed also beat every comparison label.
 
-Native toetoe passes as pampas almost every time, even though toetoe is one of
-the comparison prompts, and native clematis often passes as old man's beard.
-Gorse is well separated from its lookalikes in this sample. A pampas or old man's
-beard suggestion therefore cannot distinguish the weed from a native plant. It
-needs botanical review of diagnostic features, such as flowering time, plume
-colour and leaf form, before it counts as a lead. These are small,
-source-labelled samples, not reviewed false-positive rates.
+| Lookalike | Resembles | Top suggestion is that weed | Also a positive margin | Median margin |
+| --- | --- | --- | --- | --- |
+| Toetoe (*Austroderia*) | Pampas | 6 of 6 | **5 of 6** | +0.044 |
+| *Clematis foetida* | Old man's beard | 3 of 3 | 2 of 3 | +0.006 |
+| *Clematis forsteri* | Old man's beard | 6 of 6 | 3 of 6 | −0.002 |
+| Puawhānanga (*C. paniculata*) | Old man's beard | 6 of 6 | 1 of 6 | −0.013 |
+| Broom | Gorse | 5 of 6 | 0 of 6 | −0.091 |
+| Mānuka | Gorse | 4 of 6 | 0 of 6 | −0.050 |
+| Kānuka | Gorse | 4 of 6 | 0 of 6 | −0.049 |
+
+The review desk would present most lookalike photos as their look-alike weed:
+34 of 39 have it as the top suggestion. A suggestion is therefore not an
+identification. Margins separate the groups further. Native toetoe beats every
+comparison as pampas in 5 of 6 photos, even though toetoe is a comparison
+prompt, and native clematis does so as old man's beard in 6 of 15. Broom, mānuka
+and kānuka never beat the comparisons as gorse (0 of 18). Pampas and old man's
+beard suggestions in particular need botanical review of diagnostic features,
+such as flowering time, plume colour and leaf form, before they count as leads.
+These are small, source-labelled samples, not reviewed false-positive rates.
 
 The next experiment should include original-subject taxon prompts as stronger
 comparison labels, independently reviewed native lookalikes and genuine

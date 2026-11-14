@@ -20,8 +20,9 @@ LOOKALIKES: dict[int, dict[str, str]] = {
 }
 MEANING = (
     "Source-labelled lookalike photos screened like any other photo. "
-    "'ranked_as_confusable' counts photos whose top suggestion is the weed they resemble; "
-    "'positive_confusable_margin' counts photos where that weed beat every comparison. "
+    "'top_suggestion' counts photos whose top suggestion (what the review desk shows, "
+    "whatever its margin) is the weed they resemble; 'positive_confusable_margin' counts "
+    "photos where that weed also beat every comparison label. "
     "This is not a reviewed false-positive rate."
 )
 
@@ -43,10 +44,8 @@ def summarize_lookalikes(photos: list[dict[str, Any]]) -> dict[str, Any]:
         by_taxon[taxon] = {
             "confusable_with": confusable,
             "screened": len(members),
-            "ranked_as_confusable": sum(
-                photo["scores"].get("best_species") == confusable
-                and (_confusable_margin(photo) or 0) > 0
-                for photo in members
+            "top_suggestion": sum(
+                photo["scores"].get("best_species") == confusable for photo in members
             ),
             "positive_confusable_margin": sum(margin > 0 for margin in margins),
             "median_confusable_margin": round(statistics.median(margins), 6) if margins else None,

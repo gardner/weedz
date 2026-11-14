@@ -9,54 +9,54 @@
     "ranking_revision": 2
   },
   "summary": {
-    "meaning": "Source-labelled lookalike photos screened like any other photo. 'ranked_as_confusable' counts photos whose top suggestion is the weed they resemble; 'positive_confusable_margin' counts photos where that weed beat every comparison. This is not a reviewed false-positive rate.",
+    "meaning": "Source-labelled lookalike photos screened like any other photo. 'top_suggestion' counts photos whose top suggestion (what the review desk shows, whatever its margin) is the weed they resemble; 'positive_confusable_margin' counts photos where that weed also beat every comparison label. This is not a reviewed false-positive rate.",
     "by_taxon": {
       "Austroderia": {
         "confusable_with": "Cortaderia selloana",
         "screened": 6,
-        "ranked_as_confusable": 5,
+        "top_suggestion": 6,
         "positive_confusable_margin": 5,
         "median_confusable_margin": 0.044192
       },
       "Clematis foetida": {
         "confusable_with": "Clematis vitalba",
         "screened": 3,
-        "ranked_as_confusable": 2,
+        "top_suggestion": 3,
         "positive_confusable_margin": 2,
         "median_confusable_margin": 0.005699
       },
       "Clematis forsteri": {
         "confusable_with": "Clematis vitalba",
         "screened": 6,
-        "ranked_as_confusable": 3,
+        "top_suggestion": 6,
         "positive_confusable_margin": 3,
         "median_confusable_margin": -0.001624
       },
       "Clematis paniculata": {
         "confusable_with": "Clematis vitalba",
         "screened": 6,
-        "ranked_as_confusable": 1,
+        "top_suggestion": 6,
         "positive_confusable_margin": 1,
         "median_confusable_margin": -0.013352
       },
       "Cytisus scoparius": {
         "confusable_with": "Ulex europaeus",
         "screened": 6,
-        "ranked_as_confusable": 0,
+        "top_suggestion": 5,
         "positive_confusable_margin": 0,
         "median_confusable_margin": -0.091451
       },
       "Kunzea ericoides": {
         "confusable_with": "Ulex europaeus",
         "screened": 6,
-        "ranked_as_confusable": 0,
+        "top_suggestion": 4,
         "positive_confusable_margin": 0,
         "median_confusable_margin": -0.049032
       },
       "Leptospermum scoparium": {
         "confusable_with": "Ulex europaeus",
         "screened": 6,
-        "ranked_as_confusable": 0,
+        "top_suggestion": 4,
         "positive_confusable_margin": 0,
         "median_confusable_margin": -0.049725
       }

@@ -84,7 +84,8 @@ def test_summary_counts_lookalikes_that_pass_as_their_weed() -> None:
     toetoe = summary["by_taxon"]["Austroderia"]
     assert toetoe["confusable_with"] == "Cortaderia selloana"
     assert toetoe["screened"] == 3
-    assert toetoe["ranked_as_confusable"] == 1
+    # The review desk shows the top suggestion whatever its margin, so count it that way.
+    assert toetoe["top_suggestion"] == 2
     assert toetoe["positive_confusable_margin"] == 2
     assert toetoe["median_confusable_margin"] == 0.01
     assert "not a reviewed false-positive rate" in summary["meaning"]
@@ -122,3 +123,10 @@ def test_discover_accepts_lookalikes() -> None:
     parser_args = ["discover", "--lookalikes", "2"]
     namespace = discovery_cli.parse(parser_args)
     assert namespace.lookalikes == 2
+
+
+def test_a_top_suggestion_with_a_negative_margin_still_counts_as_suggested() -> None:
+    photo = screened("Ulex europaeus", "Ulex europaeus", {"Ulex europaeus": -0.05})
+    photo["lookalike_taxon"] = "Cytisus scoparius"
+    broom = summarize_lookalikes([photo])["by_taxon"]["Cytisus scoparius"]
+    assert (broom["top_suggestion"], broom["positive_confusable_margin"]) == (1, 0)

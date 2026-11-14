@@ -64,9 +64,11 @@ export default function Evidence({
           />
         )}
         <span className="image-caption">
-          {photo.cohort === "reference"
-            ? "Reference photo · kept outside discovery results"
-            : "Animal-subject photo · background plants unlabelled"}
+          {photo.cohort === "lookalike"
+            ? `Lookalike photo · ${photo.lookalike_taxon}, resembles ${names[photo.lookalike_of ?? ""] ?? photo.lookalike_of}`
+            : photo.cohort === "reference"
+              ? "Reference photo · kept outside discovery results"
+              : "Animal-subject photo · background plants unlabelled"}
         </span>
       </div>
       <div className="image-tools">

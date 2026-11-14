@@ -320,6 +320,13 @@ export default function ReviewDesk() {
                 >
                   References
                 </button>
+                <button
+                  type="button"
+                  aria-pressed={cohort === "lookalike"}
+                  onClick={() => setCohort("lookalike")}
+                >
+                  Lookalikes
+                </button>
               </div>
               <div className="queue-filters">
                 <select
