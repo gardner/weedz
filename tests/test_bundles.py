@@ -29,6 +29,7 @@ from weedz.bundles.windows import ALGORITHM
 from weedz.discovery.inference import MODELS, RANKING_REVISION, region_boxes, summarize_scores
 from weedz.discovery.parity import THRESHOLDS
 from weedz.discovery.records import SPECIES
+from weedz.intake.schema import Screening
 
 TODAY = date(2026, 11, 14)
 
@@ -84,8 +85,8 @@ def test_the_screening_stamp_is_what_an_intake_report_carries() -> None:
 
 
 def test_the_screening_stamp_validates_as_an_intake_report_model() -> None:
-    schema = pytest.importorskip("weedz.intake.schema", reason="intake (#57) not merged yet")
-    assert schema.Screening.model_validate(screening_stamp("bioclip-2"))
+    stamp = screening_stamp("bioclip-2")
+    assert Screening.model_validate(stamp).model_dump() == stamp
 
 
 def test_publishing_is_refused_without_a_passing_parity_record(tmp_path: Path) -> None:

@@ -1,15 +1,10 @@
 """Reviewer invite tokens for remote review (issue #31).
 
-A token is ``weedz_<id>_<secret>``: 256 random bits, shown once when issued. Only the
-SHA-256 of the secret is kept, in ``access.sqlite3`` beside (never inside) the
-discovery store, so a copied store carries no credentials. A fast hash suits a long
-random secret; slow password hashes are for secrets people choose.
+A token is ``weedz_<id>_<secret>`` (see weedz.tokens). Only the SHA-256 of the secret is
+kept, in ``access.sqlite3`` beside (never inside) the discovery store, so a copied store
+carries no credentials.
 """
 
-import hashlib
-import hmac
-import os
-import secrets
 import sqlite3
 from collections.abc import Awaitable, Callable
 from contextlib import closing, suppress
@@ -20,6 +15,7 @@ from pathlib import Path
 from fastapi import HTTPException, Request
 from pydantic import TypeAdapter, ValidationError
 
+from weedz import tokens
 from weedz.discovery.records import ReviewerName
 
 PREFIX = "weedz"
@@ -32,13 +28,7 @@ CREATE TABLE IF NOT EXISTS reviewer_tokens(
     secret_sha256 TEXT NOT NULL, created_at TEXT NOT NULL, revoked_at TEXT
 );
 """
-# Compared against when the id is unknown, so a miss costs the same as a wrong secret.
-_ABSENT = hashlib.sha256(b"no such invite").hexdigest()
 _NAME = TypeAdapter(ReviewerName)
-
-
-def _digest(secret: str) -> str:
-    return hashlib.sha256(secret.encode()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -53,26 +43,19 @@ class Access:
         self.path = root / "access.sqlite3"
 
     def _connect(self) -> sqlite3.Connection:
-        if not self.path.exists():
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            # Owner-only from the start: it holds credential hashes.
-            os.close(os.open(self.path, os.O_CREAT | os.O_WRONLY, 0o600))
-        db = sqlite3.connect(self.path)
-        db.row_factory = sqlite3.Row
-        db.executescript(SCHEMA)
-        return db
+        return tokens.connect_private(self.path, SCHEMA)
 
     def invite(self, reviewer: str) -> Invite:
         try:
             name = _NAME.validate_python(reviewer)
         except ValidationError as error:
             raise ValueError("A reviewer name needs 1 to 80 characters") from error
-        secret = secrets.token_urlsafe(32)
+        secret = tokens.new_secret()
         created = datetime.now(UTC).isoformat()
         with closing(self._connect()) as db, db:
             cursor = db.execute(
                 "INSERT INTO reviewer_tokens(reviewer,secret_sha256,created_at) VALUES(?,?,?)",
-                (name, _digest(secret), created),
+                (name, tokens.digest(secret), created),
             )
         token_id = cursor.lastrowid
         assert token_id is not None
@@ -97,19 +80,19 @@ class Access:
 
     def reviewer(self, token: str) -> str | None:
         """The reviewer an active token names, or None."""
-        prefix, _, rest = token.partition("_")
-        token_id, _, secret = rest.partition("_")
-        if prefix != PREFIX or not token_id.isdecimal() or not secret:
+        parts = tokens.split(token, PREFIX)
+        if parts is None:
             return None
+        token_id, secret = parts
         with closing(self._connect()) as db:
             row = db.execute(
                 "SELECT reviewer,secret_sha256 FROM reviewer_tokens "
                 "WHERE id=? AND revoked_at IS NULL",
-                (int(token_id),),
+                (token_id,),
             ).fetchone()
-        stored = row["secret_sha256"] if row else _ABSENT
-        matches = hmac.compare_digest(_digest(secret), stored)
-        return row["reviewer"] if row and matches else None
+        # Compared even when the id is unknown, so timing does not reveal which ids exist.
+        matched = tokens.matches(secret, row["secret_sha256"] if row else None)
+        return row["reviewer"] if row and matched else None
 
 
 def require_reviewer(store: Access) -> Callable[[Request], Awaitable[None]]:
@@ -117,8 +100,8 @@ def require_reviewer(store: Access) -> Callable[[Request], Awaitable[None]]:
     must also be the one any record in the body is attributed to."""
 
     async def dependency(request: Request) -> None:
-        scheme, _, token = request.headers.get("Authorization", "").partition(" ")
-        reviewer = store.reviewer(token.strip()) if scheme.lower() == "bearer" else None
+        token = tokens.bearer(request)
+        reviewer = store.reviewer(token) if token else None
         if reviewer is None:
             raise HTTPException(
                 401, "Sign in with your reviewer token", headers={"WWW-Authenticate": "Bearer"}

@@ -38,6 +38,7 @@ TOOLS = {
 } | {
     "reviewers": ("weedz.discovery.access_cli", False),
     "bundles": ("weedz.bundles.cli", False),
+    "intake": ("weedz.intake.cli", False),
     "release": ("weedz.release_cli", False),
 }
 
