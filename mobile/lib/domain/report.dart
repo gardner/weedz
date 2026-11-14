@@ -28,6 +28,15 @@ const targetTaxa = {
 /// Image licences the collection admits (`weedz.discovery.sharing.ADMITTED`).
 const admittedLicences = {'cc0', 'cc-by', 'cc-by-nc'};
 
+/// Published versions of the consent text (`weedz.consent.VERSIONS`,
+/// `docs/report-consent.md`).
+const consentVersions = {'2026-11'};
+
+/// What a photo may be used for (`weedz.consent.PERMISSIONS`). A photo is
+/// sent for review, so its uses always include `review`; the rest are
+/// separate opt-ins, all off by default (#60).
+const photoUses = {'review', 'evidence', 'agencies', 'public', 'training'};
+
 /// The largest location accuracy the server accepts, in metres.
 const maxAccuracyM = 100000.0;
 
@@ -168,17 +177,37 @@ final class Location {
   int get hashCode => Object.hash(latitude, longitude, accuracyM);
 }
 
-/// What the person agreed to on the device, under which wording.
+/// What the person agreed to on the device, under which published wording
+/// (`docs/report-consent.md`, #60).
 @immutable
 final class Consent {
   new({
-    required String wordingVersion,
+    required this.wordingVersion,
     required this.image,
     required this.location,
+    Set<String> uses = const {},
     this.licence,
     String? credit,
-  }) : wordingVersion = _checkToken(wordingVersion, 'wordingVersion'),
+  }) : uses = Set.unmodifiable(uses),
        credit = credit?.trim() {
+    _check(
+      consentVersions.contains(wordingVersion),
+      'wordingVersion',
+      wordingVersion,
+      'Not a published consent wording',
+    );
+    _check(
+      photoUses.containsAll(uses),
+      'uses',
+      uses,
+      'Not a photo use the consent text offers',
+    );
+    _check(
+      image ? uses.contains('review') : uses.isEmpty,
+      'uses',
+      uses,
+      'A photo is sent for review; a report without one permits no photo use',
+    );
     final licence_ = licence;
     _check(
       licence_ == null || admittedLicences.contains(licence_),
@@ -209,6 +238,9 @@ final class Consent {
   /// Whether the exact camera location may be sent.
   final bool location;
 
+  /// What the photo may be used for: empty exactly when there is no photo.
+  final Set<String> uses;
+
   /// The crop's licence: present exactly when [image] is true.
   final String? licence;
   final String? credit;
@@ -224,6 +256,7 @@ final class Consent {
     wordingVersion: wordingVersion,
     image: image,
     location: false,
+    uses: uses,
     licence: licence,
     credit: credit,
   );
@@ -232,6 +265,7 @@ final class Consent {
     'wording_version': wordingVersion,
     'image': image,
     'location': location,
+    'uses': _sortedUses,
     'licence': ?licence,
     'credit': ?credit,
   };
@@ -242,12 +276,24 @@ final class Consent {
       other.wordingVersion == wordingVersion &&
       other.image == image &&
       other.location == location &&
+      _sameUses(other.uses, uses) &&
       other.licence == licence &&
       other.credit == credit;
 
   @override
-  int get hashCode =>
-      Object.hash(wordingVersion, image, location, licence, credit);
+  int get hashCode => Object.hash(
+    wordingVersion,
+    image,
+    location,
+    Object.hashAllUnordered(uses),
+    licence,
+    credit,
+  );
+
+  List<String> get _sortedUses => uses.toList()..sort();
+
+  static bool _sameUses(Set<String> a, Set<String> b) =>
+      a.length == b.length && a.containsAll(b);
 }
 
 /// A report as sent. Capture time and location may be missing on the device

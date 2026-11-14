@@ -38,6 +38,7 @@ void main() {
       final consent = body['consent']! as Map<String, Object?>;
       expect(consent['licence'], 'cc-by-nc');
       expect(consent['image'], isTrue);
+      expect(consent['uses'], ['review']);
       expect(consent['location'], isTrue);
       expect(body['image'], isNotNull);
       expect(store.current.status, ApprovalStatus.sending);

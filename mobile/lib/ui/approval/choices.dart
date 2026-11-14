@@ -87,6 +87,10 @@ final class Choices {
         wordingVersion: consent.wordingVersion,
         image: crop != null,
         location: place != null,
+        // A photo is sent for review. The other uses (`evidence`, `agencies`,
+        // `public`, `training`) are opt-ins this screen does not offer yet, so
+        // none is given (docs/report-consent.md).
+        uses: crop == null ? const {} : const {'review'},
         licence: crop == null ? null : licence_,
         credit: consent.credit,
       ),

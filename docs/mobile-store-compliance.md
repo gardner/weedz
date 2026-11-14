@@ -420,8 +420,10 @@ Settle this when #59 is designed.
   `intake delete-submitter` procedure (#101). The settings action and public
   contact route remain pre-submission work.
 - The store listing and privacy policy describe what remains after withdrawal: a
-  tombstone of ids and received and withdrawn times, so a retry can't bring a
-  report back (#57).
+  tombstone of ids, received and withdrawn times, and what was agreed (the consent
+  wording and permitted uses, never the credit name), so a retry can't bring a
+  report back and the history shows when consent ended (#57, #60). Deleting
+  everything sent from a device clears the consent record too.
 
 ## GPL-3.0-or-later and the App Store: risk and options
 
@@ -514,7 +516,8 @@ Play's User Data policy.
    photo crop. Declining photo access still lets you check single photos.
 8. **How long we keep it** (IPP 9): reports and crops for **[decision: retention
    period]**. Withdrawal deletes the crop and erases the report's content at once,
-   leaving a tombstone of ids and times (#57). Abuse-limit records are deleted after
+   leaving a tombstone of ids, times and what was agreed (the consent wording and
+   permitted uses, never your name) (#57, #60). Abuse-limit records are deleted after
    24 hours (#57).
 9. **Your rights** (IPP 6, IPP 7, IPP 3(1)(g)): access, correction, and withdrawal
    of any report in the app. Delete everything sent from this device (see account

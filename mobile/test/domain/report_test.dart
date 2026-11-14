@@ -44,7 +44,11 @@ void main() {
       );
       expect(
         () => minimalReport().copyWith(
-          consent: Consent(wordingVersion: 'v1', image: false, location: true),
+          consent: Consent(
+            wordingVersion: '2026-11',
+            image: false,
+            location: true,
+          ),
         ),
         throwsArgumentError,
       );
@@ -101,7 +105,7 @@ void main() {
     test('a licence without image consent, or image consent without one', () {
       expect(
         () => Consent(
-          wordingVersion: 'v1',
+          wordingVersion: '2026-11',
           image: false,
           location: false,
           licence: 'cc0',
@@ -109,7 +113,7 @@ void main() {
         throwsArgumentError,
       );
       expect(
-        () => Consent(wordingVersion: 'v1', location: false, image: true),
+        () => Consent(wordingVersion: '2026-11', location: false, image: true),
         throwsArgumentError,
       );
     });
@@ -117,7 +121,7 @@ void main() {
     test('a licence the collection does not admit', () {
       expect(
         () => Consent(
-          wordingVersion: 'v1',
+          wordingVersion: '2026-11',
           location: false,
           image: true,
           licence: 'cc-by-sa',
@@ -129,7 +133,7 @@ void main() {
     test('a blank or overlong credit, and trims the rest', () {
       expect(
         () => Consent(
-          wordingVersion: 'v1',
+          wordingVersion: '2026-11',
           image: false,
           location: false,
           credit: '   ',
@@ -138,7 +142,7 @@ void main() {
       );
       expect(
         () => Consent(
-          wordingVersion: 'v1',
+          wordingVersion: '2026-11',
           image: false,
           location: false,
           credit: 'x' * 81,
@@ -146,7 +150,7 @@ void main() {
         throwsArgumentError,
       );
       final consent = Consent(
-        wordingVersion: 'v1',
+        wordingVersion: '2026-11',
         image: false,
         location: false,
         credit: ' A ',
@@ -163,6 +167,42 @@ void main() {
         () => minimalReport().copyWith(consent: imageConsent(location: false)),
         throwsArgumentError,
       );
+    });
+
+    test('an unpublished consent wording', () {
+      expect(
+        () => Consent(
+          wordingVersion: 'consent-2099-01',
+          image: false,
+          location: false,
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('photo uses need review, are known, and need a photo', () {
+      Consent photo(Set<String> uses) => Consent(
+        wordingVersion: '2026-11',
+        image: true,
+        location: false,
+        uses: uses,
+        licence: 'cc-by-nc',
+      );
+      expect(() => photo({'training'}), throwsArgumentError);
+      expect(() => photo({'review', 'advertising'}), throwsArgumentError);
+      expect(
+        () => Consent(
+          wordingVersion: '2026-11',
+          image: false,
+          location: false,
+          uses: const {'review'},
+        ),
+        throwsArgumentError,
+      );
+      expect(photo({'training', 'review'}).toJson()['uses'], [
+        'review',
+        'training',
+      ]);
     });
   });
 
@@ -191,6 +231,7 @@ void main() {
       expect(report.consent.licence, isNull);
       expect(report.consent.location, isTrue);
       expect(report.consent.credit, fullReport().consent.credit);
+      expect(report.consent.uses, isEmpty);
       expect(report.location, fullReport().location);
     });
   });

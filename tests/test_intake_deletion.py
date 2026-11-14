@@ -38,9 +38,10 @@ def test_delete_all_erases_only_the_authenticated_submitter(tmp_path: Path) -> N
     assert not list((tmp_path / "reports/images").iterdir())
     with sqlite3.connect(tmp_path / "reports/reports.sqlite3") as db:
         assert db.execute(
-            "SELECT body,content_sha256,image_file,withdrawn_at FROM reports WHERE submitter=?",
+            "SELECT body,content_sha256,image_file,consent,withdrawn_at FROM reports "
+            "WHERE submitter=?",
             (first.id,),
-        ).fetchone() == (None, None, None, deleted.json()["requested_at"])
+        ).fetchone() == (None, None, None, None, deleted.json()["requested_at"])
 
 
 def test_pending_deletion_blocks_inflight_and_survives_restart(tmp_path: Path) -> None:
@@ -226,10 +227,10 @@ def test_deletion_marker_waits_for_specialist_read_materialization(
     headers = {"Authorization": f"Bearer {credential.token}"}
     assert client.put(f"/reports/{new_id()}", json=report(), headers=headers).status_code == 201
 
-    def paused(body: str) -> ReportContent:
+    def paused(body: str, **options: object) -> ReportContent:
         parsing.set()
         assert resume.wait(5)
-        return original(body)
+        return original(body, **options)  # type: ignore[arg-type]
 
     monkeypatch.setattr(ReportContent, "model_validate_json", paused)
     with ThreadPoolExecutor(2) as pool:
