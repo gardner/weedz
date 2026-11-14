@@ -497,7 +497,7 @@ pipelines.
 | Concern | Version 1 | Not yet |
 | --- | --- | --- |
 | Identity/lineage | `<source>:<source_id>` IDs, snapshot (revision or run), parent ID, original URI, media SHA-256 | Release IDs (#7), retrieval date |
-| Rights | Media and metadata licences kept separately; creator when the source names one separately (otherwise the attribution is authoritative); attribution; where the licence was read | Intended-use eligibility |
+| Rights | Media and metadata licences kept separately; creator when the source names one separately (otherwise the attribution is authoritative); attribution; where the licence was read; intended-use eligibility (training, evaluation, sharing) derived per example by the reference collection | Rights per annotation, where they differ from the photo's |
 | Media | Width/height and format when known | Colour space, dtype, bands, valid-data mask |
 | Taxonomy | The original source label kept as context only; annotation taxon as recorded | Taxon IDs, synonym mapping, regional status |
 | Supervision / label extent | Typed annotations with `present`/`absent`/`unknown`/`ignored` labels, pixel points, boxes and mask URIs | Mask files and ignored-pixel handling; annotation completeness, so a verified target-absent image can count as a detection negative without an invented box |
@@ -533,6 +533,33 @@ supervision cannot support. Predictions, rejected labels, and `unknown` or
   The local run `nelson-tasman-3e62ad801459` gives 30 samples (24 incidental, 6
   reference), all with public coordinates, checksums and sizes. Each has one
   unreviewed model suggestion, and there are no findings yet.
+
+`src/weedz/reference.py` reads contract samples as a **reference collection**
+(PRD P13). Each annotation is one example with a standing:
+
+- original
+- accepted
+- unresolved
+- unsuitable
+- unreviewed
+
+Its eligibility for training, evaluation and sharing is derived from:
+
+- the contract's `supervises()` rule
+- whose label it is: a source's own label, a reviewer's, or a model suggestion
+- the sharing policy
+
+A model suggestion that reviewers accepted may train, but it is never evaluation
+evidence, because the reviewers saw it.
+
+`src/weedz/reference_gaps.py` counts coverage per species and use. It counts by
+source, label, view, season and region, and lists the gaps. Growth stage and
+habitat are recorded nowhere and are reported as such. Locally, Leafy Spurge gives
+900 original examples, eligible for every use. Its only gaps are oblique and
+ground views, and its season is unknown because the adapter records no capture
+date. The pilot run `nelson-tasman-3e62ad801459` has 30 unreviewed suggestions,
+so every watchlist species is a gap for every use until someone reviews them.
+See [local operation](local-development.md#review-the-reference-collection).
 
 ### Bronze, silver, and gold releases
 

@@ -509,6 +509,59 @@ The measure is partially measured once either part has something to report,
 and not yet measurable when neither does. Judged levels are reviewer opinions,
 never a first-occurrence claim.
 
+### Review the reference collection
+
+To see a run's reviewed examples as a reference collection (PRD P13, Journey 5), run:
+
+```sh
+uv run main.py reference --run nelson-tasman-3e62ad801459 --json reference.json
+```
+
+This prints a Markdown summary, and `--json` also writes every example. Nothing is
+stored: the collection is re-derived from the review history each time, so it
+cannot disagree with it. Each label on a photo is one example, built from the
+contract samples (`pilot_samples`). An example keeps:
+
+- the photo's original source label
+- its rights and attribution
+- who recorded it, and who reviewed it
+
+It has a **standing**:
+
+- **original:** the source's own label
+- **accepted:** a reviewer's finding, or a screening suggestion, that reviewers accepted
+- **unresolved:** reviewers disagree, or left it unresolved
+- **unsuitable:** rejected on review
+- **unreviewed:** nobody has judged it yet
+
+Its eligibility is stated per use, with the reason whenever it is not eligible:
+
+- **Training:** a present or absent label that was not rejected or left
+  unresolved. This is the contract's `supervises()` rule, plus a suggestion that
+  reviewers accepted.
+- **Evaluation:** a source's original label, or a reviewer's label that someone
+  *other than its author* accepted. An accepted suggestion never counts, because
+  reviewers saw the suggestion.
+- **Sharing:** an original or accepted label whose photo and observation licences
+  the sharing policy admits. Non-commercial terms are flagged.
+
+Coordinates are never included. Each example says only whether its location could
+be shared, or why it is withheld.
+
+Coverage counts photos with an eligible example for each watchlist species and
+each species seen. They are counted by source, label, view, season and region.
+
+Gaps are listed:
+
+- a use with no eligible example
+- no absent (negative) example
+- a source, region, view or season the collection holds with none for the species
+
+A view or season that no eligible example records is listed as unknown, not as a
+gap. Every iNaturalist photo's view is unknown. Growth stage and habitat are
+recorded nowhere, and the report says so. A missing example is a gap in the
+collection. It is never evidence that a weed is absent.
+
 ### Prepare a follow-up package
 
 The team decides which leads are worth investigating, and records why (PRD
