@@ -333,3 +333,62 @@ textarea::placeholder {
   line-height: 1.7;
   display: block;
 }
+.score-panel {
+  margin: 0 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.score-panel h3 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.score-panel p,
+.score-panel li {
+  font-size: 10px;
+  color: #59664f;
+  line-height: 1.6;
+}
+.score-panel .score-label {
+  margin: 0 0 8px;
+}
+.score-margins {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.score-margins li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 3px 0;
+}
+.score-margins b {
+  font-weight: 550;
+  color: #3f5a33;
+}
+.score-meaning summary {
+  cursor: pointer;
+  font-size: 10px;
+  color: #3f5a33;
+  font-weight: 600;
+}
+.score-meaning h4 {
+  margin: 12px 0 4px;
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.score-meaning p {
+  margin: 6px 0;
+}
+.score-meaning ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.score-meaning small {
+  display: block;
+  font-size: 9px;
+  color: #59664f;
+}

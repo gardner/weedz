@@ -21,6 +21,7 @@ from weedz.discovery.lookalikes import summarize_lookalikes
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
+from weedz.discovery.score_meaning import pin_meaning, score_meaning
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
 from weedz.discovery.study_store import run_study
@@ -86,13 +87,8 @@ class Activities:
                 f"loading {key} model",
             )
         screener = self.screeners[key]
-        # Metadata saved before model choice existed was always the original BioCLIP.
-        previous = run["model"] and {"model_key": "bioclip"} | run["model"]
-        if previous and previous != screener.metadata:
-            raise ValueError(
-                "Scoring configuration changed; start a new run to preserve provenance"
-            )
-        self.store.model(run_id, screener.metadata)
+        # Refuses a changed configuration; a resumed run keeps its pinned score meaning.
+        self.store.model(run_id, pin_meaning(run["model"], screener.metadata))
         photos = self.store.photos(run_id)
         for index, photo in enumerate(photos):
             activity.heartbeat(f"{index}/{len(photos)}")
@@ -153,6 +149,8 @@ def export(store: Store, run_id: str) -> dict:
         "references": references,
         "encounters": summarize(photos, encounter_groups(photos)),
         "lookalikes": summarize_lookalikes(photos),
+        # What the run's scores mean, for its model and ranking revision (#16).
+        "score_meaning": score_meaning(run["model"]),
         "corpus_coverage": coverage(
             [Photo.model_validate(p) for p in photos if p["cohort"] == "incidental"],
             RunSpec.from_saved(run["spec"]).sampling,
