@@ -28,6 +28,8 @@ from weedz.discovery.api import create_app
 # Distinctive digits, so a match can only be this point.
 OBSCURED = {"location": "-41.27391,173.28417", "positional_accuracy": 7}
 DIGITS = ("41.27391", "173.28417")
+# Rounded to two decimals (about 1 km) or finer, the point still starts like this.
+PREFIXES = ("41.27", "173.28")
 CHECKED = {
     "/runs",
     "/runs/{run_id}",
@@ -59,7 +61,7 @@ EXEMPT = {
 
 def reviewed_lead(root: Path, **fields: object) -> tuple[TestClient, str]:
     """A screened photo with every kind of review evidence, and a record near it."""
-    load_references(root, records=[nearby(2020) | {"latitude": -41.274, "longitude": 173.284}])
+    load_references(root, records=[nearby(2020) | {"latitude": -41.3, "longitude": 173.3}])
     store, photo_id = store_with_photo(root, SCREENED, **fields)
     store.review("run", photo_id, "confirmed", "", "Ana")
     add_finding(store, photo_id)
@@ -95,8 +97,8 @@ def test_no_route_reveals_an_obscured_point(tmp_path: Path) -> None:
     for route in sorted(CHECKED):
         response = client.get(route.format(run_id="run", photo_id=photo_id))
         assert response.status_code == 200, route
-        assert not any(digits in response.text for digits in DIGITS), route
-    assert not any(digits in archive_text(client) for digits in DIGITS)
+        assert not any(digits in response.text for digits in PREFIXES), route
+    assert not any(digits in archive_text(client) for digits in PREFIXES)
 
 
 def test_an_obscured_point_never_gains_a_precision_or_a_search_area(tmp_path: Path) -> None:
