@@ -109,11 +109,12 @@ def test_an_answer_can_point_to_the_judgements_it_informed(tmp_path: Path) -> No
     referred = refer(store, photo_id, finding_id=gorse)
     save(store, photo_id, reviewer="Dr Wiri", value="disputed", finding_id=gorse)
     save(store, photo_id, reviewer="Dr Wiri", value="disputed")
+    save(store, photo_id, reviewer="Ana", value="disputed", finding_id=gorse)
     client = TestClient(create_app(tmp_path))
     path = f"/runs/run/photos/{photo_id}/referrals/{referred}/events"
     ids = [row["id"] for row in store.judgements("run", photo_id)]
-    # Only judgements on the referred plant, made since it was referred, can be cited.
-    for wrong in (ids[0], ids[2], 999):
+    # Only the answerer's own judgements on the referred plant, made since it was referred.
+    for wrong in (ids[0], ids[2], ids[3], 999):
         response = client.post(path, json=answer(judgement_ids=[wrong]))
         assert response.status_code == 409, wrong
     assert client.post(path, json=answer(judgement_ids=[ids[1]])).status_code == 200

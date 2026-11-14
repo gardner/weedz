@@ -57,6 +57,7 @@ export default function ReferralPanel({
               number={index + 1}
               photo={photo}
               referral={referral}
+              reviewer={reviewer}
               blocked={blocked}
               onClose={onClose}
             />
@@ -168,12 +169,14 @@ function ReferralItem({
   number,
   photo,
   referral,
+  reviewer,
   blocked,
   onClose,
 }: {
   number: number;
   photo: Photo;
   referral: Referral;
+  reviewer: string;
   blocked: boolean;
   onClose: Close;
 }) {
@@ -207,6 +210,7 @@ function ReferralItem({
           number={number}
           photo={photo}
           referral={referral}
+          reviewer={reviewer}
           blocked={blocked}
           onClose={onClose}
         />
@@ -220,6 +224,7 @@ function Response({
   number,
   photo,
   referral,
+  reviewer,
   blocked,
   onClose,
 }: {
@@ -227,12 +232,13 @@ function Response({
   number: number;
   photo: Photo;
   referral: Referral;
+  reviewer: string;
   blocked: boolean;
   onClose: Close;
 }) {
   const [note, setNote] = useState("");
   const [cited, setCited] = useState<number[]>([]);
-  const options = citable(photo, referral);
+  const options = citable(photo, referral, reviewer);
   const close = (action: Action) =>
     onClose(referral.id, {
       action,

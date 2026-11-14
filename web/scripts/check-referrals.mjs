@@ -76,6 +76,7 @@ try {
       identity: {
         Ben: { id: 10, value: "confirmed", note: "", created_at: before },
         "Dr Wiri": { id: 11, value: "disputed", note: "Toothed leaflets", created_at: after },
+        Carol: { id: 12, value: "confirmed", note: "", created_at: after },
       },
     },
     referrals: [referral(3)],

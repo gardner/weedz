@@ -208,7 +208,7 @@ class ReviewAPI:
         if referral is None:
             raise HTTPException(404, "Referral not found on this photo")
         judgements = self.store.judgements(run_id, photo_id)
-        reason = uncitable(referral, judgements, event.judgement_ids)
+        reason = uncitable(referral, judgements, event)
         if reason:
             raise HTTPException(409, reason)
         try:

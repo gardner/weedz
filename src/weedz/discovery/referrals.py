@@ -91,15 +91,18 @@ def with_status(referral: dict[str, Any], events: list[dict[str, Any]]) -> dict[
 
 
 def uncitable(
-    referral: dict[str, Any], judgements: list[dict[str, Any]], ids: list[int]
+    referral: dict[str, Any], judgements: list[dict[str, Any]], event: ReferralEvent
 ) -> str | None:
-    """Why an answer cannot cite these judgements, or None. Each must be on the referred
-    plant (any plant when the whole photo was referred) and made since the referral."""
+    """Why an answer cannot cite these judgements, or None. Each must be the answerer's
+    own, on the referred plant (any plant when the whole photo was referred) and made
+    since the referral, so the export never credits someone else's judgement to them."""
     known = {judgement["id"]: judgement for judgement in judgements}
-    for judgement_id in ids:
+    for judgement_id in event.judgement_ids:
         judgement = known.get(judgement_id)
         if judgement is None:
             return f"Judgement {judgement_id} is not on this photo"
+        if judgement["reviewer"] != event.actor:
+            return f"Judgement {judgement_id} was made by someone else"
         target = referral["finding_id"]
         if target is not None and judgement["finding_id"] != target:
             return f"Judgement {judgement_id} is about a different plant from the referral"

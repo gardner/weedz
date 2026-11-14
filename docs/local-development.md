@@ -246,7 +246,7 @@ intended for local development, not shared public hosting.
 
    An answer never changes a reviewer's decision or judgement. A specialist who
    settles the identity records it as their own judgement first. The answer can
-   then cite it (`judgement_ids`). Only judgements on the referred plant (any
+   then cite it (`judgement_ids`). Only the answerer's own judgements on the referred plant (any
    plant for a whole-photo referral) made since the referral can be cited, and
    other citations are refused (409).
 

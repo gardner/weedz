@@ -77,10 +77,10 @@ export function targetLabel(photo: Photo, findingId: number | null): string {
 export type Citable = { id: number; label: string };
 
 /**
- * Standing judgements an answer may cite: on the referred plant (any plant for the whole
- * photo) and made since the referral, mirroring the API's check.
+ * Standing judgements an answer may cite: the answerer's own, on the referred plant (any
+ * plant for the whole photo) and made since the referral, mirroring the API's check.
  */
-export function citable(photo: Photo, referral: Referral): Citable[] {
+export function citable(photo: Photo, referral: Referral, reviewer: string): Citable[] {
   const plants = photo.findings ?? [];
   // A whole-photo referral may cite judgements on any plant, so each is named.
   const judged: [Judged, string][] =
@@ -96,7 +96,9 @@ export function citable(photo: Photo, referral: Referral): Citable[] {
   return judged.flatMap(([plant, prefix]) =>
     DIMENSIONS.flatMap(({ key, label }) =>
       Object.entries(plant.judgements?.[key] ?? {}).flatMap(([name, standing]) =>
-        standing.id != null && standing.created_at >= referral.created_at
+        standing.id != null &&
+        name === reviewer.trim() &&
+        standing.created_at >= referral.created_at
           ? [
               {
                 id: standing.id,
