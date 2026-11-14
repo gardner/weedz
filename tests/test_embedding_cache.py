@@ -144,3 +144,17 @@ def test_cached_embeddings_of_the_wrong_width_are_recomputed(tmp_path: Path) -> 
     again, encoder = screener(cache)
     assert again.screen(photo(tmp_path))["embedding_cache"] == "miss"
     assert encoder.image_calls == 1
+
+
+def test_recipe_versions_cover_the_libraries_that_decode_and_resize() -> None:
+    import open_clip
+    import PIL
+    import torchvision
+
+    from weedz.discovery.inference import library_versions
+
+    assert library_versions() == {
+        "open_clip": open_clip.__version__,
+        "torchvision": torchvision.__version__,
+        "pillow": PIL.__version__,
+    }

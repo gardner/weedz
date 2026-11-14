@@ -111,6 +111,23 @@ def prompt(label: str) -> str:
     return f"a photograph of {label}"
 
 
+def library_versions() -> dict[str, str]:
+    """Versions of the code that decodes, resizes and normalises each window.
+
+    open_clip describes the transform, but torchvision and Pillow carry it out, so an
+    upgrade to any of them must invalidate cached embeddings and refuse mixed resumes.
+    """
+    import open_clip
+    import PIL
+    import torchvision
+
+    return {
+        "open_clip": open_clip.__version__,
+        "torchvision": torchvision.__version__,
+        "pillow": PIL.__version__,
+    }
+
+
 class Screener:
     def __init__(
         self,
@@ -186,10 +203,7 @@ class Screener:
         model, _, transform = open_clip.create_model_and_transforms(f"local-dir:{path}")
         weights = hashlib.sha256((path / "open_clip_pytorch_model.bin").read_bytes()).hexdigest()
         tokenizer = open_clip.get_tokenizer("ViT-B-16")
-        preprocessing = {
-            "open_clip": open_clip.__version__,
-            **open_clip.get_model_preprocess_cfg(model),
-        }
+        preprocessing = {**library_versions(), **open_clip.get_model_preprocess_cfg(model)}
         return cls(
             cast(Encoder, model),
             transform,
