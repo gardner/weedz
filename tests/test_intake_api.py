@@ -232,7 +232,8 @@ def test_reports_are_kept_apart_owner_only_and_offered_for_review_unpublished(
     [stored] = ReportStore(tmp_path).active()
     assert stored.report_id == report_id and stored.report.candidate.taxon == "Ulex europaeus"
     assert stored.image is not None and stored.image.read_bytes()[:2] == b"\xff\xd8"
-    for path in (tmp_path / "reports" / "reports.sqlite3", stored.image):
+    folder = tmp_path / "reports"
+    for path in (folder, folder / "images", folder / "reports.sqlite3", stored.image):
         assert path.stat().st_mode & 0o077 == 0
     assert not (tmp_path / "discovery.sqlite3").exists()
     assert client.get("/openapi.json").status_code in {401, 404}

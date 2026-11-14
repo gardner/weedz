@@ -75,7 +75,8 @@ class ReportStore:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
-        self.images.mkdir(mode=0o700, parents=True, exist_ok=True)
+        for folder in (self.folder, self.images):
+            folder.mkdir(mode=0o700, parents=True, exist_ok=True)
         with closing(tokens.connect_private(self.path, SCHEMA)) as db:
             db.execute("PRAGMA secure_delete=ON")
             db.execute("BEGIN IMMEDIATE")  # one writer decides each id and budget
