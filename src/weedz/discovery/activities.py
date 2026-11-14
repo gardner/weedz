@@ -9,6 +9,8 @@ from typing import Any
 
 from temporalio import activity
 
+from weedz.discovery.audit import audit_sample, summarize_audit
+from weedz.discovery.effort import summarize_effort
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
@@ -38,13 +40,13 @@ class Activities:
 
     @activity.defn
     def screen_photos(self, payload: dict) -> dict:
-        from weedz.discovery.inference import Screener
+        from weedz.discovery.inference import Screener, subject_label
 
         run_id = payload["run_id"]
         self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
         if self.screener is None:
-            self.screener = Screener()
+            self.screener = Screener.load()
         previous = next(run["model"] for run in self.store.runs() if run["id"] == run_id)
         if previous and previous != self.screener.metadata:
             raise ValueError(
@@ -58,7 +60,9 @@ class Activities:
             if hashlib.sha256(path.read_bytes()).hexdigest() != photo["sha256"]:
                 raise ValueError(f"Image checksum mismatch: {photo['id']}")
             if not photo["scores"]:
-                self.store.score(run_id, photo["id"], self.screener.screen(path))
+                self.store.score(
+                    run_id, photo["id"], self.screener.screen(path, subject_label(photo))
+                )
             self.store.status(run_id, "screening", f"Scored {index + 1} of {len(photos)} photos")
         return {"count": len(photos)}
 
@@ -83,18 +87,33 @@ class Activities:
         self.store.status(payload["run_id"], "failed", payload["error"])
 
 
+def review_history(store: Store, run_id: str, photos: list[dict]) -> list[dict]:
+    return [
+        dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"])) for photo in photos
+    ]
+
+
 def export(store: Store, run_id: str) -> dict:
     run = next((item for item in store.runs() if item["id"] == run_id), None)
     if run is None:
         raise KeyError(run_id)
     snapshots = store.root / "runs" / run_id
+    photos = store.photos(run_id)
+    history = review_history(store, run_id, photos)
     return {
         "schema": 1,
         "run": run,
-        "photos": store.photos(run_id),
-        "review_history": [
-            dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"]))
-            for photo in store.photos(run_id)
+        "photos": photos,
+        "review_history": history,
+        "review_effort": summarize_effort(photos, history),
+        "audit": summarize_audit(
+            photos,
+            audit_sample(run_id, photos),
+            store.latest_audits(run_id),
+            store.latest_audits(run_id, blind=False),
+        ),
+        "audit_history": [
+            dict(photo_id=photo["id"], events=store.audits(run_id, photo["id"])) for photo in photos
         ],
         "source_snapshots": {
             path.name: hashlib.sha256(path.read_bytes()).hexdigest()

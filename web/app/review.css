@@ -1,0 +1,62 @@
+/* Reviewer attribution, disagreement and decision history. */
+.review-form input#reviewer-name,
+.review-form input.reviewer-name {
+  width: 100%;
+  border: 1px solid #dee5d5;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--ink);
+}
+.review-form #reviewer-help {
+  display: block;
+  font-size: 9px;
+  color: #656e5c;
+  margin: 5px 0 12px;
+}
+.dispute {
+  margin: 0 17px 12px;
+  padding: 10px 12px;
+  border: 1px solid #ede0b4;
+  border-left-width: 4px;
+  border-radius: 4px;
+  background: #fbf6e7;
+  color: #6f5a23;
+  font-size: 10px;
+}
+.dispute ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.review-history {
+  padding: 0 20px 20px;
+}
+.review-history h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.review-history > p {
+  margin: 0;
+  font-size: 10px;
+  color: #636e5c;
+}
+.review-history ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.review-history li {
+  border-top: 1px solid #edf1e8;
+  padding: 8px 0;
+  font-size: 10px;
+  color: #617251;
+}
+.review-history time {
+  color: #656e5c;
+}
+.review-history li p {
+  margin: 4px 0 0;
+  font-size: 10px;
+  color: #636e5c;
+}

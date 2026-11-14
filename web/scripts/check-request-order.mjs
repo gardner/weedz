@@ -39,6 +39,7 @@ try {
     if (path === "/api/runs") return route.fulfill({ json: runs });
     const id = path.split("/")[3];
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
+    if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     if (id === "old") await held;
     await route.fulfill({ json: { run: runs.find((run) => run.id === id), photos: [photo(id)] } });
   });

@@ -24,7 +24,14 @@ export type Photo = {
   positional_accuracy_m: number | null;
   coordinate_status: string;
   review_status: Status;
+  audit_sample?: boolean;
+  audited?: boolean;
+  auditors?: string[];
   review_note: string;
+  review_reviewer: string;
+  reviewer_decisions: Record<string, Status>;
+  disputed: boolean;
+  review_count: number;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -34,6 +41,53 @@ export type Photo = {
     height?: number;
     species?: { name: string; similarity: number; margin: number; box: number[] }[];
   };
+};
+
+/** Audit counts only; per-photo findings are in the export, so the audit view stays blind. */
+export type AuditSummary = {
+  sampled: number;
+  audited: number;
+  remaining: number;
+  weed_found: number;
+  found_as_top_suggestion: number;
+  found_not_top_suggestion: number;
+  disputed: number;
+  not_blind: number;
+};
+
+export type RunDetail = {
+  run: Run;
+  photos: Photo[];
+  review_effort?: ReviewEffort;
+  audit?: AuditSummary;
+};
+
+export type ReviewEffort = {
+  total_minutes: number;
+  measured_decisions: number;
+  unmeasured_decisions: number;
+};
+
+export function effortNote(effort: ReviewEffort | undefined): string {
+  if (!effort?.measured_decisions && !effort?.unmeasured_decisions) return "No review time yet";
+  const untimed = effort.unmeasured_decisions;
+  const note = `${effort.total_minutes} min measured review time`;
+  return untimed ? `${note} · ${untimed} decision${untimed === 1 ? "" : "s"} not timed` : note;
+}
+
+export type ReviewEvent = {
+  id: number;
+  reviewer: string;
+  status: Status;
+  note: string;
+  created_at: string;
+};
+
+export const statusLabels: Record<Status, string> = {
+  unreviewed: "Needs review",
+  confirmed: "Species visible",
+  rejected: "Rejected",
+  uncertain: "Uncertain",
 };
 
 export const names: Record<string, string> = {

@@ -77,6 +77,10 @@ try {
     original_common_name: `Blackbird ${id}`,
     review_status: status,
     review_note: "",
+    review_reviewer: "",
+    reviewer_decisions: {},
+    disputed: false,
+    review_count: 0,
     observed_on: "2024-12-30",
     uploaded_at: "2024-12-31T00:00:00Z",
     scores: {
@@ -104,6 +108,7 @@ try {
     const path = new URL(request.url()).pathname;
     if (path === "/api/runs") return route.fulfill({ json: [run] });
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
+    if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     if (path.endsWith("/review")) {
       posted.push(request.postDataJSON());
       return route.fulfill({ json: { saved: true } });
@@ -138,6 +143,20 @@ try {
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
   await page.locator(".evidence h2").waitFor();
+  // Decisions need a reviewer name; enter it by keyboard as well.
+  const name = page.getByLabel("Your name");
+  for (
+    let step = 0;
+    step < 40 && !(await name.evaluate((el) => el === document.activeElement));
+    step++
+  ) {
+    await page.keyboard.press("Tab");
+  }
+  assert.ok(
+    await name.evaluate((el) => el === document.activeElement),
+    "name field reachable by Tab",
+  );
+  await page.keyboard.type("Ana");
   const decision = page.getByRole("button", { name: "Reject suggestion" });
   for (
     let step = 0;
