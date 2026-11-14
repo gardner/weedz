@@ -77,12 +77,18 @@ EVIDENCE_FIELDS: dict[str, Callable[[dict[str, Any]], bool]] = {
 
 
 def tally(photos: Photos) -> dict[str, int]:
-    """Photos, the independent site visits among groupable ones, and those left ungrouped."""
+    """Distinct photos, the independent site visits among groupable ones, and those left
+    ungrouped."""
+    photos = list({p["id"]: p for p in photos}.values())
     return {
         "photos": len(photos),
         "site_visits": len({p["encounter_group"] for p in photos if p["encounter_linkable"]}),
         "ungrouped_photos": sum(not p["encounter_linkable"] for p in photos),
     }
+
+
+def plural(count: int, noun: str) -> str:
+    return f"{count} {noun}{'' if count == 1 else 's'}"
 
 
 def _minutes(seconds: float) -> float:
@@ -133,6 +139,24 @@ class Study:
         """Measured minutes on these photos' decisions and recorded findings, and how many
         of those were not timed."""
         return _timed(self.decisions(photos) + self.findings(photos))
+
+    def untimed(self, photos: Photos) -> tuple[int, int]:
+        """How many decisions, and how many recorded findings, on these photos were untimed."""
+        return (
+            sum(event.get("effort_seconds") is None for event in self.decisions(photos)),
+            sum(finding.get("effort_seconds") is None for finding in self.findings(photos)),
+        )
+
+    def watchlist_findings(self) -> list[tuple[dict[str, Any], str]]:
+        """(photo, species) for each confirmed suggestion and recorded watchlist plant."""
+        confirmed = [(p, p["scores"].get("best_species")) for p in self.confirmed]
+        recorded = [
+            (p, finding["species"])
+            for p in self.incidental
+            for finding in self.findings([p])
+            if finding.get("species")
+        ]
+        return confirmed + recorded
 
     def audit_effort(self) -> tuple[float | None, int]:
         """Measured blind-audit minutes, and how many audit answers were not timed."""
@@ -185,8 +209,7 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
     minutes, _ = study.effort(study.incidental)
     decisions = study.decisions(study.incidental)
     findings = study.findings(study.incidental)
-    untimed = sum(event.get("effort_seconds") is None for event in decisions)
-    untimed_findings = sum(f.get("effort_seconds") is None for f in findings)
+    untimed, untimed_findings = study.untimed(study.incidental)
     audit_minutes, untimed_audits = study.audit_effort()
     return _measure(
         "reviewer_effort_per_useful_finding",
@@ -245,9 +268,9 @@ def missed_targets(study: Study) -> dict[str, Any]:
     if audit["remaining"]:
         caveats.append(f"{audit['audited']} of {audit['sampled']} sampled photos audited.")
     if audit["disputed"]:
-        caveats.append(f"{_plural(audit['disputed'], 'audited photo')} had disputed findings.")
+        caveats.append(f"{plural(audit['disputed'], 'audited photo')} had disputed findings.")
     if audit["unsure"]:
-        caveats.append(f"{_plural(audit['unsure'], 'audited photo')} had an 'unsure' answer.")
+        caveats.append(f"{plural(audit['unsure'], 'audited photo')} had an 'unsure' answer.")
     return _measure(
         key,
         PARTIAL,
@@ -257,16 +280,18 @@ def missed_targets(study: Study) -> dict[str, Any]:
     )
 
 
-def _comparison(photo: dict[str, Any]) -> dict[str, Any] | None:
-    species = photo["scores"].get("best_species")
+def _comparison(photo: dict[str, Any], species: str) -> dict[str, Any] | None:
     found = photo.get("reference_comparison", {}).get(species)
     return found if found and found["comparable"] else None
 
 
 def _predates(photo: dict[str, Any], found: dict[str, Any]) -> bool:
-    """Observed in an earlier year than every declared record within the radius."""
+    """Observed in an earlier year than every declared record within the radius; an
+    undated nearby record could be older, so it rules the claim out."""
     earliest, observed = found.get("earliest_year"), photo.get("observed_on")
-    return bool(earliest and observed and int(observed[:4]) < earliest)
+    if found.get("undated_within_radius", 0) or not (earliest and observed):
+        return False
+    return int(observed[:4]) < earliest
 
 
 def novel_evidence(study: Study) -> dict[str, Any]:
@@ -279,11 +304,12 @@ def novel_evidence(study: Study) -> dict[str, Any]:
         "reference_as_of": references.get("retrieved_at"),
         "reference_records": references.get("counts", {}),
     }
-    if not study.confirmed:
-        reason = "There is no confirmed incidental finding to compare yet."
+    candidates = study.watchlist_findings()
+    if not candidates:
+        reason = "There is no confirmed or recorded watchlist finding to compare yet."
         return _measure(key, NOT_YET, reason, evidence=evidence)
-    compared = [(p, found) for p in study.confirmed if (found := _comparison(p))]
-    evidence["not_compared"] = len(study.confirmed) - len(compared)
+    compared = [(p, found) for p, species in candidates if (found := _comparison(p, species))]
+    evidence["not_compared"] = len(candidates) - len(compared)
     if not compared:
         reason = "No confirmed finding has a location precise enough to compare."
         return _measure(key, NOT_YET, reason, evidence=evidence)
@@ -293,9 +319,10 @@ def novel_evidence(study: Study) -> dict[str, Any]:
     evidence["no_record_nearby"] = tally(unrecorded)
     evidence["earlier_than_nearby_records"] = tally(earlier)
     reason = (
-        "Counts confirmed findings with no declared record within the radius, or observed "
-        "in an earlier year than every record within it, as of the snapshot date. The "
-        "reference set is incomplete, so this is not a novelty or first-occurrence claim "
+        "Counts confirmed suggestions and recorded watchlist findings with no declared "
+        "record within the radius, or observed in an earlier year than every record within "
+        "it, as of the snapshot date. The reference set is incomplete, so this is not a "
+        "novelty or first-occurrence claim "
         f"(#25). {USEFULNESS_UNJUDGED}"
     )
     return _measure(
@@ -316,14 +343,20 @@ def false_alarms(study: Study) -> dict[str, Any]:
         return _measure("false_alarm_workload", NOT_YET, NO_REVIEWS)
     rejected = [p for p in study.reviewed if p["review_status"] == "rejected" and not p["disputed"]]
     inconclusive = [p for p in study.reviewed if p["review_status"] == "uncertain" or p["disputed"]]
-    minutes, untimed = study.effort(rejected + inconclusive)
+    minutes, _ = study.effort(rejected + inconclusive)
+    untimed, untimed_findings = study.untimed(rejected + inconclusive)
     caveats = [
         "No rule yet decides which suggestions are proposed leads (#16), so rejected and "
         "inconclusive reviews are reported rather than a false-alarm count.",
         *study.unreviewed_note(),
     ]
-    if untimed:
-        caveats.append(f"{untimed} decisions were not timed, so minutes are a lower bound.")
+    if untimed or untimed_findings:
+        decisions = plural(untimed, "decision")
+        findings = plural(untimed_findings, "recorded finding")
+        verb = "was" if untimed + untimed_findings == 1 else "were"
+        caveats.append(
+            f"{decisions} and {findings} {verb} not timed, so minutes are a lower bound."
+        )
     return _measure(
         "false_alarm_workload",
         PARTIAL,
@@ -337,6 +370,7 @@ def false_alarms(study: Study) -> dict[str, Any]:
             ),
             "minutes": minutes,
             "untimed_decisions": untimed,
+            "untimed_findings": untimed_findings,
         },
     )
 
@@ -424,53 +458,3 @@ def outcomes(export: dict[str, Any]) -> dict[str, Any]:
         },
         "measures": [measure(study) for measure in MEASURES],
     }
-
-
-def _plural(count: int, noun: str) -> str:
-    return f"{count} {noun}{'' if count == 1 else 's'}"
-
-
-def _render(value: Any) -> str:
-    if value is None:
-        return "unknown"
-    if isinstance(value, dict) and "site_visits" in value:
-        visits = _plural(value["site_visits"], "site visit")
-        ungrouped = _plural(value["ungrouped_photos"], "ungrouped photo")
-        return f"{visits} + {ungrouped} ({_plural(value['photos'], 'photo')})"
-    if isinstance(value, dict) and set(value) == {"photos"}:
-        return _plural(value["photos"], "photo")
-    if isinstance(value, dict):
-        return "; ".join(f"{key}: {_render(item)}" for key, item in value.items()) or "none"
-    if isinstance(value, list):
-        return " / ".join(map(_render, value)) or "none"
-    return str(value)
-
-
-def to_markdown(report: dict[str, Any]) -> str:
-    context = report["context"]
-    lines = [
-        f"# Pilot outcomes: {report['run_id']}",
-        "",
-        report["meaning"],
-        "",
-        f"Incidental photos: {_render(context['incidental'])}. Model: {context['model']}, "
-        f"ranking revision {context['ranking_revision']}. Reference snapshot: "
-        f"{context['reference_as_of'] or 'none'}.",
-        "",
-        "| Measure | Status | Value | Out of | Why |",
-        "| --- | --- | --- | --- | --- |",
-    ]
-    for item in report["measures"]:
-        cells = [item["measure"], item["status"], _render(item["value"])]
-        cells += [_render(item["denominator"]), item["reason"] or ""]
-        lines.append(f"| {' | '.join(cells)} |")
-    lines += ["", "## Evidence"]
-    for item in report["measures"]:
-        lines += [
-            "",
-            f"### {item['measure']}",
-            "",
-            f"Success condition: {item['success_condition']}.",
-        ]
-        lines += [f"- {key}: {_render(value)}" for key, value in item["evidence"].items()]
-    return "\n".join(lines) + "\n"

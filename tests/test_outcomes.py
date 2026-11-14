@@ -2,7 +2,8 @@
 
 from typing import Any
 
-from weedz.discovery.outcomes import MEASURED, NOT_YET, PARTIAL, outcomes, to_markdown
+from weedz.discovery.outcome_report import to_markdown
+from weedz.discovery.outcomes import MEASURED, NOT_YET, PARTIAL, outcomes
 
 SNAPSHOT = {"retrieved_at": "2026-11-14T05:04:00+00:00", "counts": {"Ulex europaeus": 147}}
 
@@ -221,12 +222,38 @@ def test_findings_older_than_every_nearby_record_count_as_earlier_evidence() -> 
     assert novel["evidence"]["earlier_than_nearby_records"]["photos"] == 1
 
 
+def test_a_finding_is_not_earlier_when_a_nearby_record_is_undated() -> None:
+    found = {"comparable": True, "within_radius": 2, "radius_m": 5000.0, "earliest_year": 2020}
+    comparison = {"Ulex europaeus": found | {"undated_within_radius": 1}}
+    photos = [photo("a", "v1", review_status="confirmed", reference_comparison=comparison)]
+    photos[0]["observed_on"] = "2015-01-01"
+    novel = measure(outcomes(export(photos, references=SNAPSHOT)), "novel_or_earlier_evidence")
+    assert novel["value"]["photos"] == 0
+    assert novel["evidence"]["earlier_than_nearby_records"]["photos"] == 0
+
+
+def test_recorded_watchlist_findings_are_compared_with_the_records() -> None:
+    far = {"comparable": True, "within_radius": 0, "radius_m": 5000.0}
+    comparison = {"Ulex europaeus": far, "Clematis vitalba": far}
+    corrected = {"kind": "correction", "species": "Clematis vitalba", "effort_seconds": 5}
+    added = {"kind": "addition", "species": "Ulex europaeus", "effort_seconds": 5}
+    photos = [
+        photo("a", "v1", review_status="rejected", reference_comparison=comparison)
+        | {"findings": [corrected]},
+        photo("b", "v2", review_status="confirmed", reference_comparison=comparison)
+        | {"findings": [added]},
+    ]
+    novel = measure(outcomes(export(photos, references=SNAPSHOT)), "novel_or_earlier_evidence")
+    assert novel["value"] == {"photos": 2, "site_visits": 2, "ungrouped_photos": 0}
+    assert novel["denominator"]["photos"] == 2
+
+
 def test_novelty_with_a_snapshot_but_no_findings_is_not_yet_measurable() -> None:
     novel = measure(
         outcomes(export([photo("a", "a")], references=SNAPSHOT)), "novel_or_earlier_evidence"
     )
     assert novel["status"] == NOT_YET
-    assert "no confirmed incidental finding" in novel["reason"]
+    assert "no confirmed or recorded watchlist finding" in novel["reason"]
 
 
 def test_rejected_and_inconclusive_reviews_are_reported_with_their_time() -> None:
@@ -338,7 +365,11 @@ def test_time_on_recorded_findings_is_reviewer_effort() -> None:
     assert effort["timed_incidental_decisions"] == 1
     assert effort["timed_incidental_findings"] == 1
     assert effort["untimed_incidental_findings"] == 1
-    assert measure(report, "false_alarm_workload")["evidence"]["minutes"] == 2.0
+    alarms = measure(report, "false_alarm_workload")
+    assert alarms["evidence"]["minutes"] == 2.0
+    assert alarms["evidence"]["untimed_decisions"] == 0
+    assert alarms["evidence"]["untimed_findings"] == 1
+    assert "1 recorded finding was not timed" in alarms["reason"]
 
 
 def test_reviewer_added_watchlist_plants_are_non_blind_missed_evidence() -> None:

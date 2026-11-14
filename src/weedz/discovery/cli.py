@@ -18,7 +18,8 @@ from temporalio.worker import Worker
 from weedz.discovery.activities import Activities, export
 from weedz.discovery.api import create_app
 from weedz.discovery.occurrences import fetch_snapshot
-from weedz.discovery.outcomes import outcomes, to_markdown
+from weedz.discovery.outcome_report import to_markdown
+from weedz.discovery.outcomes import outcomes
 from weedz.discovery.records import TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
 from weedz.discovery.store import Store
