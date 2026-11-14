@@ -2,7 +2,17 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { imageUrl, names, type Photo, type Run, request, type Status } from "../lib/types";
+import { useReviewTimer } from "../lib/review-timer";
+import {
+  effortNote,
+  imageUrl,
+  names,
+  type Photo,
+  type ReviewEffort,
+  type Run,
+  request,
+  type Status,
+} from "../lib/types";
 import Evidence from "./evidence";
 
 const REVIEWER_KEY = "weedz-reviewer";
@@ -12,6 +22,7 @@ export default function ReviewDesk() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [runId, setRunId] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
   const [activeId, setActiveId] = useState("");
   const [cohort, setCohort] = useState("incidental");
   const [region, setRegion] = useState("all");
@@ -35,9 +46,12 @@ export default function ReviewDesk() {
       const selected = runId || list[0]?.id;
       if (selected) {
         if (!runId) setRunId(selected);
-        const result = await request<{ run: Run; photos: Photo[] }>(`runs/${selected}`);
+        const result = await request<{ run: Run; photos: Photo[]; review_effort?: ReviewEffort }>(
+          `runs/${selected}`,
+        );
         if (generation !== requestGeneration.current) return;
         setPhotos(result.photos);
+        setEffortSummary(result.review_effort);
       }
       setError("");
     } catch (failure) {
@@ -86,6 +100,8 @@ export default function ReviewDesk() {
   const incidental = photos.filter((photo) => photo.cohort === "incidental");
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
 
+  const effort = useReviewTimer(`${runId}:${active?.id ?? ""}`);
+
   async function save(status: Status, note: string) {
     if (!active) return;
     setSaving(true);
@@ -93,8 +109,14 @@ export default function ReviewDesk() {
       await request(`runs/${runId}/photos/${active.id}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, note, reviewer: reviewer.trim() }),
+        body: JSON.stringify({
+          status,
+          note,
+          reviewer: reviewer.trim(),
+          effort_seconds: effort.seconds(),
+        }),
       });
+      effort.reset();
       setNotice("Review saved locally.");
       await refresh();
     } catch (failure) {
@@ -201,7 +223,7 @@ export default function ReviewDesk() {
                 {reviewed.toString().padStart(2, "0")}
                 <em> / {incidental.length}</em>
               </strong>
-              <small>Human decisions, with an audit trail</small>
+              <small>{effortNote(effortSummary)}</small>
             </div>
             <div>
               <span>Reference photos</span>
