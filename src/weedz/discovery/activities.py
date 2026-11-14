@@ -38,13 +38,13 @@ class Activities:
 
     @activity.defn
     def screen_photos(self, payload: dict) -> dict:
-        from weedz.discovery.inference import Screener
+        from weedz.discovery.inference import Screener, subject_label
 
         run_id = payload["run_id"]
         self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
         if self.screener is None:
-            self.screener = Screener()
+            self.screener = Screener.load()
         previous = next(run["model"] for run in self.store.runs() if run["id"] == run_id)
         if previous and previous != self.screener.metadata:
             raise ValueError(
@@ -58,7 +58,9 @@ class Activities:
             if hashlib.sha256(path.read_bytes()).hexdigest() != photo["sha256"]:
                 raise ValueError(f"Image checksum mismatch: {photo['id']}")
             if not photo["scores"]:
-                self.store.score(run_id, photo["id"], self.screener.screen(path))
+                self.store.score(
+                    run_id, photo["id"], self.screener.screen(path, subject_label(photo))
+                )
             self.store.status(run_id, "screening", f"Scored {index + 1} of {len(photos)} photos")
         return {"count": len(photos)}
 

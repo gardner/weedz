@@ -26,6 +26,14 @@ LOOKALIKES = [
     "an insect",
     "a landscape with no visible plants",
 ]
+# Backgrounds common in coastal animal photos that pale grasses otherwise "explain".
+SCENES = [
+    "open sky",
+    "sea or open water",
+    "sand, mud or a rocky shore",
+    "bare rock",
+]
+COMPARISONS = LOOKALIKES + SCENES
 
 
 class Encoder(Protocol):
@@ -78,15 +86,54 @@ def summarize_scores(
     }
 
 
+def subject_label(photo: dict[str, Any]) -> str | None:
+    """The photo's original subject, so a window showing it is not read as a weed."""
+    names = [photo.get("original_taxon", ""), photo.get("original_common_name", "")]
+    return ", ".join(name for name in names if name) or None
+
+
+def prompt(label: str) -> str:
+    return f"a photograph of {label}"
+
+
 class Screener:
-    def __init__(self) -> None:
+    def __init__(self, model: Encoder, transform: Any, tokenizer: Any, weights_sha256: str) -> None:
+        import torch
+
+        self.torch = torch
+        self.model = model
+        self.transform = transform
+        self.tokenizer = tokenizer
+        self.model.eval()
+        self.labels = [f"{name}, {common}" for name, common in SPECIES.items()] + COMPARISONS
+        self.prompts = [prompt(label) for label in self.labels]
+        self.text = self.encode_text(self.prompts)
+        self.metadata = {
+            "model": MODEL,
+            "revision": REVISION,
+            "weights_sha256": weights_sha256,
+            "device": "cpu",
+            "ranking_revision": 3,
+            "prompts": self.prompts,
+            "subject_prompt": prompt("<original taxon>, <common name>"),
+            "target_count": len(SPECIES),
+            "regions": "whole image and four 60% width/height overlapping windows",
+            "ranking": (
+                "maximum target minus best comparison-label cosine similarity per window; "
+                "comparisons include the photo's original subject"
+            ),
+            "calibrated": False,
+            "segmentation": False,
+        }
+
+    @classmethod
+    def load(cls) -> "Screener":
         # Heavy libraries are deliberately outside deterministic Temporal workflow imports.
         import open_clip
         import torch
         from huggingface_hub import snapshot_download
 
         torch.set_num_threads(4)
-        self.torch = torch
         path = Path(
             snapshot_download(
                 MODEL,
@@ -98,40 +145,29 @@ class Screener:
             )
         )
         model, _, transform = open_clip.create_model_and_transforms(f"local-dir:{path}")
-        self.model = cast(Encoder, model)
-        self.transform = cast(Any, transform)
-        self.model.eval()
-        self.labels = [f"{name}, {common}" for name, common in SPECIES.items()] + LOOKALIKES
-        self.tokenizer = open_clip.get_tokenizer("ViT-B-16")
-        prompts = [f"a photograph of {label}" for label in self.labels]
-        with torch.inference_mode():
-            self.text = self.model.encode_text(self.tokenizer(prompts), normalize=True)
-        self.metadata = {
-            "model": MODEL,
-            "revision": REVISION,
-            "weights_sha256": hashlib.sha256(
-                (path / "open_clip_pytorch_model.bin").read_bytes()
-            ).hexdigest(),
-            "device": "cpu",
-            "ranking_revision": 2,
-            "prompts": prompts,
-            "target_count": len(SPECIES),
-            "regions": "whole image and four 60% width/height overlapping windows",
-            "ranking": "maximum target minus best comparison-label cosine similarity per window",
-            "calibrated": False,
-            "segmentation": False,
-        }
+        weights = hashlib.sha256((path / "open_clip_pytorch_model.bin").read_bytes()).hexdigest()
+        return cls(cast(Encoder, model), transform, open_clip.get_tokenizer("ViT-B-16"), weights)
 
-    def screen(self, path: Path) -> dict[str, Any]:
+    def encode_text(self, prompts: list[str]) -> Any:
+        with self.torch.inference_mode():
+            return self.model.encode_text(self.tokenizer(prompts), normalize=True)
+
+    def screen(self, path: Path, subject: str | None = None) -> dict[str, Any]:
         torch = self.torch
+        labels = list(SPECIES) + COMPARISONS
+        text = self.text
+        if subject:
+            labels.append(subject)
+            text = torch.cat([text, self.encode_text([prompt(subject)])])
         with Image.open(path) as original:
             image = ImageOps.exif_transpose(original).convert("RGB")
-            boxes = region_boxes(*image.size)
-            batch = torch.stack([self.transform(image.crop(box)) for box in boxes])
-            with torch.inference_mode():
-                features = self.model.encode_image(batch, normalize=True)
-                scores = (features @ self.text.T).cpu().numpy()
-            result = summarize_scores(scores, boxes, list(SPECIES) + LOOKALIKES, len(SPECIES))
-            result["window_similarities"] = scores.tolist()
-            result["width"], result["height"] = image.size
-            return result
+        boxes = region_boxes(*image.size)
+        batch = torch.stack([self.transform(image.crop(box)) for box in boxes])
+        with torch.inference_mode():
+            features = self.model.encode_image(batch, normalize=True)
+            scores = (features @ text.T).cpu().numpy()
+        result = summarize_scores(scores, boxes, labels, len(SPECIES))
+        result["subject_prompt"] = prompt(subject) if subject else None
+        result["window_similarities"] = scores.tolist()
+        result["width"], result["height"] = image.size
+        return result
