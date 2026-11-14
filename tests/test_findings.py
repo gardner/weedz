@@ -97,6 +97,9 @@ def test_a_correction_names_a_different_species_from_the_suggestion(tmp_path: Pa
     path = f"/runs/run/photos/{photo_id}/findings"
     same = client.post(path, json=finding(kind="correction", species="Clematis vitalba"))
     assert same.status_code == 409
+    for typed in ["Clematis vitalba", " clematis VITALBA ", "Old man's beard"]:
+        retyped = finding(kind="correction", species=None, other_taxon=typed)
+        assert client.post(path, json=retyped).status_code == 409, typed
     assert client.post(path, json=finding(kind="correction")).status_code == 200
 
 
@@ -126,8 +129,11 @@ def test_export_carries_findings_and_counts_their_time(tmp_path: Path) -> None:
     assert [item["reviewer"] for item in result["photos"][0]["findings"]] == ["Ana", "Ben"]
     effort = result["review_effort"]
     assert effort["total_minutes"] == 2.0
-    assert effort["minutes_by_status"] == {"rejected": 0.5, "addition": 1.5}
-    assert effort["unmeasured_decisions"] == 1
+    assert effort["minutes_by_status"] == {"rejected": 0.5}
+    assert effort["minutes_by_finding_kind"] == {"addition": 1.5}
+    assert effort["minutes_by_reviewer"] == {"Ana": 2.0}
+    assert (effort["measured_decisions"], effort["unmeasured_decisions"]) == (1, 0)
+    assert (effort["measured_findings"], effort["unmeasured_findings"]) == (1, 1)
     assert any("not segmentation" in line for line in result["limitations"])
 
 

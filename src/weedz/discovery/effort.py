@@ -5,12 +5,14 @@ reported separately rather than treated as zero effort.
 """
 
 from collections import defaultdict
+from dataclasses import dataclass, field
 from typing import Any
 
 MEANING = (
-    "Active, visible review time per decision or recorded finding (a corrected or "
-    "missed plant, counted under its kind), paused after 10 minutes without input. "
-    "A photo counts as 'confirmed' only when every reviewer's latest decision says "
+    "Active, visible review time per decision, and per recorded finding (a corrected or "
+    "missed plant), paused after 10 minutes without input. Time spent before a finding "
+    "is saved belongs to that finding, so decision minutes exclude it; totals include "
+    "both. A photo counts as 'confirmed' only when every reviewer's latest decision says "
     "the suggested species is visible; disputed photos are not counted. It is not a "
     "measure of useful findings, novelty or field value."
 )
@@ -20,27 +22,40 @@ def _minutes(seconds: float) -> float:
     return round(seconds / 60, 2)
 
 
+@dataclass
+class _Tally:
+    seconds: dict[str, float] = field(default_factory=lambda: defaultdict(float))
+    measured: int = 0
+    unmeasured: int = 0
+
+    def minutes(self) -> dict[str, float]:
+        return {key: _minutes(value) for key, value in self.seconds.items()}
+
+
 def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]) -> dict:
     cohort = {photo["id"]: photo["cohort"] for photo in photos}
-    by_status: dict[str, float] = defaultdict(float)
+    findings = {photo["id"]: photo.get("findings", []) for photo in photos}
+    decisions, recorded = _Tally(), _Tally()
     by_reviewer: dict[str, float] = defaultdict(float)
     incidental = 0.0
-    measured = unmeasured = unmeasured_incidental = 0
-    findings = {photo["id"]: photo.get("findings", []) for photo in photos}
+    unmeasured_incidental = 0
     for entry in history:
         is_incidental = cohort.get(entry["photo_id"]) == "incidental"
-        recorded = [item | {"status": item["kind"]} for item in findings.get(entry["photo_id"], [])]
-        for event in entry["events"] + recorded:
-            seconds = event.get("effort_seconds")
-            if seconds is None:
-                unmeasured += 1
-                unmeasured_incidental += is_incidental
-                continue
-            measured += 1
-            by_status[event["status"]] += seconds
-            by_reviewer[event["reviewer"] or "not recorded"] += seconds
-            if is_incidental:
-                incidental += seconds
+        for events, key, tally in [
+            (entry["events"], "status", decisions),
+            (findings.get(entry["photo_id"], []), "kind", recorded),
+        ]:
+            for event in events:
+                seconds = event.get("effort_seconds")
+                if seconds is None:
+                    tally.unmeasured += 1
+                    unmeasured_incidental += is_incidental
+                    continue
+                tally.measured += 1
+                tally.seconds[event[key]] += seconds
+                by_reviewer[event["reviewer"] or "not recorded"] += seconds
+                if is_incidental:
+                    incidental += seconds
     # Undisputed, so every reviewer's latest decision agrees with the latest status.
     confirmed = sum(
         1
@@ -51,12 +66,16 @@ def summarize_effort(photos: list[dict[str, Any]], history: list[dict[str, Any]]
     )
     return {
         "meaning": MEANING,
-        "measured_decisions": measured,
-        "unmeasured_decisions": unmeasured,
-        "total_minutes": _minutes(sum(by_status.values())),
-        "minutes_by_status": {key: _minutes(value) for key, value in by_status.items()},
+        "measured_decisions": decisions.measured,
+        "unmeasured_decisions": decisions.unmeasured,
+        "measured_findings": recorded.measured,
+        "unmeasured_findings": recorded.unmeasured,
+        "total_minutes": _minutes(sum(decisions.seconds.values()) + sum(recorded.seconds.values())),
+        "minutes_by_status": decisions.minutes(),
+        "minutes_by_finding_kind": recorded.minutes(),
         "minutes_by_reviewer": {key: _minutes(value) for key, value in by_reviewer.items()},
         "incidental_minutes": _minutes(incidental),
+        # Untimed decisions or findings on incidental photos.
         "unmeasured_incidental_decisions": unmeasured_incidental,
         "confirmed_incidental_photos": confirmed,
         # Untimed incidental decisions would make the rate look cheaper than it was.

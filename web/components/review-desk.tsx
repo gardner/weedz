@@ -25,7 +25,12 @@ import FieldNotes from "./field-notes";
 import RunSettings from "./run-settings";
 
 const REVIEWER_KEY = "weedz-reviewer";
-const SAVED = {
+type Payloads = {
+  review: { status: Status; note: string };
+  audit: { finding: string; note: string };
+  findings: NewFinding;
+};
+const SAVED: Record<keyof Payloads, string> = {
   review: "Review saved locally.",
   audit: "Audit saved locally.",
   findings: "Finding saved locally.",
@@ -129,7 +134,7 @@ export default function ReviewDesk() {
     setRunId(id);
   }
 
-  async function submit(kind: "review" | "audit" | "findings", fields: object) {
+  async function submit<K extends keyof Payloads>(kind: K, fields: Payloads[K]) {
     if (!active) return false;
     const measured = effort.snapshot();
     setSaving(true);

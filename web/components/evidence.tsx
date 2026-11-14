@@ -45,10 +45,7 @@ export default function Evidence({
   const [recording, setRecording] = useState(false);
   const [box, setBox] = useState<BoxDraft>(EMPTY_BOX);
   const { scores } = photo;
-  const draftBox =
-    recording && scores.width && scores.height
-      ? parseBox(box, scores.width, scores.height).box
-      : null;
+  const parsedBox = parseBox(box, scores.width, scores.height);
   function toggleRecording(open: boolean) {
     setRecording(open);
     setBox(EMPTY_BOX);
@@ -84,7 +81,7 @@ export default function Evidence({
         runId={runId}
         windowVisible={windowVisible}
         drawing={recording}
-        draft={draftBox}
+        draft={recording ? parsedBox.box : null}
         onDraw={(drawn) => setBox(drawn.map(String) as BoxDraft)}
       />
       <div className="image-tools">
@@ -209,7 +206,7 @@ export default function Evidence({
         <button
           type="button"
           aria-expanded={recording}
-          aria-controls="finding-form"
+          aria-controls={recording ? "finding-form" : undefined}
           onClick={() => toggleRecording(!recording)}
         >
           Record a different or missed plant
@@ -218,6 +215,7 @@ export default function Evidence({
           <FindingForm
             photo={photo}
             box={box}
+            parsedBox={parsedBox}
             onBoxChange={setBox}
             blocked={blocked}
             onSave={async (finding) => {

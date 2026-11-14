@@ -162,7 +162,8 @@ intended for local development, not shared public hosting.
    different or missed plant* opens a form for a structured finding, kept apart
    from the reviewer's decision and from blind audits. A finding is a
    *correction* (the plant is a different species from the suggestion; only
-   offered when there is a suggestion, and never the suggested species itself)
+   offered when there is a suggestion, and never the suggested species itself,
+   whether picked or typed by its scientific or common name)
    or an *addition* (a plant the screening didn't suggest). It names one
    watchlist species or an other taxon typed as free text. Free text is stored
    verbatim and never mapped to a watchlist species, even when it reads "gorse".
@@ -173,7 +174,9 @@ intended for local development, not shared public hosting.
    append-only, attributed and timed like decisions, and listed under the
    photo with their boxes drawn as solid outlines (the model's search window
    stays dashed). Each photo in the run detail and export carries its
-   `findings`, and finding time counts toward `review_effort` under its kind.
+   `findings`. Time spent before a finding is saved belongs to that finding:
+   `review_effort` totals include it, and it is reported apart from decisions
+   (`minutes_by_finding_kind`, `measured_findings`, `unmeasured_findings`).
    `GET` and `POST /runs/{run}/photos/{photo}/findings` read and append them.
    A box is a reviewer's outline, not a segmentation, and nothing can be edited
    or withdrawn yet.

@@ -10,7 +10,7 @@ import {
   findingName,
   kindLabels,
   type NewFinding,
-  parseBox,
+  type ParsedBox,
 } from "../lib/findings";
 import { names, type Photo } from "../lib/types";
 
@@ -25,12 +25,14 @@ const recordedAt = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
 export function FindingForm({
   photo,
   box,
+  parsedBox: parsed,
   onBoxChange,
   blocked,
   onSave,
 }: {
   photo: Photo;
   box: BoxDraft;
+  parsedBox: ParsedBox;
   onBoxChange: (box: BoxDraft) => void;
   blocked: boolean;
   onSave: (finding: NewFinding) => void;
@@ -45,7 +47,6 @@ export function FindingForm({
     ([scientific]) => kind === "addition" || scientific !== suggestion,
   );
   const chosen = species === OTHER || choices.some(([scientific]) => scientific === species);
-  const parsed = width && height ? parseBox(box, width, height) : { box: null };
   const named = chosen && (species !== OTHER || otherTaxon.trim() !== "");
   return (
     <form

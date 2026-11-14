@@ -12,7 +12,7 @@ from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.occurrences import with_references
-from weedz.discovery.records import TASK_QUEUE, Audit, Finding, Review, RunSpec
+from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
 
@@ -22,12 +22,20 @@ def audit_state(photo_id: str, sample: set[str], *audits: dict[str, dict[str, st
     return {"audit_sample": photo_id in sample, "audited": bool(auditors), "auditors": auditors}
 
 
+def _names_suggestion(record: Finding, suggestion: str) -> bool:
+    """Whether a correction repeats the suggestion, by key or by typed name."""
+    if record.species is not None:
+        return record.species == suggestion
+    typed = (record.other_taxon or "").casefold()
+    return typed in {suggestion.casefold(), SPECIES.get(suggestion, "").casefold()}
+
+
 def check_finding(scores: dict, record: Finding) -> None:
     """A correction must differ from the suggestion; a box must fit the screened image."""
-    suggestion = scores.get("best_species")
+    suggestion: str = scores.get("best_species") or ""
     if record.kind == "correction" and not suggestion:
         raise HTTPException(409, "No suggestion to correct; record a missed plant instead")
-    if record.kind == "correction" and record.species == suggestion:
+    if record.kind == "correction" and _names_suggestion(record, suggestion):
         raise HTTPException(409, "That is the suggested species; use Species visible instead")
     if record.box is None:
         return
@@ -98,9 +106,7 @@ class ReviewAPI:
         )
 
     def image(self, run_id: str, photo_id: str) -> FileResponse:
-        photo = next((item for item in self.store.photos(run_id) if item["id"] == photo_id), None)
-        if photo is None:
-            raise HTTPException(404, "Photo not found")
+        photo = self.photo(run_id, photo_id)
         path = (self.store.root / photo["image_path"]).resolve()
         if not path.is_relative_to(self.store.root / "images") or not path.is_file():
             raise HTTPException(404, "Image not available")

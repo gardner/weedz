@@ -23,6 +23,10 @@ def add_missing_column(
         db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
+def finding_row(row: sqlite3.Row) -> dict[str, Any]:
+    return dict(row, box=row["box"] and json.loads(row["box"]))
+
+
 def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
     """Each attributed reviewer's latest standing decision, per photo."""
     decisions: dict[str, dict[str, str]] = {}
@@ -162,11 +166,14 @@ class Store:
                 "SELECT photo_id, reviewer, status FROM reviews WHERE run_id=? ORDER BY id",
                 (run_id,),
             ).fetchall()
+            recorded = db.execute(
+                "SELECT * FROM findings WHERE run_id=? ORDER BY id", (run_id,)
+            ).fetchall()
         decisions = reviewer_decisions(events)
         counts = Counter(event["photo_id"] for event in events)
         findings: dict[str, list[dict]] = {}
-        for item in self.findings(run_id):
-            findings.setdefault(item["photo_id"], []).append(item)
+        for row in recorded:
+            findings.setdefault(row["photo_id"], []).append(finding_row(row))
         return [
             dict(
                 json.loads(row["record"]),
@@ -285,11 +292,10 @@ class Store:
                 ),
             )
 
-    def findings(self, run_id: str, photo_id: str | None = None) -> list[dict]:
-        query = "SELECT * FROM findings WHERE run_id=?"
-        parameters: tuple[str, ...] = (run_id,)
-        if photo_id is not None:
-            query, parameters = f"{query} AND photo_id=?", (run_id, photo_id)
+    def findings(self, run_id: str, photo_id: str) -> list[dict]:
         with self.connect() as db:
-            rows = db.execute(f"{query} ORDER BY id", parameters).fetchall()
-        return [dict(row, box=row["box"] and json.loads(row["box"])) for row in rows]
+            rows = db.execute(
+                "SELECT * FROM findings WHERE run_id=? AND photo_id=? ORDER BY id",
+                (run_id, photo_id),
+            ).fetchall()
+        return [finding_row(row) for row in rows]

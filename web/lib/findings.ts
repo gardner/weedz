@@ -31,16 +31,15 @@ export function findingName(finding: Pick<Finding, "species" | "other_taxon">): 
   return finding.other_taxon ?? "Unnamed";
 }
 
+export type ParsedBox = { box: number[] | null; error?: string };
+
 /**
- * A box from its four edges: none when all are blank, otherwise every edge is needed,
- * ordered and inside the image. Returns the reason when it is not usable.
+ * A box from its four edges: none when all are blank (or the image size is unknown),
+ * otherwise every edge is needed, ordered and inside the image. Gives the reason when
+ * it is not usable.
  */
-export function parseBox(
-  draft: BoxDraft,
-  width: number,
-  height: number,
-): { box: number[] | null; error?: string } {
-  if (draft.every((edge) => edge.trim() === "")) return { box: null };
+export function parseBox(draft: BoxDraft, width?: number, height?: number): ParsedBox {
+  if (!width || !height || draft.every((edge) => edge.trim() === "")) return { box: null };
   const box = draft.map((edge) => (edge.trim() === "" ? Number.NaN : Number(edge)));
   if (box.some((edge) => !Number.isFinite(edge) || edge < 0)) {
     return { box: null, error: "Enter all four edges as pixels, or clear the box" };
