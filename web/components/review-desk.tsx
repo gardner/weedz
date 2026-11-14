@@ -106,7 +106,9 @@ export default function ReviewDesk() {
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
   const held = incidental.filter((photo) => heldForAudit(photo, reviewer)).length;
 
-  const effort = useReviewTimer(`${runId}:${auditing ? "audit:" : ""}${active?.id ?? ""}`);
+  // Time belongs to whoever is reviewing, so a shared browser does not pass it between people.
+  const timerKey = [runId, auditing ? "audit" : "review", reviewer.trim(), active?.id ?? ""];
+  const effort = useReviewTimer(JSON.stringify(timerKey));
 
   function switchRun(id: string) {
     setPhotos([]);
