@@ -386,6 +386,57 @@ already do. The completion manifest is written once, when screening completes.
 It records the study linked at that moment, which is usually none, because a
 study is often defined after a run. Use the export for the current study.
 
+### Check the source's suitability
+
+Before reviewing a run, check what its photos can and cannot support (PRD P02,
+P14, Journey 1):
+
+```sh
+uv run main.py suitability --run nelson-tasman-3e62ad801459 --json suitability.json
+```
+
+This prints a Markdown summary of the run's incidental photos. `--json` also
+writes it as JSON. `GET /runs/{id}/suitability` serves the same JSON, the run
+export and completion manifest carry it as `source_suitability`, and the
+**Source suitability** panel in the review app shows it each time it is opened.
+Nothing in it is computed afresh. It composes what the run already records: each
+photo's limits and sharing decision, the site-visit groups, the corpus coverage,
+the reference comparison and the linked study. It covers:
+
+- **Scope:** photos per region against the requested number, and the run's status.
+  A shortfall, an unfinished run or a missing reference snapshot is listed as
+  affected coverage.
+- **Dates:** earliest and latest photo, the query period and the study period.
+  Also photos outside the study period, and those that cannot be placed in it
+  because they are undated, or dated only to a month or year that crosses one of
+  its ends. Years, and seasons the period reaches, that no photo could fall in are
+  listed as unassessed. A month- or year-only date covers every month it spans
+  inside the period. Gaps are "unknown" when an undated photo could fill any of
+  them, or when the study period lies outside the query period and was not sampled. A recent (newest-first) run has an open start, so
+  its earlier years are stated as not sampled.
+- **Location quality:** photos with a search area, each reason the rest have none,
+  and the reported accuracy (median and bands, with 20 m or better marked as
+  precise enough for aerial site context).
+- **Permitted uses:** the photo and observation licence mix, non-commercial-only
+  photos, images that may be shared or only linked, and locations that may be
+  shared or are withheld, with the reasons.
+- **Missing information:** photos missing each field, zeros included.
+- **Independence and screening:** site visits and ungrouped photos, and screened
+  and unscreened photos. Also whether the tiles covered every pixel and photos
+  with featureless windows, both "not recorded" for runs scored before these were
+  recorded, plus the original subjects and reviewed and unassessed photos.
+  Visible vegetation is stated as *not measured*.
+- **Comparison with known records:** the snapshot, and photos not compared, with
+  the reasons.
+- **What these photos cannot support:** for each conclusion, the photos and site
+  visits that cannot support it, and why. The conclusions are a field search
+  lead, aerial site context, when a plant was there, the study period, novelty,
+  an independent count, a shared image or location, and any screening
+  suggestion. Without a study period, that check reads "not assessed", not zero.
+
+A photo, area, period or year that was not collected, screened, compared or
+reviewed is unassessed. It is never evidence that no weed is there.
+
 ### Report outcomes against the success measures
 
 ```sh

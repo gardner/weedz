@@ -135,6 +135,14 @@ try {
     reviewer: "Ana",
   });
   assert.equal(typeof effort_seconds, "number");
+  // The saved notice shows before the reload that resets the draft, so wait for the reset.
+  await page
+    .waitForFunction(
+      () => document.querySelector('[aria-label="Identity note"]')?.value === "",
+      null,
+      { timeout: 5000 },
+    )
+    .catch(() => {});
   assert.equal(
     await page.getByLabel("Identity note").inputValue(),
     "",

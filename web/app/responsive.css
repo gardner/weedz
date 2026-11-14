@@ -154,7 +154,8 @@
     margin-bottom: 9px;
   }
   .run-settings summary > span,
-  .study-panel summary > span {
+  .study-panel summary > span,
+  .suitability-panel summary > span {
     display: none;
   }
   .settings-grid {

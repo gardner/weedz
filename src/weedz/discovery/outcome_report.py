@@ -5,7 +5,7 @@ from typing import Any
 from weedz.discovery.outcomes import plural
 
 
-def _render(value: Any) -> str:
+def render(value: Any) -> str:
     if value is None:
         return "unknown"
     if isinstance(value, dict) and "site_visits" in value:
@@ -15,9 +15,9 @@ def _render(value: Any) -> str:
     if isinstance(value, dict) and set(value) == {"photos"}:
         return plural(value["photos"], "photo")
     if isinstance(value, dict):
-        return "; ".join(f"{key}: {_render(item)}" for key, item in value.items()) or "none"
+        return "; ".join(f"{key}: {render(item)}" for key, item in value.items()) or "none"
     if isinstance(value, list):
-        return " / ".join(map(_render, value)) or "none"
+        return " / ".join(map(render, value)) or "none"
     return str(value)
 
 
@@ -73,7 +73,7 @@ def to_markdown(report: dict[str, Any]) -> str:
         "",
         report["meaning"],
         "",
-        f"Incidental photos: {_render(context['incidental'])}. Model: {context['model']}, "
+        f"Incidental photos: {render(context['incidental'])}. Model: {context['model']}, "
         f"ranking revision {context['ranking_revision']}. Reference snapshot: "
         f"{context['reference_as_of'] or 'none'}.",
         "",
@@ -82,9 +82,9 @@ def to_markdown(report: dict[str, Any]) -> str:
         "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for item in report["measures"]:
-        cells = [item["measure"], item["status"], _render(item["value"])]
+        cells = [item["measure"], item["status"], render(item["value"])]
         limit = item["limit"]
-        cells += [_render(item["denominator"]), _limit(limit), _verdict(limit)]
+        cells += [render(item["denominator"]), _limit(limit), _verdict(limit)]
         cells.append(item["reason"] or "")
         lines.append(f"| {' | '.join(cells)} |")
     lines += ["", "## Evidence"]
@@ -99,5 +99,5 @@ def to_markdown(report: dict[str, Any]) -> str:
         ]
         if item["limit"]["note"]:
             lines.append(f"Limit note: {item['limit']['note']}")
-        lines += [f"- {key}: {_render(value)}" for key, value in item["evidence"].items()]
+        lines += [f"- {key}: {render(value)}" for key, value in item["evidence"].items()]
     return "\n".join(lines) + "\n"

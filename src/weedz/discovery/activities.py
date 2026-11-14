@@ -24,6 +24,7 @@ from weedz.discovery.sampling import coverage
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
 from weedz.discovery.study_store import run_study
+from weedz.discovery.suitability import suitability
 
 
 def while_heartbeating[T](work: Callable[[], T], detail: str, every: float = 20.0) -> T:
@@ -111,6 +112,8 @@ class Activities:
         result = export(self.store, run_id)
         result["run"]["status"] = "completed"
         result["run"]["detail"] = "Screening complete; expert review is pending"
+        # Summarised again, so it reads the run as completed rather than still exporting.
+        result["source_suitability"] = suitability(result)
         destination = self.store.root / "runs" / run_id / "manifest.json"
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_suffix(".tmp")
@@ -143,7 +146,7 @@ def export(store: Store, run_id: str) -> dict:
     snapshots = store.root / "runs" / run_id
     references, photos = with_references(store.root, store.photos(run_id))
     history = review_history(store, run_id, photos)
-    return {
+    result = {
         "schema": 1,
         "run": run,
         "photos": with_limits(with_encounters(photos)),
@@ -216,3 +219,5 @@ def export(store: Store, run_id: str) -> dict:
             ),
         ],
     }
+    # What the collection can and cannot support, from the parts above (PRD P02, P14).
+    return result | {"source_suitability": suitability(result)}

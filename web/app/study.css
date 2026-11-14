@@ -1,32 +1,38 @@
-.study-panel {
+.study-panel,
+.suitability-panel {
   border: 1px solid var(--line);
   border-radius: 6px;
   margin: 14px 0;
   background: #fafbf7;
   padding: 13px 17px;
 }
-.study-panel summary {
+.study-panel summary,
+.suitability-panel summary {
   cursor: pointer;
   font-weight: 600;
   font-size: 11px;
 }
-.study-panel summary > span {
+.study-panel summary > span,
+.suitability-panel summary > span {
   font-weight: 400;
   float: right;
   font-size: 10px;
   color: var(--muted);
 }
-.study-panel p {
+.study-panel p,
+.suitability-panel p {
   margin-bottom: 0;
   font-size: 11px;
   line-height: 1.6;
   color: var(--muted);
 }
-.study-panel h2 {
+.study-panel h2,
+.suitability-panel h2 {
   margin: 16px 0 6px;
   font-size: 11px;
 }
-.study-panel ul {
+.study-panel ul,
+.suitability-panel ul {
   margin: 0;
   padding-left: 18px;
   font-size: 11px;
@@ -122,4 +128,33 @@
   .study-pick {
     grid-template-columns: 1fr;
   }
+}
+.suitability-report section,
+.suitability-report > ul {
+  margin-top: 4px;
+}
+.suitability-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.suitability-table caption {
+  text-align: left;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.suitability-table th,
+.suitability-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.suitability-table thead th {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
 }
