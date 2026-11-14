@@ -1,6 +1,6 @@
 // Review time counts visible, active seconds on the current photo, and nothing else.
 import assert from "node:assert/strict";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 
 const browser = await chromium.launch({
   headless: true,
@@ -37,6 +37,7 @@ try {
   };
   const second = { ...photo, id: "second", original_common_name: "Tui" };
   const posted = [];
+  const details = [];
   let held = null;
   const holdNextSave = () => {
     const gate = Promise.withResolvers();
@@ -46,6 +47,9 @@ try {
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/runs") return route.fulfill({ json: [run, { ...run, id: "other" }] });
+    if (!path.endsWith("/image") && !path.endsWith("/review") && !path.endsWith("/reviews")) {
+      details.push(path);
+    }
     if (path === "/api/runs/other") return route.fulfill({ status: 503, body: "Unavailable" });
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
     if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
@@ -109,9 +113,32 @@ try {
   const next = posted[3].effort_seconds;
   assert.ok(next >= 29 && next <= 32, `next photo keeps its time across a slow save, got ${next}`);
 
-  // Another run's detail must not show this run's review time.
+  // A glance at the references keeps the time already spent on the photo.
+  const saved = () => expect(page.getByRole("button", { name: "Unsure" })).toBeEnabled();
+  await saved();
+  await page.clock.runFor(20_000);
+  await page.getByRole("button", { name: "References" }).click();
+  await page.clock.runFor(5_000);
+  await page.getByRole("button", { name: "Incidental photos" }).click();
+  await page.clock.runFor(10_000);
+  await click("Unsure");
+  const resumed = posted[4].effort_seconds;
+  assert.ok(resumed >= 29 && resumed <= 32, `time survives a view change, got ${resumed}`);
+
+  // Changing runs during a slow save shows the new run, not the old run's evidence or time.
+  await saved();
+  const releaseOld = holdNextSave();
+  await click("Reject suggestion");
   await page.getByText("Run & collection settings").click();
   await page.getByLabel("Saved run").selectOption("other");
+  await page.getByText("No review time yet").waitFor();
+  const seen = details.length;
+  releaseOld();
+  while (details.length === seen) await new Promise((resolve) => setTimeout(resolve, 20));
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const reloaded = details.slice(seen).filter((path) => path.startsWith("/api/runs/"));
+  assert.deepEqual([...new Set(reloaded)], ["/api/runs/other"], "the old save reloaded its run");
+  assert.equal(await page.getByRole("button", { name: /Tui/ }).count(), 0);
   await page.getByText("No review time yet").waitFor();
   console.log("Review effort counts visible, active time per decision.");
 } finally {
