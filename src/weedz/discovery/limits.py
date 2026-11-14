@@ -88,7 +88,7 @@ def search_area(photo: dict[str, Any]) -> SearchArea:
     )
 
 
-def _day(value: str | None) -> date | None:
+def calendar_day(value: str | None) -> date | None:
     """A full calendar day, or None: sources can give partial dates such as "2024-06"."""
     try:
         return date.fromisoformat(value[:10]) if value else None
@@ -116,8 +116,8 @@ def limits(photo: dict[str, Any]) -> Limits:
     """The photo's search area and dates; it was screened when it was last scored. The
     capture date is kept as the source gave it, and day gaps need full dates."""
     observed = (photo.get("observed_on") or "")[:10] or None
-    photographed, uploaded = _day(observed), _day(photo.get("uploaded_at"))
-    screened = _day(photo.get("screened_at"))
+    photographed, uploaded = calendar_day(observed), calendar_day(photo.get("uploaded_at"))
+    screened = calendar_day(photo.get("screened_at"))
     return Limits(
         search_area=search_area(photo),
         dates=Dates(
