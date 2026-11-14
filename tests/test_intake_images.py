@@ -59,6 +59,13 @@ def test_other_format_parsers_never_see_the_upload(monkeypatch: pytest.MonkeyPat
     assert parsed == []
 
 
+def test_a_side_longer_than_jpeg_allows_is_refused() -> None:
+    out = BytesIO()
+    Image.new("L", (70_000, 1)).save(out, "PNG")
+    with pytest.raises(ImageRefused, match="side"):
+        clean_image(out.getvalue(), max_pixels=100_000)
+
+
 def test_too_many_pixels_are_refused_before_decoding() -> None:
     with pytest.raises(ImageRefused, match="pixels"):
         clean_image(jpeg((200, 100)), max_pixels=10_000)

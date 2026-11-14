@@ -8,7 +8,7 @@ is the operator's note of whose device it is; it is not sent with reports.
 """
 
 import sqlite3
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from contextlib import closing
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -86,11 +86,11 @@ class Submitters:
         return token_id if tokens.matches(secret, row["secret_sha256"] if row else None) else None
 
 
-def require_submitter(store: Submitters) -> Callable[[Request], Awaitable[None]]:
+def require_submitter(store: Submitters) -> Callable[[Request], None]:
     """A request dependency: the bearer token of an active submitter, whose id it puts in
-    ``request.state.submitter``."""
+    ``request.state.submitter``. Sync, so FastAPI runs its SQLite lookup off the loop."""
 
-    async def dependency(request: Request) -> None:
+    def dependency(request: Request) -> None:
         token = tokens.bearer(request)
         submitter = store.submitter(token) if token else None
         if submitter is None:

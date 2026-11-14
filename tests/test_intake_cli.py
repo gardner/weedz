@@ -99,3 +99,12 @@ def test_an_operator_can_withdraw_a_report_for_a_revoked_device(
     assert list((tmp_path / "reports" / "images").iterdir()) == []
     with pytest.raises(SystemExit, match="No report"):
         main(["withdraw", "--submitter", "99", "--report", report_id, *folder])
+
+
+def test_the_token_lookup_runs_off_the_event_loop(tmp_path: Path) -> None:
+    """FastAPI runs a sync dependency in its thread pool, so SQLite never blocks the loop."""
+    import inspect
+
+    from weedz.intake.submitters import require_submitter
+
+    assert not inspect.iscoroutinefunction(require_submitter(Submitters(tmp_path)))

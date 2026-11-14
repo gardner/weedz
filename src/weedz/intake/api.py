@@ -6,9 +6,9 @@ submitter's own receipt and ``DELETE`` withdraws the report. Another submitter's
 is a 404, the same as a missing one. Nothing here logs or echoes a token.
 """
 
+import asyncio
 import base64
 import hashlib
-import threading
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -94,22 +94,17 @@ class IntakeAPI:
     def __init__(self, root: Path, limits: Limits) -> None:
         self.store = ReportStore(root)
         self.limits = limits
-        self._guard = threading.Lock()
-        self._submitting: dict[int, threading.Lock] = {}
-
-    def _one_at_a_time(self, submitter: int) -> threading.Lock:
-        """Each submitter's new reports are taken in turn, so the budget is checked against
-        every earlier one before any image is decoded. (This holds within one server
-        process, which is how ``intake serve`` runs.)"""
-        with self._guard:
-            return self._submitting.setdefault(submitter, threading.Lock())
+        # Each submitter's reports are taken in turn, so the budget is checked against every
+        # earlier one before any image is decoded. Waiting is on the event loop, so queued
+        # reports hold no worker thread. (One server process, as ``intake serve`` runs.)
+        self._submitting: dict[int, asyncio.Lock] = {}
 
     async def put(self, report_id: uuid.UUID, request: Request, response: Response) -> Receipt:
         body = await read_body(request, self.limits.max_body_bytes)
         # Parsing, image work and SQLite block, so they run off the event loop.
-        receipt, created = await run_in_threadpool(
-            self.accept, request.state.submitter, str(report_id), body
-        )
+        submitter: int = request.state.submitter
+        async with self._submitting.setdefault(submitter, asyncio.Lock()):
+            receipt, created = await run_in_threadpool(self.accept, submitter, str(report_id), body)
         if created:
             response.status_code = 201
         return receipt
@@ -119,7 +114,7 @@ class IntakeAPI:
         # Canonical, so a retry that differs only in spacing or key order is the same report.
         digest = hashlib.sha256(report.model_dump_json().encode()).hexdigest()
         upload = uploaded_image(report, self.limits)
-        with self._one_at_a_time(submitter), refusals():
+        with refusals():
             # A retry, or a report over budget, costs no image decoding.
             earlier = self.store.admit(
                 submitter, report_id, digest, len(upload or b""), self.limits

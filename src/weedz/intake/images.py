@@ -12,6 +12,8 @@ from PIL import Image, ImageOps
 
 ACCEPTED = ("JPEG", "PNG", "WEBP")
 UNREADABLE = "The crop is not a readable JPEG, PNG or WebP image"
+# The longest side a JPEG can hold.
+JPEG_MAX_SIDE = 65_500
 
 
 class ImageRefused(ValueError):
@@ -28,6 +30,8 @@ def clean_image(data: bytes, max_pixels: int) -> bytes:
                 raise ImageRefused(UNREADABLE)
             if image.width * image.height > max_pixels:
                 raise ImageRefused(f"The crop has more than {max_pixels} pixels")
+            if max(image.size) > JPEG_MAX_SIDE:
+                raise ImageRefused(f"A crop's side is at most {JPEG_MAX_SIDE} pixels")
             upright = ImageOps.exif_transpose(image).convert("RGB")
     except ImageRefused:
         raise

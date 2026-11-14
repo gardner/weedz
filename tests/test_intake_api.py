@@ -315,11 +315,13 @@ def test_concurrent_uploads_decode_only_what_the_budget_allows(
     app = create_intake_app(tmp_path, Limits(reports_per_day=1))
     headers = auth(tmp_path)
 
-    def send(_: int) -> int:
-        path = f"/reports/{new_id()}"
-        return TestClient(app).put(path, json=with_image(jpeg()), headers=headers).status_code
+    # One client, so every request runs on the same event loop, as under uvicorn.
+    with TestClient(app) as client, ThreadPoolExecutor(4) as pool:
 
-    with ThreadPoolExecutor(4) as pool:
+        def send(_: int) -> int:
+            path = f"/reports/{new_id()}"
+            return client.put(path, json=with_image(jpeg()), headers=headers).status_code
+
         assert sorted(pool.map(send, range(4))) == [201, 429, 429, 429]
     assert len(decoded) == 1
 
