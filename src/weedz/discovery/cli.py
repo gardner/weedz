@@ -144,6 +144,8 @@ def run_store(args: argparse.Namespace) -> Store:
 def package(args: argparse.Namespace) -> None:
     """Write the run's follow-up package to a new or empty folder."""
     store = run_store(args)
+    if args.out.exists() and not args.out.is_dir():
+        raise SystemExit(f"{args.out} is not a folder; choose a new or empty folder")
     if args.out.exists() and any(args.out.iterdir()):
         raise SystemExit(f"{args.out} is not empty; choose a new or empty folder")
     built, files = package_contents(store, args.run, datetime.now(UTC).isoformat())

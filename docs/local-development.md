@@ -428,7 +428,7 @@ All three permit sharing with attribution; for CC BY-NC, the package says the
 use must be non-commercial.
 
 - The included file is the run's retained copy, and only while it still matches
-  its recorded SHA-256. Otherwise the package is refused.
+  its recorded SHA-256. Otherwise the lead links to the source and says why.
 - Any other licence gets a source link and the reason the photo was left out.
 - The relevant detail is given as pixel boxes on the photo, not as new crops:
   the screening window for a suggestion, or the reviewer-drawn extent for a

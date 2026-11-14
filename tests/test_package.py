@@ -87,6 +87,17 @@ def test_judgements_keep_each_opinion_and_their_disagreement(tmp_path: Path) -> 
     assert judged["disputed_dimensions"] == ["identity"]
 
 
+def test_reviewer_text_cannot_break_the_markdown(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path, SCREENED)
+    save(store, photo_id, note="leaf | stem\n\n# differ")
+    select(store, photo_id, reason="See ![x](http://example.com/x.png)\n\n## Not a heading")
+    text = to_markdown(package_of(store))
+    [row] = [line for line in text.splitlines() if line.startswith("| identity")]
+    assert row.count(" | ") == 2, row
+    assert "\n## Not a heading" not in text and "\n# differ" not in text
+    assert "![x](" not in text
+
+
 def test_an_obscured_location_is_not_searchable_and_never_revealed(tmp_path: Path) -> None:
     store, photo_id = store_with_photo(tmp_path, SCREENED)  # obscured at -41.2,173.3
     select(store, photo_id)
@@ -188,3 +199,14 @@ def test_an_image_is_packaged_only_when_its_licence_permits(tmp_path: Path) -> N
     lead = only_lead(store)
     assert lead["source"]["url"].startswith("https://www.inaturalist.org/observations/")
     assert lead["source"]["attribution"] == "Example observer (CC BY-NC 4.0)"
+
+
+def test_the_reference_records_are_attributed(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path, SCREENED, **PUBLIC)
+    path = load_references(tmp_path)
+    snapshot = json.loads(path.read_text())
+    dataset = {"title": "DOC Weeds", "license": "CC BY 4.0", "url": "https://gbif.org/d"}
+    path.write_text(json.dumps(snapshot | {"dataset": dataset}))
+    select(store, photo_id)
+    text = to_markdown(package_of(store))
+    assert "Reference records: DOC Weeds (CC BY 4.0), <https://gbif.org/d>" in text

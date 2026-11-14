@@ -12,7 +12,7 @@ from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.judgements import Judgement, unsupported
-from weedz.discovery.leads import LeadEvent, lead_state, record_lead, selections
+from weedz.discovery.leads import LeadEvent, lead_states, no_leads, record_lead, selections
 from weedz.discovery.limits import with_limits
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.outcomes import outcomes
@@ -107,11 +107,11 @@ class ReviewAPI:
         # audited, so it can hold a sampled photo out of each auditor's ranked queue.
         audit = summarize_audit(photos, sample, blind, late)
         del audit["findings"]
-        events = selections(self.store, run_id)
+        leads = lead_states(selections(self.store, run_id))
         photos = [
             photo
             | audit_state(photo["id"], sample, blind, late)
-            | {"lead": lead_state(events, photo["id"])}
+            | {"lead": leads.get(photo["id"], no_leads())}
             for photo in photos
         ]
         photos = with_limits(with_encounters(photos))

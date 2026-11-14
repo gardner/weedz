@@ -53,6 +53,17 @@ def test_selections_are_appended_and_the_latest_event_stands(tmp_path: Path) -> 
     assert [row["action"] for row in lead["history"]] == ["selected"]
 
 
+def test_a_reselected_lead_keeps_its_place_among_the_selected(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path)
+    gorse = add_finding(store, photo_id)
+    select(store, photo_id)
+    select(store, photo_id, finding_id=gorse)
+    select(store, photo_id, action="deselected", reason="Check the date first")
+    select(store, photo_id, reason="Date checked")
+    leads = selected_leads(selections(store, "run"))
+    assert [lead["finding_id"] for lead in leads] == [None, gorse]
+
+
 def test_a_deselected_lead_keeps_its_history_when_selected_again(tmp_path: Path) -> None:
     store, photo_id = store_with_photo(tmp_path)
     select(store, photo_id)

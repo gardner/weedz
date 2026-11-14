@@ -60,6 +60,11 @@ def image(photo: dict[str, Any], detail: list[dict[str, Any]]) -> dict[str, Any]
     }
 
 
+def link_only(image: dict[str, Any], reason: str) -> dict[str, Any]:
+    """The image entry when the bytes cannot be shared after all, with the reason."""
+    return image | {"included": False, "file": None, "terms": reason}
+
+
 def _candidate(photo: dict[str, Any], plant: dict[str, Any] | None) -> dict[str, Any]:
     if plant is None:
         species = photo["scores"].get("best_species")
@@ -142,11 +147,7 @@ def lead(photo: dict[str, Any], selection: dict[str, Any], snapshot: dict | None
         "finding_id": finding_id,
         "region": photo["region"],
         "selection": {key: selection[key] for key in keep}
-        | {
-            "history": [
-                {key: event[key] for key in ("action", *keep)} for event in selection["history"]
-            ]
-        },
+        | {"history": [_event(event) for event in selection["history"]]},
         "candidate": candidate,
         "original_subject": {
             "taxon": photo["original_taxon"],
@@ -178,7 +179,7 @@ def lead(photo: dict[str, Any], selection: dict[str, Any], snapshot: dict | None
 def follow_up_package(
     export: dict[str, Any], events: list[dict[str, Any]], generated_at: str
 ) -> dict[str, Any]:
-    """The run's selected leads, oldest selection first, with how to read them."""
+    """The run's selected leads, in the order first selected, with how to read them."""
     photos = {photo["id"]: photo for photo in export["photos"]}
     run = export["run"]
     return {

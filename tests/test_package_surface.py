@@ -13,7 +13,7 @@ from test_leads import select
 
 from weedz.discovery import cli
 from weedz.discovery.api import create_app
-from weedz.discovery.package_output import package_contents
+from weedz.discovery.package_output import package_contents, write
 from weedz.discovery.records import Photo
 from weedz.discovery.store import Store
 
@@ -50,11 +50,18 @@ def test_a_photo_whose_licence_does_not_permit_sharing_is_left_out(tmp_path: Pat
     assert set(files) == {"package.json", "package.md"}
 
 
-def test_a_photo_that_no_longer_matches_its_checksum_is_refused(tmp_path: Path) -> None:
+def test_a_changed_or_missing_photo_is_linked_not_packaged(tmp_path: Path) -> None:
     store, _photo_id = selected_store(tmp_path)
     (tmp_path / "images" / "101.jpg").write_bytes(b"changed")
-    with pytest.raises(ValueError, match="checksum"):
-        package_contents(store, "run", "2026-11-14")
+    package, files = package_contents(store, "run", "2026-11-14")
+    assert set(files) == {"package.json", "package.md"}
+    image = package["leads"][0]["image"]
+    assert image["included"] is False and image["file"] is None
+    assert "no longer matches" in image["terms"]
+    (tmp_path / "images" / "101.jpg").unlink()
+    package, files = package_contents(store, "run", "2026-11-14")
+    assert "no retained copy" in package["leads"][0]["image"]["terms"]
+    assert "no retained copy" in files["package.md"].decode()
 
 
 def test_the_api_serves_the_package_and_its_archive(tmp_path: Path) -> None:
@@ -91,6 +98,20 @@ def test_cli_writes_the_package_files(tmp_path: Path, capsys: pytest.CaptureFixt
     assert "1 lead" in capsys.readouterr().out
     with pytest.raises(SystemExit, match="not empty"):
         cli.main(["package", "--run", "run", "--pilot-dir", str(tmp_path), "--out", str(out)])
+
+
+def test_cli_refuses_a_file_as_the_output_folder(tmp_path: Path) -> None:
+    selected_store(tmp_path)
+    notes = tmp_path / "notes.txt"
+    notes.write_text("keep")
+    with pytest.raises(SystemExit, match="not a folder"):
+        cli.main(["package", "--run", "run", "--pilot-dir", str(tmp_path), "--out", str(notes)])
+
+
+def test_files_are_never_written_outside_the_output_folder(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="outside"):
+        write({"photos/../../escape.jpg": b"x"}, tmp_path / "out")
+    assert not (tmp_path / "escape.jpg").exists()
 
 
 def test_cli_rejects_an_unknown_run(tmp_path: Path) -> None:

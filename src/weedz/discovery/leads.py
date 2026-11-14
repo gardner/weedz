@@ -88,24 +88,29 @@ def _histories(events: list[dict[str, Any]]) -> dict[tuple[str, int | None], lis
 
 
 def selected_leads(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Leads whose latest event selects them, in the order they were last selected, each
-    with the selector and reason that stand and the lead's full history."""
+    """Leads whose latest event selects them, in the order they were first selected (so a
+    reselected lead keeps its place), each with the selector and reason that stand and the
+    lead's full history."""
     leads = [
         history[-1] | {"history": history}
         for history in _histories(events).values()
         if history[-1]["action"] == "selected"
     ]
-    return sorted(leads, key=lambda lead: lead["id"])
+    return sorted(leads, key=lambda lead: lead["history"][0]["id"])
 
 
-def lead_state(events: list[dict[str, Any]], photo_id: str) -> dict[str, Any]:
-    """A photo's selected leads for the review app: its suggestion, and plants by id."""
-    standing = [lead for lead in selected_leads(events) if lead["photo_id"] == photo_id]
-    summary = [
-        (lead["finding_id"], {key: lead[key] for key in ("selector", "reason", "created_at")})
-        for lead in standing
-    ]
-    return {
-        "suggestion": next((lead for target, lead in summary if target is None), None),
-        "plants": {str(target): lead for target, lead in summary if target is not None},
-    }
+def no_leads() -> dict[str, Any]:
+    return {"suggestion": None, "plants": {}}
+
+
+def lead_states(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Each photo's selected leads for the review app: its suggestion, and plants by id."""
+    states: dict[str, dict[str, Any]] = {}
+    for lead in selected_leads(events):
+        state = states.setdefault(lead["photo_id"], no_leads())
+        standing = {key: lead[key] for key in ("selector", "reason", "created_at")}
+        if lead["finding_id"] is None:
+            state["suggestion"] = standing
+        else:
+            state["plants"][str(lead["finding_id"])] = standing
+    return states

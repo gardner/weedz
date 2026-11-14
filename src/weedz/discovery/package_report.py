@@ -15,24 +15,33 @@ NONE_SELECTED = (
 )
 
 
+def _inline(text: str | None) -> str:
+    """Reviewer or source text as one line of literal Markdown: no line breaks, links,
+    images, HTML or table cells of its own."""
+    flat = " ".join((text or "").split())
+    for character in "\\`[]<>|":
+        flat = flat.replace(character, "\\" + character)
+    return flat
+
+
 def _name(candidate: dict[str, Any]) -> str:
-    species = candidate["species"] or "Unknown"
+    species = _inline(candidate["species"]) or "Unknown"
     common = candidate["common_name"]
     return f"{common} (*{species}*)" if common else f"*{species}* (as typed by the reviewer)"
 
 
 def _selection(selection: dict[str, Any]) -> list[str]:
     lines = [
-        f"**Why follow up:** {selection['reason']}",
-        f"Selected by {selection['selector']} on {selection['created_at'][:10]}.",
+        f"**Why follow up:** {_inline(selection['reason'])}",
+        f"Selected by {_inline(selection['selector'])} on {selection['created_at'][:10]}.",
     ]
     earlier = selection["history"][:-1]
     if earlier:
         lines.append(
             "Earlier: "
             + "; ".join(
-                f"{event['action']} by {event['selector']} on {event['created_at'][:10]} "
-                f"({event['reason']})"
+                f"{event['action']} by {_inline(event['selector'])} on "
+                f"{event['created_at'][:10]} ({_inline(event['reason'])})"
                 for event in earlier
             )
         )
@@ -41,8 +50,8 @@ def _selection(selection: dict[str, Any]) -> list[str]:
 
 def _candidate(lead: dict[str, Any]) -> list[str]:
     candidate, subject = lead["candidate"], lead["original_subject"]
-    by = f" ({candidate['recorded_by']})" if candidate["recorded_by"] else ""
-    note = f" Note: {candidate['note']}" if candidate["note"] else ""
+    by = f" ({_inline(candidate['recorded_by'])})" if candidate["recorded_by"] else ""
+    note = f" Note: {_inline(candidate['note'])}" if candidate["note"] else ""
     subject_name = subject["common_name"] or subject["taxon"]
     return [
         f"**Candidate:** {_name(candidate)}. {KIND[candidate['kind']]}{by}.{note}",
@@ -54,7 +63,8 @@ def _candidate(lead: dict[str, Any]) -> list[str]:
 def _source(lead: dict[str, Any]) -> list[str]:
     source, image = lead["source"], lead["image"]
     lines = [
-        f"**Source:** <{source['url']}> by {source['observer']}. {source['attribution']}. "
+        f"**Source:** <{source['url']}> by {_inline(source['observer'])}. "
+        f"{_inline(source['attribution'])}. "
         f"Photo licence {source['photo_license']}; observation licence "
         f"{source['observation_license']}.",
     ]
@@ -92,7 +102,7 @@ def _where(limits: dict[str, Any]) -> list[str]:
 def _review(lead: dict[str, Any]) -> list[str]:
     review = lead["review"]
     decisions = ", ".join(
-        f"{name}: {value}" for name, value in review["reviewer_decisions"].items()
+        f"{_inline(name)}: {value}" for name, value in review["reviewer_decisions"].items()
     )
     disagree = " Reviewers disagree." if review["reviewers_disagree"] else ""
     return [
@@ -107,7 +117,8 @@ def _judgements(judged: dict[str, Any]) -> list[str]:
         if dimension == "disputed_dimensions":
             continue
         opinions = "; ".join(
-            f"{name}: {opinion['value']}" + (f" ({opinion['note']})" if opinion["note"] else "")
+            f"{_inline(name)}: {opinion['value']}"
+            + (f" ({_inline(opinion['note'])})" if opinion["note"] else "")
             for name, opinion in entry["by_reviewer"].items()
         )
         lines.append(f"| {dimension} | {entry['level']} | {opinions or 'none'} |")
@@ -140,12 +151,12 @@ def _referrals(referrals: list[dict[str, Any]]) -> list[str]:
     lines = []
     for referral in referrals:
         answers = " ".join(
-            f"{event['action'].capitalize()} by {event['actor']}: {event['note']}"
+            f"{event['action'].capitalize()} by {_inline(event['actor'])}: {_inline(event['note'])}"
             for event in referral["events"]
         )
         lines.append(
             f"- Referral ({referral['status']}, {referral['reason']}) by "
-            f"{referral['referrer']}: {referral['note']} {answers}".rstrip()
+            f"{_inline(referral['referrer'])}: {_inline(referral['note'])} {answers}".rstrip()
         )
     return ["**Specialist referrals:**", *lines] if lines else ["**Specialist referrals:** none."]
 
@@ -183,6 +194,17 @@ def _paragraphs(section: list[str]) -> list[str]:
     return [part for line in section for part in (line, "")]
 
 
+def _attribution(snapshot: dict[str, Any] | None) -> list[str]:
+    """Credit for the reference records the comparisons used (CC BY), when declared."""
+    dataset = (snapshot or {}).get("dataset")
+    if not dataset:
+        return []
+    return [
+        f"Reference records: {dataset['title']} ({dataset['license']}), <{dataset['url']}>.",
+        "",
+    ]
+
+
 def to_markdown(package: dict[str, Any]) -> str:
     leads = package["leads"]
     lines = [
@@ -196,6 +218,7 @@ def to_markdown(package: dict[str, Any]) -> str:
         return "\n".join([*lines, NONE_SELECTED, ""])
     lines += ["## How to read this package", ""]
     lines += [f"- {line}" for line in package["how_to_read"]] + [""]
+    lines += _attribution(package["reference_snapshot"])
     for number, lead in enumerate(leads, start=1):
         lines += _lead(number, lead)
     return "\n".join(lines)
