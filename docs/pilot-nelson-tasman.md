@@ -156,6 +156,81 @@ basis the project lead chose BioCLIP 2 as the default for new runs. Runs saved
 earlier keep the original BioCLIP, and `--model bioclip` still selects it. These
 are small, source-labelled samples, not reviewed accuracy.
 
+### Whole frame or tiles: what a reviewer would see
+
+Issue [#12](https://github.com/gardner/weedz/issues/12) asks whether whole-photo
+or region-based screening puts more useful weeds in front of a reviewer at a fixed
+budget. Revision 4 already scores both: a letterboxed whole frame and its square
+tiles. `scripts/compare_framing.py` screens each photo once with BioCLIP 2, then
+reads the same window similarities three ways:
+
+- the whole frame only;
+- the tiles only, with featureless tiles excluded;
+- either, which is what runs use.
+
+Each readout ranks photos by best margin. A budget K is the top K photos. The
+same 30 pilot photos and 39 lookalike photos were measured on 14 November 2026
+([summary](../benchmarks/whole-vs-region.json)).
+
+**No verdict is possible yet.** The pilot has no reviews, blind audits or
+findings. Its reference collection therefore has no example eligible for
+evaluation, so recall and precision on the incidental review queue are "not
+measurable" at every budget. The only labels are source subject labels: six
+reference photos whose subject is a weed, and 39 photos whose subject is a
+lookalike. They describe the subject, not background plants. A lookalike photo
+is not a verified absence of the weed.
+
+| Check | Whole frame | Tiles | Both (revision 4) |
+| --- | --- | --- | --- |
+| Windows encoded per photo (median) | 1 | 6 | 7 |
+| References with their weed as suggestion in the top 5 / top 10 of the pooled 69 | 5 / 6 of 6 | 5 / 6 of 6 | 5 / 6 of 6 |
+| Reference margins | 0.030–0.082 | 0.051–0.097 | 0.051–0.097 |
+| Lookalikes in the pooled top 20, suggested as the weed they resemble | 12 | 9 | 9 |
+| Incidental photos with a positive margin | 0 of 24 | 1 of 24 | 1 of 24 |
+| Lookalike photos with a positive margin | 1 of 39 | 4 of 39 | 4 of 39 |
+
+| Incidental review queue | Top 5 | Top 10 | Top 20 |
+| --- | --- | --- | --- |
+| Photos shared by the whole-frame and tile queues | 3 | 5 | 17 |
+| Photos shared by the tile and revision 4 queues | 5 | 10 | 20 |
+
+What this shows:
+
+- **In practice, revision 4 ranks by its tiles.** The whole frame won only 4 of 69
+  photos. It never changed the incidental queue at any budget, while costing one
+  window in seven.
+- **The choice changes what a reviewer sees.** The whole-frame and tile queues
+  share only 3 of the top 5 and 5 of the top 10 incidental photos. The suggested
+  species differs for 12 of 24 incidental photos. Independent labels will decide
+  which choice is better.
+- **Subject photos cannot separate the arms.** Every readout reaches the same
+  references at the same budgets. Tiles widen the reference margins, but they also
+  lift more lookalikes above zero (4 against 1). The whole frame puts more
+  lookalikes in the top 20 (12 against 9), but all except one of its lookalike
+  margins are negative. Neither difference measures background-plant
+  performance.
+
+What it cannot show: which readout finds more useful background weeds, its
+missed weeds, or its false-alarm rate. Ranking 69 source-labelled photos is a
+sanity check, not accuracy. The tiles are search windows from the same model,
+not plant-region proposals followed by a specialist identifier, which this
+repository does not have.
+
+The harness already reads independent labels when they exist. It uses only the
+blind audit sample, a quarter of incidental photos chosen from their ids
+regardless of rank. Ranked review meets photos in revision 4 margin order, so
+findings from it would favour the tile readout that ordered the queue. On the
+sample, it reads:
+
+- reference-collection examples eligible for evaluation;
+- agreeing first answers from the blind audit, where "none" means no watchlist
+  weed was visible. Disputed or unsure answers are skipped.
+
+A species labelled both present and absent on one photo is left out as
+unresolved. Re-run the command in the summary once the sample has been audited. The incidental rows then report recall, known false alarms and precision
+over labelled photos per budget. Unlabelled photos are counted separately, never
+as false alarms.
+
 ### Source suitability
 
 `uv run main.py suitability --run nelson-tasman-3e62ad801459`

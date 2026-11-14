@@ -39,6 +39,14 @@ for testing discovery value. Add source-eligible supervised training only when
 the observed failures justify it. A mask boundary, species identity, and
 geographic accuracy remain separate claims with separate evidence.
 
+The harness for that comparison exists, but it has no verdict yet
+([#12](https://github.com/gardner/weedz/issues/12),
+[summary](../benchmarks/whole-vs-region.json)). It reads the whole frame and the
+tiles of one screen as separate ranked queues. Each queue is measured at fixed
+reviewer budgets against evaluation-eligible reference examples and blind audits.
+Both come from the rank-independent blind audit sample, and none exists yet. Its tiles come from the screening model, not a
+region proposer plus a specialist identifier.
+
 ## Model roles and initial choices
 
 These are starting experiments, not validated model selections for our domain.
