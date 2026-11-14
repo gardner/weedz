@@ -22,7 +22,8 @@ class RunSpec(BaseModel):
     controls_per_species: int = Field(default=1, ge=0, le=3)
     before: date = date(2024, 12, 31)
     # A key of weedz.discovery.inference.MODELS; see issue #14.
-    model: Literal["bioclip", "bioclip-2"] = "bioclip"
+    # BioCLIP 2 separates native lookalikes far better (benchmarks/model-comparison.json).
+    model: Literal["bioclip", "bioclip-2"] = "bioclip-2"
     after: date = date(2010, 1, 1)
     # "recent" reproduces the first pilot's newest-first selection; see issue #5.
     sampling: Literal["stratified", "recent"] = "stratified"
@@ -31,8 +32,9 @@ class RunSpec(BaseModel):
 
     @classmethod
     def from_saved(cls, saved: dict) -> "RunSpec":
-        """Runs saved before stratified sampling existed were newest-first runs."""
-        return cls.model_validate({"sampling": "recent"} | saved)
+        """Saved runs keep how they ran: before these options, runs were newest-first and
+        screened with the original BioCLIP."""
+        return cls.model_validate({"sampling": "recent", "model": "bioclip"} | saved)
 
     @model_validator(mode="after")
     def stratified_period_is_bounded(self) -> "RunSpec":

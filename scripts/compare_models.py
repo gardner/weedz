@@ -13,6 +13,7 @@ import argparse
 import json
 import time
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,48 @@ def summarise(rows: list[dict[str, Any]], seconds: float) -> dict[str, Any]:
         ],
         "lookalikes": dict(sorted(lookalikes.items())),
         "seconds_per_photo": round(seconds / max(1, len(rows)), 3),
+    }
+
+
+METHOD = (
+    "Same 30 pilot photos (run nelson-tasman-3e62ad801459, with the original-subject "
+    "comparison as in a real run) and 39 source-labelled lookalike photos (no subject "
+    "prompt, as in #11), screened with ranking revision 4 (letterboxed frame plus square "
+    "tiles) by each pinned model on CPU. Source-labelled sanity checks, not accuracy."
+)
+COMMAND = (
+    "uv run python scripts/compare_models.py --run nelson-tasman-3e62ad801459 "
+    "--lookalikes <lookalike dir> --output <file>"
+)
+ROW_KEYS = ["id", "cohort", "reference_species", "lookalike_taxon", "lookalike_of", "best_species"]
+
+
+def document(results: dict[str, Any], assessed: str) -> dict[str, Any]:
+    """The benchmark file exactly as committed: header, trimmed provenance, rows."""
+    models = {}
+    for key, result in results.items():
+        rows = result["rows"]
+        provenance = ["model", "model_key", "revision", "weights_sha256"]
+        models[key] = {name: result["metadata"][name] for name in provenance} | {
+            "summary": result["summary"],
+            "reference_own_target_margins": [
+                round(row["margins"][row["reference_species"]], 6)
+                for row in rows
+                if row["cohort"] == "reference"
+            ],
+            "rows": [
+                {name: row.get(name) for name in ROW_KEYS}
+                | {"margins": {n: round(v, 6) for n, v in row["margins"].items()}}
+                for row in rows
+            ],
+        }
+    return {
+        "schema": 1,
+        "assessed": assessed,
+        "issue": "https://github.com/gardner/weedz/issues/14",
+        "method": METHOD,
+        "command": COMMAND,
+        "models": models,
     }
 
 
@@ -75,7 +118,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     results = {model: screen_all(model, args) for model in args.models}
-    args.output.write_text(json.dumps(results, indent=2, ensure_ascii=False))
+    output = document(results, date.today().isoformat())
+    args.output.write_text(json.dumps(output, indent=2, ensure_ascii=False) + "\n")
     for model, result in results.items():
         print(model, json.dumps(result["summary"]))
 

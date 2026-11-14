@@ -33,8 +33,7 @@ def test_metadata_names_the_screening_model() -> None:
     assert make("bioclip").metadata["revision"] == MODELS["bioclip"]["revision"]
 
 
-def test_run_spec_defaults_to_the_original_model_and_rejects_unknown_ones() -> None:
-    assert RunSpec().model == "bioclip"
+def test_run_spec_rejects_unknown_models() -> None:
     assert RunSpec(model="bioclip-2").model == "bioclip-2"
     with pytest.raises(ValidationError):
         RunSpec.model_validate({"model": "resnet"})
@@ -112,4 +111,81 @@ def test_discover_accepts_a_model() -> None:
     from weedz.discovery import cli as discovery_cli
 
     assert discovery_cli.parse(["discover", "--model", "bioclip-2"]).model == "bioclip-2"
-    assert discovery_cli.parse(["discover"]).model == "bioclip"
+    assert discovery_cli.parse(["discover"]).model == "bioclip-2"
+
+
+def test_new_runs_default_to_bioclip_2_but_saved_runs_keep_bioclip() -> None:
+    assert RunSpec().model == "bioclip-2"
+    saved = {"limit_per_region": 12, "controls_per_species": 1, "before": "2024-12-31"}
+    assert RunSpec.from_saved(saved).model == "bioclip"
+    assert RunSpec.from_saved(saved | {"model": "bioclip-2"}).model == "bioclip-2"
+
+
+def test_a_legacy_bioclip_run_resumes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    activities = Activities(tmp_path)
+    activities.store.create_run("run", RunSpec(model="bioclip"))
+    with activities.store.connect() as db:  # a run saved before model choice existed
+        db.execute(
+            "UPDATE runs SET spec=? WHERE id='run'",
+            ('{"limit_per_region": 12, "controls_per_species": 1, "before": "2024-12-31"}',),
+        )
+    legacy = {"model": MODELS["bioclip"]["repo"], "revision": MODELS["bioclip"]["revision"]}
+    activities.store.model("run", legacy)
+
+    class FakeScreener:
+        metadata = legacy | {"model_key": "bioclip"}
+
+        def screen(self, _path: Path, _subject: str | None = None) -> dict:
+            return {}
+
+    loaded: list[str] = []
+
+    def load(_cache: Path, model: str) -> FakeScreener:
+        loaded.append(model)
+        return FakeScreener()
+
+    monkeypatch.setattr("weedz.discovery.inference.Screener.load", load)
+    monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
+    activities.screen_photos({"run_id": "run"})
+    assert loaded == ["bioclip"]
+
+
+def test_comparison_document_matches_the_committed_benchmark_shape() -> None:
+    import importlib.util
+    import json
+
+    spec = importlib.util.spec_from_file_location(
+        "compare_models", Path(__file__).parents[1] / "scripts" / "compare_models.py"
+    )
+    assert spec and spec.loader
+    compare = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(compare)
+    row = {
+        "id": "a",
+        "cohort": "reference",
+        "reference_species": "Ulex europaeus",
+        "best_species": "Ulex europaeus",
+        "margins": {"Ulex europaeus": 0.2},
+    }
+    results = {
+        "bioclip-2": {
+            "metadata": {
+                "model": "m",
+                "model_key": "bioclip-2",
+                "revision": "r",
+                "weights_sha256": "w",
+                "prompts": ["x"],
+            },
+            "summary": {"x": 1},
+            "rows": [row],
+        }
+    }
+    document = compare.document(results, "2026-11-14")
+    committed = json.loads(
+        (Path(__file__).parents[1] / "benchmarks" / "model-comparison.json").read_text()
+    )
+    assert set(document) == set(committed)
+    entry = document["models"]["bioclip-2"]
+    assert set(entry) == set(committed["models"]["bioclip-2"])
+    assert entry["reference_own_target_margins"] == [0.2]
+    assert set(entry["rows"][0]) == set(committed["models"]["bioclip-2"]["rows"][0])

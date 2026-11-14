@@ -151,10 +151,10 @@ at `2957b322`; [#14](https://github.com/gardner/weedz/issues/14),
 BioCLIP 2 keeps every reference clearly positive while rejecting most lookalikes
 and the false alarms. The chafer's pink fibres and the sky tiles no longer
 rank; its single incidental candidate is the oystercatcher's riverbed vegetation
-at +0.009. The cost is about 4.6× the CPU time and a 1.7 GB checkpoint. The
-default stays `bioclip` until the project lead decides; runs can opt in with
-`RunSpec.model = "bioclip-2"`. These are small, source-labelled samples, not
-reviewed accuracy.
+at +0.009. The cost is about 4.6× the CPU time and a 1.7 GB checkpoint. On that
+basis the project lead chose BioCLIP 2 as the default for new runs. Runs saved
+earlier keep the original BioCLIP, and `--model bioclip` still selects it. These
+are small, source-labelled samples, not reviewed accuracy.
 
 The next experiment should include independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.

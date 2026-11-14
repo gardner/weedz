@@ -49,7 +49,7 @@ uv run main.py discover --limit 12 --controls 1 --after 2010-01-01 --before 2024
 This requests 12 animal-subject photos per region and one reference per target
 species per region: up to **30 photos**. Targets are old man's beard, pampas
 grass and gorse. References stay separate from incidental results. The first
-run downloads a pinned BioCLIP checkpoint (about 600 MB); no GPU or inference
+run downloads the pinned BioCLIP 2 checkpoint (about 1.7 GB); no GPU or inference
 API key is needed. Source requests are rate-limited and model inference is local.
 
 See [local operation and pilot limits](docs/local-development.md) for the actual

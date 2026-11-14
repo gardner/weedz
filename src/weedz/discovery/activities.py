@@ -50,11 +50,12 @@ class Activities:
         self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
         run = next(item for item in self.store.runs() if item["id"] == run_id)
-        key = RunSpec.model_validate(run["spec"]).model
+        key = RunSpec.from_saved(run["spec"]).model
         if key not in self.screeners:
             self.screeners[key] = Screener.load(self.store.root / "embeddings", model=key)
         screener = self.screeners[key]
-        previous = run["model"]
+        # Metadata saved before model choice existed was always the original BioCLIP.
+        previous = run["model"] and {"model_key": "bioclip"} | run["model"]
         if previous and previous != screener.metadata:
             raise ValueError(
                 "Scoring configuration changed; start a new run to preserve provenance"

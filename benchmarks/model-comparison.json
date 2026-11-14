@@ -54,7 +54,7 @@
             "of": 6
           }
         },
-        "seconds_per_photo": 0.674
+        "seconds_per_photo": 0.667
       },
       "reference_own_target_margins": [
         0.062953,
@@ -1013,7 +1013,7 @@
             "of": 6
           }
         },
-        "seconds_per_photo": 3.124
+        "seconds_per_photo": 3.094
       },
       "reference_own_target_margins": [
         0.06836,

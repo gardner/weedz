@@ -165,7 +165,7 @@ def parse(argv: list[str]) -> argparse.Namespace:
     run.add_argument(
         "--model",
         choices=["bioclip", "bioclip-2"],
-        default="bioclip",
+        default="bioclip-2",
         help="Pinned screening model (see benchmarks/model-comparison.json)",
     )
     snapshot = commands.add_parser(
