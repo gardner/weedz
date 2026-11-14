@@ -1,6 +1,7 @@
 """A JSONL sample manifest: one validated contract sample per line, pinned by SHA-256."""
 
 import hashlib
+import os
 import tempfile
 from collections.abc import Iterable
 from pathlib import Path
@@ -17,14 +18,27 @@ def _unique(samples: list[Sample]) -> list[Sample]:
     return samples
 
 
+def _umask() -> int:
+    mask = os.umask(0)
+    os.umask(mask)
+    return mask
+
+
 def write_manifest(path: Path, samples: Iterable[Sample]) -> str:
     """Write the samples atomically and return the manifest's SHA-256."""
     rows = _unique(list(samples))
     content = "".join(sample.model_dump_json() + "\n" for sample in rows).encode("utf-8")
     # A unique temporary file in the same directory, so concurrent writers never share one.
     with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as out:
-        out.write(content)
-    Path(out.name).replace(path)
+        temporary = Path(out.name)
+    try:
+        temporary.write_bytes(content)
+        # Temporary files are owner-only; a manifest is a shared artefact, so use the umask.
+        temporary.chmod(0o666 & ~_umask())
+        temporary.replace(path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
     return hashlib.sha256(content).hexdigest()
 
 

@@ -145,3 +145,23 @@ def test_adapter_samples_round_trip_through_a_manifest(tmp_path: Path, dataset_d
     samples = leafy_spurge_samples(dataset_dir) + pilot_samples(store, "run")
     digest = write_manifest(tmp_path / "samples.jsonl", samples)
     assert read_manifest(tmp_path / "samples.jsonl", digest) == samples
+
+
+def test_a_reopen_does_not_hide_another_reviewer_s_standing_decision(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path)
+    store.score("run", photo_id, {"best_species": "Ulex europaeus", "margin": 0.1})
+    store.review("run", photo_id, "confirmed", "", "Ana")
+    store.review("run", photo_id, "unreviewed", "Second look", "Ben")
+    (sample,) = pilot_samples(store, "run")
+    suggestion = next(a for a in sample.annotations if a.id == "suggestion")
+    assert (suggestion.review, suggestion.reviewer) == ("accepted", "Ana")
+
+
+def test_disagreeing_reviewers_leave_the_suggestion_uncertain_and_name_both(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path)
+    store.score("run", photo_id, {"best_species": "Ulex europaeus", "margin": 0.1})
+    store.review("run", photo_id, "confirmed", "", "Ana")
+    store.review("run", photo_id, "rejected", "Native", "Ben")
+    (sample,) = pilot_samples(store, "run")
+    suggestion = next(a for a in sample.annotations if a.id == "suggestion")
+    assert (suggestion.review, suggestion.reviewer) == ("uncertain", "Ana; Ben")

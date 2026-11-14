@@ -103,3 +103,25 @@ def test_a_stale_temporary_path_cannot_block_or_clobber_a_write(tmp_path: Path) 
     write_manifest(path, samples())
     assert len(read_manifest(path)) == len(samples())
     assert not [p for p in tmp_path.iterdir() if p.name.startswith(".manifest")]
+
+
+def test_a_manifest_gets_ordinary_umask_permissions(tmp_path: Path) -> None:
+    import os
+
+    path = tmp_path / "manifest.jsonl"
+    write_manifest(path, samples())
+    mask = os.umask(0)
+    os.umask(mask)
+    assert path.stat().st_mode & 0o777 == 0o666 & ~mask
+
+
+def test_a_failed_write_leaves_no_temporary_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def refuse(self: Path, target: Path) -> Path:
+        raise OSError("disk full")
+
+    monkeypatch.setattr(Path, "replace", refuse)
+    with pytest.raises(OSError, match="disk full"):
+        write_manifest(tmp_path / "manifest.jsonl", samples())
+    assert list(tmp_path.iterdir()) == []

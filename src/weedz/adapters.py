@@ -105,20 +105,33 @@ def _finding(plant: dict[str, Any]) -> Annotation:
     )
 
 
+def _suggestion_review(row: dict[str, Any]) -> tuple[Review, str | None]:
+    """From each reviewer's standing decision, so a later reopen or another reviewer's
+    event cannot hide a decision that still stands."""
+    standing = row.get("reviewer_decisions") or {}
+    if not standing:  # unattributed decisions from before reviewer names existed
+        return SUGGESTION_REVIEW.get(row["review_status"], "unreviewed"), None
+    names = "; ".join(sorted(standing))
+    statuses = set(standing.values())
+    if len(statuses) > 1:
+        return "uncertain", names
+    return SUGGESTION_REVIEW.get(statuses.pop(), "unreviewed"), names
+
+
 def _suggestion(row: dict[str, Any], model: dict[str, Any]) -> Annotation | None:
     """The screening model's best species: a prediction, never supervision."""
     scores = row["scores"]
     if not scores.get("best_species"):
         return None
-    review = "uncertain" if row["disputed"] else SUGGESTION_REVIEW.get(row["review_status"])
+    review, reviewer = _suggestion_review(row)
     return Annotation(
         id="suggestion",
         supervision="image_class",
         taxon=scores["best_species"],
         label="present",
         origin="model",
-        review=review or "unreviewed",
-        reviewer=row["review_reviewer"] or None,
+        review=review,
+        reviewer=reviewer,
         note=scores.get("method", ""),
         model="@".join(filter(None, [model.get("model"), model.get("revision")])) or "unknown",
         score=scores.get("margin"),
