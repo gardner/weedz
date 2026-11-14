@@ -157,6 +157,9 @@ def test_ios_preparation_and_cleanup_with_a_matching_private_identity(
     )
     installed = Path(json.loads((state / "ios/installed-profile.json").read_text()))
     assert installed.exists()
+    assert (
+        installed.parent == Path.home() / "Library/Developer/Xcode/UserData/Provisioning Profiles"
+    )
     cleanup(root, state, "ios")
     assert not installed.exists()
     assert not state.exists()

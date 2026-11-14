@@ -210,7 +210,7 @@ def prepare_ios(root: Path, state: Path, env: Mapping[str, str]) -> None:
     write_private(profile_path, decode_secret(env, "IOS_PROVISIONING_PROFILE_BASE64"))
     info = profile_info(run(["security", "cms", "-D", "-i", str(profile_path)]), team, bundle)
     install_identity(state, env, info)
-    folder = Path.home() / "Library/MobileDevice/Provisioning Profiles"
+    folder = Path.home() / "Library/Developer/Xcode/UserData/Provisioning Profiles"
     installed = folder / f"{info.uuid}.mobileprovision"
     if installed.exists():
         raise BuildError("Provisioning profile is already installed; use a clean runner")

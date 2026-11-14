@@ -53,7 +53,8 @@ upload to either store. Version/build numbers currently come from
 
 Signing material is decoded under the runner's temporary directory with private
 permissions. iOS uses a temporary keychain and an installed temporary provisioning
-profile. The always-run cleanup restores the previous keychain search list,
+profile in the Xcode 16+ `Library/Developer/Xcode/UserData/Provisioning Profiles`
+directory. The always-run cleanup restores the previous keychain search list,
 deletes the profile/keychain and removes temporary files, even when one cleanup
 operation fails. Only the app artifacts listed above are uploaded: signing files,
 configuration JSON, keychain files and archives are excluded.
