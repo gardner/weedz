@@ -409,11 +409,15 @@ the reference comparison and the linked study. It covers:
 - **Dates:** earliest and latest photo, the query period and the study period.
   Also photos outside the study period, and those that cannot be placed in it
   because they are undated, or dated only to a month or year that crosses one of
-  its ends. Years, and seasons the period reaches, that no photo could fall in are
+  its ends. Gaps are looked for only in the part of the study period the run
+  queried. Years, and seasons that part reaches, that no photo could fall in are
   listed as unassessed. A month- or year-only date covers every month it spans
-  inside the period. Gaps are "unknown" when an undated photo could fill any of
-  them, or when the study period lies outside the query period and was not sampled. A recent (newest-first) run has an open start, so
-  its earlier years are stated as not sampled.
+  inside the period. Any part of the study period before or after the query
+  period is stated as not sampled, and its years are never listed as gaps. Gaps
+  are "unknown" when an undated photo could fill any of them, or when the study
+  period lies wholly before or after the query period, so none of it was
+  sampled. A recent (newest-first) run has an open start, so its earlier years
+  are stated as not sampled.
 - **Location quality:** photos with a search area, each reason the rest have none,
   and the reported accuracy (median and bands, with 20 m or better marked as
   precise enough for aerial site context).
