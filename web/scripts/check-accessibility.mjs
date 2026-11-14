@@ -414,7 +414,7 @@ try {
   await page.reload();
   await page.getByLabel("Reviewer token").fill("weedz_1_wrong");
   await page.keyboard.press("Enter");
-  await page.getByRole("alert").waitFor();
+  await page.getByRole("alert").filter({ hasText: "That token is not valid" }).waitFor();
   for (const width of [1400, 390]) {
     await page.setViewportSize({ width, height: 844 });
     const signIn = await new AxeBuilder({ page })

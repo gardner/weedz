@@ -66,7 +66,7 @@ try {
   assert.equal(await token.getAttribute("type"), "password");
   await token.fill("weedz_1_wrong");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.getByRole("alert").getByText("That token is not valid").waitFor();
+  await page.getByRole("alert").filter({ hasText: "That token is not valid" }).waitFor();
 
   await token.fill("  weedz_1_right ");
   await page.getByRole("button", { name: "Sign in" }).click();
