@@ -1,0 +1,178 @@
+name: Mobile Builds
+
+on:
+  pull_request:
+    paths: &build-paths
+      - "mobile/**"
+      - "src/weedz/mobile_build.py"
+      - "tests/test_mobile_build.py"
+      - ".github/workflows/mobile-builds.yml"
+  push:
+    branches: [main]
+    paths: *build-paths
+  workflow_dispatch:
+    inputs:
+      signed_release:
+        description: Build signed Android APK/AAB and iOS IPA (requires issue 114 secrets)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-builds-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  development:
+    name: development-${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            runner: ubuntu-latest
+          - platform: ios
+            runner: macos-26
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v6.3.0
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+      - name: Prepare public configuration (no secrets on pull requests)
+        env:
+          WEEDZ_INTAKE_BASE_URL: ${{ github.event_name != 'pull_request' && secrets.WEEDZ_INTAKE_BASE_URL || '' }}
+          WEEDZ_DELETION_REQUEST_URL: ${{ github.event_name != 'pull_request' && secrets.WEEDZ_DELETION_REQUEST_URL || '' }}
+        run: python src/weedz/mobile_build.py "${{ matrix.platform }}" --state "$RUNNER_TEMP/weedz-build"
+      - name: Install locked Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get --enforce-lockfile
+      - name: Build Android development APK
+        if: matrix.platform == 'android'
+        working-directory: mobile
+        run: flutter build apk --debug --dart-define-from-file="$RUNNER_TEMP/weedz-build/config.json"
+      - name: Build iOS simulator app
+        if: matrix.platform == 'ios'
+        working-directory: mobile
+        run: flutter build ios --simulator --debug --no-codesign --dart-define-from-file="$RUNNER_TEMP/weedz-build/config.json"
+      - name: Package iOS simulator app
+        if: matrix.platform == 'ios'
+        working-directory: mobile/build/ios/iphonesimulator
+        run: ditto -c -k --sequesterRsrc --keepParent Runner.app "$RUNNER_TEMP/weedz-ios-simulator.zip"
+      - uses: actions/upload-artifact@v7.0.2
+        if: matrix.platform == 'android'
+        with:
+          name: weedz-android-development
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v7.0.2
+        if: matrix.platform == 'ios'
+        with:
+          name: weedz-ios-simulator
+          path: ${{ runner.temp }}/weedz-ios-simulator.zip
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove temporary configuration
+        if: always()
+        run: python src/weedz/mobile_build.py "${{ matrix.platform }}" --state "$RUNNER_TEMP/weedz-build" --cleanup
+
+  release:
+    name: release-${{ matrix.platform }}
+    if: github.event_name == 'workflow_dispatch' && inputs.signed_release && github.ref == 'refs/heads/main'
+    environment: mobile-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            runner: ubuntu-latest
+          - platform: ios
+            runner: macos-26
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v6.3.0
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          cache: true
+      - name: Validate release configuration and install temporary signing material
+        env:
+          WEEDZ_INTAKE_BASE_URL: ${{ secrets.WEEDZ_INTAKE_BASE_URL }}
+          WEEDZ_DELETION_REQUEST_URL: ${{ secrets.WEEDZ_DELETION_REQUEST_URL }}
+          ANDROID_APPLICATION_ID: ${{ secrets.ANDROID_APPLICATION_ID }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          IOS_BUNDLE_IDENTIFIER: ${{ secrets.IOS_BUNDLE_IDENTIFIER }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_DISTRIBUTION_P12_BASE64: ${{ secrets.IOS_DISTRIBUTION_P12_BASE64 }}
+          IOS_DISTRIBUTION_P12_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_P12_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: python src/weedz/mobile_build.py "${{ matrix.platform }}" --state "$RUNNER_TEMP/weedz-build" --release
+      - name: Install locked Flutter dependencies
+        working-directory: mobile
+        run: flutter pub get --enforce-lockfile
+      - name: Build signed Android APK and AAB
+        if: matrix.platform == 'android'
+        working-directory: mobile
+        env:
+          WEEDZ_SIGNED_RELEASE: "true"
+          WEEDZ_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/weedz-build/android/upload.jks
+          ANDROID_APPLICATION_ID: ${{ secrets.ANDROID_APPLICATION_ID }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          flutter build apk --release --dart-define-from-file="$RUNNER_TEMP/weedz-build/config.json"
+          flutter build appbundle --release --dart-define-from-file="$RUNNER_TEMP/weedz-build/config.json"
+      - name: Build signed iOS IPA
+        if: matrix.platform == 'ios'
+        working-directory: mobile
+        run: >-
+          flutter build ipa --release
+          --export-options-plist="$RUNNER_TEMP/weedz-build/ios/ExportOptions.plist"
+          --dart-define-from-file="$RUNNER_TEMP/weedz-build/config.json"
+      - uses: actions/upload-artifact@v7.0.2
+        if: matrix.platform == 'android'
+        with:
+          name: weedz-android-release
+          path: |
+            mobile/build/app/outputs/flutter-apk/app-release.apk
+            mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v7.0.2
+        if: matrix.platform == 'ios'
+        with:
+          name: weedz-ios-release
+          path: mobile/build/ios/ipa/*.ipa
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove signing material and restore keychain configuration
+        if: always()
+        run: python src/weedz/mobile_build.py "${{ matrix.platform }}" --state "$RUNNER_TEMP/weedz-build" --cleanup
