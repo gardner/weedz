@@ -31,7 +31,8 @@ MEANING = (
     "'known_false_alarms' counts suggestions on labelled-absent pairs; precision is over "
     "labelled items only, so unlabelled photos are counted apart, not as false alarms. "
     "None means not measurable (no labels), not zero. Independent labels are reference-"
-    "collection examples eligible for evaluation and agreeing blind audits, measured on "
+    "collection examples eligible for evaluation and agreeing blind audits, both only on "
+    "the rank-independent blind audit sample, measured on "
     "the incidental review queue and counted only on incidental photos; a species "
     "labelled both present and absent is left out as unresolved. Source subject labels "
     "are reference photos whose subject is the weed, measured on a pooled queue with "
@@ -134,18 +135,19 @@ def independent_labels(
     audits: Mapping[str, Mapping[str, str]],
     sample: Collection[str],
 ) -> list[Label]:
-    """Evaluation-eligible watchlist examples and agreeing blind audits of the sample.
+    """Evaluation-eligible watchlist examples and agreeing blind audits, on the sample only.
 
-    Each (photo, species) is labelled once; one labelled both present and absent (say, an
-    accepted finding and a blind "none") is unresolved and left out, not counted twice.
+    The audit sample is chosen from photo ids, independently of rank. Ranked review meets
+    photos in margin order, so its findings elsewhere would favour the arm that ordered
+    the queue. Each (photo, species) is labelled once; one labelled both present and
+    absent (say, an accepted finding and a blind "none") is unresolved and left out.
     """
     labels = [
-        # A pilot sample id is "<source>:<photo id>".
-        Label(
-            example["sample_id"].split(":", 1)[-1], example["taxon"], example["label"] == "present"
-        )
+        Label(photo_id, example["taxon"], example["label"] == "present")
         for example in examples
-        if example["uses"]["evaluation"]["eligible"]
+        # A pilot sample id is "<source>:<photo id>".
+        if (photo_id := example["sample_id"].split(":", 1)[-1]) in sample
+        and example["uses"]["evaluation"]["eligible"]
         and example["taxon"] in SPECIES
         and example["label"] in {"present", "absent"}
     ]

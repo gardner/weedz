@@ -180,7 +180,7 @@ def test_independent_labels_use_only_evaluation_eligible_watchlist_examples() ->
         example("Rubus fruticosus", "present", True, "p2"),  # not on the watchlist
         example("Cortaderia selloana", "absent", True, "p3"),
     ]
-    assert independent_labels(examples, {}, set()) == [
+    assert independent_labels(examples, {}, {"p1", "p2", "p3"}) == [
         Label("p1", "Ulex europaeus", True),
         Label("p3", "Cortaderia selloana", False),
     ]
@@ -263,3 +263,15 @@ def test_independent_labels_off_the_incidental_queue_are_not_counted() -> None:
     assert found["labels"]["independent"] == 0
     row = found["arms"]["whole_frame"]["incidental"]["budgets"][0]
     assert row["labelled_present"] == 0 and row["recall"] is None
+
+
+def test_reviewed_examples_count_only_on_the_rank_independent_audit_sample() -> None:
+    """Ranked review reaches photos in margin order, so its findings would favour the
+    arm that ordered the queue; only the blind sample is chosen independently of rank."""
+    examples = [
+        example("Ulex europaeus", "present", True, "sampled"),
+        example("Ulex europaeus", "present", True, "ranked"),
+    ]
+    assert independent_labels(examples, {}, {"sampled"}) == [
+        Label("sampled", "Ulex europaeus", True)
+    ]

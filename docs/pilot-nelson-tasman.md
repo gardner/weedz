@@ -216,14 +216,18 @@ sanity check, not accuracy. The tiles are search windows from the same model,
 not plant-region proposals followed by a specialist identifier, which this
 repository does not have.
 
-The harness already reads independent labels when they exist:
+The harness already reads independent labels when they exist. It uses only the
+blind audit sample, a quarter of incidental photos chosen from their ids
+regardless of rank. Ranked review meets photos in revision 4 margin order, so
+findings from it would favour the tile readout that ordered the queue. On the
+sample, it reads:
 
 - reference-collection examples eligible for evaluation;
-- agreeing first answers from the blind audit sample, where "none" means no
-  watchlist weed was visible and disputed or unsure answers are skipped.
+- agreeing first answers from the blind audit, where "none" means no watchlist
+  weed was visible. Disputed or unsure answers are skipped.
 
-Re-run the command in the summary once audits or independently accepted findings
-exist. The incidental rows then report recall, known false alarms and precision
+A species labelled both present and absent on one photo is left out as
+unresolved. Re-run the command in the summary once the sample has been audited. The incidental rows then report recall, known false alarms and precision
 over labelled photos per budget. Unlabelled photos are counted separately, never
 as false alarms.
 

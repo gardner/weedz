@@ -44,7 +44,7 @@ The harness for that comparison exists, but it has no verdict yet
 [summary](../benchmarks/whole-vs-region.json)). It reads the whole frame and the
 tiles of one screen as separate ranked queues. Each queue is measured at fixed
 reviewer budgets against evaluation-eligible reference examples and blind audits.
-None of those labels exists yet. Its tiles come from the screening model, not a
+Both come from the rank-independent blind audit sample, and none exists yet. Its tiles come from the screening model, not a
 region proposer plus a specialist identifier.
 
 ## Model roles and initial choices
