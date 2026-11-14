@@ -1,8 +1,11 @@
 """Retry-safe side effects with only small records returned to Temporal history."""
 
+import contextvars
 import hashlib
 import json
 import platform
+import threading
+from collections.abc import Callable
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any
@@ -20,10 +23,30 @@ from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
 
 
+def while_heartbeating[T](work: Callable[[], T], detail: str, every: float = 20.0) -> T:
+    """Run blocking work (e.g. a first 1.7 GB model download) while heartbeating, so the
+    activity's two-minute heartbeat timeout measures liveness, not download speed."""
+    context = contextvars.copy_context()
+    done = threading.Event()
+
+    def beat() -> None:
+        while not done.wait(every):
+            context.run(activity.heartbeat, detail)
+
+    thread = threading.Thread(target=beat, daemon=True)
+    activity.heartbeat(detail)
+    thread.start()
+    try:
+        return work()
+    finally:
+        done.set()
+        thread.join()
+
+
 class Activities:
     def __init__(self, root: Path) -> None:
         self.store = Store(root)
-        self.screener: Any = None
+        self.screeners: dict[str, Any] = {}
 
     @activity.defn
     def collect_photos(self, payload: dict) -> dict:
@@ -49,14 +72,23 @@ class Activities:
         run_id = payload["run_id"]
         self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
-        if self.screener is None:
-            self.screener = Screener.load(self.store.root / "embeddings")
-        previous = next(run["model"] for run in self.store.runs() if run["id"] == run_id)
-        if previous and previous != self.screener.metadata:
+        run = next(item for item in self.store.runs() if item["id"] == run_id)
+        key = RunSpec.from_saved(run["spec"]).model
+        if key not in self.screeners:
+            # Keep only the active model: two encoders (0.6 + 1.7 GB) could exhaust memory.
+            self.screeners.clear()
+            self.screeners[key] = while_heartbeating(
+                lambda: Screener.load(self.store.root / "embeddings", model=key),
+                f"loading {key} model",
+            )
+        screener = self.screeners[key]
+        # Metadata saved before model choice existed was always the original BioCLIP.
+        previous = run["model"] and {"model_key": "bioclip"} | run["model"]
+        if previous and previous != screener.metadata:
             raise ValueError(
                 "Scoring configuration changed; start a new run to preserve provenance"
             )
-        self.store.model(run_id, self.screener.metadata)
+        self.store.model(run_id, screener.metadata)
         photos = self.store.photos(run_id)
         for index, photo in enumerate(photos):
             activity.heartbeat(f"{index}/{len(photos)}")
@@ -64,9 +96,7 @@ class Activities:
             if hashlib.sha256(path.read_bytes()).hexdigest() != photo["sha256"]:
                 raise ValueError(f"Image checksum mismatch: {photo['id']}")
             if not photo["scores"]:
-                self.store.score(
-                    run_id, photo["id"], self.screener.screen(path, subject_label(photo))
-                )
+                self.store.score(run_id, photo["id"], screener.screen(path, subject_label(photo)))
             self.store.status(run_id, "screening", f"Scored {index + 1} of {len(photos)} photos")
         return {"count": len(photos)}
 

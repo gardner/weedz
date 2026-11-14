@@ -131,6 +131,31 @@ necessary to find edge weeds, but it does not make the ranking more selective.
 Calibrated thresholds and lookalike discrimination (#16, #14) remain the
 limiting problems.
 
+### BioCLIP 2: a model that tells natives from weeds
+
+The same 30 pilot photos and 39 lookalike photos were screened with revision 4
+by the original BioCLIP and by
+[BioCLIP 2](https://huggingface.co/imageomics/bioclip-2) (MIT, ViT-L/14, pinned
+at `2957b322`; [#14](https://github.com/gardner/weedz/issues/14),
+[comparison](../benchmarks/model-comparison.json)).
+
+| Check | BioCLIP | BioCLIP 2 |
+| --- | --- | --- |
+| Incidental photos with a positive margin | 5 of 24 | **1 of 24** |
+| References with their own target on top (margin range) | 6 of 6 (0.032–0.165) | 6 of 6 (0.051–0.097) |
+| Toetoe beating every comparison as pampas | 6 of 6 | **1 of 6** |
+| Native clematis beating every comparison as old man's beard | 9 of 15 | **2 of 15** |
+| Kānuka, broom or mānuka beating every comparison as gorse | 2 of 18 | **0 of 18** |
+| CPU seconds per photo (about 7–11 windows) | 0.67 | 3.1 |
+
+BioCLIP 2 keeps every reference clearly positive while rejecting most lookalikes
+and the false alarms. The chafer's pink fibres and the sky tiles no longer
+rank; its single incidental candidate is the oystercatcher's riverbed vegetation
+at +0.009. The cost is about 4.6× the CPU time and a 1.7 GB checkpoint. On that
+basis the project lead chose BioCLIP 2 as the default for new runs. Runs saved
+earlier keep the original BioCLIP, and `--model bioclip` still selects it. These
+are small, source-labelled samples, not reviewed accuracy.
+
 The next experiment should include independently reviewed native lookalikes and genuine
 no-vegetation negatives, and a broader sample of habitat-visible animal photos.
 Retain low-ranked photos for missed-weed review. Compare whole-frame and regional
