@@ -57,7 +57,11 @@ class ApprovalScreen extends StatefulWidget {
 }
 
 class _ApprovalScreenState extends State<ApprovalScreen> {
+  late Findings _found = _merged();
   late Choices _choices = _startingChoices();
+
+  /// One image provider per crop, so a rebuild does not decode it again.
+  (Crop, MemoryImage)? _preview;
 
   /// The choices to carry over to a revision this screen just made.
   Choices? _carried;
@@ -68,28 +72,49 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
       _case.status == ApprovalStatus.pending ||
       _case.status == ApprovalStatus.approved;
 
+  /// What the person may choose from: the scan's findings, or failing that
+  /// what the report already holds, so nothing shown is silently dropped.
+  Findings _merged() => Findings(
+    crop: widget.findings.crop ?? _case.report.image,
+    location: widget.findings.location ?? _case.report.location,
+  );
+
+  MemoryImage? get _photo {
+    final crop = _found.crop;
+    if (crop == null) return null;
+    final cached = _preview;
+    if (cached != null && identical(cached.$1, crop)) return cached.$2;
+    final image = MemoryImage(crop.bytes);
+    _preview = (crop, image);
+    return image;
+  }
+
   /// A report waiting for a decision starts with nothing chosen. One already
   /// decided on shows the answers it records.
   Choices _startingChoices() => _case.status == ApprovalStatus.pending
       ? const Choices()
-      : Choices.fromReport(_case.report, widget.findings);
+      : Choices.fromReport(_case.report, _found);
 
   @override
   void didUpdateWidget(ApprovalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.reportCase.id != widget.reportCase.id) {
+    final newCase = oldWidget.reportCase.id != widget.reportCase.id;
+    if (newCase || !identical(oldWidget.findings, widget.findings)) {
+      _found = _merged();
+    }
+    if (newCase) {
       _choices = _carried ?? _startingChoices();
       _carried = null;
     }
   }
 
-  Report _applied() => _choices.applyTo(_case.report, widget.findings);
+  Report _applied() => _choices.applyTo(_case.report, _found);
 
   /// Records an answer. Once every answer is given, the report is edited to
   /// match, which undoes any approval.
   void _choose(Choices next) {
     setState(() => _choices = next);
-    if (!next.isCompleteFor(widget.findings)) return;
+    if (!next.isCompleteFor(_found)) return;
     final edited = _case.edit(_applied());
     if (!identical(edited, _case)) widget.onChanged(edited);
   }
@@ -101,14 +126,14 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
       id: widget.newId(),
       report: change(_case.report),
     );
-    _carried = Choices.fromReport(revision.report, widget.findings);
+    _carried = Choices.fromReport(revision.report, _found);
     widget.onRevised(retired, revision);
   }
 
-  /// Whether the report is still as it was when the person was asked to
-  /// confirm: a send can finish, or be refused, while a dialog is open.
-  bool _isStill(ReportCase asked) =>
-      asked.id == _case.id && asked.status == _case.status;
+  /// Whether the report the person confirmed is still this one. A send can
+  /// settle while a dialog is open, so each action then checks that the
+  /// current status still allows it.
+  bool _isSame(ReportCase asked) => asked.id == _case.id;
 
   @override
   Widget build(BuildContext context) {
@@ -128,13 +153,13 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
               SuggestionSection(report: report),
               PhotoSection(
                 report: report,
-                findings: widget.findings,
+                preview: _photo,
                 choices: _choices,
                 onChoose: choose,
               ),
               LocationSection(
                 report: report,
-                findings: widget.findings,
+                findings: _found,
                 choices: _choices,
                 onChoose: choose,
               ),
@@ -147,15 +172,19 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
               ),
               ApprovalActions(
                 reportCase: _case,
-                choicesComplete: _choices.isCompleteFor(widget.findings),
+                choicesComplete: _choices.isCompleteFor(_found),
                 handlers: (
                   approve: _approve,
                   send: () => widget.onSend(_case),
                   decline: (asked) {
-                    if (_isStill(asked)) widget.onChanged(_case.decline());
+                    if (_isSame(asked) && _case.mayDecline) {
+                      widget.onChanged(_case.decline());
+                    }
                   },
                   withdraw: (asked) {
-                    if (_isStill(asked)) widget.onWithdraw(_case);
+                    if (_isSame(asked) && _case.mayWithdraw) {
+                      widget.onWithdraw(_case);
+                    }
                   },
                   revise: _revise,
                 ),

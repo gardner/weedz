@@ -81,6 +81,24 @@ final class ReportCase {
     ApprovalStatus.unanswered,
   }.contains(status);
 
+  static const Set<ApprovalStatus> _declinable = {
+    ApprovalStatus.pending,
+    ApprovalStatus.approved,
+    ApprovalStatus.refused,
+  };
+
+  static const Set<ApprovalStatus> _withdrawable = {
+    ApprovalStatus.sending,
+    ApprovalStatus.unanswered,
+    ApprovalStatus.received,
+  };
+
+  /// Whether [decline] is allowed now.
+  bool get mayDecline => _declinable.contains(status);
+
+  /// Whether [withdrawn] is allowed now: the server may have this report.
+  bool get mayWithdraw => _withdrawable.contains(status);
+
   /// Replaces the report. A change needs approving again; an unchanged
   /// report keeps its status.
   ReportCase edit(Report updated) {
@@ -92,11 +110,8 @@ final class ReportCase {
   ReportCase approve() =>
       _move({ApprovalStatus.pending}, ApprovalStatus.approved, 'approve');
 
-  ReportCase decline() => _move(
-    {ApprovalStatus.pending, ApprovalStatus.approved, ApprovalStatus.refused},
-    ApprovalStatus.declined,
-    'decline',
-  );
+  ReportCase decline() =>
+      _move(_declinable, ApprovalStatus.declined, 'decline');
 
   /// Freezes the approved report for sending (or sends an unanswered one
   /// again) and returns the request to send. Both happen in one step, so no
@@ -150,15 +165,8 @@ final class ReportCase {
   /// Confirmed withdrawn: a receipt from `DELETE`, or a 410. An older server
   /// may return 404 without recording intent. That is not confirmation while
   /// a `PUT` may still be in flight: repeat `DELETE` once the `PUT` settles.
-  ReportCase withdrawn() => _move(
-    {
-      ApprovalStatus.sending,
-      ApprovalStatus.unanswered,
-      ApprovalStatus.received,
-    },
-    ApprovalStatus.withdrawn,
-    'withdraw',
-  );
+  ReportCase withdrawn() =>
+      _move(_withdrawable, ApprovalStatus.withdrawn, 'withdraw');
 
   ReportCase _move(Set<ApprovalStatus> from, ApprovalStatus to, String verb) {
     _expect(from, verb);

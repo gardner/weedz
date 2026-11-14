@@ -103,14 +103,16 @@ class _YesNo extends StatelessWidget {
 class PhotoSection extends StatelessWidget {
   const new({
     required this.report,
-    required this.findings,
+    required this.preview,
     required this.choices,
     required this.onChoose,
     super.key,
   });
 
   final Report report;
-  final Findings findings;
+
+  /// The crop the person may send, or null when there is none.
+  final ImageProvider? preview;
   final Choices choices;
 
   /// Null once the report can no longer change.
@@ -118,19 +120,19 @@ class PhotoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final crop = findings.crop ?? report.image;
+    final image = preview;
     final choose = onChoose;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionTitle('Photo'),
-        if (crop == null)
+        if (image == null)
           const Text('There is no photo to send with this report.')
         else ...[
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 240),
-            child: Image.memory(
-              crop.bytes,
+            child: Image(
+              image: image,
               semanticLabel: 'The cropped part of your photo',
               errorBuilder: (context, error, stack) =>
                   const Text('The photo could not be shown.'),
