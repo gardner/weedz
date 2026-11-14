@@ -20,7 +20,7 @@ import json
 import platform
 import subprocess
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import date
 from pathlib import Path
 from typing import Any, cast
@@ -237,33 +237,54 @@ def artefact_folder(work: Path, metadata: Mapping[str, Any], versions: Mapping[s
     return folder
 
 
+def write_atomically(path: Path, write: Callable[[Path], object]) -> None:
+    """Write to a temporary name, then rename, so an interrupted write is never reused."""
+    partial = path.with_name(f"{path.stem}.partial{path.suffix}")
+    try:
+        write(partial)
+        partial.replace(path)
+    finally:
+        partial.unlink(missing_ok=True)
+
+
 def export_artefacts(visual: Any, folder: Path, needed: set[str]) -> None:
     """Write each needed image-tower artefact once; artefact_folder keys their provenance."""
     import torch
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
     paths = {name: folder / file for name, (_, file) in ARTEFACTS.items()}
-    if "fp32" in needed and not paths["fp32"].exists():
-        torch.save(visual, paths["fp32"])
-    if "fp16" in needed and not paths["fp16"].exists():
-        torch.save(copy.deepcopy(visual).half(), paths["fp16"])
-    if needed & {"onnx", "int8", "int8-per-channel"} and not paths["onnx"].exists():
+
+    def onnx(target: Path) -> None:
         # The TorchScript exporter needs no extra dependency and handles open_clip's ViT.
         torch.onnx.export(
             visual,
             (torch.zeros(1, 3, 224, 224),),
-            str(paths["onnx"]),
+            str(target),
             input_names=["pixels"],
             output_names=["embedding"],
             dynamic_axes={"pixels": {0: "batch"}, "embedding": {0: "batch"}},
             dynamo=False,
             opset_version=EXPORT["onnx_opset"],
         )
-    for name, per_channel in [("int8", False), ("int8-per-channel", True)]:
+
+    def int8(per_channel: bool) -> Callable[[Path], None]:
+        return lambda target: quantize_dynamic(
+            paths["onnx"], target, weight_type=QuantType.QInt8, per_channel=per_channel
+        )
+
+    # In dependency order: the int8 artefacts are quantised from the ONNX export.
+    writers: dict[str, Callable[[Path], object]] = {
+        "fp32": lambda target: torch.save(visual, target),
+        "fp16": lambda target: torch.save(copy.deepcopy(visual).half(), target),
+        "onnx": onnx,
+        "int8": int8(False),
+        "int8-per-channel": int8(True),
+    }
+    if needed & {"int8", "int8-per-channel"}:
+        needed = needed | {"onnx"}
+    for name, write in writers.items():
         if name in needed and not paths[name].exists():
-            quantize_dynamic(
-                paths["onnx"], paths[name], weight_type=QuantType.QInt8, per_channel=per_channel
-            )
+            write_atomically(paths[name], write)
 
 
 def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]) -> dict[str, Any]:

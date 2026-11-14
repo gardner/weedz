@@ -10,6 +10,7 @@ from types import ModuleType
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 
 from weedz.discovery.parity import THRESHOLDS
@@ -137,6 +138,21 @@ def test_conclusion_names_passing_and_failing_variants() -> None:
     assert "Kept parity: good." in text
     assert "Failed parity: bad." in text
     assert "Kept parity: none." in script.conclusion({"bad": variant(False)})
+
+
+def test_an_interrupted_artefact_write_leaves_nothing_to_reuse(tmp_path: Path) -> None:
+    target = tmp_path / "visual.onnx"
+
+    def interrupted(path: Path) -> None:
+        path.write_bytes(b"partial")
+        raise OSError("disk full")
+
+    with pytest.raises(OSError):
+        script.write_atomically(target, interrupted)
+    assert not target.exists()
+    script.write_atomically(target, lambda path: path.write_bytes(b"whole"))
+    assert target.read_bytes() == b"whole"
+    assert [item.name for item in tmp_path.iterdir()] == ["visual.onnx"]
 
 
 def test_artefacts_are_cached_per_weights_libraries_and_export_settings(tmp_path: Path) -> None:
