@@ -62,7 +62,11 @@ function StudyView({ study, terms }: { study: Study; terms?: StudyTerms }) {
       "Review budget",
       use ? `${budgetText(use.hours, "h")} · ${budgetText(use.photos, "photos")}` : NOT_YET,
     ],
-    ["Reference records", d.reference_records.map((r) => r.name).join("; ") || NOT_YET],
+    [
+      "Reference records",
+      d.reference_records.map((r) => (r.note ? `${r.name}: ${r.note}` : r.name)).join("; ") ||
+        NOT_YET,
+    ],
   ];
   const limits = terms
     ? Object.entries(terms.limits).map(([key, item]) => limitText(item, d.limits[key]))

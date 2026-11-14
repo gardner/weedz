@@ -82,6 +82,7 @@ try {
   await panel.getByLabel("Not yet screened species").fill("Gunnera tinctoria: Wetland spread");
   await panel.getByRole("checkbox", { name: /^Clematis paniculata/ }).check();
   await panel.getByLabel("Why Clematis paniculata").fill("Native; flowers alike");
+  await panel.getByLabel("Reference records").fill("DOC weed records: Snapshot; incomplete");
   await panel.getByLabel(/^Coverage and review usability:/).fill("80");
   await panel.getByLabel("Recorded by").fill("Ana");
   await panel.getByRole("button", { name: "Save study version" }).click();
@@ -115,6 +116,8 @@ try {
   await panel.getByText(/Ulex europaeus is screened by every run/).waitFor();
   await panel.getByText(/at least 0\.5 h used so far · no budget set/).waitFor();
   await panel.getByText(/Version 1 by Ana/).waitFor();
+  // A reference record shows its coverage note, not just its name.
+  await panel.getByText("DOC weed records: Snapshot; incomplete").waitFor();
 
   // A stored version may name what the screening no longer covers, or a measure since
   // removed; an edit must carry them rather than silently drop them.
