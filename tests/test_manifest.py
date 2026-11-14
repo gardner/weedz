@@ -32,6 +32,14 @@ def test_a_manifest_round_trips_and_reports_its_sha256(tmp_path: Path) -> None:
     assert read_manifest(path, digest) == samples()
 
 
+def test_unicode_line_separators_in_free_text_round_trip(tmp_path: Path) -> None:
+    path = tmp_path / "samples.jsonl"
+    note = "pasted note with\x85breaks"
+    record = Sample.model_validate(sample(annotations=[annotation(note=note)]))
+    digest = write_manifest(path, [record])
+    assert read_manifest(path, digest) == [record]
+
+
 def test_an_altered_manifest_fails_its_checksum(tmp_path: Path) -> None:
     path = tmp_path / "samples.jsonl"
     digest = write_manifest(path, samples())

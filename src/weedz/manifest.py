@@ -32,7 +32,8 @@ def read_manifest(path: Path, sha256: str | None = None) -> list[Sample]:
     if sha256 is not None and hashlib.sha256(content).hexdigest() != sha256:
         raise ValueError(f"Manifest checksum mismatch: {path}")
     samples: list[Sample] = []
-    for number, line in enumerate(content.decode("utf-8").splitlines(), start=1):
+    # Split bytes on newlines only: JSON escapes them, but not U+2028, U+2029 or U+0085.
+    for number, line in enumerate(content.splitlines(), start=1):
         try:
             samples.append(Sample.model_validate_json(line))
         except ValidationError as error:

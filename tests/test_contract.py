@@ -111,12 +111,25 @@ def test_occurrence_supervision_needs_a_real_location() -> None:
         ({"box": [1, 1, 2, 2]}, "image_class"),
         ({"supervision": "dense_mask"}, "mask_uri"),
         ({"supervision": "surveyed_point", "point": [401, 10]}, "inside the image"),
+        ({"supervision": "surveyed_point"}, "point"),
         ({"supervision": "unlabelled"}, "unlabelled"),
     ],
 )
 def test_geometry_must_fit_its_supervision(fields: dict[str, Any], message: str) -> None:
     with pytest.raises(ValidationError, match=message):
         Sample.model_validate(sample(tasks=["inference"], annotations=[annotation(**fields)]))
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf")])
+def test_non_finite_numbers_are_refused_because_json_cannot_hold_them(value: float) -> None:
+    prediction = annotation(origin="model", model="bioclip-2", score=value)
+    for invalid in (
+        sample(tasks=["inference"], annotations=[prediction]),
+        sample(ground={"gsd_m": value}),
+        sample(geography={"latitude": -41.3, "longitude": 173.2, "uncertainty_m": value}),
+    ):
+        with pytest.raises(ValidationError, match="finite"):
+            Sample.model_validate(invalid)
 
 
 def test_a_sample_rejects_unknown_schema_versions_and_unnamespaced_ids() -> None:

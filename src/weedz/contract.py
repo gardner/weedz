@@ -49,7 +49,8 @@ Pixels = Annotated[float, Field(ge=0)]
 
 
 class Contract(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    # JSON cannot hold NaN or infinity, so a manifest could not round-trip them.
+    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
 
 
 class Rights(Contract):
@@ -115,8 +116,10 @@ class Annotation(Contract):
             raise ValueError("A box needs left < right and top < bottom")
         if (self.mask_uri is not None) != (kind in {"dense_mask", "sparse_mask"}):
             raise ValueError(f"Only mask supervision has a mask_uri, and it needs one, not {kind}")
-        if self.point is not None and kind != "surveyed_point":
-            raise ValueError(f"Only surveyed_point supervision has a point, not {kind}")
+        if (self.point is not None) != (kind == "surveyed_point"):
+            raise ValueError(
+                f"Only surveyed_point supervision has a point, and it needs one, not {kind}"
+            )
         if kind == "unlabelled" and (self.taxon or self.label != "unknown"):
             raise ValueError("An unlabelled annotation names no taxon and no label")
         if self.origin == "model" and not self.model:
