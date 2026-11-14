@@ -278,24 +278,49 @@ def cleanup(root: Path, state: Path, platform: str) -> None:
         raise BuildError("Signing cleanup failed; check the temporary runner before reuse")
 
 
+def prepare(
+    platform: str,
+    root: Path,
+    state: Path,
+    env: Mapping[str, str],
+    *,
+    release: bool = False,
+    ios_signing_check: bool = False,
+) -> None:
+    if ios_signing_check and (release or platform != "ios"):
+        raise BuildError("An iOS signing check cannot prepare Android or a production release")
+    # A signing proof deliberately embeds no deployment URLs, even if the environment
+    # contains them. Production release validation is a separate, unchanged path.
+    config = {} if ios_signing_check else app_config(env, release=release)
+    write_private(state / "config.json", json.dumps(config).encode())
+    if release and platform == "android":
+        prepare_android(state, env)
+    if platform == "ios" and (release or ios_signing_check):
+        prepare_ios(root, state, env)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("platform", choices=("android", "ios"))
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--state", type=Path, required=True)
-    parser.add_argument("--release", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--release", action="store_true")
+    mode.add_argument("--ios-signing-check", action="store_true")
     parser.add_argument("--cleanup", action="store_true")
     args = parser.parse_args()
     try:
         if args.cleanup:
             cleanup(args.root, args.state, args.platform)
             return
-        config = app_config(os.environ, release=args.release)
-        write_private(args.state / "config.json", json.dumps(config).encode())
-        if args.release and args.platform == "android":
-            prepare_android(args.state, os.environ)
-        if args.release and args.platform == "ios":
-            prepare_ios(args.root, args.state, os.environ)
+        prepare(
+            args.platform,
+            args.root,
+            args.state,
+            os.environ,
+            release=args.release,
+            ios_signing_check=args.ios_signing_check,
+        )
     except BuildError as error:
         raise SystemExit(str(error)) from None
 
