@@ -136,20 +136,6 @@ void main() {
       );
     });
 
-    test('a location without location consent, and consent without one', () {
-      final point = fullReport().location;
-      expect(
-        () => minimalReport().copyWith(location: point),
-        throwsArgumentError,
-      );
-      expect(
-        () => minimalReport().copyWith(
-          consent: minimalReport().consent.copyWith(location: true),
-        ),
-        throwsArgumentError,
-      );
-    });
-
     test('an unpublished consent wording', () {
       expect(
         () => Consent(wordingVersion: 'consent-2099-01', image: false),
@@ -179,10 +165,9 @@ void main() {
   });
 
   group('Removing details before approval (#56)', () {
-    test('withoutLocation drops the location and its consent', () {
+    test('withoutLocation drops the location and nothing else', () {
       final report = fullReport().withoutLocation();
       expect(report.location, isNull);
-      expect(report.consent.location, isFalse);
       expect(report.image, fullReport().image);
     });
 
@@ -201,7 +186,6 @@ void main() {
       expect(report.consent.licence, isNull);
       expect(report.consent.credit, fullReport().consent.credit);
       expect(report.consent.uses, isEmpty);
-      expect(report.consent.location, isTrue);
       expect(report.location, fullReport().location);
     });
   });

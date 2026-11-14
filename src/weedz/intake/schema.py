@@ -76,9 +76,6 @@ class Consent(Part):
 
     wording_version: Token
     image: bool
-    # The person saw the exact point being sent and agreed to share it (#91). It is never
-    # blurred: the exact location is the point of a report.
-    location: bool = False
     # What the photo may be used for. Review is why a photo is sent, so a photo always
     # permits it; a report without a photo permits no photo use at all.
     uses: frozenset[Permission] = frozenset()
@@ -130,12 +127,6 @@ class ReportContent(Part):
     captured_at: AwareDatetime | None = None
     location: Location | None = None
     consent: Consent
-
-    @model_validator(mode="after")
-    def location_only_with_consent(self) -> "ReportContent":
-        if (self.location is not None) != self.consent.location:
-            raise ValueError("A location is sent only with location consent, and consent needs one")
-        return self
 
     @field_validator("captured_at")
     @classmethod

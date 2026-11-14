@@ -7,10 +7,7 @@ version its person saw (`consent.wording_version`), and the intake refuses a ver
 that isn't published here. The intake keeps that version and the uses the person
 permitted, including after they withdraw the report.
 
-When a report carries a location, the approval screen shows the exact point that will
-be sent (a map pin and its accuracy), and the report records `consent.location: true`.
-The intake refuses a location without that consent, and the consent without a location
-(#91). Consent records that the person knowingly shares the exact point; it never blurs it.
+Consent to share a report's exact location is #91 (PR #105).
 
 How the photo choices are enforced:
 
@@ -36,9 +33,8 @@ is CC BY-NC, and the credit name is empty, which credits "a Weedz contributor".
 
 You're sending us a possible sighting of a weed: the suggested species, the score the
 app gave it, where your phone was and when the photo was taken. The location is
-exact, because that's what lets someone find and check the plant. The map above shows
-the exact point and how accurate it is, and you can see everything else before you
-send. Sending is up to you, and nothing is sent until you approve.
+exact, because that's what lets someone find and check the plant. You can see all of
+it above before you send. Sending is up to you, and nothing is sent until you approve.
 
 **Your photo (optional)**
 

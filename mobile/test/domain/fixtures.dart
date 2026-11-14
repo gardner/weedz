@@ -12,7 +12,6 @@ Crop jpegCrop() => Crop.fromBase64('/9j/4AAQSkZJRgABAQ==');
 Consent imageConsent() => Consent(
   wordingVersion: '2026-11',
   image: true,
-  location: true,
   uses: {'review'},
   licence: 'cc-by',
   credit: 'A. Contributor',
