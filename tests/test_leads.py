@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from test_discovery import observation
 from test_judgements import add_finding, store_with_photo
 
+from weedz.discovery.activities import export
 from weedz.discovery.api import create_app
 from weedz.discovery.audit import audit_sample
 from weedz.discovery.leads import LeadEvent, record_lead, selected_leads, selections
@@ -106,3 +107,12 @@ def test_a_selection_by_someone_who_had_not_audited_unblinds_later_audits(
     select(store, target, selector="Carol")
     store.audit("run", target, "Ulex europaeus", "", "Ana")
     assert store.latest_audits("run") == {}
+
+
+def test_the_run_export_keeps_every_selection_event(tmp_path: Path) -> None:
+    store, photo_id = store_with_photo(tmp_path)
+    select(store, photo_id)
+    select(store, photo_id, action="deselected", reason="Matches a DOC record")
+    result = export(store, "run")
+    assert [row["action"] for row in result["lead_selections"]] == ["selected", "deselected"]
+    assert any("follow-up" in line for line in result["limitations"])
