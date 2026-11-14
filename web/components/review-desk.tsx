@@ -15,6 +15,7 @@ import {
   type RunDetail,
   request,
   type Status,
+  siteVisitNote,
 } from "../lib/types";
 import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
@@ -103,6 +104,9 @@ export default function ReviewDesk() {
   const filtered = queuePhotos(photos, cohort, { region, review, reviewer });
   const active = filtered.find((photo) => photo.id === activeIds[cohort]) ?? filtered[0];
   const incidental = photos.filter((photo) => photo.cohort === "incidental");
+  const groupable = incidental.filter((photo) => photo.encounter_linkable === true);
+  const visits = new Set(groupable.map((photo) => photo.encounter_group ?? photo.id)).size;
+  const ungrouped = incidental.length - groupable.length;
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
   const held = incidental.filter((photo) => heldForAudit(photo, reviewer)).length;
 
@@ -231,7 +235,10 @@ export default function ReviewDesk() {
             <div>
               <span>Incidental photos</span>
               <strong>{incidental.length.toString().padStart(2, "0")}</strong>
-              <small>Animal subjects · background unlabelled</small>
+              <small>
+                Independent site visits: {visits.toString().padStart(2, "0")}
+                {ungrouped > 0 && ` · ${ungrouped} could not be grouped`} · background unlabelled
+              </small>
             </div>
             <div>
               <span>Reviewed</span>
@@ -406,6 +413,7 @@ export default function ReviewDesk() {
                             ? "Needs review"
                             : photo.review_status}
                         {!auditing && photo.disputed && " · Reviewers disagree"}
+                        {!auditing && siteVisitNote(photo) && ` · ${siteVisitNote(photo)}`}
                       </small>
                     </span>
                   </button>

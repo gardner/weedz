@@ -11,6 +11,7 @@ from temporalio import activity
 
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
+from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import Inaturalist
 from weedz.discovery.store import Store
@@ -103,7 +104,8 @@ def export(store: Store, run_id: str) -> dict:
     return {
         "schema": 1,
         "run": run,
-        "photos": photos,
+        "photos": with_encounters(photos),
+        "encounters": summarize(photos, encounter_groups(photos)),
         "review_history": history,
         "review_effort": summarize_effort(photos, history),
         "audit": summarize_audit(
@@ -130,5 +132,10 @@ def export(store: Store, run_id: str) -> dict:
             "Reference photos are separate; animal photos have no background weed ground truth",
             "Observation coordinates locate the observation, not a confirmed weed",
             "No novelty comparison, infestation area estimate or external publication performed",
+            "Site-visit groups link photos by observer, date and distance; not the same plant",
+            (
+                "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "
+                "are ungrouped, not counted as independent visits"
+            ),
         ],
     }

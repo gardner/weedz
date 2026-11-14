@@ -2,7 +2,14 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { imageUrl, names, type Photo, type Status, statusLabels } from "../lib/types";
+import {
+  imageUrl,
+  names,
+  type Photo,
+  type Status,
+  siteVisitSummary,
+  statusLabels,
+} from "../lib/types";
 import ReviewHistory from "./review-history";
 
 export default function Evidence({
@@ -121,6 +128,11 @@ export default function Evidence({
           <span>Photographed</span>
           <strong>{photo.observed_on ?? "Date unknown"}</strong>
           <small>Uploaded {photo.uploaded_at?.slice(0, 10) ?? "unknown"}</small>
+        </div>
+        <div>
+          <span>Site visit</span>
+          <strong>{siteVisitSummary(photo)}</strong>
+          <small>Same observer, date and nearby location; not necessarily the same plant</small>
         </div>
         <div>
           <span>Observation location</span>

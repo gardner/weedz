@@ -10,6 +10,7 @@ from temporalio.client import Client
 from weedz.discovery.activities import export, review_history
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
+from weedz.discovery.encounters import with_encounters
 from weedz.discovery.records import TASK_QUEUE, Audit, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
@@ -62,6 +63,7 @@ class ReviewAPI:
         audit = summarize_audit(photos, sample, blind, late)
         del audit["findings"]
         photos = [photo | audit_state(photo["id"], sample, blind, late) for photo in photos]
+        photos = with_encounters(photos)
         return {"run": run, "photos": photos, "review_effort": effort, "audit": audit}
 
     def download(self, run_id: str) -> JSONResponse:

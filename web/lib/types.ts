@@ -32,6 +32,9 @@ export type Photo = {
   reviewer_decisions: Record<string, Status>;
   disputed: boolean;
   review_count: number;
+  encounter_group?: string;
+  encounter_size?: number;
+  encounter_linkable?: boolean;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -42,6 +45,21 @@ export type Photo = {
     species?: { name: string; similarity: number; margin: number; box: number[] }[];
   };
 };
+
+export function siteVisitNote(photo: Photo): string | null {
+  const others = (photo.encounter_size ?? 1) - 1;
+  if (others < 1) return null;
+  return `Same site visit as ${others} other photo${others === 1 ? "" : "s"}`;
+}
+
+export const unknownSiteVisit =
+  "Site visit unknown: location obscured, missing, imprecise or of unknown accuracy, or date unknown";
+
+/** Describe a photo's site visit; an unchecked visit is unknown, never independent. */
+export function siteVisitSummary(photo: Photo): string {
+  if (photo.encounter_linkable !== true) return unknownSiteVisit;
+  return siteVisitNote(photo) ?? "No other photos from this visit";
+}
 
 /** Audit counts only; per-photo findings are in the export, so the audit view stays blind. */
 export type AuditSummary = {
