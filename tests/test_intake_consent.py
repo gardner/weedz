@@ -19,7 +19,7 @@ def setup(tmp_path: Path) -> tuple[TestClient, dict[str, str]]:
 
 def test_a_report_under_an_unpublished_wording_is_refused(tmp_path: Path) -> None:
     client, headers = setup(tmp_path)
-    body = report(consent={"wording_version": "2099-01", "image": False})
+    body = report(consent={"wording_version": "2099-01", "image": False, "location": True})
     assert client.put(f"/reports/{new_id()}", json=body, headers=headers).status_code == 422
 
 
@@ -79,3 +79,34 @@ def test_a_store_from_before_consent_records_gains_them(tmp_path: Path) -> None:
     old = ReportStore(tmp_path).receipt(1, "old")
     assert old is not None
     assert (old.consent_version, old.uses) == (None, [])
+
+
+def test_a_location_without_location_consent_is_refused_and_not_stored(tmp_path: Path) -> None:
+    client, headers = setup(tmp_path)
+    body = report(consent={"wording_version": "2026-11", "image": False, "location": False})
+    assert client.put(f"/reports/{new_id()}", json=body, headers=headers).status_code == 422
+    unstated = report(consent={"wording_version": "2026-11", "image": False})
+    assert client.put(f"/reports/{new_id()}", json=unstated, headers=headers).status_code == 422
+    assert ReportStore(tmp_path).active() == []
+
+
+def test_location_consent_without_a_location_is_refused(tmp_path: Path) -> None:
+    client, headers = setup(tmp_path)
+    body = report(location=None)
+    assert client.put(f"/reports/{new_id()}", json=body, headers=headers).status_code == 422
+
+
+def test_a_report_without_a_location_needs_no_location_consent(tmp_path: Path) -> None:
+    client, headers = setup(tmp_path)
+    consent = {"wording_version": "2026-11", "image": False, "location": False}
+    body = report(location=None, consent=consent)
+    assert client.put(f"/reports/{new_id()}", json=body, headers=headers).status_code == 201
+
+
+def test_a_located_report_keeps_its_location_consent_and_exact_point(tmp_path: Path) -> None:
+    client, headers = setup(tmp_path)
+    assert client.put(f"/reports/{new_id()}", json=report(), headers=headers).status_code == 201
+    (stored,) = ReportStore(tmp_path).active()
+    assert stored.report.consent.location is True
+    assert stored.report.location is not None
+    assert (stored.report.location.latitude, stored.report.location.longitude) == (-41.27, 173.28)

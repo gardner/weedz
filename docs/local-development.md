@@ -169,6 +169,11 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   used for. It must include `review`; `evidence`, `agencies`, `public` and
   `training` are separate opt-ins. A report without a photo lists no uses. An
   optional `credit` names the person in the attribution (#60).
+- `consent.location` is `true` exactly when a `location` is sent, as image
+  consent goes with an image: the person saw the exact point (a map pin and its
+  accuracy) and agreed to share it. A location without it, or it without a
+  location, is refused with 422 and nothing is stored. The point is never
+  blurred; exact locations are the point of a report (#91).
 - `GET /reports/{uuid}` returns the submitter's own receipt. `DELETE` withdraws
   the report: its image is deleted and its content erased (zeroed in the
   database file), leaving only ids, times, the consent wording and the uses
