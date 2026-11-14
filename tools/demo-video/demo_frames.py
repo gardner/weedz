@@ -126,6 +126,8 @@ class Frames:
                         "error",
                         "-i",
                         str(self.captures / "web-final/web-review-interactions.webm"),
+                        "-t",
+                        "13",
                         "-vf",
                         f"fps={self.fps},scale=1536:864",
                         "-f",

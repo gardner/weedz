@@ -49,8 +49,21 @@ Flutter widget captures explicitly marked as prototypes. Search windows are
 schematic; their boxes do not claim measured detections. Pilot sample counts
 describe the full benchmark, not the curated capture subset.
 
-Before delivery, mix an original instrumental quietly under the narration,
-keeping the unmodified native narration master as a separate deliverable. Attach
+Mix the original instrumental quietly under the narration:
+
+```sh
+uv run python tools/demo-video/mix_demo.py \
+  --render /absolute/path/to/artifacts/video/weedz-demo-v1 \
+  --music /absolute/path/to/artifacts/music/music3-conservation-seed112-v1.wav \
+  --ffmpeg /absolute/path/to/ffmpeg \
+  --output /absolute/path/to/artifacts/video/weedz-demo-v1/weedz-demo.mp4
+```
+
+This retains the native narration master separately, adds music at gain 0.055,
+and uses a 48 kHz stereo AAC 256 kbps delivery track. The voice gain stays at one;
+mix normalization is disabled. Captions are burned into the picture and included
+as an optional English subtitle track. Keep the native master when sharing
+audio so listeners can hear exactly what Breeze generated. Attach
 the instrumental's provenance, update final checksums, and verify the final
 container with ffprobe. Listen to the whole movie and inspect the beginning,
 scene changes, captions and credits. Include `credits.json` when sharing it.
