@@ -147,6 +147,14 @@ try {
       novelty: {},
     },
     judgement_disputes: ["location"],
+    lead: {
+      suggestion: {
+        selector: "Ana",
+        reason: "Clear leaflets by a stream",
+        created_at: "2026-11-14",
+      },
+      plants: {},
+    },
     referrals: [
       {
         id: 1,

@@ -1,5 +1,6 @@
 import type { Finding } from "./findings";
 import type { Judged } from "./judgements";
+import type { PhotoLeads } from "./leads";
 import type { Limits } from "./limits";
 import type { Referral } from "./referrals";
 
@@ -46,6 +47,7 @@ export type Photo = Judged & {
   limits?: Limits;
   findings?: Finding[];
   referrals?: Referral[];
+  lead?: PhotoLeads;
   scores: {
     best_species?: string;
     similarity?: number;
