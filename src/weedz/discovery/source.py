@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import httpx
 from PIL import Image
 
+from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.records import REGIONS, SPECIES, Photo, RunSpec
 from weedz.discovery.sampling import season_windows, select_across_strata
 
@@ -21,8 +22,10 @@ HEADERS = {"User-Agent": "Weedz/0.1 (open-source non-commercial conservation res
 def photo_from_observation(
     raw: dict,
     region: str,
-    cohort: Literal["incidental", "reference"],
+    cohort: Literal["incidental", "reference", "lookalike"],
     reference_species: str | None = None,
+    lookalike_taxon: str | None = None,
+    lookalike_of: str | None = None,
 ) -> Photo | None:
     if raw.get("license_code") not in LICENSES:
         return None
@@ -40,6 +43,8 @@ def photo_from_observation(
         region=region,
         cohort=cohort,
         reference_species=reference_species,
+        lookalike_taxon=lookalike_taxon,
+        lookalike_of=lookalike_of,
         source_url=raw["uri"],
         image_url=photo["url"].replace("/square.", "/large."),
         attribution=photo.get("attribution") or raw["user"]["login"],
@@ -140,6 +145,7 @@ class Inaturalist:
                 ("reference", species, spec.controls_per_species, {"taxon_name": species})
                 for species in SPECIES
             ]
+            self._lookalikes(run_id, region, base, spec.lookalikes_per_taxon, photos, progress)
             for cohort, species, limit, extra in queries:
                 if limit == 0:
                     continue
@@ -149,6 +155,38 @@ class Inaturalist:
                     result["response"]["results"], photos, region, cohort, species, limit, progress
                 )
         return list(photos.values())
+
+    def _lookalikes(
+        self,
+        run_id: str,
+        region: str,
+        base: dict,
+        limit: int,
+        photos: dict[int, Photo],
+        progress: Callable[..., None],
+    ) -> None:
+        """Newest eligible photos of each declared lookalike taxon, kept as their own cohort."""
+        if limit == 0:
+            return
+        for taxon_id, entry in LOOKALIKES.items():
+            progress(f"Querying {region}: lookalike {entry['name']}")
+            snapshot = self.root / "runs" / run_id / f"{region}-lookalike-{taxon_id}.json"
+            result = self.query(snapshot, base | {"taxon_id": taxon_id})
+            count = 0
+            for raw in result["response"]["results"]:
+                photo = photo_from_observation(
+                    raw,
+                    region,
+                    "lookalike",
+                    lookalike_taxon=entry["name"],
+                    lookalike_of=entry["confusable_with"],
+                )
+                if photo is None or photo.photo_id in photos:
+                    continue
+                photos[photo.photo_id] = self.image(photo)
+                count += 1
+                if count >= limit:
+                    break
 
     def _stratified(
         self,

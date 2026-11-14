@@ -1,10 +1,11 @@
 import type { Photo } from "./types";
 
-export type View = "incidental" | "reference" | "audit";
+export type View = "incidental" | "reference" | "lookalike" | "audit";
 
 export const VIEWS: [View, string][] = [
   ["incidental", "Incidental photos"],
   ["reference", "References"],
+  ["lookalike", "Lookalikes"],
   ["audit", "Audit sample"],
 ];
 
