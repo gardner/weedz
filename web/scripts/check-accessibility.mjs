@@ -3,6 +3,56 @@ import assert from "node:assert/strict";
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "@playwright/test";
 
+// axe leaves very short text (e.g. a "2" count) as "incomplete" and never checks
+// placeholders, so compute WCAG contrast directly for every text node on a solid colour.
+async function lowContrast(page) {
+  return page.evaluate(() => {
+    const rgb = (value) => (value.match(/[\d.]+/g) ?? []).map(Number);
+    const luminance = ([r, g, b]) => {
+      const channel = (c) => {
+        const v = c / 255;
+        return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    };
+    const background = (element) => {
+      for (let node = element; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.backgroundImage !== "none") return null;
+        const colour = rgb(style.backgroundColor);
+        if (colour.length === 3 || colour[3] === 1) return colour.slice(0, 3);
+        if (colour[3] > 0) return null;
+      }
+      return [255, 255, 255];
+    };
+    const failures = [];
+    const check = (element, colour, label) => {
+      const back = background(element);
+      if (!back) return;
+      const [a, b] = [luminance(rgb(colour)), luminance(back)].sort((x, y) => y - x);
+      const ratio = (a + 0.05) / (b + 0.05);
+      const style = getComputedStyle(element);
+      const size = Number.parseFloat(style.fontSize);
+      const large = size >= 24 || (size >= 18.66 && Number(style.fontWeight) >= 700);
+      if (ratio < (large ? 3 : 4.5)) failures.push(`${label} ${ratio.toFixed(2)}:1`);
+    };
+    for (const element of document.querySelectorAll("body *")) {
+      const style = getComputedStyle(element);
+      if (style.visibility === "hidden" || style.display === "none") continue;
+      if (element.closest("[aria-hidden='true']")) continue;
+      if (["TITLE", "SCRIPT", "STYLE", "NOSCRIPT"].includes(element.tagName.toUpperCase()))
+        continue;
+      const text = [...element.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+      const name = `${element.tagName.toLowerCase()}.${[...element.classList].join(".")}`;
+      if (text) check(element, style.color, name);
+      if (element.matches("input[placeholder], textarea[placeholder]")) {
+        check(element, getComputedStyle(element, "::placeholder").color, `${name}::placeholder`);
+      }
+    }
+    return failures;
+  });
+}
+
 const browser = await chromium.launch({
   headless: true,
   ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
@@ -48,6 +98,7 @@ try {
     source_url: "https://www.inaturalist.org/observations/1",
   });
   const posted = [];
+  let photos = [photo("a", "unreviewed"), photo("b", "rejected")];
   await page.route("**/api/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -57,9 +108,7 @@ try {
       posted.push(request.postDataJSON());
       return route.fulfill({ json: { saved: true } });
     }
-    await route.fulfill({
-      json: { run, photos: [photo("a", "unreviewed"), photo("b", "rejected")] },
-    });
+    await route.fulfill({ json: { run, photos } });
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.locator(".photo-row").nth(1).waitFor();
@@ -72,6 +121,8 @@ try {
     (v) => `${v.id} (${v.impact}): ${v.nodes.length} × ${v.nodes[0]?.target.join(" ")}`,
   );
   assert.deepEqual(summary, [], `WCAG violations:\n${summary.join("\n")}`);
+
+  assert.deepEqual(await lowContrast(page), [], "every text node meets AA contrast");
 
   // The phone layout reflows the same content; audit it too.
   await page.setViewportSize({ width: 390, height: 844 });
@@ -104,6 +155,19 @@ try {
   await page.keyboard.press("Enter");
   await page.getByText("Review saved locally.").waitFor();
   assert.equal(posted[0].status, "rejected");
+  // Empty states render different text; audit them with a run that has no photos.
+  photos = [];
+  await page.reload();
+  await page.getByText("No photos match this view.").waitFor();
+  const empty = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  assert.deepEqual(
+    empty.violations.map((v) => v.id),
+    [],
+    "empty states meet WCAG AA",
+  );
+  assert.deepEqual(await lowContrast(page), [], "empty-state text meets AA contrast");
   console.log("No WCAG 2.2 AA violations; the core decision works from the keyboard.");
 } finally {
   await browser.close();

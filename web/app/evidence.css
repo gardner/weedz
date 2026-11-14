@@ -21,7 +21,7 @@
     10px "DM Sans",
     sans-serif;
   margin-left: 5px;
-  color: #6d7f5d;
+  color: #607052;
 }
 .queue-heading p {
   font-size: 10px;
@@ -300,7 +300,7 @@ textarea {
   color: var(--ink);
 }
 textarea::placeholder {
-  color: #9ba591;
+  color: #646e5a;
 }
 .decision-buttons {
   display: flex;
