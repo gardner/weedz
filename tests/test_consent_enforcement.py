@@ -102,5 +102,12 @@ def test_attribution_and_the_contributors_limits_travel_with_a_shared_photo() ->
     assert shared["image"]["action"] == "include"
 
 
+def test_a_withdrawn_photo_is_shared_as_permitting_nothing() -> None:
+    item = photo(consent=consented(["review", "agencies"], WITHDRAWN_AT))
+    shared = shareable_photo(item)["sharing"]
+    assert shared["terms"]["contributor_permits"] == []
+    assert shared["image"]["action"] == "link"
+
+
 def test_sourced_photos_carry_no_contributor_limits() -> None:
     assert "contributor_permits" not in shareable_photo(photo())["sharing"]["terms"]

@@ -135,9 +135,12 @@ def terms(photo: dict[str, Any]) -> dict[str, Any]:
 
 
 def _contributor_limits(photo: dict[str, Any]) -> dict[str, Any]:
-    """The uses a contributor permitted, so a recipient knows, e.g., not to publish."""
+    """The uses a contributor permits, so a recipient knows, e.g., not to publish. A
+    withdrawn consent permits nothing."""
     given = photo.get("consent")
-    return {"contributor_permits": sorted(given["uses"])} if given else {}
+    if not given:
+        return {}
+    return {"contributor_permits": [] if given.get("withdrawn_at") else sorted(given["uses"])}
 
 
 def _withheld(photo: dict[str, Any], use: Use) -> str:
