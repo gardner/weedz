@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 REGIONS = {"Nelson": 40493, "Tasman": 40494}
 SPECIES = {
@@ -19,6 +19,15 @@ class RunSpec(BaseModel):
     limit_per_region: int = Field(default=12, ge=1, le=50)
     controls_per_species: int = Field(default=1, ge=0, le=3)
     before: date = date(2024, 12, 31)
+    after: date = date(2010, 1, 1)
+    # "recent" reproduces the first pilot's newest-first selection; see issue #5.
+    sampling: Literal["stratified", "recent"] = "stratified"
+
+    @model_validator(mode="after")
+    def period_is_not_empty(self) -> "RunSpec":
+        if self.after > self.before:
+            raise ValueError("The sampling period must start on or before its end")
+        return self
 
 
 class Photo(BaseModel):
