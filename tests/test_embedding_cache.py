@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest
 import torch
 from PIL import Image
 from test_discovery_inference import FakeEncoder
@@ -80,12 +81,13 @@ def test_changed_bytes_weights_or_windows_miss_the_cache(tmp_path: Path, monkeyp
     assert encoder.image_calls == 1
 
 
-def test_unreadable_cache_entries_are_recomputed(tmp_path: Path) -> None:
+@pytest.mark.parametrize("contents", [b"not an array", b""], ids=["garbage", "empty"])
+def test_unreadable_cache_entries_are_recomputed(tmp_path: Path, contents: bytes) -> None:
     cache = tmp_path / "cache"
     first, _ = screener(cache)
     first.screen(photo(tmp_path))
     for entry in cache.glob("*.npy"):
-        entry.write_bytes(b"not an array")
+        entry.write_bytes(contents)
     again, encoder = screener(cache)
     assert again.screen(photo(tmp_path))["embedding_cache"] == "miss"
     assert encoder.image_calls == 1

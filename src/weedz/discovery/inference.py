@@ -222,7 +222,7 @@ class Screener:
                 cached = np.load(cache, allow_pickle=False)
                 if cached.ndim == 2 and len(cached) == len(boxes):
                     return self.torch.from_numpy(cached), "hit"
-            except (OSError, ValueError):
+            except (OSError, ValueError, EOFError):
                 pass  # Corrupt or partial entries are recomputed, never trusted.
         batch = self.torch.stack([self.transform(image.crop(box)) for box in boxes])
         with self.torch.inference_mode():
