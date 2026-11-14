@@ -9,12 +9,17 @@ manifest that lists an artefact not yet in place.
 """
 
 import base64
+import fcntl
 import json
 import logging
 import os
 import shutil
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from weedz.bundles.canonical import canonical
 from weedz.bundles.manifest import BundleRejected, BundleSpec, build_manifest, check_artefact
@@ -22,6 +27,7 @@ from weedz.bundles.signing import key_id, load_private_key, public_key_text, sig
 
 logger = logging.getLogger(__name__)
 MANIFEST = "manifest.json"
+LOCK = ".publish.lock"
 
 
 def artefact_path(out: Path, sha256: str) -> Path:
@@ -61,10 +67,23 @@ def _atomic_write(target: Path, data: bytes) -> None:
         Path(temporary).unlink(missing_ok=True)
 
 
-def publish(spec: BundleSpec, key_path: Path, out: Path) -> str:
-    """Sign and publish `spec` into `out`; returns the public key that verifies it."""
-    key = load_private_key(key_path)
-    manifest = build_manifest(spec)
+@contextmanager
+def lock(out: Path) -> Iterator[None]:
+    """Hold the tree's publish lock, so two publishers cannot both pass the sequence check
+    and have the older manifest written last."""
+    out.mkdir(parents=True, exist_ok=True)
+    with (out / LOCK).open("a") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise BundleRejected(f"Another publish to {out} is in progress") from error
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def _place(spec: BundleSpec, manifest: dict, key: Ed25519PrivateKey, out: Path) -> None:
     previous = published_sequence(out)
     if manifest["sequence"] <= previous:
         raise BundleRejected(
@@ -78,6 +97,14 @@ def publish(spec: BundleSpec, key_path: Path, out: Path) -> str:
             _atomic_copy(Path(source), target)
         check_artefact(target, entry)
     _atomic_write(out / MANIFEST, json.dumps(sign(canonical(manifest), key), indent=2).encode())
+
+
+def publish(spec: BundleSpec, key_path: Path, out: Path) -> str:
+    """Sign and publish `spec` into `out`; returns the public key that verifies it."""
+    key = load_private_key(key_path)
+    manifest = build_manifest(spec)
+    with lock(out):
+        _place(spec, manifest, key, out)
     public = public_key_text(key)
     logger.info("Published bundle %d signed by key %s", manifest["sequence"], key_id(public))
     return public

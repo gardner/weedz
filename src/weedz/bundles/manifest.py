@@ -17,7 +17,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from weedz.bundles.signing import PAYLOAD_TYPE, BundleRejected, verify
-from weedz.bundles.text_table import table_entry
+from weedz.bundles.text_table import table_parts
 from weedz.discovery import inference
 from weedz.discovery.inference import COMPARISONS, MODELS, RANKING_REVISION, file_sha256
 from weedz.discovery.lookalikes import LOOKALIKES
@@ -29,6 +29,16 @@ __all__ = ["PAYLOAD_TYPE", "BundleRejected", "BundleSpec", "ParityRefused"]
 
 SCHEMA = 1
 Version = Annotated[str, StringConstraints(pattern=r"^\d{1,4}\.\d{1,4}\.\d{1,4}$")]
+# How a device feeds the tower and reads it, as the parity benchmark did (#52).
+INPUT = (
+    "Each window (see windows) cut from the photo and letterboxed to a square, then "
+    "prepared per preprocessing (open_clip's config; decimals are strings): an RGB "
+    "float32 tensor shaped [batch, 3, height, width]."
+)
+OUTPUT = (
+    "One embedding per window: L2-normalise it, then take its dot product with every "
+    "text_table row (cosine similarity) and rank as ranking_revision says."
+)
 Token = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9._-]{0,39}$")]
 
 
@@ -87,7 +97,8 @@ def parity_record(benchmark: Mapping[str, Any], variant: str, model_key: str, sh
     model = MODELS[model_key]
     if (record.get("model"), record.get("revision")) != (model["repo"], model["revision"]):
         raise ParityRefused(f"{variant} measured another model than pinned {model_key}")
-    version = record["parity"]["thresholds"]["version"]
+    # compare_optimised records the thresholds once for the whole benchmark.
+    version = benchmark.get("thresholds", {}).get("version")
     if version != THRESHOLDS["version"]:
         raise ParityRefused(f"{variant} was measured against thresholds version {version}")
     if record["parity"]["passed"] is not True:
@@ -141,6 +152,7 @@ def build_manifest(spec: BundleSpec) -> dict[str, Any]:
     source = spec.image_model.parity
     benchmark = json.loads(Path(source.benchmark).read_text())
     parity = parity_record(benchmark, source.variant, spec.model_key, tower["sha256"])
+    table, preprocessing = table_parts(Path(spec.text_table), spec.model_key)
     return {
         "schema": SCHEMA,
         "sequence": spec.sequence,
@@ -161,8 +173,11 @@ def build_manifest(spec: BundleSpec) -> dict[str, Any]:
             "model_key": spec.model_key,
             "model_revision": MODELS[spec.model_key]["revision"],
             "parity": parity,
+            "input": INPUT,
+            "preprocessing": preprocessing,
+            "output": OUTPUT,
         },
-        "text_table": table_entry(Path(spec.text_table), spec.model_key),
+        "text_table": table,
     }
 
 

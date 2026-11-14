@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from bundle_helpers import VARIANT, parity_benchmark, spec, write_artefacts
+from bundle_helpers import PREPROCESSING, VARIANT, parity_benchmark, spec, write_artefacts
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from weedz.bundles.canonical import canonical
@@ -22,6 +22,7 @@ from weedz.bundles.manifest import (
     screening_stamp,
 )
 from weedz.bundles.signing import public_key_text, sign, verify
+from weedz.bundles.text_table import save_table
 from weedz.discovery.inference import MODELS, RANKING_REVISION
 from weedz.discovery.records import SPECIES
 
@@ -104,7 +105,8 @@ def test_publishing_is_refused_without_a_passing_parity_record(tmp_path: Path) -
     [
         {"artefact_sha256": None},
         {"revision": "0" * 40},
-        {"parity": {"thresholds": {"version": 0}, "passed": True}},
+        {"thresholds": {"version": 0}},
+        {"thresholds": {}},
     ],
 )
 def test_a_record_for_other_bytes_model_or_thresholds_cannot_gate(tmp_path: Path, override) -> None:
@@ -112,6 +114,37 @@ def test_a_record_for_other_bytes_model_or_thresholds_cannot_gate(tmp_path: Path
     benchmark = json.loads(parity_benchmark(tmp_path, tower, **override).read_text())
     with pytest.raises(ParityRefused):
         parity_record(benchmark, VARIANT, "bioclip-2", artefact(tower)["sha256"])
+
+
+def test_the_committed_benchmark_is_refused_until_it_records_artefact_hashes() -> None:
+    committed = Path(__file__).parents[1] / "benchmarks" / "optimised-model-parity.json"
+    benchmark = json.loads(committed.read_text())
+    with pytest.raises(ParityRefused, match="SHA-256"):
+        parity_record(benchmark, "torch-fp16", "bioclip-2", "0" * 64)
+    with pytest.raises(ParityRefused, match="did not pass"):
+        parity_record(benchmark, "onnx-int8", "bioclip-2", "0" * 64)
+
+
+def test_the_manifest_carries_the_preprocessing_the_tower_expects(tmp_path: Path) -> None:
+    image = build_manifest(spec(tmp_path))["image_model"]
+    assert image["preprocessing"]["size"] == [224, 224]
+    assert image["preprocessing"]["mean"][0] == "0.48145466", "decimal strings, not floats"
+    assert "L2" in image["output"]
+
+
+def test_a_text_table_from_another_model_is_refused(tmp_path: Path) -> None:
+    bundle = spec(tmp_path)
+    write_artefacts(Path(bundle.text_table).parent, model_key="bioclip")
+    with pytest.raises(ValueError, match="bioclip"):
+        build_manifest(bundle)
+
+
+def test_a_text_table_whose_bytes_changed_is_refused(tmp_path: Path) -> None:
+    bundle = spec(tmp_path)
+    table = Path(bundle.text_table)
+    table.write_bytes(b"\1" * len(table.read_bytes()))
+    with pytest.raises(ValueError, match="SHA-256"):
+        build_manifest(bundle)
 
 
 def test_the_manifest_lists_every_part_and_is_stable(tmp_path: Path) -> None:
@@ -136,10 +169,8 @@ def test_the_manifest_lists_every_part_and_is_stable(tmp_path: Path) -> None:
 
 
 def test_a_text_table_that_does_not_fit_the_prompts_is_refused(tmp_path: Path) -> None:
-    bundle = spec(tmp_path)
-    Path(bundle.text_table).write_bytes(b"\0" * 6)
     with pytest.raises(ValueError, match="prompt"):
-        build_manifest(bundle)
+        save_table(tmp_path / "text.f32", [[0.0] * 4], "bioclip-2", "w" * 64, PREPROCESSING)
 
 
 def test_artefact_hashes_and_sizes_are_checked(tmp_path: Path) -> None:

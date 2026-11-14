@@ -60,8 +60,8 @@ def _verify(args: argparse.Namespace) -> None:
 def _text_table(args: argparse.Namespace) -> None:  # pragma: no cover - loads a model
     from weedz.bundles.text_table import write_text_table
 
-    entry = write_text_table(args.model, args.out)
-    print(f"Wrote {args.out}: shape {entry['shape']}, sha256 {entry['sha256']}")
+    write_text_table(args.model, args.out)
+    print(f"Wrote {args.out} and its provenance beside it")
 
 
 def _serve(args: argparse.Namespace) -> None:  # pragma: no cover - runs a server

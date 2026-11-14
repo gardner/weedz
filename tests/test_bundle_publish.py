@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from weedz.bundles.api import create_app
 from weedz.bundles.cli import main
 from weedz.bundles.manifest import BundleRejected, ParityRefused, check_artefact, read_manifest
-from weedz.bundles.publish import publish
+from weedz.bundles.publish import lock, publish
 from weedz.bundles.signing import KeyRefused, generate_key, load_private_key, public_key_text
 
 REPO = Path(__file__).resolve().parents[1]
@@ -66,7 +66,11 @@ def test_an_existing_or_readable_key_is_refused(tmp_path: Path, key_path: Path) 
 
 def test_no_private_key_is_tracked_in_the_repo() -> None:
     tracked = subprocess.run(
-        ["git", "grep", "-l", "PRIVATE KEY-----"], cwd=REPO, capture_output=True, text=True
+        # A pattern, not the literal marker, so this file does not match itself.
+        ["git", "grep", "-lE", "BEGIN [A-Z ]*PRIVATE KEY"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
     )
     assert tracked.stdout.strip() == ""
 
@@ -160,3 +164,10 @@ def test_the_cli_publishes_a_spec_with_relative_paths_and_verifies_it(
                 public_key_text(Ed25519PrivateKey.generate()),
             ]
         )
+
+
+def test_only_one_publish_runs_on_a_tree_at_a_time(tmp_path: Path, key_path: Path) -> None:
+    out = tmp_path / "site"
+    with lock(out), pytest.raises(BundleRejected, match="in progress"):
+        publish(spec(tmp_path), key_path, out)
+    publish(spec(tmp_path), key_path, out)

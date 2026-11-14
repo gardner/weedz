@@ -9,35 +9,54 @@ from pathlib import Path
 from typing import Any
 
 from weedz.bundles.manifest import BundleSpec
-from weedz.bundles.text_table import prompts
+from weedz.bundles.text_table import prompts, save_table
 from weedz.discovery.inference import MODELS
 from weedz.discovery.parity import THRESHOLDS
 
 VARIANT = "onnx-fp16"
 DIMENSIONS = 4
+# What open_clip.get_model_preprocess_cfg reports for a ViT-L/14 tower.
+PREPROCESSING = {
+    "size": (224, 224),
+    "mode": "RGB",
+    "mean": (0.48145466, 0.4578275, 0.40821073),
+    "std": (0.26862954, 0.26130258, 0.27577711),
+    "interpolation": "bicubic",
+    "resize_mode": "shortest",
+    "fill_color": 0,
+}
 
 
-def write_artefacts(folder: Path) -> tuple[Path, Path]:
+def write_artefacts(folder: Path, model_key: str = "bioclip-2") -> tuple[Path, Path]:
     """An image tower (random bytes) and a text table with one row per fixed prompt."""
     folder.mkdir(parents=True, exist_ok=True)
     tower = folder / "visual-fp16.onnx"
     tower.write_bytes(b"not really an onnx graph " * 64)
     table = folder / "text.f32"
-    table.write_bytes(bytes(4 * DIMENSIONS * len(prompts())))
+    rows = [[0.5] * DIMENSIONS for _ in prompts()]
+    save_table(table, rows, model_key, "w" * 64, PREPROCESSING)
     return tower, table
 
 
-def parity_benchmark(folder: Path, tower: Path, passed: bool = True, **override: Any) -> Path:
-    """A parity benchmark whose one variant measured exactly `tower`'s bytes."""
+def parity_benchmark(
+    folder: Path,
+    tower: Path,
+    passed: bool = True,
+    thresholds: dict[str, Any] = THRESHOLDS,
+    **override: Any,
+) -> Path:
+    """A parity benchmark laid out as compare_optimised writes it: thresholds once, at the
+    top, and one variant that measured exactly `tower`'s bytes."""
     model = MODELS["bioclip-2"]
     variant = {
         "model": model["repo"],
         "revision": model["revision"],
         "artefact_sha256": hashlib.sha256(tower.read_bytes()).hexdigest(),
-        "parity": {"thresholds": THRESHOLDS, "passed": passed},
+        "parity": {"passed": passed},
     } | override
     path = folder / "parity.json"
-    path.write_text(json.dumps({"schema": 1, "variants": {VARIANT: variant}}))
+    benchmark = {"schema": 1, "thresholds": thresholds, "variants": {VARIANT: variant}}
+    path.write_text(json.dumps(benchmark))
     return path
 
 
