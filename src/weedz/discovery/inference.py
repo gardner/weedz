@@ -87,7 +87,12 @@ def summarize_scores(
 
 
 def subject_label(photo: dict[str, Any]) -> str | None:
-    """The photo's original subject, so a window showing it is not read as a weed."""
+    """The photo's original subject, so a window showing it is not read as a weed.
+
+    A watchlist target is never its own comparison: reference photos would score zero.
+    """
+    if photo.get("original_taxon") in SPECIES:
+        return None
     names = [photo.get("original_taxon", ""), photo.get("original_common_name", "")]
     return ", ".join(name for name in names if name) or None
 

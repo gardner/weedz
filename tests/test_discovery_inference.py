@@ -92,3 +92,9 @@ def test_subject_label_uses_taxon_and_optional_common_name() -> None:
         {"original_taxon": "Australopacifica garveyi", "original_common_name": ""}
     ) == ("Australopacifica garveyi")
     assert subject_label({"original_taxon": "", "original_common_name": ""}) is None
+
+
+def test_a_watchlist_subject_is_not_compared_against_itself() -> None:
+    # Reference photos are labelled with the target; comparing it with itself zeroes the margin.
+    photo = {"original_taxon": "Ulex europaeus", "original_common_name": "gorse"}
+    assert subject_label(photo) is None
