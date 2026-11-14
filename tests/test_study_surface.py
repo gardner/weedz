@@ -109,6 +109,22 @@ def test_cli_records_a_version_links_it_and_shows_it(
     assert shown["change_note"] == "New partner"
 
 
+def test_cli_never_replaces_a_study_linked_since_it_looked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pilot(tmp_path)
+    source = tmp_path / "study.json"
+    source.write_text(json.dumps(definition()))
+    args = ["study", "--run", "run", "--pilot-dir", str(tmp_path), "--file", str(source)]
+    with pytest.raises(SystemExit, match="no study yet"):
+        cli.main([*args, "--author", "Ana", "--base-version", "2"])
+    cli.main([*args, "--author", "Ana"])
+    # Someone else links a study between the CLI's read and its write.
+    monkeypatch.setattr(cli, "run_study", lambda store, run_id: None)
+    with pytest.raises(SystemExit, match="already has study"):
+        cli.main([*args, "--author", "Ben"])
+
+
 def test_cli_needs_an_author_to_record_and_refuses_an_invalid_file(tmp_path: Path) -> None:
     pilot(tmp_path)
     source = tmp_path / "study.json"

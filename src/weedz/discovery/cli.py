@@ -27,7 +27,13 @@ from weedz.discovery.records import TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
 from weedz.discovery.store import Store
 from weedz.discovery.study import StudyDefinition, StudyEdit
-from weedz.discovery.study_store import StaleVersion, link_study, run_study, save_version
+from weedz.discovery.study_store import (
+    AlreadyLinked,
+    StaleVersion,
+    create_linked,
+    run_study,
+    save_version,
+)
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 
@@ -187,6 +193,10 @@ def _record_study(store: Store, args: argparse.Namespace) -> None:
             f"This run's study is at version {linked['version']}. Check your file is based "
             f"on it, then pass --base-version {linked['version']}"
         )
+    if not linked and args.base_version:
+        raise SystemExit(
+            "This run has no study yet; record its first version without --base-version"
+        )
     edit = StudyEdit(
         definition=definition,
         author=args.author,
@@ -194,11 +204,13 @@ def _record_study(store: Store, args: argparse.Namespace) -> None:
         change_note=args.note,
     )
     try:
-        saved = save_version(store, linked["id"] if linked else None, edit)
-    except StaleVersion as error:
+        if linked:
+            save_version(store, linked["id"], edit)
+        else:
+            # Linked in the same write, so a study someone linked meanwhile is never replaced.
+            create_linked(store, args.run, edit)
+    except (StaleVersion, AlreadyLinked) as error:
         raise SystemExit(f"Study not recorded: {error}") from error
-    if not linked:
-        link_study(store, args.run, saved["id"], args.author)
 
 
 def study(args: argparse.Namespace) -> None:
