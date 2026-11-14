@@ -13,7 +13,7 @@ from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.outcomes import outcomes
-from weedz.discovery.records import TASK_QUEUE, Audit, Review, RunSpec
+from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.store import Store
 from weedz.discovery.workflows import DiscoveryWorkflow
 
@@ -21,6 +21,29 @@ from weedz.discovery.workflows import DiscoveryWorkflow
 def audit_state(photo_id: str, sample: set[str], *audits: dict[str, dict[str, str]]) -> dict:
     auditors = sorted({name for found in audits for name in found.get(photo_id, {})})
     return {"audit_sample": photo_id in sample, "audited": bool(auditors), "auditors": auditors}
+
+
+def _names_suggestion(record: Finding, suggestion: str) -> bool:
+    """Whether a correction repeats the suggestion, by key or by typed name."""
+    if record.species is not None:
+        return record.species == suggestion
+    typed = (record.other_taxon or "").casefold()
+    return typed in {suggestion.casefold(), SPECIES.get(suggestion, "").casefold()}
+
+
+def check_finding(scores: dict, record: Finding) -> None:
+    """A correction must differ from the suggestion; a box must fit the screened image."""
+    suggestion: str = scores.get("best_species") or ""
+    if record.kind == "correction" and not suggestion:
+        raise HTTPException(409, "No suggestion to correct; record a missed plant instead")
+    if record.kind == "correction" and _names_suggestion(record, suggestion):
+        raise HTTPException(409, "That is the suggested species; use Species visible instead")
+    if record.box is None:
+        return
+    if not (scores.get("width") and scores.get("height")):
+        raise HTTPException(409, "Image size is unknown until screening; record without a box")
+    if record.box[2] > scores["width"] or record.box[3] > scores["height"]:
+        raise HTTPException(422, "The box extends beyond the image")
 
 
 class ReviewAPI:
@@ -88,9 +111,7 @@ class ReviewAPI:
         return outcomes(export(self.store, run_id))
 
     def image(self, run_id: str, photo_id: str) -> FileResponse:
-        photo = next((item for item in self.store.photos(run_id) if item["id"] == photo_id), None)
-        if photo is None:
-            raise HTTPException(404, "Photo not found")
+        photo = self.photo(run_id, photo_id)
         path = (self.store.root / photo["image_path"]).resolve()
         if not path.is_relative_to(self.store.root / "images") or not path.is_file():
             raise HTTPException(404, "Image not available")
@@ -121,10 +142,24 @@ class ReviewAPI:
         )
         return {"saved": True}
 
-    def history(self, run_id: str, photo_id: str) -> list[dict]:
-        if not any(photo["id"] == photo_id for photo in self.store.photos(self.run(run_id)["id"])):
+    def photo(self, run_id: str, photo_id: str) -> dict:
+        photos = self.store.photos(self.run(run_id)["id"])
+        photo = next((item for item in photos if item["id"] == photo_id), None)
+        if photo is None:
             raise HTTPException(404, "Photo not found")
+        return photo
+
+    def history(self, run_id: str, photo_id: str) -> list[dict]:
+        self.photo(run_id, photo_id)
         return self.store.reviews(run_id, photo_id)
+
+    def record_finding(self, run_id: str, photo_id: str, record: Finding) -> dict:
+        check_finding(self.photo(run_id, photo_id)["scores"], record)
+        self.store.finding(run_id, photo_id, record)
+        return {"saved": True}
+
+    def findings(self, run_id: str, photo_id: str) -> list[dict]:
+        return self.photo(run_id, photo_id)["findings"]
 
 
 def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
@@ -139,4 +174,6 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.post("/runs/{run_id}/photos/{photo_id}/review")(api.review)
     app.get("/runs/{run_id}/photos/{photo_id}/reviews")(api.history)
     app.post("/runs/{run_id}/photos/{photo_id}/audit")(api.audit)
+    app.post("/runs/{run_id}/photos/{photo_id}/findings")(api.record_finding)
+    app.get("/runs/{run_id}/photos/{photo_id}/findings")(api.findings)
     return app

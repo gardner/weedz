@@ -100,6 +100,18 @@ try {
     positional_accuracy_m: 10,
     attribution: "Test fixture",
     source_url: "https://www.inaturalist.org/observations/1",
+    findings: [
+      {
+        id: 1,
+        kind: "addition",
+        species: null,
+        other_taxon: "Clematis paniculata",
+        box: [1, 1, 5, 5],
+        note: "Native, in flower",
+        reviewer: "Ben",
+        created_at: "2026-11-13T20:00:00+00:00",
+      },
+    ],
   });
   const posted = [];
   let photos = [photo("a", "unreviewed"), photo("b", "rejected")];
@@ -118,6 +130,11 @@ try {
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.locator(".photo-row").nth(1).waitFor();
   await page.locator(".run-settings summary").click();
+  // Audit the finding form open, with its free-text field and a box error showing.
+  await page.getByRole("button", { name: "Record a different or missed plant" }).click();
+  await page.getByLabel("Species", { exact: true }).selectOption("other");
+  await page.getByLabel("Left", { exact: true }).fill("5");
+  await page.getByText("Enter all four edges").waitFor();
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

@@ -104,3 +104,43 @@ class Audit(BaseModel):
         if value not in {*SPECIES, "none", "unsure"}:
             raise ValueError("Finding must be a watchlist species, 'none' or 'unsure'")
         return value
+
+
+OtherTaxon = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+PixelBox = tuple[
+    Annotated[float, Field(ge=0)],
+    Annotated[float, Field(ge=0)],
+    Annotated[float, Field(ge=0)],
+    Annotated[float, Field(ge=0)],
+]
+
+
+class Finding(BaseModel):
+    """A plant a reviewer sees: a different species from the suggestion, or one it missed.
+
+    The species is a watchlist key or verbatim free text, never mapped between the two.
+    """
+
+    kind: Literal["correction", "addition"]
+    species: str | None = None
+    other_taxon: OtherTaxon | None = None
+    # Visible extent in original image pixels: left, top, right, bottom.
+    box: PixelBox | None = None
+    reviewer: ReviewerName
+    note: str = Field(default="", max_length=4000)
+    effort_seconds: float | None = Field(default=None, ge=0, le=86_400)
+
+    @field_validator("species")
+    @classmethod
+    def watchlist_species(cls, value: str | None) -> str | None:
+        if value is not None and value not in SPECIES:
+            raise ValueError("Species must be a watchlist species; use other_taxon otherwise")
+        return value
+
+    @model_validator(mode="after")
+    def one_identification_and_ordered_box(self) -> "Finding":
+        if (self.species is None) == (self.other_taxon is None):
+            raise ValueError("Give exactly one of a watchlist species or another taxon")
+        if self.box and not (self.box[0] < self.box[2] and self.box[1] < self.box[3]):
+            raise ValueError("A box needs left < right and top < bottom")
+        return self

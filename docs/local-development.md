@@ -142,8 +142,8 @@ intended for local development, not shared public hosting.
    scores. An audit counts as blind only if it is that auditor's first answer
    for the photo, and nobody reviewed the photo before it without having audited
    it first. The app lets a sampled photo be reviewed only after the reviewer's
-   own audit, so any other earlier review (for example, one made before the
-   audit sample existed) means the suggestion may have been seen. Other audits
+   own audit, so any other earlier review or recorded finding (for example, one
+   made before the audit sample existed) means the suggestion may have been seen. Other audits
    are left out of the findings and reported as `not_blind`, and the audit view
    disables the answers once you have audited a photo. Simply opening a photo is
    not recorded, so viewing outside this workflow cannot be detected. The
@@ -158,6 +158,30 @@ intended for local development, not shared public hosting.
    low. The
    API export includes current decisions and site-visit groups, while the completion manifest records
    the state at screening completion.
+6. **Record a different or missed plant.** In the evidence panel, *Record a
+   different or missed plant* opens a form for a structured finding, kept apart
+   from the reviewer's decision and from blind audits. A finding is a
+   *correction* (the plant is a different species from the suggestion; only
+   offered when there is a suggestion, and never the suggested species itself,
+   whether picked or typed by its scientific or common name)
+   or an *addition* (a plant the screening didn't suggest). It names one
+   watchlist species or an other taxon typed as free text. Free text is stored
+   verbatim and never mapped to a watchlist species, even when it reads "gorse".
+   An optional box marks the plant's visible extent in original image pixels.
+   Drag on the photo to draw it, or type its left, top, right and bottom edges,
+   which works without a pointer. The box must fit the screened image, so it
+   cannot be added before screening has measured the image. Findings are
+   append-only, attributed and timed like decisions, and listed under the
+   photo with their boxes drawn as solid outlines (the model's search window
+   stays dashed). Each photo in the run detail and export carries its
+   `findings`. Time spent before a finding is saved belongs to that finding:
+   `review_effort` totals include it, and it is reported apart from decisions
+   (`minutes_by_finding_kind`, `measured_findings`, `unmeasured_findings`,
+   `unmeasured_incidental_findings`). An untimed incidental finding also
+   withholds the per-photo rate.
+   `GET` and `POST /runs/{run}/photos/{photo}/findings` read and append them.
+   A box is a reviewer's outline, not a segmentation, and nothing can be edited
+   or withdrawn yet.
 
 Acquisition, screening and export are separate Temporal activities, each with
 timeouts, heartbeats and up to three attempts. Query snapshots and cached photos
@@ -223,7 +247,7 @@ Everything generated is ignored by Git:
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
 | `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, pinned model, weights, library versions, preprocessing and window geometry; safe to delete |
 | `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
-| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions and review events |
+| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits and findings |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 
@@ -237,8 +261,8 @@ Obscured, missing or undated records, and photos with unknown positional
 accuracy or accuracy over 250 m, never link, so groups can be too small but are never invented. These
 photos show “Site visit unknown” and are counted as “could not be grouped”,
 never as independent visits. “Species visible” is a local reviewer decision about the suggested
-species in a photo; it does not verify a new locality. Notes can record alternative
-identifications; a structured corrected-species annotation is a subsequent step.
+species in a photo; it does not verify a new locality. Corrected species and missed
+plants are recorded as structured findings (see step 6), not inferred from notes.
 There is no gold dataset or measured discovery yield until independent reviews
 and a low-ranked-photo audit are completed.
 
@@ -266,6 +290,9 @@ placeholders. It also makes a review decision by
 keyboard alone, checking that the focused control is visibly marked. Muted text
 colours were darkened within their hue to at least 4.5:1 contrast after the
 first audit found 42 failures.
+The findings check records a corrected and a missed plant, drawing one box by
+dragging on the photo and typing another by keyboard, and the accessibility
+check audits the finding form open with a box error showing.
 The smoke check is read-only against a completed local pilot and verifies filters,
 source-image loading, window toggling, export and mobile layout.
 

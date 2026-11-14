@@ -24,7 +24,7 @@ export default function AuditPanel({
   summary?: AuditSummary;
   reviewer: string;
   onReviewerChange: (name: string) => void;
-  onSave: (finding: string, note: string) => Promise<void>;
+  onSave: (finding: string, note: string) => Promise<unknown>;
   saving: boolean;
 }) {
   const [note, setNote] = useState("");
