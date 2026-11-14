@@ -271,6 +271,52 @@ def test_rgb_and_nir_products_of_one_survey_are_distinct_collections() -> None:
     ]
 
 
+def test_absolute_child_links_are_matched_on_their_path() -> None:
+    base = "https://example.test/imagery"
+    absolute = {
+        "links": [
+            {"rel": "child", "href": f"{base}/tasman/tasman_2020_0.3m/rgb/2193/collection.json"},
+            {"rel": "child", "href": f"{base}/otago/otago_2020_0.3m/rgb/2193/collection.json"},
+        ]
+    }
+    links = assess.candidate_links(absolute, ("nelson", "tasman"))
+    assert [link["href"].split("/")[-4] for link in links] == ["tasman_2020_0.3m"]
+
+
+@pytest.mark.parametrize(
+    "href",
+    [
+        "./tasman/tasman_2020_0.3m/rgb/2193/collection.json",
+        "https://example.test/imagery/tasman/tasman_2020_0.3m/rgb/2193/collection.json",
+    ],
+)
+def test_collection_and_capture_area_links_resolve_relative_or_absolute(
+    href: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import httpx
+
+    catalog_url = "https://example.test/imagery/catalog.json"
+    collection_url = "https://example.test/imagery/tasman/tasman_2020_0.3m/rgb/2193/collection.json"
+    area_url = collection_url.replace("collection.json", "capture-area.geojson")
+    raw = collection(
+        **{"linz:slug": "tasman_2020_0.3m"},
+        assets={"capture_area": {"href": "./capture-area.geojson"}},
+    )
+    responses = {
+        catalog_url: {"links": [{"rel": "child", "href": href}]},
+        collection_url: raw,
+        area_url: {"type": "Feature", "geometry": SQUARE},
+    }
+    transport = httpx.MockTransport(
+        lambda request: httpx.Response(200, json=responses[str(request.url)])
+    )
+    monkeypatch.setattr(assess, "REQUEST_PAUSE_S", 0)
+    with httpx.Client(transport=transport) as client:
+        found = assess._collections(client, catalog_url)
+    assert [item["slug"] for item, _ in found] == ["tasman_2020_0.3m"]
+    assert found[0][1]["geometry"] == SQUARE
+
+
 @pytest.mark.parametrize(("start", "end"), [("2024-12-06", None), (None, "2025-03-27")])
 def test_a_half_open_capture_window_is_unknown_timing_not_a_crash(
     start: str | None, end: str | None

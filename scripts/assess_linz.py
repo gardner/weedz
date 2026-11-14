@@ -22,6 +22,7 @@ import time
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -47,7 +48,8 @@ def candidate_links(catalog: Json, regions: tuple[str, ...]) -> list[Json]:
 
 
 def _is_candidate(href: str, regions: tuple[str, ...]) -> bool:
-    filed_under, slug = href.split("/")[1:3]
+    # Children end <region>/<slug>/<bands>/<crs>/collection.json, relative or absolute.
+    filed_under, slug = urlparse(href).path.split("/")[-5:-3]
     return filed_under in (NATIONAL, *regions) or any(region in slug for region in regions)
 
 
@@ -221,13 +223,11 @@ def _fetch(client: httpx.Client, url: str) -> Json:
 
 
 def _collections(client: httpx.Client, catalog_url: str) -> list[tuple[Json, Json]]:
-    base = catalog_url.rsplit("/", 1)[0]
     found = []
     for link in candidate_links(_fetch(client, catalog_url), ("nelson", "tasman")):
-        url = f"{base}/{link['href'].removeprefix('./')}"
+        url = urljoin(catalog_url, link["href"])
         raw = _fetch(client, url)
-        area_href = raw["assets"]["capture_area"]["href"].removeprefix("./")
-        area = _fetch(client, f"{url.rsplit('/', 1)[0]}/{area_href}")
+        area = _fetch(client, urljoin(url, raw["assets"]["capture_area"]["href"]))
         found.append((parse_collection(raw, link), area))
     return found
 
