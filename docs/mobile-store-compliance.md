@@ -366,7 +366,7 @@ preparing reports, is not collected and is not declared as such.
 | Location: **Precise location** | **Yes** | **See note** | Yes: per report, the person chooses | No | App functionality | Exact EXIF coordinates and accuracy of the photo. |
 | Photos and videos: **Photos** | Yes | See note | Yes | No | App functionality | Cropped image only, with consent and a licence. |
 | Personal info: **Name** | Yes | See note | Yes | No | App functionality | Optional credit name. |
-| Personal info: **User IDs** | Yes | No | Yes: sent only with an approved report | No | App functionality, Fraud prevention, security and compliance | Submitter token: authentication, revocation, per-submitter abuse limits. See the Apple section for why this is not a device ID. |
+| Personal info: **User IDs** | Yes | No | Yes: sent only with an approved report | No | App functionality, Account management, Fraud prevention, security and compliance | Submitter token: authentication (Account management covers verifying credentials), revocation, per-submitter abuse limits. See the Apple section for why this is not a device ID. |
 | App activity: **Other user-generated content** | Yes | See note | Yes: sent only when a report is approved | No | App functionality | The report: taxon, score, capture time, model ids, consent. |
 | App info and performance | No | — | — | — | — | No crash or analytics SDK. Re-check if one is added. |
 | Device or other IDs | No | — | — | — | — | — |
