@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from intake_helpers import new_id, report
 from test_intake_concurrency import token
@@ -67,3 +68,30 @@ def test_pending_upload_can_be_withdrawn_even_at_its_daily_limit(tmp_path: Path)
     headers = {"Authorization": f"Bearer {secret}"}
     assert client.delete(f"/reports/{report_id}", headers=headers).status_code == 200
     assert client.put(f"/reports/{report_id}", json=report(), headers=headers).status_code == 410
+
+
+def test_a_completed_image_budget_refusal_cannot_decode_for_free(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from intake_helpers import jpeg, with_image
+
+    from weedz.intake.images import clean_image
+
+    decoded: list[int] = []
+
+    def count(data: bytes, max_pixels: int) -> bytes:
+        decoded.append(1)
+        return clean_image(data, max_pixels)
+
+    monkeypatch.setattr("weedz.intake.api.clean_image", count)
+    client = TestClient(
+        create_intake_app(tmp_path, Limits(reports_per_day=1, image_bytes_per_day=1))
+    )
+    headers = {"Authorization": f"Bearer {token(tmp_path)}"}
+    path, body = f"/reports/{new_id()}", with_image(jpeg())
+    assert client.put(path, json=body, headers=headers).status_code == 429
+    assert decoded == [1]
+    assert client.put(path, json=body, headers=headers).status_code == 429
+    assert decoded == [1], "A completed refusal must spend its report charge"
+    assert client.put(path, json=report(), headers=headers).status_code == 429
