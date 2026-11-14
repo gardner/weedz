@@ -231,6 +231,80 @@ unresolved. Re-run the command in the summary once the sample has been audited. 
 over labelled photos per budget. Unlabelled photos are counted separately, never
 as false alarms.
 
+### Optimised models: does a smaller model still find the same weeds?
+
+A phone cannot run BioCLIP 2 as the server does
+([#51](https://github.com/gardner/weedz/issues/51)), and any model small
+enough to fit changes the scores
+([#52](https://github.com/gardner/weedz/issues/52)). Only the image tower needs
+to be on the phone. The prompts are fixed, so the server can embed them once
+and ship a table of 16 vectors.
+
+`scripts/compare_optimised.py` checks each candidate image tower against the
+BioCLIP 2 fp32 reference. It uses the same photos and the same revision 4
+windows. Each photo's windows are pre-processed once, and every candidate
+encodes them in its own process. The candidate's window similarities are then
+scored against the reference's text embeddings and read the way a run reads
+them. `weedz.discovery.parity` reports where the candidate disagrees with the
+reference and applies fixed, versioned thresholds (version 1). Each threshold
+has a reason written next to it, and the limits were set before the first run:
+
+| Check | Limit | Why |
+| --- | --- | --- |
+| Largest change in any photo's margin for any weed | 0.01 | BioCLIP 2's only incidental candidate is at +0.009; its weakest reference at +0.051 |
+| Top-suggestion changes that are not near-ties | 0 | With every margin within 0.01, only margins within 0.02 of each other can swap |
+| Reference photos no longer found as their weed | 0 | Every pilot reference is found by both pinned models |
+| Lookalikes newly beating every comparison as their weed | 0 | Rejecting lookalikes is why BioCLIP 2 became the default (#14) |
+| Photos swapped in the incidental review queue, per budget (5, 10, 20) | 1 | Most incidental margins are negative and close together |
+
+Size, memory and time are reported, not gated. What a phone can afford depends
+on the platform (#50).
+
+On 14 November 2026 the 30 pilot photos and 39 lookalike photos were measured
+on an AMD Ryzen 9 9950X with 4 threads
+([summary](../benchmarks/optimised-model-parity.json)). The table shows median
+encoding time per photo (about 7 windows):
+
+| Image tower | Size | Peak memory | Seconds per photo | Parity |
+| --- | --- | --- | --- | --- |
+| BioCLIP 2, PyTorch fp32 (reference, what runs use) | 1216 MB | 1856 MB | 2.88 | — |
+| BioCLIP 2, ONNX fp32 | 1216 MB | 2217 MB | 1.12 | **Kept**: margins within 0.000002 |
+| BioCLIP 2, fp16 | 608 MB | 1110 MB | 8.07 | **Kept**: margins within 0.0006 |
+| BioCLIP 2, ONNX dynamic int8 (per tensor) | 306 MB | 897 MB | 0.46 | Failed |
+| BioCLIP 2, ONNX dynamic int8 (per channel) | 308 MB | 836 MB | 0.47 | Failed |
+| BioCLIP ViT-B/16, fp32 (smaller tower) | 345 MB | 877 MB | 0.62 | Failed |
+| BioCLIP ViT-B/16, ONNX dynamic int8 | 87 MB | 438 MB | 0.10 | Failed |
+
+What this shows:
+
+- **fp16 keeps BioCLIP 2's behaviour at half the size.** Every top suggestion,
+  queue and lookalike outcome is unchanged. It is slow here only because this
+  desktop CPU has no fast fp16 arithmetic. Phone neural engines and GPUs are
+  built for fp16, but that speed has to be measured on a phone.
+- **ONNX export on its own is exact**, and on this CPU onnxruntime encodes 2.6×
+  faster than PyTorch. It saves no space, though.
+- **Dynamic int8 is 4× smaller and about 6× faster here, but it changes what
+  the screen says.** Margins move by up to 0.08 (median 0.007). Two native
+  lookalikes (a *Clematis forsteri* and an *Austroderia* toetoe) newly beat
+  every comparison as the weed they resemble, and the top 20 of the incidental
+  queue swaps two photos (one per budget with per-channel weights). All 9–11
+  changed top suggestions were near-ties, and no reference was lost. Plain
+  dynamic int8 of the whole tower is not safe to ship. Gentler int8 schemes are
+  untested here.
+- **The smaller BioCLIP tower is a different model, not an optimisation.** It
+  lets 17 of 39 lookalikes beat every comparison as their weed, against 3 for
+  BioCLIP 2, and reorders the queue, as #14 found.
+  The harness fails it on every check except references, which shows it catches
+  a real regression.
+
+What it cannot show: phone latency, memory, battery or heat. Desktop CPU numbers
+are not phone numbers, and conversion to Core ML, TFLite or ExecuTorch is
+deferred to the platform choice (#50). Parity means agreeing with the reference
+on 69 source-labelled photos. It is not accuracy, and a candidate that agrees
+here can still diverge on other photos. On a phone, the per-photo
+original-subject comparison is also absent, because a phone photo has no source
+taxon. That changes the ranking itself and needs its own check.
+
 ### Source suitability
 
 `uv run main.py suitability --run nelson-tasman-3e62ad801459`
