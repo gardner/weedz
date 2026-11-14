@@ -220,7 +220,7 @@ class Screener:
         if cache is not None and cache.exists():
             try:
                 cached = np.load(cache, allow_pickle=False)
-                if cached.ndim == 2 and len(cached) == len(boxes):
+                if cached.shape == (len(boxes), self.text.shape[1]):
                     return self.torch.from_numpy(cached), "hit"
             except (OSError, ValueError, EOFError):
                 pass  # Corrupt or partial entries are recomputed, never trusted.

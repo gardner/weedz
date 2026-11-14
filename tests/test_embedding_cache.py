@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 import torch
 from PIL import Image
@@ -130,4 +131,16 @@ def test_same_count_window_geometry_change_misses_the_cache(tmp_path: Path, monk
     monkeypatch.setattr(inference, "region_boxes", shifted)
     moved, encoder = screener(cache)
     assert moved.screen(photo(tmp_path))["embedding_cache"] == "miss"
+    assert encoder.image_calls == 1
+
+
+def test_cached_embeddings_of_the_wrong_width_are_recomputed(tmp_path: Path) -> None:
+    cache = tmp_path / "cache"
+    first, _ = screener(cache)
+    first.screen(photo(tmp_path))
+    for entry in cache.glob("*.npy"):
+        rows = len(np.load(entry))
+        np.save(entry, np.zeros((rows, 7), dtype=np.float32))
+    again, encoder = screener(cache)
+    assert again.screen(photo(tmp_path))["embedding_cache"] == "miss"
     assert encoder.image_calls == 1
