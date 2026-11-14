@@ -87,33 +87,41 @@ void main() {
 
     test('a licence without image consent, or image consent without one', () {
       expect(
-        () => Consent(wordingVersion: 'v1', image: false, licence: 'cc0'),
+        () => Consent(wordingVersion: '2026-11', image: false, licence: 'cc0'),
         throwsArgumentError,
       );
       expect(
-        () => Consent(wordingVersion: 'v1', image: true),
+        () => Consent(wordingVersion: '2026-11', image: true),
         throwsArgumentError,
       );
     });
 
     test('a licence the collection does not admit', () {
       expect(
-        () => Consent(wordingVersion: 'v1', image: true, licence: 'cc-by-sa'),
+        () => Consent(
+          wordingVersion: '2026-11',
+          image: true,
+          licence: 'cc-by-sa',
+        ),
         throwsArgumentError,
       );
     });
 
     test('a blank or overlong credit, and trims the rest', () {
       expect(
-        () => Consent(wordingVersion: 'v1', image: false, credit: '   '),
+        () => Consent(wordingVersion: '2026-11', image: false, credit: '   '),
         throwsArgumentError,
       );
       expect(
-        () => Consent(wordingVersion: 'v1', image: false, credit: 'x' * 81),
+        () => Consent(
+          wordingVersion: '2026-11',
+          image: false,
+          credit: 'x' * 81,
+        ),
         throwsArgumentError,
       );
       final consent = Consent(
-        wordingVersion: 'v1',
+        wordingVersion: '2026-11',
         image: false,
         credit: ' A ',
       );
@@ -130,12 +138,57 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test('a location without location consent, and consent without one', () {
+      final point = fullReport().location;
+      expect(
+        () => minimalReport().copyWith(location: point),
+        throwsArgumentError,
+      );
+      expect(
+        () => minimalReport().copyWith(
+          consent: minimalReport().consent.copyWith(location: true),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('an unpublished consent wording', () {
+      expect(
+        () => Consent(wordingVersion: 'consent-2099-01', image: false),
+        throwsArgumentError,
+      );
+    });
+
+    test('photo uses need review, are known, and need a photo', () {
+      Consent photo(Set<String> uses) => Consent(
+        wordingVersion: '2026-11',
+        image: true,
+        uses: uses,
+        licence: 'cc-by-nc',
+      );
+      expect(() => photo({'training'}), throwsArgumentError);
+      expect(() => photo({'review', 'advertising'}), throwsArgumentError);
+      expect(
+        () => Consent(
+          wordingVersion: '2026-11',
+          image: false,
+          uses: {'review'},
+        ),
+        throwsArgumentError,
+      );
+      expect(photo({'training', 'review'}).toJson()['uses'], [
+        'review',
+        'training',
+      ]);
+    });
   });
 
   group('Removing details before approval (#56)', () {
-    test('withoutLocation drops the location and nothing else', () {
+    test('withoutLocation drops the location and its consent', () {
       final report = fullReport().withoutLocation();
       expect(report.location, isNull);
+      expect(report.consent.location, isFalse);
       expect(report.image, fullReport().image);
     });
 
@@ -153,6 +206,8 @@ void main() {
       expect(report.consent.image, isFalse);
       expect(report.consent.licence, isNull);
       expect(report.consent.credit, fullReport().consent.credit);
+      expect(report.consent.uses, isEmpty);
+      expect(report.consent.location, isTrue);
       expect(report.location, fullReport().location);
     });
   });

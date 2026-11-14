@@ -110,3 +110,15 @@ def test_a_located_report_keeps_its_location_consent_and_exact_point(tmp_path: P
     assert stored.report.consent.location is True
     assert stored.report.location is not None
     assert (stored.report.location.latitude, stored.report.location.longitude) == (-41.27, 173.28)
+
+
+def test_a_retry_listing_the_same_uses_in_another_order_is_the_same_report(
+    tmp_path: Path,
+) -> None:
+    client, headers = setup(tmp_path)
+    path = f"/reports/{new_id()}"
+    crop = jpeg()
+    first = with_image(crop, uses=["training", "review", "agencies"])
+    retry = with_image(crop, uses=["agencies", "review", "training"])
+    assert client.put(path, json=first, headers=headers).status_code == 201
+    assert client.put(path, json=retry, headers=headers).status_code == 200

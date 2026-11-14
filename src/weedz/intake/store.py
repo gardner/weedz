@@ -52,7 +52,8 @@ class Receipt:
     withdrawn_at: str | None
     image: bool
     # What the person agreed to, kept after withdrawal: the wording and the photo's uses.
-    # None and [] only for a report stored before consent was recorded (#60).
+    # None and [] for an id withdrawn before it arrived, or stored before consent was
+    # recorded (#60).
     consent_version: str | None
     uses: list[str]
 
@@ -172,11 +173,13 @@ class ReportStore:
             row = _row(db, submitter, report_id)
             if row is None and before_arrival:
                 now = _now()
+                # Never received, so nothing was agreed: no consent is recorded.
                 db.execute(
-                    "INSERT INTO reports VALUES(?,?,?,NULL,NULL,NULL,?)",
+                    "INSERT INTO reports(submitter, report_id, received_at, withdrawn_at) "
+                    "VALUES(?,?,?,?)",
                     (submitter, report_id, now, now),
                 )
-                return Receipt(report_id, "withdrawn", now, now, False)
+                return Receipt(report_id, "withdrawn", now, now, False, None, [])
             if row is None:
                 return None
             if row["image_file"]:

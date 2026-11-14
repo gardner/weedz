@@ -105,6 +105,7 @@ void main() {
       final report = minimalReport().copyWith(
         location: metadata.reportLocation,
         capturedAt: metadata.reportCapturedAt,
+        consent: minimalReport().consent.copyWith(location: true),
       );
       final fixture =
           jsonDecode(fixtureJson('report_v1.json')) as Map<String, Object?>;

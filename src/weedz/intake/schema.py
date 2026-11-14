@@ -16,6 +16,7 @@ from pydantic import (
     ConfigDict,
     Field,
     StringConstraints,
+    field_serializer,
     field_validator,
     model_validator,
 )
@@ -84,6 +85,11 @@ class Consent(Part):
     # The cropped image's licence: one the collection admits, and only with image consent.
     licence: str | None = None
     credit: Credit | None = None
+
+    @field_serializer("uses")
+    def sorted_uses(self, uses: frozenset[str]) -> list[str]:
+        """Sorted, so a retry's digest does not depend on the process's hash seed."""
+        return sorted(uses)
 
     @field_validator("wording_version")
     @classmethod
