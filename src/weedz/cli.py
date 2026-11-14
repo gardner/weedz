@@ -35,6 +35,11 @@ def main() -> None:
 
         discovery_main(sys.argv[1:])
         return
+    if len(sys.argv) > 1 and sys.argv[1] == "release":
+        from weedz.release_cli import main as release_main
+
+        release_main(sys.argv[2:])
+        return
     parser = argparse.ArgumentParser(description="Leafy Spurge baseline and offline review map")
     parser.add_argument("command", nargs="?", choices=("fetch", "run"), default="run")
     parser.add_argument("--data-dir", type=Path, default=Path("data/leafy-spurge"))

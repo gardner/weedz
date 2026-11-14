@@ -18,16 +18,20 @@ def _unique(samples: list[Sample]) -> list[Sample]:
     return samples
 
 
-def write_manifest(path: Path, samples: Iterable[Sample]) -> str:
-    """Write the samples atomically and return the manifest's SHA-256."""
+def manifest_bytes(samples: Iterable[Sample]) -> bytes:
+    """The exact bytes `write_manifest` writes, so a digest can be known before writing."""
     rows = _unique(list(samples))
-    content = "".join(sample.model_dump_json() + "\n" for sample in rows).encode("utf-8")
+    return "".join(sample.model_dump_json() + "\n" for sample in rows).encode("utf-8")
+
+
+def write_atomic(path: Path, content: bytes) -> None:
+    """Replace `path` with `content` so a reader never sees a partly written file."""
     # A unique temporary file in the same directory, so concurrent writers never share one.
     # O_EXCL keeps the temporary file unique per writer; mode 0o666 lets the kernel apply
     # the umask, so nothing reads or changes the process-wide umask.
     temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}")
     # O_BINARY (Windows only; 0 elsewhere) stops text mode turning "\n" into "\r\n",
-    # which would make the file differ from the checksum returned below.
+    # which would make the file differ from any checksum of `content`.
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
     descriptor = os.open(temporary, flags, 0o666)
     try:
@@ -37,6 +41,12 @@ def write_manifest(path: Path, samples: Iterable[Sample]) -> str:
     except BaseException:
         temporary.unlink(missing_ok=True)
         raise
+
+
+def write_manifest(path: Path, samples: Iterable[Sample]) -> str:
+    """Write the samples atomically and return the manifest's SHA-256."""
+    content = manifest_bytes(samples)
+    write_atomic(path, content)
     return hashlib.sha256(content).hexdigest()
 
 
