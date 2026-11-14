@@ -5,6 +5,7 @@ segmentation mask or a localized plant boundary. No threshold is calibrated yet.
 """
 
 import hashlib
+import io
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -13,6 +14,8 @@ from PIL import Image, ImageOps
 
 from weedz.discovery.records import SPECIES
 
+# Bump when window geometry or image decoding changes, so cached embeddings are not reused.
+WINDOW_REVISION = 1
 MODEL = "imageomics/bioclip"
 REVISION = "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c"
 LOOKALIKES = [
@@ -106,7 +109,14 @@ def prompt(label: str) -> str:
 
 
 class Screener:
-    def __init__(self, model: Encoder, transform: Any, tokenizer: Any, weights_sha256: str) -> None:
+    def __init__(
+        self,
+        model: Encoder,
+        transform: Any,
+        tokenizer: Any,
+        weights_sha256: str,
+        cache_dir: Path | None = None,
+    ) -> None:
         import torch
 
         self.torch = torch
@@ -117,6 +127,9 @@ class Screener:
         self.labels = [f"{name}, {common}" for name, common in SPECIES.items()] + COMPARISONS
         self.prompts = [prompt(label) for label in self.labels]
         self.text = self.encode_text(self.prompts)
+        self.cache_dir = cache_dir
+        self.weights_sha256 = weights_sha256
+        self.preprocessing_sha256 = hashlib.sha256(repr(transform).encode()).hexdigest()
         self.metadata = {
             "model": MODEL,
             "revision": REVISION,
@@ -133,10 +146,15 @@ class Screener:
             ),
             "calibrated": False,
             "segmentation": False,
+            "embedding_cache": {
+                "key": "sha256(image bytes, weights, preprocessing, window revision)",
+                "window_revision": WINDOW_REVISION,
+                "preprocessing_sha256": self.preprocessing_sha256,
+            },
         }
 
     @classmethod
-    def load(cls) -> "Screener":
+    def load(cls, cache_dir: Path | None = None) -> "Screener":
         # Heavy libraries are deliberately outside deterministic Temporal workflow imports.
         import open_clip
         import torch
@@ -155,11 +173,43 @@ class Screener:
         )
         model, _, transform = open_clip.create_model_and_transforms(f"local-dir:{path}")
         weights = hashlib.sha256((path / "open_clip_pytorch_model.bin").read_bytes()).hexdigest()
-        return cls(cast(Encoder, model), transform, open_clip.get_tokenizer("ViT-B-16"), weights)
+        tokenizer = open_clip.get_tokenizer("ViT-B-16")
+        return cls(cast(Encoder, model), transform, tokenizer, weights, cache_dir)
 
     def encode_text(self, prompts: list[str]) -> Any:
         with self.torch.inference_mode():
             return self.model.encode_text(self.tokenizer(prompts), normalize=True)
+
+    def cache_path(self, image_bytes: bytes) -> Path | None:
+        if self.cache_dir is None:
+            return None
+        parts = [
+            hashlib.sha256(image_bytes).hexdigest(),
+            self.weights_sha256,
+            self.preprocessing_sha256,
+            str(WINDOW_REVISION),
+        ]
+        return self.cache_dir / f"{hashlib.sha256('|'.join(parts).encode()).hexdigest()}.npy"
+
+    def window_features(self, image: Image.Image, boxes: list, cache: Path | None) -> tuple:
+        """Normalised window embeddings, reused from disk when the exact inputs match."""
+        if cache is not None and cache.exists():
+            try:
+                cached = np.load(cache, allow_pickle=False)
+                if cached.ndim == 2 and len(cached) == len(boxes):
+                    return self.torch.from_numpy(cached), "hit"
+            except (OSError, ValueError):
+                pass  # Corrupt or partial entries are recomputed, never trusted.
+        batch = self.torch.stack([self.transform(image.crop(box)) for box in boxes])
+        with self.torch.inference_mode():
+            features = self.model.encode_image(batch, normalize=True)
+        if cache is None:
+            return features, "off"
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        temporary = cache.with_suffix(".tmp.npy")
+        np.save(temporary, features.cpu().numpy())
+        temporary.replace(cache)
+        return features, "miss"
 
     def screen(self, path: Path, subject: str | None = None) -> dict[str, Any]:
         torch = self.torch
@@ -168,15 +218,16 @@ class Screener:
         if subject:
             labels.append(subject)
             text = torch.cat([text, self.encode_text([prompt(subject)])])
-        with Image.open(path) as original:
+        image_bytes = path.read_bytes()
+        with Image.open(io.BytesIO(image_bytes)) as original:
             image = ImageOps.exif_transpose(original).convert("RGB")
         boxes = region_boxes(*image.size)
-        batch = torch.stack([self.transform(image.crop(box)) for box in boxes])
+        features, cache_state = self.window_features(image, boxes, self.cache_path(image_bytes))
         with torch.inference_mode():
-            features = self.model.encode_image(batch, normalize=True)
-            scores = (features @ text.T).cpu().numpy()
+            scores = (features.to(text.dtype) @ text.T).cpu().numpy()
         result = summarize_scores(scores, boxes, labels, len(SPECIES))
         result["subject_prompt"] = prompt(subject) if subject else None
+        result["embedding_cache"] = cache_state
         result["window_similarities"] = scores.tolist()
         result["width"], result["height"] = image.size
         return result

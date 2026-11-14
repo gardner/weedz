@@ -112,6 +112,7 @@ Everything generated is ignored by Git:
 | --- | --- |
 | `data/pilot/images/` | Downloaded large photo derivatives; source rights remain attached |
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
+| `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, weights, preprocessing and window revision; safe to delete |
 | `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions and review events |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
