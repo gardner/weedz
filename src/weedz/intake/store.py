@@ -66,7 +66,8 @@ class StoredReport:
 
 
 class ReportStore:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, sqlite_busy_seconds: float = 5) -> None:
+        self.sqlite_busy_seconds = sqlite_busy_seconds
         self.folder = root / "reports"
         self.images = self.folder / "images"
         self.path = self.folder / "reports.sqlite3"
@@ -74,7 +75,7 @@ class ReportStore:
     def _connect(self) -> sqlite3.Connection:
         for folder in (self.folder, self.images):
             folder.mkdir(mode=0o700, parents=True, exist_ok=True)
-        db = tokens.connect_private(self.path, SCHEMA)
+        db = tokens.connect_private(self.path, SCHEMA, self.sqlite_busy_seconds)
         db.execute("PRAGMA secure_delete=ON")
         return db
 

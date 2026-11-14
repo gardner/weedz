@@ -11,8 +11,14 @@ class Limits:
     max_body_bytes: int = 2_000_000
     # The longest gap allowed between parts of a body: a phone that drops off mid-upload
     # must not hold its submitter's turn (and so its retries and withdrawals) for ever, but
-    # a slow, steady upload on weak signal is never cut off.
+    # total body deadline separately bounds even a steady trickle.
     body_idle_seconds: float = 30
+    body_total_seconds: float = 120
+    sqlite_busy_seconds: float = 5
+    submitter_wait_seconds: float = 130
+    # Pre-authentication requests, across all clients of one server process.
+    auth_requests_per_second: float = 100
+    auth_burst: int = 200
     max_image_bytes: int = 1_000_000
     # Checked from the image header before decoding, so a decompression bomb is refused.
     max_pixels: int = 4096 * 4096

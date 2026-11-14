@@ -10,6 +10,7 @@ Nothing here logs or echoes a token.
 import asyncio
 import base64
 import hashlib
+import sqlite3
 import uuid
 from collections.abc import AsyncIterator, Iterator
 from contextlib import contextmanager
@@ -17,6 +18,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from weedz.intake.budget import OverBudget
@@ -104,7 +106,7 @@ class IntakeAPI:
     """Each route acts for the submitter that ``require_submitter`` signed in."""
 
     def __init__(self, root: Path, limits: Limits) -> None:
-        self.store = ReportStore(root)
+        self.store = ReportStore(root, limits.sqlite_busy_seconds)
         self.limits = limits
         # Each submitter's uploads and withdrawals are taken in turn, so the budget is checked
         # against every earlier report before any image is decoded, and a withdrawal never
@@ -118,7 +120,11 @@ class IntakeAPI:
         # and queued uploads are not buffered, as their bodies are not read until their turn.
         async with self._submitting.setdefault(submitter, asyncio.Lock()):
             limits = self.limits
-            body = await read_body(request, limits.max_body_bytes, limits.body_idle_seconds)
+            try:
+                async with asyncio.timeout(limits.body_total_seconds):
+                    body = await read_body(request, limits.max_body_bytes, limits.body_idle_seconds)
+            except TimeoutError as error:
+                raise HTTPException(408, "The report took too long to arrive") from error
             # Parsing, image work and SQLite block, so they run off the event loop.
             receipt, created = await run_in_threadpool(self.accept, submitter, str(report_id), body)
         if created:
@@ -167,16 +173,31 @@ def receipt_missing() -> Receipt:
 def create_intake_app(root: Path, limits: Limits | None = None) -> FastAPI:
     """Every route needs a submitter token. No schema or docs are served: the contract
     is documented in the repository, not advertised by the public endpoint."""
+    limits = limits or Limits()
     app = FastAPI(
         title="Weedz report intake",
-        dependencies=[Depends(require_submitter(Submitters(root)))],
+        dependencies=[Depends(require_submitter(Submitters(root, limits.sqlite_busy_seconds)))],
         openapi_url=None,
         docs_url=None,
         redoc_url=None,
     )
-    api = IntakeAPI(root, limits or Limits())
+    api = IntakeAPI(root, limits)
+    app.add_exception_handler(sqlite3.OperationalError, database_busy)
     api.store.sweep()
     app.put("/reports/{report_id}")(api.put)
     app.get("/reports/{report_id}")(api.get)
     app.delete("/reports/{report_id}")(api.delete)
     return app
+
+
+async def database_busy(request: Request, error: Exception) -> JSONResponse:
+    """SQLite contention is retryable; unrelated database failures remain errors."""
+    if not isinstance(error, sqlite3.OperationalError) or (
+        getattr(error, "sqlite_errorcode", 0) & 0xFF
+    ) not in {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED}:
+        raise error
+    return JSONResponse(
+        {"detail": "The intake database is busy; retry shortly"},
+        status_code=503,
+        headers={"Retry-After": "1"},
+    )

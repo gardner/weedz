@@ -35,11 +35,12 @@ class Credential:
 
 
 class Submitters:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, sqlite_busy_seconds: float = 5) -> None:
+        self.sqlite_busy_seconds = sqlite_busy_seconds
         self.path = root / "submitters.sqlite3"
 
     def _connect(self) -> sqlite3.Connection:
-        return tokens.connect_private(self.path, SCHEMA)
+        return tokens.connect_private(self.path, SCHEMA, self.sqlite_busy_seconds)
 
     def issue(self, label: str) -> Credential:
         label = label.strip()
