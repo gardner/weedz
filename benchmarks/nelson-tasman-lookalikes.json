@@ -1,0 +1,613 @@
+{
+  "schema": 1,
+  "assessed": "2026-11-14",
+  "issue": "https://github.com/gardner/weedz/issues/11",
+  "method": "Newest 3 eligible research-grade iNaturalist photos (CC0/CC BY/CC BY-NC) per declared lookalike taxon per region (Nelson 40493, Tasman 40494), observed on or before 2024-12-31; screened with ranking revision 2 (pinned BioCLIP ce901ab3, whole frame plus four windows, no original-subject comparison). Source-labelled, not expert-reviewed.",
+  "model": {
+    "model": "imageomics/bioclip",
+    "revision": "ce901ab3c6a913f9e9ef94ce6d27761069f4f01c",
+    "ranking_revision": 2
+  },
+  "summary": {
+    "meaning": "Source-labelled lookalike photos screened like any other photo. 'top_suggestion' counts photos whose top suggestion (what the review desk shows, whatever its margin) is the weed they resemble; 'positive_confusable_margin' counts photos where that weed also beat every comparison label. This is not a reviewed false-positive rate.",
+    "by_taxon": {
+      "Austroderia": {
+        "confusable_with": "Cortaderia selloana",
+        "screened": 6,
+        "top_suggestion": 6,
+        "positive_confusable_margin": 5,
+        "median_confusable_margin": 0.044192
+      },
+      "Clematis foetida": {
+        "confusable_with": "Clematis vitalba",
+        "screened": 3,
+        "top_suggestion": 3,
+        "positive_confusable_margin": 2,
+        "median_confusable_margin": 0.005699
+      },
+      "Clematis forsteri": {
+        "confusable_with": "Clematis vitalba",
+        "screened": 6,
+        "top_suggestion": 6,
+        "positive_confusable_margin": 3,
+        "median_confusable_margin": -0.001624
+      },
+      "Clematis paniculata": {
+        "confusable_with": "Clematis vitalba",
+        "screened": 6,
+        "top_suggestion": 6,
+        "positive_confusable_margin": 1,
+        "median_confusable_margin": -0.013352
+      },
+      "Cytisus scoparius": {
+        "confusable_with": "Ulex europaeus",
+        "screened": 6,
+        "top_suggestion": 5,
+        "positive_confusable_margin": 0,
+        "median_confusable_margin": -0.091451
+      },
+      "Kunzea ericoides": {
+        "confusable_with": "Ulex europaeus",
+        "screened": 6,
+        "top_suggestion": 4,
+        "positive_confusable_margin": 0,
+        "median_confusable_margin": -0.049032
+      },
+      "Leptospermum scoparium": {
+        "confusable_with": "Ulex europaeus",
+        "screened": 6,
+        "top_suggestion": 4,
+        "positive_confusable_margin": 0,
+        "median_confusable_margin": -0.049725
+      }
+    }
+  },
+  "photos": [
+    {
+      "id": "inat-248320706-443668409",
+      "region": "Nelson",
+      "lookalike_taxon": "Clematis paniculata",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis paniculata",
+      "source_url": "https://www.inaturalist.org/observations/248320706",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.013249,
+        "Cortaderia selloana": -0.098228,
+        "Ulex europaeus": -0.188578
+      }
+    },
+    {
+      "id": "inat-244250279-435671170",
+      "region": "Nelson",
+      "lookalike_taxon": "Clematis paniculata",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis paniculata",
+      "source_url": "https://www.inaturalist.org/observations/244250279",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.07806,
+        "Cortaderia selloana": -0.147138,
+        "Ulex europaeus": -0.23186
+      }
+    },
+    {
+      "id": "inat-187198926-327322243",
+      "region": "Nelson",
+      "lookalike_taxon": "Clematis paniculata",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis paniculata",
+      "source_url": "https://www.inaturalist.org/observations/187198926",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": 0.032053,
+        "Cortaderia selloana": -0.03784,
+        "Ulex europaeus": -0.114862
+      }
+    },
+    {
+      "id": "inat-253709796-454331441",
+      "region": "Nelson",
+      "lookalike_taxon": "Clematis forsteri",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis forsteri",
+      "source_url": "https://www.inaturalist.org/observations/253709796",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.064002,
+        "Cortaderia selloana": -0.066223,
+        "Ulex europaeus": -0.097915
+      }
+    },
+    {
+      "id": "inat-249962607-446938032",
+      "region": "Nelson",
+      "lookalike_taxon": "Clematis forsteri",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis forsteri",
+      "source_url": "https://www.inaturalist.org/observations/249962607",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": 0.011016,
+        "Cortaderia selloana": -0.028131,
+        "Ulex europaeus": -0.039325
+      }
+    },
+    {
+      "id": "inat-246862510-440788335",
+      "region": "Nelson",
+      "lookalike_taxon": "Clematis forsteri",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis forsteri",
+      "source_url": "https://www.inaturalist.org/observations/246862510",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.027429,
+        "Cortaderia selloana": -0.050124,
+        "Ulex europaeus": -0.089764
+      }
+    },
+    {
+      "id": "inat-190982193-334923591",
+      "region": "Nelson",
+      "lookalike_taxon": "Austroderia",
+      "lookalike_of": "Cortaderia selloana",
+      "original_taxon": "Austroderia richardii",
+      "source_url": "https://www.inaturalist.org/observations/190982193",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": -0.056315,
+        "Cortaderia selloana": 0.008954,
+        "Ulex europaeus": -0.05168
+      }
+    },
+    {
+      "id": "inat-139730851-239052175",
+      "region": "Nelson",
+      "lookalike_taxon": "Austroderia",
+      "lookalike_of": "Cortaderia selloana",
+      "original_taxon": "Austroderia richardii",
+      "source_url": "https://www.inaturalist.org/observations/139730851",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": 0.005451,
+        "Cortaderia selloana": 0.135288,
+        "Ulex europaeus": -0.027858
+      }
+    },
+    {
+      "id": "inat-65630163-105666373",
+      "region": "Nelson",
+      "lookalike_taxon": "Austroderia",
+      "lookalike_of": "Cortaderia selloana",
+      "original_taxon": "Austroderia fulvida",
+      "source_url": "https://www.inaturalist.org/observations/65630163",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": -0.10136,
+        "Cortaderia selloana": 0.094331,
+        "Ulex europaeus": -0.128765
+      }
+    },
+    {
+      "id": "inat-250532538-448091474",
+      "region": "Nelson",
+      "lookalike_taxon": "Cytisus scoparius",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Cytisus scoparius",
+      "source_url": "https://www.inaturalist.org/observations/250532538",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.196201,
+        "Cortaderia selloana": -0.199345,
+        "Ulex europaeus": -0.097117
+      }
+    },
+    {
+      "id": "inat-247277103-441611371",
+      "region": "Nelson",
+      "lookalike_taxon": "Cytisus scoparius",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Cytisus scoparius",
+      "source_url": "https://www.inaturalist.org/observations/247277103",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.178364,
+        "Cortaderia selloana": -0.175829,
+        "Ulex europaeus": -0.093236
+      }
+    },
+    {
+      "id": "inat-244396298-435933238",
+      "region": "Nelson",
+      "lookalike_taxon": "Cytisus scoparius",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Cytisus scoparius",
+      "source_url": "https://www.inaturalist.org/observations/244396298",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.078918,
+        "Cortaderia selloana": -0.073527,
+        "Ulex europaeus": -0.03186
+      }
+    },
+    {
+      "id": "inat-247709964-442472472",
+      "region": "Nelson",
+      "lookalike_taxon": "Leptospermum scoparium",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Leptospermum scoparium",
+      "source_url": "https://www.inaturalist.org/observations/247709964",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.080785,
+        "Cortaderia selloana": -0.114955,
+        "Ulex europaeus": -0.05806
+      }
+    },
+    {
+      "id": "inat-231527693-411225849",
+      "region": "Nelson",
+      "lookalike_taxon": "Leptospermum scoparium",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Leptospermum scoparium",
+      "source_url": "https://www.inaturalist.org/observations/231527693",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.045068,
+        "Cortaderia selloana": -0.115881,
+        "Ulex europaeus": -0.027157
+      }
+    },
+    {
+      "id": "inat-187198392-327321075",
+      "region": "Nelson",
+      "lookalike_taxon": "Leptospermum scoparium",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Leptospermum scoparium",
+      "source_url": "https://www.inaturalist.org/observations/187198392",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.113916,
+        "Cortaderia selloana": -0.114744,
+        "Ulex europaeus": -0.03658
+      }
+    },
+    {
+      "id": "inat-245883435-438847987",
+      "region": "Nelson",
+      "lookalike_taxon": "Kunzea ericoides",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Kunzea ericoides",
+      "source_url": "https://www.inaturalist.org/observations/245883435",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.2012,
+        "Cortaderia selloana": -0.194231,
+        "Ulex europaeus": -0.048045
+      }
+    },
+    {
+      "id": "inat-231528008-411227230",
+      "region": "Nelson",
+      "lookalike_taxon": "Kunzea ericoides",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Kunzea ericoides",
+      "source_url": "https://www.inaturalist.org/observations/231528008",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": -0.02855,
+        "Cortaderia selloana": -0.004102,
+        "Ulex europaeus": -0.027412
+      }
+    },
+    {
+      "id": "inat-219959153-389384222",
+      "region": "Nelson",
+      "lookalike_taxon": "Kunzea ericoides",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Kunzea ericoides",
+      "source_url": "https://www.inaturalist.org/observations/219959153",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.01798,
+        "Cortaderia selloana": -0.035508,
+        "Ulex europaeus": -0.005092
+      }
+    },
+    {
+      "id": "inat-257222053-461380516",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis paniculata",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis paniculata",
+      "source_url": "https://www.inaturalist.org/observations/257222053",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.013454,
+        "Cortaderia selloana": -0.133624,
+        "Ulex europaeus": -0.088698
+      }
+    },
+    {
+      "id": "inat-253256847-453432683",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis paniculata",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis paniculata",
+      "source_url": "https://www.inaturalist.org/observations/253256847",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.029233,
+        "Cortaderia selloana": -0.069146,
+        "Ulex europaeus": -0.078896
+      }
+    },
+    {
+      "id": "inat-253259673-453438358",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis paniculata",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis paniculata",
+      "source_url": "https://www.inaturalist.org/observations/253259673",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.009527,
+        "Cortaderia selloana": -0.116821,
+        "Ulex europaeus": -0.189282
+      }
+    },
+    {
+      "id": "inat-255478831-457833773",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis forsteri",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis forsteri",
+      "source_url": "https://www.inaturalist.org/observations/255478831",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": 0.010573,
+        "Cortaderia selloana": -0.063455,
+        "Ulex europaeus": -0.1128
+      }
+    },
+    {
+      "id": "inat-254430343-455732460",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis forsteri",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis forsteri",
+      "source_url": "https://www.inaturalist.org/observations/254430343",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": 0.019816,
+        "Cortaderia selloana": -0.106561,
+        "Ulex europaeus": -0.164807
+      }
+    },
+    {
+      "id": "inat-253139746-453206441",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis forsteri",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis forsteri",
+      "source_url": "https://www.inaturalist.org/observations/253139746",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.013821,
+        "Cortaderia selloana": -0.134586,
+        "Ulex europaeus": -0.147886
+      }
+    },
+    {
+      "id": "inat-248036730-443111749",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis foetida",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis foetida",
+      "source_url": "https://www.inaturalist.org/observations/248036730",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": 0.016507,
+        "Cortaderia selloana": -0.130547,
+        "Ulex europaeus": -0.118456
+      }
+    },
+    {
+      "id": "inat-258015805-462855390",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis foetida",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis foetida",
+      "source_url": "https://www.inaturalist.org/observations/258015805",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.034121,
+        "Cortaderia selloana": -0.049031,
+        "Ulex europaeus": -0.082515
+      }
+    },
+    {
+      "id": "inat-139507599-238625461",
+      "region": "Tasman",
+      "lookalike_taxon": "Clematis foetida",
+      "lookalike_of": "Clematis vitalba",
+      "original_taxon": "Clematis foetida",
+      "source_url": "https://www.inaturalist.org/observations/139507599",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": 0.005699,
+        "Cortaderia selloana": -0.010503,
+        "Ulex europaeus": -0.050818
+      }
+    },
+    {
+      "id": "inat-251631880-450279483",
+      "region": "Tasman",
+      "lookalike_taxon": "Austroderia",
+      "lookalike_of": "Cortaderia selloana",
+      "original_taxon": "Austroderia richardii",
+      "source_url": "https://www.inaturalist.org/observations/251631880",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": 0.012186,
+        "Cortaderia selloana": 0.061434,
+        "Ulex europaeus": -0.021396
+      }
+    },
+    {
+      "id": "inat-232209542-412517171",
+      "region": "Tasman",
+      "lookalike_taxon": "Austroderia",
+      "lookalike_of": "Cortaderia selloana",
+      "original_taxon": "Austroderia richardii",
+      "source_url": "https://www.inaturalist.org/observations/232209542",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": -0.024437,
+        "Cortaderia selloana": 0.026949,
+        "Ulex europaeus": -0.065364
+      }
+    },
+    {
+      "id": "inat-215417496-380839808",
+      "region": "Tasman",
+      "lookalike_taxon": "Austroderia",
+      "lookalike_of": "Cortaderia selloana",
+      "original_taxon": "Austroderia richardii",
+      "source_url": "https://www.inaturalist.org/observations/215417496",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": -0.055877,
+        "Cortaderia selloana": -0.022649,
+        "Ulex europaeus": -0.11722
+      }
+    },
+    {
+      "id": "inat-256812550-460538839",
+      "region": "Tasman",
+      "lookalike_taxon": "Cytisus scoparius",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Cytisus scoparius",
+      "source_url": "https://www.inaturalist.org/observations/256812550",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.137487,
+        "Cortaderia selloana": -0.218168,
+        "Ulex europaeus": -0.119341
+      }
+    },
+    {
+      "id": "inat-256683175-460279007",
+      "region": "Tasman",
+      "lookalike_taxon": "Cytisus scoparius",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Cytisus scoparius",
+      "source_url": "https://www.inaturalist.org/observations/256683175",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": -0.099657,
+        "Cortaderia selloana": -0.07343,
+        "Ulex europaeus": -0.089666
+      }
+    },
+    {
+      "id": "inat-250980692-448986021",
+      "region": "Tasman",
+      "lookalike_taxon": "Cytisus scoparius",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Cytisus scoparius",
+      "source_url": "https://www.inaturalist.org/observations/250980692",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.19738,
+        "Cortaderia selloana": -0.159815,
+        "Ulex europaeus": -0.084365
+      }
+    },
+    {
+      "id": "inat-258310146-463181089",
+      "region": "Tasman",
+      "lookalike_taxon": "Leptospermum scoparium",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Leptospermum scoparium",
+      "source_url": "https://www.inaturalist.org/observations/258310146",
+      "best_species": "Cortaderia selloana",
+      "margins": {
+        "Clematis vitalba": -0.093271,
+        "Cortaderia selloana": -0.064398,
+        "Ulex europaeus": -0.084866
+      }
+    },
+    {
+      "id": "inat-258085684-462989623",
+      "region": "Tasman",
+      "lookalike_taxon": "Leptospermum scoparium",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Leptospermum scoparium",
+      "source_url": "https://www.inaturalist.org/observations/258085684",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.100676,
+        "Cortaderia selloana": -0.145597,
+        "Ulex europaeus": -0.112718
+      }
+    },
+    {
+      "id": "inat-257323086-461587499",
+      "region": "Tasman",
+      "lookalike_taxon": "Leptospermum scoparium",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Leptospermum scoparium",
+      "source_url": "https://www.inaturalist.org/observations/257323086",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.076068,
+        "Cortaderia selloana": -0.089721,
+        "Ulex europaeus": -0.04139
+      }
+    },
+    {
+      "id": "inat-217640521-385046946",
+      "region": "Tasman",
+      "lookalike_taxon": "Kunzea ericoides",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Kunzea ericoides",
+      "source_url": "https://www.inaturalist.org/observations/217640521",
+      "best_species": "Clematis vitalba",
+      "margins": {
+        "Clematis vitalba": -0.094342,
+        "Cortaderia selloana": -0.106442,
+        "Ulex europaeus": -0.114276
+      }
+    },
+    {
+      "id": "inat-205725677-363790579",
+      "region": "Tasman",
+      "lookalike_taxon": "Kunzea ericoides",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Kunzea ericoides",
+      "source_url": "https://www.inaturalist.org/observations/205725677",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.158908,
+        "Cortaderia selloana": -0.139082,
+        "Ulex europaeus": -0.099417
+      }
+    },
+    {
+      "id": "inat-197951451-348781078",
+      "region": "Tasman",
+      "lookalike_taxon": "Kunzea ericoides",
+      "lookalike_of": "Ulex europaeus",
+      "original_taxon": "Kunzea ericoides",
+      "source_url": "https://www.inaturalist.org/observations/197951451",
+      "best_species": "Ulex europaeus",
+      "margins": {
+        "Clematis vitalba": -0.114796,
+        "Cortaderia selloana": -0.111947,
+        "Ulex europaeus": -0.050019
+      }
+    }
+  ]
+}

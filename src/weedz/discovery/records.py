@@ -24,6 +24,8 @@ class RunSpec(BaseModel):
     after: date = date(2010, 1, 1)
     # "recent" reproduces the first pilot's newest-first selection; see issue #5.
     sampling: Literal["stratified", "recent"] = "stratified"
+    # Source-labelled lookalike photos per declared taxon per region; see issue #11.
+    lookalikes_per_taxon: int = Field(default=0, ge=0, le=3)
 
     @classmethod
     def from_saved(cls, saved: dict) -> "RunSpec":
@@ -49,8 +51,11 @@ class Photo(BaseModel):
     observation_id: int
     photo_id: int
     region: str
-    cohort: Literal["incidental", "reference"]
+    cohort: Literal["incidental", "reference", "lookalike"]
     reference_species: str | None = None
+    # For lookalike photos: the declared lookalike taxon and the weed it resembles.
+    lookalike_taxon: str | None = None
+    lookalike_of: str | None = None
     source_url: str
     image_url: str
     attribution: str

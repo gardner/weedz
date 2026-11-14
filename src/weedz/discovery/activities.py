@@ -12,6 +12,7 @@ from temporalio import activity
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
+from weedz.discovery.lookalikes import summarize_lookalikes
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
@@ -109,6 +110,7 @@ def export(store: Store, run_id: str) -> dict:
         "photos": with_encounters(photos),
         "references": references,
         "encounters": summarize(photos, encounter_groups(photos)),
+        "lookalikes": summarize_lookalikes(photos),
         "corpus_coverage": coverage(
             [Photo.model_validate(p) for p in photos if p["cohort"] == "incidental"],
             RunSpec.from_saved(run["spec"]).sampling,

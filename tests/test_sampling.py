@@ -122,6 +122,7 @@ def test_discover_sends_the_sampling_period(monkeypatch: pytest.MonkeyPatch) -> 
         before="2024-12-31",
         after="2015-01-01",
         sampling="recent",
+        lookalikes=0,
         api_url="http://api",
         temporal_address="",
         wait=False,

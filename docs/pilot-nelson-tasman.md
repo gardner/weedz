@@ -46,6 +46,40 @@ positive comparison margin does not establish plant presence. This concrete
 failure argues against automatically accepting these rankings or scaling this
 method as a validated detector.
 
+### Lookalike photos: can screening tell the weed from its lookalike?
+
+On 14 November 2026, 39 source-labelled iNaturalist photos of declared lookalikes
+were screened with the pinned BioCLIP and **ranking revision 2**: the whole frame
+plus four corner windows, with no original-subject comparison
+([#11](https://github.com/gardner/weedz/issues/11), [summary](../benchmarks/nelson-tasman-lookalikes.json)).
+That was up to three per taxon per region. The same photos under revision 4 are
+reported in the revision 4 section below. Lookalike confusion rises there.
+
+Every photo has a top suggestion, which is the watchlist species with the largest
+margin, and the review desk shows it whatever the margin's sign. The positive
+margin column is counted independently: that weed beat every comparison label,
+whichever weed was on top.
+
+| Lookalike | Resembles | Top suggestion is that weed | Positive margin for that weed | Median margin |
+| --- | --- | --- | --- | --- |
+| Toetoe (*Austroderia*) | Pampas | 6 of 6 | **5 of 6** | +0.044 |
+| *Clematis foetida* | Old man's beard | 3 of 3 | 2 of 3 | +0.006 |
+| *Clematis forsteri* | Old man's beard | 6 of 6 | 3 of 6 | −0.002 |
+| Puawhānanga (*C. paniculata*) | Old man's beard | 6 of 6 | 1 of 6 | −0.013 |
+| Broom | Gorse | 5 of 6 | 0 of 6 | −0.091 |
+| Mānuka | Gorse | 4 of 6 | 0 of 6 | −0.050 |
+| Kānuka | Gorse | 4 of 6 | 0 of 6 | −0.049 |
+
+The review desk would present most lookalike photos as their look-alike weed:
+34 of 39 have it as the top suggestion. A suggestion is therefore not an
+identification. Margins separate the groups further. Native toetoe beats every
+comparison as pampas in 5 of 6 photos, even though toetoe is a comparison
+prompt, and native clematis does so as old man's beard in 6 of 15. Broom, mānuka
+and kānuka never beat the comparisons as gorse (0 of 18). Pampas and old man's
+beard suggestions in particular need botanical review of diagnostic features,
+such as flowering time, plume colour and leaf form, before they count as leads.
+These are small, source-labelled samples, not reviewed false-positive rates.
+
 ### Ranking revision 3: re-screen of the same photos
 
 The gannet failure was not a one-off. In 10 of 24 incidental photos a target

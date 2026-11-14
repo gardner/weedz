@@ -154,7 +154,9 @@ def subject_label(photo: dict[str, Any]) -> str | None:
     That includes references identified below species, such as a gorse subspecies.
     """
     taxon = photo.get("original_taxon", "")
-    if photo.get("cohort") == "reference" or any(
+    # Reference and lookalike photos are measured against the watchlist; naming their own
+    # taxon as a comparison would answer the question for the model.
+    if photo.get("cohort") in {"reference", "lookalike"} or any(
         taxon == name or taxon.startswith(f"{name} ") for name in SPECIES
     ):
         return None
