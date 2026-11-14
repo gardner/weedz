@@ -25,6 +25,8 @@ export type Photo = {
   coordinate_status: string;
   review_status: Status;
   review_note: string;
+  encounter_group?: string;
+  encounter_size?: number;
   scores: {
     best_species?: string;
     similarity?: number;
@@ -35,6 +37,12 @@ export type Photo = {
     species?: { name: string; similarity: number; margin: number; box: number[] }[];
   };
 };
+
+export function siteVisitNote(photo: Photo): string | null {
+  const others = (photo.encounter_size ?? 1) - 1;
+  if (others < 1) return null;
+  return `Same site visit as ${others} other photo${others === 1 ? "" : "s"}`;
+}
 
 export const names: Record<string, string> = {
   "Clematis vitalba": "Old man's beard",
