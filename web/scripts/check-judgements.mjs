@@ -129,7 +129,11 @@ try {
     reviewer: "Ana",
   });
   assert.equal(typeof effort_seconds, "number");
-  assert.equal(await page.getByLabel("Identity note").inputValue(), "", "note clears on save");
+  assert.equal(
+    await page.getByLabel("Identity note").inputValue(),
+    "",
+    "note returns to the standing note on save",
+  );
 
   // A camera point is not a plant point: a missing location cannot be judged usable.
   const usable = page.getByLabel("Location usefulness").locator("option[value=usable]");
@@ -191,6 +195,16 @@ try {
   await page.getByLabel("Your name").fill("Ben");
   await page.getByLabel("Your name").fill("Carol");
   assert.equal(await page.getByLabel("Novelty", { exact: true }).inputValue(), "unassessed");
+
+  // Resaving keeps a reviewer's standing note unless they clear it.
+  await target.selectOption("suggestion");
+  await page.getByLabel("Your name").fill("Ben");
+  const locationNote = page.getByLabel("Location usefulness note");
+  assert.equal(await locationNote.inputValue(), "Vine is across the river");
+  await page.getByRole("button", { name: "Save location usefulness" }).click();
+  for (let wait = 0; wait < 50 && posted.length < 4; wait++) await page.waitForTimeout(100);
+  assert.equal(posted[3].value, "camera_point_only");
+  assert.equal(posted[3].note, "Vine is across the river");
   console.log("Identity, location, history and novelty are judged and saved separately.");
 } finally {
   await browser.close();

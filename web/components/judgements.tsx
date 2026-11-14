@@ -116,10 +116,12 @@ function JudgementRow({
 }) {
   const info = DIMENSIONS.find((item) => item.key === dimension) ?? DIMENSIONS[0];
   const standing = Object.entries(judged.judgements?.[dimension] ?? {});
-  const own = judged.judgements?.[dimension]?.[reviewer.trim()]?.value;
+  const own = judged.judgements?.[dimension]?.[reviewer.trim()];
+  // Drafts start from the reviewer's standing judgement, so resaving keeps its note.
   const [draft, setValue] = useState<string | null>(null);
-  const value = draft ?? own ?? "unassessed";
-  const [note, setNote] = useState("");
+  const value = draft ?? own?.value ?? "unassessed";
+  const [noteDraft, setNote] = useState<string | null>(null);
+  const note = noteDraft ?? own?.note ?? "";
   const id = `judgement-${dimension}`;
   const required = NOTE_REQUIRED[`${dimension}:${value}`];
   const missing = Boolean(required) && !note.trim();
@@ -176,7 +178,7 @@ function JudgementRow({
           type="button"
           disabled={blocked || missing}
           onClick={async () => {
-            if (await onSave({ finding_id: findingId, dimension, value, note })) setNote("");
+            if (await onSave({ finding_id: findingId, dimension, value, note })) setNote(null);
           }}
         >
           Save {info.label.toLowerCase()}
