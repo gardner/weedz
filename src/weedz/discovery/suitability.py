@@ -231,7 +231,7 @@ def _period(study: StudyDefinition | None) -> dict[str, str | None] | None:
 
 
 def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None) -> dict:
-    spec = _spec(export) or RunSpec()
+    spec = _spec(export)
     period = _period(study)
     start, end = _window(export, study)
     dated = [p["observed_on"][:10] for p in photos if p.get("observed_on")]
@@ -239,14 +239,14 @@ def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None)
     outside = unknown = None
     if study and period:
         outside, unknown = tally(_placed(photos, study, False)), tally(_placed(photos, study, None))
-    # A gap is claimed only where no photo could fall.
-    years, seasons = _gaps(photos, start, end)
+    years, seasons = _gaps(photos, start, end) if spec else ([], [])  # only if queried
     undated = sum(_span(p.get("observed_on")) is None for p in photos)
     return {
         "corpus": corpus,
         "earliest": min(dated, default=None),
         "latest": max(dated, default=None),
-        "query_period": {
+        "query_period": spec
+        and {
             "start": spec.after.isoformat() if spec.sampling == "stratified" else None,
             "end": spec.before.isoformat(),
         },

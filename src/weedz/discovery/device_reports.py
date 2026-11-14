@@ -13,6 +13,7 @@ credit are erased. Its id, candidate and model stamp stay, so the append-only re
 judgements, referrals and lead events made on it still read sensibly.
 """
 
+import fcntl
 import hashlib
 import json
 import os
@@ -31,6 +32,7 @@ from weedz.intake.store import ReportStore, StoredReport
 
 RUN_ID = "device-reports"
 IMAGES = "images/device"
+LOCK = "device-reports.lock"
 # A temporary crop older than this is left from a failed write, not one in progress.
 STALE_WRITE_SECONDS = 600
 NO_CREDIT = "Device report (no credit given)"
@@ -277,7 +279,15 @@ def _private(store: Store) -> None:
 
 
 def sync(store: Store, reports: ReportStore) -> None:
-    """Bring the device run up to date with intake: add new reports, erase withdrawn ones."""
+    """Bring the device run up to date with intake: add new reports, erase withdrawn ones.
+    Syncs take turns, across processes too, so one that listed a report before it was
+    withdrawn never writes it back after a later sync erased it."""
+    with (store.root / LOCK).open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        _sync(store, reports)
+
+
+def _sync(store: Store, reports: ReportStore) -> None:
     _create_run(store)
     _private(store)
     active = {item_id(stored): stored for stored in reports.active()}

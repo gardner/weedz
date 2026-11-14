@@ -1,5 +1,6 @@
 """A withdrawal erases a device report from review, and nothing else does (issue #58)."""
 
+import fcntl
 import json
 from pathlib import Path
 
@@ -64,7 +65,9 @@ def test_a_crop_written_while_its_report_is_withdrawn_is_deleted(
 
     def withdrawn_meanwhile(target: Path, data: bytes) -> None:
         ReportStore(intake).withdraw(1, report_id)
-        device_reports.sync(Store(tmp_path / "pilot"), ReportStore(intake))
+        device_reports._sync(  # bypassing the turn-taking lock, as a safeguard
+            Store(tmp_path / "pilot"), ReportStore(intake)
+        )
         write(target, data)
 
     monkeypatch.setattr(device_reports, "_write_private", withdrawn_meanwhile)
@@ -180,6 +183,30 @@ def test_the_device_run_claims_no_historical_query(tmp_path: Path) -> None:
     suitability = client.get(f"/runs/{RUN_ID}/suitability")
     assert suitability.status_code == 200
     assert "requested photos" not in suitability.text
+    dates = suitability.json()["dates"]
+    assert dates["query_period"] is None and dates["corpus"]["sampling"] is None
+    assert dates["years_without_photos"] == [] and dates["seasons_without_photos"] == []
+    assert not any("unassessed, not weed-free" in note for note in dates["notes"])
+
+
+def test_syncs_take_turns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """An older sync never writes after a newer one has applied a withdrawal."""
+    intake = tmp_path / "intake"
+    send(intake, report())
+    listed = ReportStore.active
+    held = []
+
+    def while_listing(self: ReportStore) -> list:
+        with (tmp_path / "pilot" / device_reports.LOCK).open("a") as other:
+            try:
+                fcntl.flock(other, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                held.append(True)
+        return listed(self)
+
+    monkeypatch.setattr(ReportStore, "active", while_listing)
+    synced(tmp_path, intake)
+    assert held == [True]
 
 
 def test_device_reports_are_not_offered_as_reference_examples(tmp_path: Path) -> None:
