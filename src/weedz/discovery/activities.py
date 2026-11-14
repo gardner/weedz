@@ -123,7 +123,12 @@ class Activities:
 
 def review_history(store: Store, run_id: str, photos: list[dict]) -> list[dict]:
     return [
-        dict(photo_id=photo["id"], events=store.reviews(run_id, photo["id"])) for photo in photos
+        dict(
+            photo_id=photo["id"],
+            events=store.reviews(run_id, photo["id"]),
+            judgements=store.judgements(run_id, photo["id"]),
+        )
+        for photo in photos
     ]
 
 
@@ -177,6 +182,11 @@ def export(store: Store, run_id: str) -> dict:
             "Known-record comparison is distance and date only, not a novelty verdict; "
             "no infestation area estimate or external publication performed",
             "Site-visit groups link photos by observer, date and distance; not the same plant",
+            (
+                "Judgements of identity, location, history and novelty are attributed reviewer "
+                "opinions, kept per dimension; no judgement means unassessed, and only a "
+                "noted 'verified_new_locality' claims a new locality"
+            ),
             (
                 "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "
                 "are ungrouped, not counted as independent visits"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/findings";
+import type { NewJudgement } from "../lib/judgements";
 import {
   imageUrl,
   names,
@@ -13,6 +14,7 @@ import {
   statusLabels,
 } from "../lib/types";
 import { FindingForm, FindingList } from "./finding-form";
+import JudgementPanel from "./judgements";
 import PhotoStage from "./photo-stage";
 import ReviewHistory from "./review-history";
 
@@ -21,6 +23,7 @@ export default function Evidence({
   runId,
   onSave,
   onSaveFinding,
+  onSaveJudgement,
   saving,
   references,
   reviewer,
@@ -30,6 +33,7 @@ export default function Evidence({
   runId: string;
   onSave: (status: Status, note: string) => Promise<unknown>;
   onSaveFinding: (finding: NewFinding) => Promise<boolean>;
+  onSaveJudgement: (judgement: NewJudgement) => Promise<boolean>;
   saving: boolean;
   references: References;
   reviewer: string;
@@ -225,6 +229,12 @@ export default function Evidence({
         )}
         <FindingList findings={photo.findings ?? []} />
       </div>
+      <JudgementPanel
+        photo={photo}
+        reviewer={reviewer}
+        blocked={blocked}
+        onSave={onSaveJudgement}
+      />
       <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />
     </article>
   );

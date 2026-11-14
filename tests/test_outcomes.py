@@ -372,6 +372,23 @@ def test_time_on_recorded_findings_is_reviewer_effort() -> None:
     assert "1 recorded finding was not timed" in alarms["reason"]
 
 
+def test_time_on_judgements_is_reviewer_effort() -> None:
+    run = export([photo("a", "a", review_status="rejected")], {"a": [event("rejected", 60)]})
+    run["review_history"][0]["judgements"] = [
+        {"dimension": "novelty", "value": "new_in_photo", "effort_seconds": 30},
+        {"dimension": "identity", "value": "disputed", "effort_seconds": None},
+    ]
+    report = outcomes(run)
+    effort = measure(report, "reviewer_effort_per_useful_finding")["evidence"]
+    assert effort["incidental_minutes"] == 1.5
+    assert effort["timed_incidental_judgements"] == 1
+    assert effort["untimed_incidental_judgements"] == 1
+    alarms = measure(report, "false_alarm_workload")
+    assert alarms["evidence"]["minutes"] == 1.5
+    assert alarms["evidence"]["untimed_judgements"] == 1
+    assert "1 judgement was not timed, so minutes are a lower bound" in alarms["reason"]
+
+
 def test_reviewer_added_watchlist_plants_are_non_blind_missed_evidence() -> None:
     added = {"kind": "addition", "species": "Ulex europaeus", "effort_seconds": 5}
     other = {"kind": "addition", "other_taxon": "Toetoe", "effort_seconds": 5}

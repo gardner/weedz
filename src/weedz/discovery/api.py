@@ -11,6 +11,7 @@ from weedz.discovery.activities import export, review_history
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
+from weedz.discovery.judgements import Judgement, unsupported
 from weedz.discovery.occurrences import with_references
 from weedz.discovery.outcomes import outcomes
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
@@ -44,6 +45,16 @@ def check_finding(scores: dict, record: Finding) -> None:
         raise HTTPException(409, "Image size is unknown until screening; record without a box")
     if record.box[2] > scores["width"] or record.box[3] > scores["height"]:
         raise HTTPException(422, "The box extends beyond the image")
+
+
+def check_target(photo: dict, record: Judgement) -> None:
+    """A judgement is about the suggested species or one of this photo's recorded plants."""
+    if record.finding_id is None and not photo["scores"].get("best_species"):
+        raise HTTPException(409, "No suggestion to judge; judge a recorded plant instead")
+    if record.finding_id is not None and not any(
+        plant["id"] == record.finding_id for plant in photo["findings"]
+    ):
+        raise HTTPException(404, "Recorded plant not found on this photo")
 
 
 class ReviewAPI:
@@ -161,6 +172,20 @@ class ReviewAPI:
     def findings(self, run_id: str, photo_id: str) -> list[dict]:
         return self.photo(run_id, photo_id)["findings"]
 
+    def record_judgement(self, run_id: str, photo_id: str, record: Judgement) -> dict:
+        snapshot, [photo] = with_references(self.store.root, [self.photo(run_id, photo_id)])
+        check_target(photo, record)
+        reason = unsupported(photo, record)
+        if reason:
+            raise HTTPException(409, reason)
+        basis = snapshot["snapshot_sha256"] if snapshot else None
+        self.store.judgement(run_id, photo_id, record, basis)
+        return {"saved": True}
+
+    def judgements(self, run_id: str, photo_id: str) -> list[dict]:
+        self.photo(run_id, photo_id)
+        return self.store.judgements(run_id, photo_id)
+
 
 def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app = FastAPI(title="Weedz regional review", version="0.2.0")
@@ -176,4 +201,6 @@ def create_app(root: Path, temporal_address: str = "localhost:7234") -> FastAPI:
     app.post("/runs/{run_id}/photos/{photo_id}/audit")(api.audit)
     app.post("/runs/{run_id}/photos/{photo_id}/findings")(api.record_finding)
     app.get("/runs/{run_id}/photos/{photo_id}/findings")(api.findings)
+    app.post("/runs/{run_id}/photos/{photo_id}/judgements")(api.record_judgement)
+    app.get("/runs/{run_id}/photos/{photo_id}/judgements")(api.judgements)
     return app

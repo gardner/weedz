@@ -10,6 +10,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from weedz.discovery.occurrences import predates
+
 MEASURED = "measured"
 PARTIAL = "partially measured"
 NOT_YET = "not yet measurable"
@@ -121,14 +123,21 @@ class Study:
             p for p in self.incidental if p["review_status"] == "confirmed" and not p["disputed"]
         ]
 
-    def decisions(self, photos: Photos) -> list[dict[str, Any]]:
+    def _history(self, photos: Photos, kind: str) -> list[dict[str, Any]]:
         ids = {p["id"] for p in photos}
         return [
             event
             for entry in self.export["review_history"]
             if entry["photo_id"] in ids
-            for event in entry["events"]
+            for event in entry.get(kind, [])
         ]
+
+    def decisions(self, photos: Photos) -> list[dict[str, Any]]:
+        return self._history(photos, "events")
+
+    def judgements(self, photos: Photos) -> list[dict[str, Any]]:
+        """Identity, location, history and novelty judgements on these photos (#18)."""
+        return self._history(photos, "judgements")
 
     @staticmethod
     def findings(photos: Photos) -> list[dict[str, Any]]:
@@ -136,16 +145,17 @@ class Study:
         return [finding for p in photos for finding in p.get("findings", [])]
 
     def effort(self, photos: Photos) -> tuple[float | None, int]:
-        """Measured minutes on these photos' decisions and recorded findings, and how many
-        of those were not timed."""
-        return _timed(self.decisions(photos) + self.findings(photos))
+        """Measured minutes on these photos' decisions, recorded findings and judgements,
+        and how many of those were not timed."""
+        work = self.decisions(photos) + self.findings(photos) + self.judgements(photos)
+        return _timed(work)
 
-    def untimed(self, photos: Photos) -> tuple[int, int]:
-        """How many decisions, and how many recorded findings, on these photos were untimed."""
-        return (
-            sum(event.get("effort_seconds") is None for event in self.decisions(photos)),
-            sum(finding.get("effort_seconds") is None for finding in self.findings(photos)),
+    def untimed(self, photos: Photos) -> tuple[int, int, int]:
+        """How many decisions, recorded findings and judgements on these photos were untimed."""
+        decisions, findings, judgements = (
+            _timed(kind(photos))[1] for kind in (self.decisions, self.findings, self.judgements)
         )
+        return decisions, findings, judgements
 
     def watchlist_findings(self) -> list[tuple[dict[str, Any], str]]:
         """(photo, species) for each confirmed suggestion and recorded watchlist plant."""
@@ -209,7 +219,8 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
     minutes, _ = study.effort(study.incidental)
     decisions = study.decisions(study.incidental)
     findings = study.findings(study.incidental)
-    untimed, untimed_findings = study.untimed(study.incidental)
+    judgements = study.judgements(study.incidental)
+    untimed, untimed_findings, untimed_judgements = study.untimed(study.incidental)
     audit_minutes, untimed_audits = study.audit_effort()
     return _measure(
         "reviewer_effort_per_useful_finding",
@@ -221,6 +232,8 @@ def effort_per_finding(study: Study) -> dict[str, Any]:
             "untimed_incidental_decisions": untimed,
             "timed_incidental_findings": len(findings) - untimed_findings,
             "untimed_incidental_findings": untimed_findings,
+            "timed_incidental_judgements": len(judgements) - untimed_judgements,
+            "untimed_incidental_judgements": untimed_judgements,
             "audit_minutes": audit_minutes,
             "untimed_audit_answers": untimed_audits,
             "confirmed_visible": tally(study.confirmed),
@@ -285,15 +298,6 @@ def _comparison(photo: dict[str, Any], species: str) -> dict[str, Any] | None:
     return found if found and found["comparable"] else None
 
 
-def _predates(photo: dict[str, Any], found: dict[str, Any]) -> bool:
-    """Observed in an earlier year than every declared record within the radius; an
-    undated nearby record could be older, so it rules the claim out."""
-    earliest, observed = found.get("earliest_year"), photo.get("observed_on")
-    if found.get("undated_within_radius", 0) or not (earliest and observed):
-        return False
-    return int(observed[:4]) < earliest
-
-
 def novel_evidence(study: Study) -> dict[str, Any]:
     references = study.export.get("references")
     key = "novel_or_earlier_evidence"
@@ -315,7 +319,7 @@ def novel_evidence(study: Study) -> dict[str, Any]:
         return _measure(key, NOT_YET, reason, evidence=evidence)
     evidence["radius_m"] = sorted({found["radius_m"] for _, found in compared})
     unrecorded = [p for p, found in compared if found["within_radius"] == 0]
-    earlier = [p for p, found in compared if _predates(p, found)]
+    earlier = [p for p, found in compared if predates(p, found)]
     evidence["no_record_nearby"] = tally(unrecorded)
     evidence["earlier_than_nearby_records"] = tally(earlier)
     reason = (
@@ -344,19 +348,22 @@ def false_alarms(study: Study) -> dict[str, Any]:
     rejected = [p for p in study.reviewed if p["review_status"] == "rejected" and not p["disputed"]]
     inconclusive = [p for p in study.reviewed if p["review_status"] == "uncertain" or p["disputed"]]
     minutes, _ = study.effort(rejected + inconclusive)
-    untimed, untimed_findings = study.untimed(rejected + inconclusive)
+    untimed, untimed_findings, untimed_judgements = study.untimed(rejected + inconclusive)
     caveats = [
         "No rule yet decides which suggestions are proposed leads (#16), so rejected and "
         "inconclusive reviews are reported rather than a false-alarm count.",
         *study.unreviewed_note(),
     ]
-    if untimed or untimed_findings:
-        decisions = plural(untimed, "decision")
-        findings = plural(untimed_findings, "recorded finding")
-        verb = "was" if untimed + untimed_findings == 1 else "were"
-        caveats.append(
-            f"{decisions} and {findings} {verb} not timed, so minutes are a lower bound."
-        )
+    counts = [untimed, untimed_findings, untimed_judgements]
+    parts = [
+        plural(count, noun)
+        for count, noun in zip(counts, ["decision", "recorded finding", "judgement"], strict=True)
+        if count
+    ]
+    if parts:
+        listed = parts[-1] if len(parts) == 1 else f"{', '.join(parts[:-1])} and {parts[-1]}"
+        verb = "was" if sum(counts) == 1 else "were"
+        caveats.append(f"{listed} {verb} not timed, so minutes are a lower bound.")
     return _measure(
         "false_alarm_workload",
         PARTIAL,
@@ -371,6 +378,7 @@ def false_alarms(study: Study) -> dict[str, Any]:
             "minutes": minutes,
             "untimed_decisions": untimed,
             "untimed_findings": untimed_findings,
+            "untimed_judgements": untimed_judgements,
         },
     )
 

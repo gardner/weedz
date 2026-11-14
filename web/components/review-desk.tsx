@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NewFinding } from "../lib/findings";
+import type { NewJudgement } from "../lib/judgements";
 import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { useReviewTimer } from "../lib/review-timer";
 import {
@@ -29,11 +30,13 @@ type Payloads = {
   review: { status: Status; note: string };
   audit: { finding: string; note: string };
   findings: NewFinding;
+  judgements: NewJudgement;
 };
 const SAVED: Record<keyof Payloads, string> = {
   review: "Review saved locally.",
   audit: "Audit saved locally.",
   findings: "Finding saved locally.",
+  judgements: "Judgement saved locally.",
 };
 
 export default function ReviewDesk() {
@@ -162,6 +165,7 @@ export default function ReviewDesk() {
   const save = (status: Status, note: string) => submit("review", { status, note });
   const saveAudit = (finding: string, note: string) => submit("audit", { finding, note });
   const saveFinding = (finding: NewFinding) => submit("findings", finding);
+  const saveJudgement = (judgement: NewJudgement) => submit("judgements", judgement);
 
   return (
     <div className="app-shell">
@@ -407,6 +411,7 @@ export default function ReviewDesk() {
                 runId={runId}
                 onSave={save}
                 onSaveFinding={saveFinding}
+                onSaveJudgement={saveJudgement}
                 saving={saving}
                 references={references}
                 reviewer={reviewer}

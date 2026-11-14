@@ -112,6 +112,16 @@ try {
         created_at: "2026-11-13T20:00:00+00:00",
       },
     ],
+    judgements: {
+      identity: { Ben: { value: "confirmed", note: "Leaflets visible", created_at: "" } },
+      location: {
+        Ben: { value: "camera_point_only", note: "", created_at: "" },
+        Carol: { value: "usable", note: "", created_at: "" },
+      },
+      history: {},
+      novelty: {},
+    },
+    judgement_disputes: ["location"],
   });
   const posted = [];
   let photos = [photo("a", "unreviewed"), photo("b", "rejected")];
@@ -135,6 +145,9 @@ try {
   await page.getByLabel("Species", { exact: true }).selectOption("other");
   await page.getByLabel("Left", { exact: true }).fill("5");
   await page.getByText("Enter all four edges").waitFor();
+  // Audit the judgements with a required-note hint and unavailable claims showing.
+  await page.getByLabel("Novelty", { exact: true }).selectOption("verified_new_locality");
+  await page.getByText(/needs the verification evidence/).waitFor();
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
