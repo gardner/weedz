@@ -38,9 +38,10 @@ def test_delete_all_erases_only_the_authenticated_submitter(tmp_path: Path) -> N
     assert not list((tmp_path / "reports/images").iterdir())
     with sqlite3.connect(tmp_path / "reports/reports.sqlite3") as db:
         assert db.execute(
-            "SELECT body,content_sha256,image_file,withdrawn_at FROM reports WHERE submitter=?",
+            "SELECT body,content_sha256,image_file,consent,withdrawn_at FROM reports "
+            "WHERE submitter=?",
             (first.id,),
-        ).fetchone() == (None, None, None, deleted.json()["requested_at"])
+        ).fetchone() == (None, None, None, None, deleted.json()["requested_at"])
 
 
 def test_pending_deletion_blocks_inflight_and_survives_restart(tmp_path: Path) -> None:
