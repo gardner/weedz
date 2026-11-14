@@ -278,6 +278,7 @@ class ReviewAPI:
         return FileResponse(path, media_type="image/jpeg")
 
     def review(self, run_id: str, photo_id: str, decision: Review) -> dict:
+        self.writable(run_id, photo_id)
         try:
             self.store.review(
                 run_id,
@@ -309,12 +310,19 @@ class ReviewAPI:
             raise HTTPException(404, "Photo not found")
         return photo
 
+    def writable(self, run_id: str, photo_id: str) -> dict:
+        """The photo, if new records may be made on it: not a withdrawn device report."""
+        photo = self.photo(run_id, photo_id)
+        if photo.get("withdrawn_at"):
+            raise HTTPException(410, "This report was withdrawn by the person who sent it")
+        return photo
+
     def history(self, run_id: str, photo_id: str) -> list[dict]:
         self.photo(run_id, photo_id)
         return self.store.reviews(run_id, photo_id)
 
     def record_finding(self, run_id: str, photo_id: str, record: Finding) -> dict:
-        check_finding(self.photo(run_id, photo_id)["scores"], record)
+        check_finding(self.writable(run_id, photo_id)["scores"], record)
         self.store.finding(run_id, photo_id, record)
         return {"saved": True}
 
@@ -322,7 +330,7 @@ class ReviewAPI:
         return self.photo(run_id, photo_id)["findings"]
 
     def record_judgement(self, run_id: str, photo_id: str, record: Judgement) -> dict:
-        snapshot, [photo] = with_references(self.store.root, [self.photo(run_id, photo_id)])
+        snapshot, [photo] = with_references(self.store.root, [self.writable(run_id, photo_id)])
         check_target(photo, record.finding_id)
         reason = unsupported(photo, record)
         if reason:
@@ -336,7 +344,7 @@ class ReviewAPI:
         return self.store.judgements(run_id, photo_id)
 
     def select_lead(self, run_id: str, photo_id: str, record: LeadEvent) -> dict:
-        check_lead(self.photo(run_id, photo_id), record)
+        check_lead(self.writable(run_id, photo_id), record)
         if not record_lead(self.store, run_id, photo_id, record):
             selected = record.action == "selected"
             raise HTTPException(
@@ -345,7 +353,7 @@ class ReviewAPI:
         return {"saved": True}
 
     def refer(self, run_id: str, photo_id: str, record: Referral) -> dict:
-        photo = self.photo(run_id, photo_id)
+        photo = self.writable(run_id, photo_id)
         plants = {plant["id"] for plant in photo["findings"]}
         if record.finding_id is not None and record.finding_id not in plants:
             raise HTTPException(404, "Recorded plant not found on this photo")

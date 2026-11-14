@@ -231,3 +231,33 @@ def test_the_review_stack_takes_device_reports_only_when_asked() -> None:
 
     assert cli.parse(["dev"]).intake_dir is None
     assert cli.parse(["dev", "--intake-dir", "data/intake"]).intake_dir == Path("data/intake")
+
+
+def test_a_withdrawn_report_leaves_the_follow_up_package(intake: Path, client: TestClient) -> None:
+    report_id = send(intake, with_image(jpeg()))
+    [photo] = detail(client)["photos"]
+    lead = {"action": "selected", "selector": "Ana", "reason": "Gorse by the track"}
+    client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/leads", json=lead)
+    ReportStore(intake).withdraw(1, report_id)
+    assert client.get(f"/runs/{RUN_ID}/package").json()["leads"] == []
+
+
+@pytest.mark.parametrize(
+    ("action", "body"),
+    [
+        ("review", {"status": "confirmed", "reviewer": "Ana"}),
+        ("findings", {"kind": "addition", "species": "Ulex europaeus", "reviewer": "Ana"}),
+        ("judgements", {"dimension": "identity", "value": "confirmed", "reviewer": "Ana"}),
+        ("leads", {"action": "selected", "selector": "Ana", "reason": "Worth a visit"}),
+        ("referrals", {"reason": "lookalike", "note": "Check", "referrer": "Ana"}),
+    ],
+)
+def test_nothing_new_is_recorded_on_a_withdrawn_report(
+    intake: Path, client: TestClient, action: str, body: dict
+) -> None:
+    report_id = send(intake, report())
+    [photo] = detail(client)["photos"]
+    ReportStore(intake).withdraw(1, report_id)
+    response = client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/{action}", json=body)
+    assert response.status_code == 410, response.text
+    assert "withdrawn" in response.json()["detail"]
