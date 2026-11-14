@@ -81,6 +81,23 @@ def test_snapshot_pages_each_watchlist_taxon_and_records_its_as_of_date(tmp_path
         fetch_snapshot(tmp_path, client, at, pause=0)
 
 
+def test_a_concurrent_snapshot_with_the_same_name_is_never_replaced(tmp_path: Path) -> None:
+    at = datetime(2026, 11, 14, 5, 0, tzinfo=UTC)
+    rival = tmp_path / "references" / "doc-weeds-20261114T050000Z.json"
+
+    def racing(request: httpx.Request) -> httpx.Response:
+        if not rival.exists():  # another run finishes first, after our existence check
+            rival.parent.mkdir(parents=True, exist_ok=True)
+            rival.write_text("rival")
+        return httpx.Response(200, json={"results": [], "endOfRecords": True})
+
+    client = httpx.Client(transport=httpx.MockTransport(racing))
+    with pytest.raises(FileExistsError):
+        fetch_snapshot(tmp_path, client, at, pause=0)
+    assert rival.read_text() == "rival"
+    assert [path.name for path in rival.parent.iterdir()] == [rival.name]
+
+
 def test_no_snapshot_means_no_comparison(tmp_path: Path) -> None:
     assert latest_snapshot(tmp_path) is None
 

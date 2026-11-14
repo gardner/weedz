@@ -8,6 +8,8 @@ locality, and a missing record is not an absence.
 import hashlib
 import json
 import math
+import os
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
@@ -98,9 +100,14 @@ def fetch_snapshot(root: Path, client: httpx.Client, at: datetime, pause: float 
         "records": [row for rows in records.values() for row in rows],
     }
     destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_suffix(".tmp")
-    temporary.write_text(json.dumps(snapshot, indent=2))
-    temporary.replace(destination)
+    with tempfile.NamedTemporaryFile(
+        "w", dir=destination.parent, suffix=".tmp", delete=False
+    ) as temporary:
+        temporary.write(json.dumps(snapshot, indent=2))
+    try:
+        os.link(temporary.name, destination)  # fails, never overwrites, if the name is taken
+    finally:
+        os.unlink(temporary.name)
     return destination
 
 
