@@ -2,7 +2,17 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { imageUrl, names, type Photo, type Run, request, type Status } from "../lib/types";
+import { useReviewTimer } from "../lib/review-timer";
+import {
+  effortNote,
+  imageUrl,
+  names,
+  type Photo,
+  type ReviewEffort,
+  type Run,
+  request,
+  type Status,
+} from "../lib/types";
 import Evidence from "./evidence";
 
 const REVIEWER_KEY = "weedz-reviewer";
@@ -12,6 +22,7 @@ export default function ReviewDesk() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [runId, setRunId] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [effortSummary, setEffortSummary] = useState<ReviewEffort>();
   const [activeId, setActiveId] = useState("");
   const [cohort, setCohort] = useState("incidental");
   const [region, setRegion] = useState("all");
@@ -35,9 +46,12 @@ export default function ReviewDesk() {
       const selected = runId || list[0]?.id;
       if (selected) {
         if (!runId) setRunId(selected);
-        const result = await request<{ run: Run; photos: Photo[] }>(`runs/${selected}`);
+        const result = await request<{ run: Run; photos: Photo[]; review_effort?: ReviewEffort }>(
+          `runs/${selected}`,
+        );
         if (generation !== requestGeneration.current) return;
         setPhotos(result.photos);
+        setEffortSummary(result.review_effort);
       }
       setError("");
     } catch (failure) {
@@ -47,6 +61,9 @@ export default function ReviewDesk() {
       if (generation === requestGeneration.current) setLoading(false);
     }
   }, [runId]);
+  // A save that finishes after a run change must reload the run now selected.
+  const latestRefresh = useRef(refresh);
+  latestRefresh.current = refresh;
 
   useEffect(() => {
     try {
@@ -86,17 +103,33 @@ export default function ReviewDesk() {
   const incidental = photos.filter((photo) => photo.cohort === "incidental");
   const reviewed = incidental.filter((photo) => photo.review_status !== "unreviewed").length;
 
+  const effort = useReviewTimer(`${runId}:${active?.id ?? ""}`);
+
+  function switchRun(id: string) {
+    setPhotos([]);
+    setEffortSummary(undefined);
+    setActiveId("");
+    setRunId(id);
+  }
+
   async function save(status: Status, note: string) {
     if (!active) return;
+    const measured = effort.snapshot();
     setSaving(true);
     try {
       await request(`runs/${runId}/photos/${active.id}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, note, reviewer: reviewer.trim() }),
+        body: JSON.stringify({
+          status,
+          note,
+          reviewer: reviewer.trim(),
+          effort_seconds: measured.seconds,
+        }),
       });
+      effort.clear(measured);
       setNotice("Review saved locally.");
-      await refresh();
+      await latestRefresh.current();
     } catch (failure) {
       setError(String(failure));
     } finally {
@@ -112,9 +145,7 @@ export default function ReviewDesk() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit_per_region: limit, controls_per_species: 1, before }),
       });
-      setPhotos([]);
-      setActiveId("");
-      setRunId(result.id);
+      switchRun(result.id);
       setNotice("Regional run queued. Progress updates automatically.");
     } catch (failure) {
       setError(String(failure));
@@ -201,7 +232,7 @@ export default function ReviewDesk() {
                 {reviewed.toString().padStart(2, "0")}
                 <em> / {incidental.length}</em>
               </strong>
-              <small>Human decisions, with an audit trail</small>
+              <small>{effortNote(effortSummary)}</small>
             </div>
             <div>
               <span>Reference photos</span>
@@ -227,14 +258,7 @@ export default function ReviewDesk() {
             <div className="settings-grid">
               <label>
                 Saved run
-                <select
-                  value={runId}
-                  onChange={(event) => {
-                    setPhotos([]);
-                    setRunId(event.target.value);
-                    setActiveId("");
-                  }}
-                >
+                <select value={runId} onChange={(event) => switchRun(event.target.value)}>
                   {runs.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.id} · {item.status}

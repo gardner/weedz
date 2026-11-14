@@ -54,3 +54,5 @@ class Review(BaseModel):
     # Attribution on a local stack, not authentication; see issue #31 for remote review.
     reviewer: ReviewerName
     note: str = Field(default="", max_length=4000)
+    # Active, visible time on this photo measured by the review app; None when not measured.
+    effort_seconds: float | None = Field(default=None, ge=0, le=86_400)

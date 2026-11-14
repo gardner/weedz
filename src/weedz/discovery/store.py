@@ -16,9 +16,11 @@ def now() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def add_missing_column(db: sqlite3.Connection, table: str, column: str) -> None:
+def add_missing_column(
+    db: sqlite3.Connection, table: str, column: str, definition: str = "TEXT NOT NULL DEFAULT ''"
+) -> None:
     if column not in {row["name"] for row in db.execute(f"PRAGMA table_info({table})")}:
-        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def reviewer_decisions(events: list[sqlite3.Row]) -> dict[str, dict[str, str]]:
@@ -57,13 +59,15 @@ class Store:
                 CREATE TABLE IF NOT EXISTS reviews (
                     id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, photo_id TEXT NOT NULL,
                     status TEXT NOT NULL, note TEXT NOT NULL, created_at TEXT NOT NULL,
-                    reviewer TEXT NOT NULL DEFAULT '',
+                    reviewer TEXT NOT NULL DEFAULT '', effort_seconds REAL,
                     FOREIGN KEY(run_id, photo_id) REFERENCES photos(run_id, id)
                 );
             """)
             # Databases created before reviewer attribution keep their history unattributed.
             add_missing_column(db, "photos", "review_reviewer")
             add_missing_column(db, "reviews", "reviewer")
+            # Earlier decisions were not timed: NULL means unmeasured, never zero effort.
+            add_missing_column(db, "reviews", "effort_seconds", "REAL")
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -139,7 +143,15 @@ class Store:
                 (json.dumps(scores), run_id, photo_id),
             )
 
-    def review(self, run_id: str, photo_id: str, status: str, note: str, reviewer: str) -> None:
+    def review(
+        self,
+        run_id: str,
+        photo_id: str,
+        status: str,
+        note: str,
+        reviewer: str,
+        effort_seconds: float | None = None,
+    ) -> None:
         if status not in {"unreviewed", "confirmed", "rejected", "uncertain"}:
             raise ValueError("Unknown review status")
         with self.connect() as db:
@@ -151,9 +163,9 @@ class Store:
             if cursor.rowcount != 1:
                 raise KeyError(photo_id)
             db.execute(
-                "INSERT INTO reviews(run_id,photo_id,status,note,created_at,reviewer) "
-                "VALUES(?,?,?,?,?,?)",
-                (run_id, photo_id, status, note, now(), reviewer),
+                "INSERT INTO reviews(run_id,photo_id,status,note,created_at,reviewer,"
+                "effort_seconds) VALUES(?,?,?,?,?,?,?)",
+                (run_id, photo_id, status, note, now(), reviewer, effort_seconds),
             )
 
     def reviews(self, run_id: str, photo_id: str) -> list[dict]:

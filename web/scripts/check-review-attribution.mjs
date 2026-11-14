@@ -98,7 +98,11 @@ try {
   assert.equal(await note.inputValue(), "", "another reviewer's note is not reused");
   await unsure.click();
   await page.getByText("Review saved locally.").waitFor();
-  assert.deepEqual(posted, [{ status: "uncertain", note: "", reviewer: "Cara" }]);
+  assert.deepEqual(
+    posted.map(({ effort_seconds, ...decision }) => decision),
+    [{ status: "uncertain", note: "", reviewer: "Cara" }],
+  );
+  assert.equal(typeof posted[0].effort_seconds, "number");
 
   await page.reload();
   assert.equal(await name.inputValue(), "Cara");

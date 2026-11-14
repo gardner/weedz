@@ -40,6 +40,19 @@ export type Photo = {
   };
 };
 
+export type ReviewEffort = {
+  total_minutes: number;
+  measured_decisions: number;
+  unmeasured_decisions: number;
+};
+
+export function effortNote(effort: ReviewEffort | undefined): string {
+  if (!effort?.measured_decisions && !effort?.unmeasured_decisions) return "No review time yet";
+  const untimed = effort.unmeasured_decisions;
+  const note = `${effort.total_minutes} min measured review time`;
+  return untimed ? `${note} · ${untimed} decision${untimed === 1 ? "" : "s"} not timed` : note;
+}
+
 export type ReviewEvent = {
   id: number;
   reviewer: string;
