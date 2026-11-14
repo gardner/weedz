@@ -164,6 +164,7 @@ def test_a_withdrawn_report_leaves_the_queue_and_loses_its_image_but_keeps_histo
 
     after = detail(client)
     assert after["photos"] == [] and after["withdrawn_reports"] == 1
+    assert after["run"]["detail"] == "0 reports in review · 1 withdrawn"
     assert not copy.exists()
     assert client.get(f"{path}/image").status_code == 403
     # The append-only history stays, without the image or the location.

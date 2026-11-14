@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { hasImage } from "../lib/device-reports";
 import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
 import type { NewLeadEvent } from "../lib/leads";
@@ -16,6 +17,7 @@ import {
   siteVisitSummary,
   statusLabels,
 } from "../lib/types";
+import DeviceReport from "./device-report";
 import { FindingForm, FindingList } from "./finding-form";
 import JudgementPanel from "./judgements";
 import LeadPanel from "./leads";
@@ -72,11 +74,14 @@ export default function Evidence({
   }
   const target = scores.best_species ?? "Pending screening";
   const blocked = saving || !reviewer.trim();
+  const device = photo.cohort === "device";
   return (
     <article className="evidence">
       <div className="evidence-heading">
         <div>
-          <span className="eyebrow">PHOTO EVIDENCE · {photo.region.toUpperCase()}</span>
+          <span className="eyebrow">
+            {device ? "DEVICE REPORT" : `PHOTO EVIDENCE · ${photo.region.toUpperCase()}`}
+          </span>
           <h2>{names[target] ?? target}</h2>
           <p className="scientific">{scores.best_species ?? "Waiting for the worker"}</p>
         </div>
@@ -113,22 +118,30 @@ export default function Evidence({
           />{" "}
           Show search window
         </label>
-        <a href={imageUrl(runId, photo.id)} target="_blank" rel="noreferrer">
-          Open full image ↗
-        </a>
+        {hasImage(photo) && (
+          <a href={imageUrl(runId, photo.id)} target="_blank" rel="noreferrer">
+            Open full image ↗
+          </a>
+        )}
       </div>
-      <p className="attribution">
-        {photo.attribution} · {photo.photo_license.toUpperCase()} ·{" "}
-        <a href={photo.source_url} target="_blank" rel="noreferrer">
-          View on iNaturalist ↗
-        </a>
-      </p>
+      {device ? (
+        <DeviceReport photo={photo} />
+      ) : (
+        <p className="attribution">
+          {photo.attribution} · {photo.photo_license.toUpperCase()} ·{" "}
+          <a href={photo.source_url} target="_blank" rel="noreferrer">
+            View on iNaturalist ↗
+          </a>
+        </p>
+      )}
       <div className="context-grid">
-        <div>
-          <span>Original subject</span>
-          <strong>{photo.original_common_name || photo.original_taxon}</strong>
-          <small>{photo.original_taxon}</small>
-        </div>
+        {!device && (
+          <div>
+            <span>Original subject</span>
+            <strong>{photo.original_common_name || photo.original_taxon}</strong>
+            <small>{photo.original_taxon}</small>
+          </div>
+        )}
         <PhotoDates photo={photo} />
         <div>
           <span>Site visit</span>
@@ -147,7 +160,7 @@ export default function Evidence({
           </small>
         </div>
       </div>
-      <ScorePanel photo={photo} meaning={scoreMeaning} />
+      {!device && <ScorePanel photo={photo} meaning={scoreMeaning} />}
       <div className="review-form">
         <h3>Is the suggested species visible?</h3>
         <p>
@@ -245,7 +258,7 @@ export default function Evidence({
         onRefer={onRefer}
         onClose={onCloseReferral}
       />
-      {photo.cohort === "incidental" && (
+      {(photo.cohort === "incidental" || device) && (
         <LeadPanel photo={photo} blocked={blocked} onSelect={onSelectLead} />
       )}
       <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />

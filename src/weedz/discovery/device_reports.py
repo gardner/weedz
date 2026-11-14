@@ -26,7 +26,6 @@ from weedz.discovery.store import Store, now
 from weedz.intake.store import ReportStore, StoredReport
 
 RUN_ID = "device-reports"
-RUN_DETAIL = "Reports approved on phones; withdrawn reports leave the queue"
 IMAGES = "images/device"
 NO_CREDIT = "Device report (no credit given)"
 
@@ -167,7 +166,6 @@ def _erase(store: Store, record: dict) -> dict:
 def sync(store: Store, reports: ReportStore) -> None:
     """Bring the device run up to date with intake: add new reports, erase withdrawn ones."""
     store.create_run(RUN_ID, RunSpec())
-    store.status(RUN_ID, "receiving", RUN_DETAIL)
     active = {item_id(stored): stored for stored in reports.active()}
     with store.connect() as db:
         rows = db.execute("SELECT id, record FROM photos WHERE run_id=?", (RUN_ID,))
@@ -175,14 +173,21 @@ def sync(store: Store, reports: ReportStore) -> None:
     for identifier, stored in active.items():
         if identifier not in known:
             _add(store, stored)
-    for identifier, record in known.items():
-        if identifier not in active and not record.get("withdrawn_at"):
-            erased = _erase(store, record)
-            with store.connect() as db:
-                db.execute(
-                    "UPDATE photos SET record=? WHERE run_id=? AND id=?",
-                    (json.dumps(erased), RUN_ID, identifier),
-                )
+    gone = {key: record for key, record in known.items() if key not in active}
+    for identifier, record in gone.items():
+        if not record.get("withdrawn_at"):
+            _withdraw(store, identifier, record)
+    detail = f"{len(active)} reports in review · {len(gone)} withdrawn"
+    store.status(RUN_ID, "receiving", detail)
+
+
+def _withdraw(store: Store, identifier: str, record: dict) -> None:
+    erased = _erase(store, record)
+    with store.connect() as db:
+        db.execute(
+            "UPDATE photos SET record=? WHERE run_id=? AND id=?",
+            (json.dumps(erased), RUN_ID, identifier),
+        )
 
 
 def _add(store: Store, stored: StoredReport) -> None:

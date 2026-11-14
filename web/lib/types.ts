@@ -1,3 +1,4 @@
+import type { DeviceProvenance } from "./device-reports";
 import type { Finding } from "./findings";
 import type { Judged } from "./judgements";
 import type { PhotoLeads } from "./leads";
@@ -17,7 +18,9 @@ export type Run = {
 export type Photo = Judged & {
   id: string;
   region: string;
-  cohort: "incidental" | "reference" | "lookalike";
+  cohort: "incidental" | "reference" | "lookalike" | "device";
+  /** Provenance of a report sent from a phone (#58); absent for iNaturalist photos. */
+  device?: DeviceProvenance;
   lookalike_taxon?: string | null;
   lookalike_of?: string | null;
   reference_species: string | null;
@@ -121,6 +124,7 @@ export type RunDetail = {
   references?: References;
   study?: Study | null;
   score_meaning?: ScoreMeaning;
+  withdrawn_reports?: number;
 };
 
 export type ReviewEffort = {

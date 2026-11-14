@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NewFinding } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
 import type { NewLeadEvent } from "../lib/leads";
-import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
+import { auditedBy, defaultView, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
 import { useReviewer } from "../lib/reviewer";
@@ -14,7 +13,6 @@ import type { Study } from "../lib/study";
 import {
   type AuditSummary,
   effortNote,
-  imageUrl,
   names,
   type Photo,
   type References,
@@ -28,6 +26,7 @@ import {
 import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
+import { Thumbnail } from "./photo-stage";
 import RunSettings from "./run-settings";
 import { ScreeningNote } from "./score-meaning";
 import StudyPanel from "./study-panel";
@@ -95,7 +94,10 @@ export default function ReviewDesk({
       setRuns(list);
       const selected = runId || list[0]?.id;
       if (selected) {
-        if (!runId) setRunId(selected);
+        if (!runId) {
+          setRunId(selected);
+          setCohort(defaultView(selected));
+        }
         const result = await request<RunDetail>(`runs/${selected}`);
         if (generation !== requestGeneration.current) return;
         setPhotos(result.photos);
@@ -150,6 +152,7 @@ export default function ReviewDesk({
     setStudy(null);
     setScoreMeaning(undefined);
     setActiveIds({});
+    setCohort(defaultView(id));
     setRunId(id);
   }
 
@@ -390,14 +393,7 @@ export default function ReviewDesk({
                     }}
                     aria-pressed={active?.id === photo.id}
                   >
-                    <Image
-                      src={imageUrl(runId, photo.id)}
-                      alt={photo.original_common_name || photo.original_taxon}
-                      loading="lazy"
-                      width={68}
-                      height={74}
-                      unoptimized
-                    />
+                    <Thumbnail photo={photo} runId={runId} />
                     <span className="photo-row-body">
                       <span className="row-index">
                         {String(index + 1).padStart(2, "0")} / {photo.region}
