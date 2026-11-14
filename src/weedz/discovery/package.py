@@ -192,5 +192,17 @@ def follow_up_package(
         "leads": [
             lead(photos[selection["photo_id"]], selection, export["references"])
             for selection in selected_leads(events)
+            if _in_export(photos, selection)
         ],
     }
+
+
+def _in_export(photos: dict[str, dict[str, Any]], selection: dict[str, Any]) -> bool:
+    """Whether the export holds the selected plant. Selections are read after the photos,
+    so a plant recorded and selected in between waits for the next package rather than
+    being packaged as some other plant."""
+    photo = photos.get(selection["photo_id"])
+    target = selection["finding_id"]
+    return photo is not None and (
+        target is None or any(plant["id"] == target for plant in photo["findings"])
+    )

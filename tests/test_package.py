@@ -210,3 +210,22 @@ def test_the_reference_records_are_attributed(tmp_path: Path) -> None:
     select(store, photo_id)
     text = to_markdown(package_of(store))
     assert "Reference records: DOC Weeds (CC BY 4.0), <https://gbif.org/d>" in text
+
+
+def test_a_selection_newer_than_the_export_is_left_for_the_next_package(
+    tmp_path: Path,
+) -> None:
+    store, photo_id = store_with_photo(tmp_path, SCREENED)
+    select(store, photo_id)
+    snapshot = export(store, "run")
+    gorse = add_finding(store, photo_id)
+    select(store, photo_id, finding_id=gorse)
+    later = photo_from_observation(observation() | {"id": 9}, "Tasman", "incidental")
+    assert later is not None
+    store.save_photos("run", [later])
+    store.score("run", later.id, SCREENED)
+    select(store, later.id)
+    package = follow_up_package(snapshot, selections(store, "run"), "2026-11-14")
+    assert [(lead["photo_id"], lead["finding_id"]) for lead in package["leads"]] == [
+        (photo_id, None)
+    ]
