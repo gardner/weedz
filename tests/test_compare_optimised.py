@@ -3,6 +3,7 @@
 Tiny stand-in image towers keep these tests offline; no screening model is downloaded.
 """
 
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -168,3 +169,13 @@ def test_artefacts_are_cached_per_weights_libraries_and_export_settings(tmp_path
     fingerprint = json.loads((folder / "provenance.json").read_text())
     assert fingerprint["weights_sha256"] == "w" * 64
     assert fingerprint["export"] == script.EXPORT
+
+
+def test_a_single_file_artefact_records_the_hash_a_bundle_gate_checks(tmp_path: Path) -> None:
+    single = tmp_path / "visual-fp16.pt"
+    single.write_bytes(b"weights")
+    assert script.artefact_sha256(single) == hashlib.sha256(b"weights").hexdigest()
+    split = tmp_path / "visual.onnx"
+    split.write_bytes(b"graph")
+    (tmp_path / "visual.onnx.data").write_bytes(b"external weights")
+    assert script.artefact_sha256(split) is None, "an artefact in several files ships as none"
