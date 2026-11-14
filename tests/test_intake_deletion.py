@@ -209,3 +209,41 @@ def test_bulk_erasure_preserves_existing_withdrawal_times(tmp_path: Path) -> Non
     assert receipt is not None
     assert receipt.withdrawn_at == withdrawn["withdrawn_at"]
     assert receipt.received_at == withdrawn["received_at"]
+
+
+def test_deletion_marker_waits_for_specialist_read_materialization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    from weedz.intake.schema import ReportContent
+
+    parsing, resume = threading.Event(), threading.Event()
+    original = ReportContent.model_validate_json
+    credential = Submitters(tmp_path).issue("phone")
+    client = TestClient(create_intake_app(tmp_path))
+    headers = {"Authorization": f"Bearer {credential.token}"}
+    assert client.put(f"/reports/{new_id()}", json=report(), headers=headers).status_code == 201
+
+    def paused(body: str) -> ReportContent:
+        parsing.set()
+        assert resume.wait(5)
+        return original(body)
+
+    monkeypatch.setattr(ReportContent, "model_validate_json", paused)
+    with ThreadPoolExecutor(2) as pool:
+        reading = pool.submit(ReportStore(tmp_path).active)
+        try:
+            assert parsing.wait(5)
+            erasing = pool.submit(Deletions(tmp_path).delete, credential.id)
+            # A marker writer cannot commit while the read still materializes bodies.
+            from concurrent.futures import TimeoutError as FutureTimeout
+
+            with pytest.raises(FutureTimeout):
+                erasing.result(timeout=0.1)
+        finally:
+            resume.set()
+        assert len(reading.result()) == 1
+        assert erasing.result().status == "deleted"
+    assert not ReportStore(tmp_path).active()

@@ -29,7 +29,10 @@ same SQLite write lock used by uploads. Both admission and final storage check
 that marker. An upload already authenticated, receiving its body, or decoding
 its crop cannot store content after the marker commits. Reports already committed
 are included in the erasure. Marked submitters are immediately hidden from the
-specialist report reader, including during an interrupted erasure.
+specialist report reader, including during an interrupted erasure. A read already
+materializing report bodies finishes its database snapshot before the deletion
+marker commits. Objects returned by an earlier read cannot be revoked; consumers
+must not keep stale snapshots as a substitute for current withdrawal state.
 
 The server then revokes the credential, durably deletes crops, clears report
 bodies and content hashes, removes the submitter's abuse-budget rows, and records

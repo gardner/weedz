@@ -173,22 +173,29 @@ class ReportStore:
             return Receipt(report_id, "withdrawn", row["received_at"], withdrawn, False)
 
     def active(self) -> list[StoredReport]:
-        """Every report received and not withdrawn: unpublished, for review (#58)."""
-        with closing(self._connect()) as db:
+        """Materialize a specialist snapshot before a deletion marker can commit.
+
+        Already-returned snapshots cannot be revoked; callers must not cache report
+        content past its use or treat an old snapshot as current withdrawal state.
+        """
+        with closing(self._connect()) as db, db:
+            # SELECT alone is autocommit: fetchall would release its read lock before
+            # parsing. An explicit read transaction orders this call before erasure.
+            db.execute("BEGIN")
             rows = db.execute(
                 "SELECT * FROM reports WHERE withdrawn_at IS NULL AND submitter NOT IN "
                 "(SELECT submitter FROM submitter_deletions) ORDER BY received_at"
             ).fetchall()
-        return [
-            StoredReport(
-                row["submitter"],
-                row["report_id"],
-                row["received_at"],
-                ReportContent.model_validate_json(row["body"]),
-                self._image(row["image_file"]),
-            )
-            for row in rows
-        ]
+            return [
+                StoredReport(
+                    row["submitter"],
+                    row["report_id"],
+                    row["received_at"],
+                    ReportContent.model_validate_json(row["body"]),
+                    self._image(row["image_file"]),
+                )
+                for row in rows
+            ]
 
     def sweep(self) -> None:
         """Delete crops no report names: left by a crash between writing an image and
