@@ -242,10 +242,14 @@ and ship a table of 16 vectors.
 
 `scripts/compare_optimised.py` checks each candidate image tower against the
 BioCLIP 2 fp32 reference. It uses the same photos and the same revision 4
-windows. Each photo's windows are pre-processed once, and every candidate
-encodes them in its own process. The candidate's window similarities are then
-scored against the reference's text embeddings and read the way a run reads
-them. `weedz.discovery.parity` reports where the candidate disagrees with the
+windows. Each photo's windows are pre-processed once per model, with that
+model's own transform, and every candidate encodes them in its own process.
+Candidates derived from BioCLIP 2 (ONNX, fp16, int8) change only the image
+tower: their window similarities are scored against BioCLIP 2's text
+embeddings. A smaller model cannot share that embedding space, so the BioCLIP
+ViT-B/16 candidates are scored against BioCLIP's own text embeddings. Their
+result compares a whole different model, not just a different image tower.
+Either way, the similarities are read the way a run reads them. `weedz.discovery.parity` reports where the candidate disagrees with the
 reference and applies fixed, versioned thresholds (version 1). Each threshold
 has a reason written next to it, and the limits were set before the first run:
 
