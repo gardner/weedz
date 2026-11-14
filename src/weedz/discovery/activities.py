@@ -15,6 +15,7 @@ from temporalio import activity
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import encounter_groups, summarize, with_encounters
+from weedz.discovery.leads import selections
 from weedz.discovery.limits import CAMERA_TO_PLANT_ALLOWANCE_M, with_limits
 from weedz.discovery.lookalikes import summarize_lookalikes
 from weedz.discovery.occurrences import with_references
@@ -160,6 +161,7 @@ def export(store: Store, run_id: str) -> dict:
             store.latest_audits(run_id),
             store.latest_audits(run_id, blind=False),
         ),
+        "lead_selections": selections(store, run_id),
         "audit_history": [
             dict(photo_id=photo["id"], events=store.audits(run_id, photo["id"])) for photo in photos
         ],
@@ -200,6 +202,10 @@ def export(store: Store, run_id: str) -> dict:
                 "Referrals ask for specialist assessment with a reason; an answer is the "
                 "named specialist's note, not a verified identification, and never changes "
                 "a reviewer's decision or judgement. Names are attribution, not identity"
+            ),
+            (
+                "Leads selected for follow-up are attributed team choices with a reason, "
+                "not verified findings; the follow-up package carries only those selected"
             ),
             (
                 "Photos with obscured, missing or imprecise locations, unknown accuracy or no date "

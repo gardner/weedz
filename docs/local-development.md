@@ -361,6 +361,96 @@ The measure is partially measured once either part has something to report,
 and not yet measurable when neither does. Judged levels are reviewer opinions,
 never a first-occurrence claim.
 
+### Prepare a follow-up package
+
+The team decides which leads are worth investigating, and records why (PRD
+Journey 4). A lead is the suggested species, or a recorded plant, on an
+incidental photo.
+
+**Select a lead.** In the review app, the photo's **Follow-up** section selects
+or deselects a lead. Both actions need your name and a reason.
+
+- Selections are appended, never edited. The latest event for a lead stands,
+  and a deselection is a later event, so the history stays visible.
+- Repeating the current state is refused (409): selecting a lead that is
+  already selected, or deselecting one that is not.
+- Selection is not timed review work.
+- A selection by someone who had not audited the photo unblinds later audits,
+  like any other review action.
+- The export's `lead_selections` lists every event.
+- API: `POST /runs/{run}/photos/{photo}/leads`, with `action` (`selected` or
+  `deselected`), `selector`, `reason` and an optional `finding_id`.
+
+**Build the package.**
+
+```sh
+uv run main.py package --run nelson-tasman-3e62ad801459 --out follow-up/
+```
+
+This writes `package.json`, a readable `package.md`, and `photos/` to a new or
+empty folder. With no selections, it says so plainly and writes nothing.
+
+In the app, **Follow-up package ↓** downloads the same files as a zip
+(`GET /runs/{id}/package/archive`). `GET /runs/{id}/package` returns the JSON.
+
+**What each lead carries.** Only selected leads are packaged, never the whole
+queue. Each lead carries:
+
+- **Selection:** who selected it, when and why, and its selection history.
+- **Candidate:** the candidate plant, kept apart from the photo's original
+  subject.
+- **Source:** the source link, observer, attribution, and photo and
+  observation licences.
+- **Review:** each reviewer's decision on the suggestion, and whether they
+  disagree.
+- **Judgements:** for each dimension, a level (the agreed value, `disputed` or
+  `unassessed`), with every opinion and its note.
+- **Limits:**
+  - the search area: its centre is the observation point, never a plant point,
+    and its radius is the reported accuracy plus the 100 m allowance. If there
+    is no search area, the reason is given.
+  - the photo, upload and screening dates
+  - the presence statement: a photo is not current presence
+- **Comparison basis:**
+  - the reference snapshot's file, retrieval date and SHA-256
+  - this plant's distance-only comparison, or why there is none (free-text
+    taxa are never compared)
+  - the judged novelty level
+  - whether a record-relative claim was judged against another snapshot
+- **Referrals** affecting the plant, with their answers.
+- **Site visit:** its site-visit group.
+
+**Location privacy.** Raw coordinates are never copied into a package. An
+obscured or missing location appears only as "not searchable", with its reason.
+
+**Photos.** A photo is included only when its licence is CC0, CC BY or CC BY-NC.
+All three permit sharing with attribution; for CC BY-NC, the package says the
+use must be non-commercial.
+
+- The included file is the run's retained copy, and only while it still matches
+  its recorded SHA-256. Otherwise the lead links to the source and says why.
+- Any other licence gets a source link and the reason the photo was left out.
+- The relevant detail is given as pixel boxes on the photo, not as new crops:
+  the screening window for a suggestion, or the reviewer-drawn extent for a
+  recorded plant.
+- Nothing is published, and no observation is created on anyone's behalf.
+- Broader sharing rules, such as other licences and the run export's own
+  sharing, are tracked in #28.
+
+**Real-data check.** On a copy of `data/pilot`, run
+`nelson-tasman-3e62ad801459` had no selections, and the command printed "No
+leads are selected for follow-up in this run" and wrote nothing.
+
+After two suggestions were selected on that copy, it wrote two leads (one
+CC BY-NC photo, one CC BY photo). Both had public locations:
+
+- One had a 295 m search area (195 m accuracy), not precise enough for aerial
+  context.
+- The other had a 105 m area (5 m accuracy), precise enough for aerial context.
+
+Neither had a DOC record within 5 km. Both remained unassessed on every
+judgement dimension.
+
 ## Files and evidence
 
 Everything generated is ignored by Git:
@@ -371,7 +461,7 @@ Everything generated is ignored by Git:
 | `data/pilot/runs/<id>/*.json` | Raw source query snapshots and completion manifest |
 | `data/pilot/embeddings/` | Cached BioCLIP window embeddings, keyed by image bytes, pinned model, weights, library versions, preprocessing and window geometry; safe to delete |
 | `data/pilot/references/` | Dated DOC weed-record snapshots from GBIF for comparison |
-| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings, judgements and specialist referrals |
+| `data/pilot/discovery.sqlite3` | Runs, source records, raw scores, current decisions, review events, audits, findings, judgements, specialist referrals and lead selections |
 | `data/pilot/temporal.sqlite3` | Persistent Temporal development-server history |
 | `runs/nelson-tasman-review/` | Browser-check screenshots |
 

@@ -20,6 +20,8 @@ from weedz.discovery.api import create_app
 from weedz.discovery.occurrences import fetch_snapshot
 from weedz.discovery.outcome_report import to_markdown
 from weedz.discovery.outcomes import outcomes
+from weedz.discovery.package_output import package_contents, write
+from weedz.discovery.package_report import NONE_SELECTED
 from weedz.discovery.records import TASK_QUEUE, RunSpec
 from weedz.discovery.source import HEADERS
 from weedz.discovery.store import Store
@@ -129,12 +131,37 @@ def references(args: argparse.Namespace) -> None:
     print(f"Wrote reference snapshot {path}")
 
 
-def report(args: argparse.Namespace) -> None:
+def run_store(args: argparse.Namespace) -> Store:
+    """The pilot store holding `args.run`; never creates a store where there is none."""
     if not (args.pilot_dir / "discovery.sqlite3").is_file():
         raise SystemExit(f"No pilot store in {args.pilot_dir}")
     store = Store(args.pilot_dir)
     if not any(run["id"] == args.run for run in store.runs()):
         raise SystemExit(f"No run {args.run!r} in {args.pilot_dir}")
+    return store
+
+
+def package(args: argparse.Namespace) -> None:
+    """Write the run's follow-up package to a new or empty folder."""
+    store = run_store(args)
+    if args.out.exists() and not args.out.is_dir():
+        raise SystemExit(f"{args.out} is not a folder; choose a new or empty folder")
+    if args.out.exists() and any(args.out.iterdir()):
+        raise SystemExit(f"{args.out} is not empty; choose a new or empty folder")
+    built, photos = package_contents(store, args.run, datetime.now(UTC).isoformat())
+    if not built["leads"]:
+        print(NONE_SELECTED + " Nothing written.")
+        return
+    try:
+        write(built, photos, args.out)
+    except (ValueError, OSError) as error:
+        raise SystemExit(f"Package not written: {error}") from error
+    count = len(built["leads"])
+    print(f"Wrote {count} lead{'s' if count != 1 else ''} for follow-up to {args.out}")
+
+
+def report(args: argparse.Namespace) -> None:
+    store = run_store(args)
     result = outcomes(export(store, args.run))
     print(to_markdown(result), end="")
     if args.json:
@@ -194,6 +221,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
     measures.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     measures.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     measures.add_argument("--json", type=Path, help="Also write the report as JSON here")
+    bundle = commands.add_parser(
+        "package", help="Write the follow-up package of a run's selected leads"
+    )
+    bundle.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
+    bundle.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
+    bundle.add_argument("--out", type=Path, required=True, help="New or empty folder to write")
     return parser.parse_args(argv)
 
 
@@ -204,5 +237,8 @@ def main(argv: list[str]) -> None:
         return
     if args.command == "outcomes":
         report(args)
+        return
+    if args.command == "package":
+        package(args)
         return
     asyncio.run(dev(args) if args.command == "dev" else discover(args))

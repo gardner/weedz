@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
+import type { NewLeadEvent } from "../lib/leads";
 import type { Closing, NewReferral } from "../lib/referrals";
 import {
   imageUrl,
@@ -16,6 +17,7 @@ import {
 } from "../lib/types";
 import { FindingForm, FindingList } from "./finding-form";
 import JudgementPanel from "./judgements";
+import LeadPanel from "./leads";
 import { PhotoDates, SearchAreaNote } from "./photo-limits";
 import PhotoStage from "./photo-stage";
 import ReferralPanel from "./referrals";
@@ -29,6 +31,7 @@ export default function Evidence({
   onSaveJudgement,
   onRefer,
   onCloseReferral,
+  onSelectLead,
   saving,
   references,
   reviewer,
@@ -41,6 +44,7 @@ export default function Evidence({
   onSaveJudgement: (judgement: NewJudgement) => Promise<boolean>;
   onRefer: (referral: NewReferral) => Promise<boolean>;
   onCloseReferral: (referralId: number, closing: Closing) => Promise<boolean>;
+  onSelectLead: (event: NewLeadEvent) => Promise<boolean>;
   saving: boolean;
   references: References;
   reviewer: string;
@@ -232,6 +236,9 @@ export default function Evidence({
         onRefer={onRefer}
         onClose={onCloseReferral}
       />
+      {photo.cohort === "incidental" && (
+        <LeadPanel photo={photo} blocked={blocked} onSelect={onSelectLead} />
+      )}
       <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />
     </article>
   );
