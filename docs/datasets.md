@@ -178,7 +178,11 @@ imply that non-commercial training is excluded.
 Keep all photos of an observation, duplicate photos, and known encounters with
 the same plant in one partition. Test additional observer/site holdouts. Export
 an observation location only with its uncertainty and privacy status; it is not
-a plant boundary or a camera-to-ground projection. Respect
+a plant boundary or a camera-to-ground projection. The pilot describes each
+photo's search area as reported accuracy plus a declared 100 m camera-to-plant
+allowance around the observation point, and gives no search area when the
+location is obscured, missing or of unknown accuracy
+([location and date limits](local-development.md#location-and-date-limits)). Respect
 [obscured/private coordinates](https://help.inaturalist.org/en/support/solutions/articles/151000233080-how-does-inaturalist-protect-the-locations-of-sensitive-species-).
 Hosted photos have metadata removed, so camera pose must not be assumed available
 from [downloaded image EXIF](https://help.inaturalist.org/en/support/solutions/articles/151000233085-how-to-download-a-photo-from-inaturalist).
