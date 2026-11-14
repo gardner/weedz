@@ -112,7 +112,7 @@ accuracy within 5 km; other photos are marked not compared, with a reason. The
 evidence panel shows this for the suggested species.
 
 This is a distance comparison, not a novelty verdict. A missing record is not
-an absence, and neither point locates a plant. The 13 November 2026 snapshot
+an absence, and neither point locates a plant. The 14 November 2026 snapshot
 (51 old man's beard, 4 pampas, 147 gorse records) is sparse near the pilot
 photos: nearest records are typically 7–70 km away and mostly from the late
 1990s. "No nearby record" therefore says more about the reference set than about
