@@ -127,8 +127,13 @@ class Annotation(Contract):
         return self
 
     def supervises(self) -> bool:
-        """Evidence a task can rely on: not a prediction and not rejected on review."""
-        return self.origin != "model" and self.review != "rejected"
+        """Evidence a task can rely on: a present or absent label, not a prediction, and not
+        rejected on review. Unknown and ignored labels give a task no target."""
+        return (
+            self.label in {"present", "absent"}
+            and self.origin != "model"
+            and self.review != "rejected"
+        )
 
 
 class Sample(Contract):

@@ -499,8 +499,8 @@ pipelines.
 | Prediction | Model-origin annotations with model, score and method note, which never count as supervision | Thresholds, abstention, preprocessing versions |
 
 Each sample declares its tasks, and validation refuses any task that the sample's
-supervision cannot support. Predictions and rejected labels are not evidence for
-this check. In particular:
+supervision cannot support. Predictions, rejected labels, and `unknown` or
+`ignored` labels are not evidence for this check. In particular:
 
 - image labels, boxes and sparse masks cannot support dense segmentation
 - area measurement also needs a known GSD
