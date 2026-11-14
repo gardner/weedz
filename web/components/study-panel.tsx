@@ -60,7 +60,11 @@ function StudyView({ study, terms }: { study: Study; terms?: StudyTerms }) {
     ["Subject selection", d.subject_selection || NOT_YET],
     [
       "Review budget",
-      use ? `${budgetText(use.hours, "h")} · ${budgetText(use.photos, "photos")}` : NOT_YET,
+      use
+        ? [budgetText(use.hours, "h"), budgetText(use.photos, "photos"), d.review_budget.note]
+            .filter(Boolean)
+            .join(" · ")
+        : NOT_YET,
     ],
     [
       "Reference records",
@@ -69,7 +73,10 @@ function StudyView({ study, terms }: { study: Study; terms?: StudyTerms }) {
     ],
   ];
   const limits = terms
-    ? Object.entries(terms.limits).map(([key, item]) => limitText(item, d.limits[key]))
+    ? Object.entries(terms.limits).map(([key, item]) => {
+        const note = d.limits[key]?.note;
+        return `${limitText(item, d.limits[key])}${note ? ` (${note})` : ""}`;
+      })
     : [];
   return (
     <div className="study-view">

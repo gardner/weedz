@@ -247,3 +247,17 @@ def test_two_new_studies_for_one_run_cannot_both_link(tmp_path: Path) -> None:
     assert len(studies(store)) == 1
     linked = run_study(store, "run")
     assert linked is not None and linked["id"] == first["id"]
+
+
+def test_a_recent_run_has_an_open_start_against_the_study_period() -> None:
+    study = StudyDefinition.model_validate(definition(period_start="2015-01-01"))
+    notes = differences(study, RunSpec(sampling="recent", before=date(2024, 12, 31)))
+    assert any("open start" in note and "outside" in note for note in notes)
+    unbounded = StudyDefinition.model_validate(definition())
+    assert not any("outside" in note for note in differences(unbounded, RunSpec(sampling="recent")))
+
+
+def test_a_budget_is_spent_only_when_the_unrounded_time_reaches_it() -> None:
+    use = budget_use(Budget(hours=1), minutes=59.75, untimed=0, photos=0)
+    assert use["hours"]["used"] == 1.0
+    assert use["hours"]["state"] == "within"

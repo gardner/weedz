@@ -125,3 +125,11 @@ def test_markdown_shows_the_study_limits_and_verdicts() -> None:
     assert "not agreed" in text
     plain = to_markdown(outcomes(reviewed_export()))
     assert "No study is linked to this run" in plain
+
+
+def test_a_share_is_compared_before_it_is_rounded() -> None:
+    """2 of 3 is 66.666…%, short of 66.67 % even though it shows as 66.7."""
+    photos = [photo("a", "a"), photo("b", "b"), photo("c", "c", sha256="")]
+    study = linked(limits={"evidence_completeness": {"value": 66.67}})
+    result = measure(outcomes(export(photos, study=study)), "evidence_completeness")["limit"]
+    assert (result["measured"], result["verdict"]) == (66.7, "not met")

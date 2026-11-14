@@ -84,6 +84,8 @@ try {
   await panel.getByLabel("Why Clematis paniculata").fill("Native; flowers alike");
   await panel.getByLabel("Reference records").fill("DOC weed records: Snapshot; incomplete");
   await panel.getByLabel(/^Coverage and review usability:/).fill("80");
+  await panel.getByLabel("Note on Coverage and review usability").fill("Half the queue");
+  await panel.getByLabel("Budget note").fill("Pilot only");
   await panel.getByLabel("Recorded by").fill("Ana");
   await panel.getByRole("button", { name: "Save study version" }).click();
   await page.getByText("Study version 1 saved locally.").waitFor();
@@ -104,7 +106,7 @@ try {
   assert.deepEqual(definition.lookalikes, [
     { taxon: "Clematis paniculata", rationale: "Native; flowers alike", screened: true },
   ]);
-  assert.deepEqual(definition.limits, { coverage: { value: 80, note: "" } });
+  assert.deepEqual(definition.limits, { coverage: { value: 80, note: "Half the queue" } });
   assert.equal(definition.review_budget.hours, null);
   assert.equal(created.run_id, "run");
 
@@ -118,6 +120,9 @@ try {
   await panel.getByText(/Version 1 by Ana/).waitFor();
   // A reference record shows its coverage note, not just its name.
   await panel.getByText("DOC weed records: Snapshot; incomplete").waitFor();
+  // Notes qualifying the budget and a limit are shown with them.
+  await panel.getByText(/no budget set · Pilot only/).waitFor();
+  await panel.getByText(/80 % of incidental photos reviewed \(Half the queue\)/).waitFor();
 
   // A stored version may name what the screening no longer covers, or a measure since
   // removed; an edit must carry them rather than silently drop them.

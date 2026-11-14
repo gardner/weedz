@@ -300,32 +300,35 @@ def _screening_gaps(study: StudyDefinition) -> list[str]:
 def differences(study: StudyDefinition, spec: RunSpec | None) -> list[str]:
     """Every way the study differs from what the screening code, and the run, cover."""
     notes = _screening_gaps(study)
-    if spec is None or spec.sampling != "stratified":
+    if spec is None:
         return notes
+    # A recent run queries everything up to `before`, so its period has an open start.
+    after = spec.after if spec.sampling == "stratified" else None
     start, end = study.period_start, study.period_end
-    if (start and spec.after < start) or (end and spec.before > end):
+    if (start and (after is None or after < start)) or (end and spec.before > end):
         notes.append(
-            f"The run's period {spec.after} to {spec.before} reaches outside the study "
-            f"period {start or 'open'} to {end or 'open'}"
+            f"The run's period {after or 'open start'} to {spec.before} reaches outside "
+            f"the study period {start or 'open'} to {end or 'open'}"
         )
     return notes
 
 
 def _use(budget: float | None, used: float, lower_bound: bool) -> dict[str, Any]:
+    """Compared unrounded, so work is never spent early; reported to two decimals."""
     if budget is None:
         state = "not set"
     elif used >= budget:
         state = "spent"
     else:
         state = "within so far" if lower_bound else "within"
-    return {"budget": budget, "used": used, "lower_bound": lower_bound, "state": state}
+    return {"budget": budget, "used": round(used, 2), "lower_bound": lower_bound, "state": state}
 
 
 def budget_use(budget: Budget, minutes: float, untimed: int, photos: int) -> dict[str, Any]:
     """Measured review hours and reviewed photos against the budget. Untimed work makes
     the hours a lower bound: spent is certain, within is only so far."""
     return {
-        "hours": _use(budget.hours, round(minutes / 60, 2), untimed > 0),
+        "hours": _use(budget.hours, minutes / 60, untimed > 0),
         "photos": _use(budget.photos, photos, False),
         "note": budget.note,
     }

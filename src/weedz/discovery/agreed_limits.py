@@ -33,7 +33,7 @@ def _share(item: dict[str, Any]) -> float | None:
     value, denominator = item["value"], item["denominator"]
     if not value or not denominator or not denominator["photos"]:
         return None
-    return round(100 * value["photos"] / denominator["photos"], 1)
+    return 100 * value["photos"] / denominator["photos"]
 
 
 def _complete(item: dict[str, Any]) -> Quantity | None:
@@ -61,7 +61,7 @@ def _verdict(terms: LimitTerms, limit: Limit, quantity: Quantity) -> tuple[str, 
     if lower_bound and met != at_least:
         return (
             "not comparable",
-            f"Only a lower bound is measured ({value:g} {terms.unit}), which does not "
+            f"Only a lower bound is measured ({round(value, 1):g} {terms.unit}), which does not "
             "settle the limit yet.",
         )
     return ("met" if met else "not met"), ""
@@ -76,7 +76,8 @@ def compare(
         "direction": terms.direction,
         "unit": terms.unit,
         "note": limit.note if limit else "",
-        "measured": quantity[0] if quantity else None,
+        # Compared unrounded; reported to one decimal.
+        "measured": round(quantity[0], 1) if quantity else None,
     }
     if limit is None:
         return result | {"verdict": "not agreed", "reason": NOT_AGREED}
