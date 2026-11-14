@@ -7,7 +7,14 @@ than silently weakening labels (an image label never becomes a mask).
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_serializer,
+    model_validator,
+)
 
 SCHEMA_VERSION = 1
 
@@ -142,6 +149,11 @@ class Sample(Contract):
     context: dict[str, str] = {}
     tasks: frozenset[Task]
     annotations: tuple[Annotation, ...] = ()
+
+    @field_serializer("tasks")
+    def sorted_tasks(self, tasks: frozenset[str]) -> list[str]:
+        """Sorted, so a manifest's bytes and SHA-256 do not depend on the hash seed."""
+        return sorted(tasks)
 
     @model_validator(mode="after")
     def supported(self) -> "Sample":
