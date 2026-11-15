@@ -17,11 +17,19 @@ from temporalio.worker import Worker
 
 from weedz.batches.activities import BatchActivities
 from weedz.batches.contract import batch_request
+from weedz.batches.publisher_runtime import publisher_from_config
 from weedz.batches.receipts import write_receipt
 from weedz.batches.runtime import prepare_config, registry_from_config
-from weedz.batches.workflow import CLASSIFICATION, CONTROL, SEGMENTATION, BatchAnnotationWorkflow
+from weedz.batches.workflow import (
+    CLASSIFICATION,
+    CONTROL,
+    PUBLICATION,
+    SEGMENTATION,
+    BatchAnnotationWorkflow,
+)
 
 ROLES = {
+    "publication": (PUBLICATION, ("batch_publish_v1",)),
     "control": (CONTROL, ("batch_validate_v1", "batch_package_v1")),
     "segmentation": (SEGMENTATION, ("batch_segment_v1",)),
     "classification": (
@@ -34,9 +42,20 @@ ROLES = {
 async def worker(args, config):
     selected = args.roles.split(",")
     if not selected or any(role not in ROLES for role in selected):
-        raise ValueError("Choose explicit control, segmentation or classification roles")
+        raise ValueError(
+            "Choose explicit control, segmentation, classification or publication roles"
+        )
     client = await Client.connect(args.address, namespace=args.namespace)
-    activities = BatchActivities(Path(config["artifact_root"]), registry_from_config(config))
+    publisher = None
+    if "publication" in selected:
+        if args.publication_config is None:
+            raise ValueError("The publication role requires explicit sole-writer configuration")
+        publisher = publisher_from_config(
+            json.loads(args.publication_config.read_text(encoding="utf-8"))
+        )
+    activities = BatchActivities(
+        Path(config["artifact_root"]), registry_from_config(config), publisher
+    )
     stopped = asyncio.Event()
     for name in (signal.SIGTERM, signal.SIGINT):
         asyncio.get_running_loop().add_signal_handler(name, stopped.set)
@@ -81,6 +100,7 @@ def main():
     serve = commands.add_parser("worker")
     serve.add_argument("--config", type=Path, required=True)
     serve.add_argument("--roles", required=True)
+    serve.add_argument("--publication-config", type=Path)
     start = commands.add_parser("submit")
     start.add_argument("--request", type=Path, required=True)
     start.add_argument("--workflow-id", required=True)
