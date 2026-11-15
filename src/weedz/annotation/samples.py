@@ -101,6 +101,10 @@ def _frame(key: str, digest: str, rows: dict, metadata: dict | None) -> tuple:
         raise ValueError("Missing classifier result for a source sample")
     if row["image_sha256"] != digest:
         raise ValueError("Classifier image checksum mismatch")
+    if metadata.get("classifier_kind") == "bioclip-margin-cuda-v1":
+        from weedz.annotation.bioclip import frame_prediction as margin_frame
+
+        return margin_frame(row["scores"], metadata), row, "BioCLIP margin candidate proposed"
     return frame_prediction(row["topk"], metadata), row, "frame taxon proposed"
 
 

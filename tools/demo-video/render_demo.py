@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 
 from demo_credits import portable_credits
-from demo_evidence import photo_record, verified_photo_bytes
+from demo_evidence import verified_photo_bytes
 from demo_frames import Frames, caption, configure_fonts, dissolve
 from demo_integrity import MOBILE_MEDIA, WEB_MEDIA, checked_files
 from demo_timeline import caption_cues, load_timeline, narration_master, portable_timeline, srt
@@ -47,6 +47,27 @@ def validate_browser_capture(web: Path) -> dict:
     return proof
 
 
+def mobile_source_credit(proof: dict) -> dict:
+    source = proof.get("source_provenance")
+    if not isinstance(source, dict):
+        raise ValueError("Mobile source provenance is missing")
+    for key in ("source_image_sha256", "report_image_sha256"):
+        digest = source.get(key)
+        if (
+            not isinstance(digest, str)
+            or len(digest) != 64
+            or set(digest) - set("0123456789abcdef")
+        ):
+            raise ValueError("Mobile source provenance requires exact encoded-image checksums")
+    rights = source.get("rights")
+    required = ("attribution", "observer", "source_url", "photo_licence", "observation_licence")
+    if not isinstance(rights, dict) or any(
+        not isinstance(rights.get(k), str) or not rights[k] for k in required
+    ):
+        raise ValueError("Mobile source provenance requires its own attribution and rights")
+    return source
+
+
 def validate_mobile_capture(mobile: Path) -> dict:
     try:
         proof = json.loads((mobile / "live-capture.json").read_text())
@@ -69,6 +90,7 @@ def validate_mobile_capture(mobile: Path) -> dict:
         raise ValueError(
             "Mobile browser capture must finish without errors and verify real API outcomes"
         )
+    mobile_source_credit(proof)
     checked_files(mobile, MOBILE_MEDIA, proof.get("media_sha256"))
     return proof
 
@@ -131,10 +153,12 @@ def render(args: argparse.Namespace) -> None:
         mobile = web / "mobile"
         mobile.mkdir()
         checked_files(args.mobile_captures, MOBILE_MEDIA, mobile_proof.get("media_sha256"), mobile)
-        _render(args, output, web, mobile)
+        _render(args, output, web, mobile, mobile_source_credit(mobile_proof))
 
 
-def _render(args: argparse.Namespace, output: Path, web: Path, mobile: Path) -> None:
+def _render(
+    args: argparse.Namespace, output: Path, web: Path, mobile: Path, mobile_credit: dict
+) -> None:
     scenes = load_timeline(args.script, args.audio)
     cues = caption_cues(scenes, args.transcript)
     output.mkdir(parents=True)
@@ -185,7 +209,7 @@ def _render(args: argparse.Namespace, output: Path, web: Path, mobile: Path) -> 
         },
         "music": "MiniMax Music3; see music provenance supplied with final mix",
         "photo_sources": portable_credits(frames.provenance),
-        "flutter_photo": portable_credits(photo_record(frames.provenance, "images/447484684.png")),
+        "flutter_photo": portable_credits(mobile_credit),
         "photo_modifications": "Metadata removed, orientation corrected, resized for composition. "
         "Search-window and report-field graphics explain the pipeline; no photo pan or zoom.",
         "credit_font": "Noto Sans CJK Japanese / SIL Open Font License 1.1",

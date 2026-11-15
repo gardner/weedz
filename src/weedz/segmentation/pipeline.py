@@ -25,7 +25,9 @@ class Proposer(Protocol):
     def generate(self, image: Image.Image) -> list[dict[str, Any]]: ...
 
 
-def identify_views(screener: Any, views: dict[str, Image.Image], subject: str | None) -> dict:
+def identify_views(
+    screener: Any, views: dict[str, Image.Image], subject: str | None, *, include_raw: bool = False
+) -> dict:
     """Same BioCLIP text comparisons, with each view kept separate (never confidence)."""
     torch = screener.torch
     labels = list(SPECIES) + COMPARISONS
@@ -43,6 +45,8 @@ def identify_views(screener: Any, views: dict[str, Image.Image], subject: str | 
             features = screener.model.encode_image(batch, normalize=True)
             scores = cosine_scores(screener, features, text)
         result[name] = summarize_scores(scores, [(0, 0, *image.size)], labels, len(SPECIES))
+        if include_raw:
+            result[name]["window_similarities"] = scores.tolist()
         result[name].pop("box")
         for species in result[name]["species"]:
             species.pop("box")

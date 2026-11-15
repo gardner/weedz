@@ -78,7 +78,7 @@ def main() -> None:
                         "python",
                         "scripts/serve_demo_snapshot.py",
                         "--snapshot",
-                        str(args.snapshot),
+                        str(snapshot),
                         "--port",
                         str(api_port),
                         "--instance",

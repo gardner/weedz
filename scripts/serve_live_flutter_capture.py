@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 
 import uvicorn
-from demo_public_report import source_report
+from demo_public_report import source_capture
 from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -75,7 +75,7 @@ def main() -> None:
         json.dumps(
             {
                 "token": credential.token,
-                "report": source_report(args.source_pilot),
+                **source_capture(args.source_pilot),
             }
         )
     )

@@ -116,3 +116,9 @@ is an explicitly non-commercial demo. Each credit carries the actual codes, obse
 source link and the sharing policy's terms. Unknown observation terms are refused;
 no licence version is inferred for generic observation codes. Historical media and
 receipts are preserved rather than silently upgraded to this newer credit schema.
+New live capture receipts carry public provenance from the actual mobile source,
+including original encoded-image and uploaded JPEG checksums, model context, and
+separate photo/observation rights. The browser checks the upload bytes before PUT;
+rendered mobile credits use that retained receipt rather than an unrelated review
+snapshot. JPEG re-encoding is disclosed. Checked source paths (and the selected
+FFmpeg executable) are resolved before launching children from the repository cwd.

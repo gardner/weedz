@@ -107,3 +107,44 @@ def test_owned_server_is_reaped_even_if_graceful_shutdown_times_out(monkeypatch,
     module.stop_server(SimpleNamespace(pid=123, poll=lambda: None, wait=wait))
     assert signals == [(123, signal.SIGTERM)] + ([(123, signal.SIGKILL)] if times_out else [])
     assert waits == ([10, 10] if times_out else [10])
+
+
+@pytest.mark.parametrize(
+    "script,source_flag,extra",
+    [
+        ("capture_live_flutter", "--source-pilot", ["--ffmpeg", "unused"]),
+        ("capture_review_demo", "--snapshot", []),
+    ],
+)
+def test_child_receives_the_checked_absolute_source_from_another_cwd(
+    tmp_path, monkeypatch, script, source_flag, extra
+):
+    import importlib
+
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
+    module = importlib.import_module(script)
+    monkeypatch.chdir(tmp_path)
+    source = tmp_path / "relative-source"
+    source.mkdir()
+    monkeypatch.setattr(module, "outside_git", lambda path: path.resolve(), raising=False)
+    monkeypatch.setattr(module, "new_output", lambda path: path.resolve(), raising=False)
+    if script == "capture_review_demo":
+        ports = iter([8311, 8312])
+        monkeypatch.setattr(module, "available_port", lambda: next(ports))
+    commands = []
+
+    class StopBeforeLaunching(Exception):
+        pass
+
+    def launch(command, **_kwargs):
+        commands.append(command)
+        raise StopBeforeLaunching
+
+    monkeypatch.setattr(module.subprocess, "Popen", launch)
+    monkeypatch.setattr(
+        sys, "argv", [script, source_flag, "relative-source", "--output", "out", *extra]
+    )
+    with pytest.raises(StopBeforeLaunching):
+        module.main()
+    index = commands[0].index(source_flag)
+    assert commands[0][index + 1] == str(source)
