@@ -7,7 +7,7 @@ WorkingDirectory=%h/.local/share/weedz/site/current/web
 Environment=NODE_ENV=production
 Environment=WEEDZ_DEPLOYMENT=beast
 Environment=WEEDZ_API_URL=http://127.0.0.1:8058
-Environment=WEEDZ_RUN_CREATION=disabled
+Environment=WEEDZ_RUN_CREATION=enabled
 ExecStart=%h/.local/share/weedz/site/runtime/node %h/.local/share/weedz/site/current/web/node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3058
 Restart=on-failure
 RestartSec=3

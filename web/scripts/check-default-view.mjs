@@ -36,7 +36,9 @@ try {
     if (path === "/api/runs/plants") return route.fulfill({ json: { run, photos: [photo] } });
     return route.fulfill({ json: [] });
   });
-  await page.goto("http://127.0.0.1:3001", { waitUntil: "domcontentloaded" });
+  await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001", {
+    waitUntil: "domcontentloaded",
+  });
   await page.locator("button.photo-row").waitFor({ timeout: 3000 });
   assert.match((await page.locator("button.photo-row").textContent()) ?? "", /Gorse/);
   await page.getByRole("button", { name: "Incidental photos", exact: true }).click();

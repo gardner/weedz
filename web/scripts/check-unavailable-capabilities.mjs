@@ -12,7 +12,9 @@ try {
         json: new URL(route.request().url()).pathname === "/api/session" ? body : [],
       }),
     );
-    await page.goto("http://127.0.0.1:3001", { waitUntil: "domcontentloaded" });
+    await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001", {
+      waitUntil: "domcontentloaded",
+    });
     await page.locator(".run-settings summary").click();
     await page.getByRole("button", { name: "Start bounded run" }).waitFor();
     assert(await page.getByRole("button", { name: "Start bounded run" }).isDisabled());
@@ -27,7 +29,9 @@ try {
       json: session ? { mode: "tokens", reviewer: "Test reviewer" } : [],
     });
   });
-  await page.goto("http://127.0.0.1:3001", { waitUntil: "domcontentloaded" });
+  await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001", {
+    waitUntil: "domcontentloaded",
+  });
   await page.getByLabel("Reviewer token", { exact: true }).fill("test-token");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.locator(".run-settings summary").click();

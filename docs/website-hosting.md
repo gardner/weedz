@@ -35,10 +35,13 @@ settings without replacing the plant-only default. Its 24 newly computed results
 9 reused exact verified results retain real masks/scores and truthful source cohorts;
 it is not a population-performance evaluation.
 
-There is no Temporal server/discovery worker in this service deployment. New collection
-creation is explicitly disabled by `WEEDZ_RUN_CREATION=disabled` in both proxy and UI;
-existing evidence, studies and review records remain usable. Enable collection creation
-only after provisioning and verifying the workflow stack. No fake workflow response is used.
+The hosted worker now owns a real SDK-managed local Temporal evaluation service.
+Authenticated collection creation is enabled only while both that service and its
+scoped model worker are healthy. New submissions default to the versioned SAM2.1
+profile, followed by the unchanged baseline, proposal-view scoring and export.
+`WEEDZ_RUN_CREATION=disabled` remains an operational stop switch. Existing evidence,
+studies and reviews remain usable while processing is unavailable. No fake workflow
+response is used.
 R2 is not part of the active storage path; durable data is on beast.
 
 ## Files and lifecycle
@@ -151,3 +154,11 @@ legacy off behavior. Failed and empty proposal results are distinct stage outcom
 Do not enable the website's collection flag until a real authenticated run and
 workflow/worker restart recovery have been verified against actual Temporal history
 and immutable model-stage artifacts.
+
+Actual restart validation on 15 November used workflow
+`nelson-tasman-26c5fca23e18`: eight unique licensed photos, 31 class-agnostic masks,
+two legitimate empty results and all five activities completed. Both the model-worker
+and SDK-server PIDs changed while that same workflow was running. Existing completed
+artifacts and human-review state were preserved. The owner-private proof contains the
+actual Temporal history and exported-stage checksums; this is operational recovery
+evidence, not identification-accuracy validation.
