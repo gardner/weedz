@@ -87,6 +87,7 @@ class Sam2Proposer:
         quality = np.array(
             [[r.quality["predicted_iou"], r.quality["stability_score"]] for r in kept]
         )
+        quality = quality.reshape((-1, 2))
         self.cache.mkdir(parents=True, exist_ok=True)
         temporary = path.with_suffix(".tmp.npz")
         np.savez_compressed(temporary, masks=masks, quality=quality)
@@ -99,10 +100,10 @@ class Sam2Proposer:
         if (
             masks.ndim != 3
             or masks.shape[0] > self.config.max_proposals
+            or min(masks.shape[1:]) < 1
             or max(masks.shape[1:]) > self.config.max_side
             or masks.dtype != bool
             or quality.shape != (len(masks), 2)
-            and len(masks) != 0
             or not np.isfinite(quality).all()
         ):
             raise ValueError("Invalid mask cache")

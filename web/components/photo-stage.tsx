@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { type PointerEvent, type ReactNode, useRef } from "react";
+import { type PointerEvent, type ReactNode, useRef, useState } from "react";
 import { findingName } from "../lib/findings";
 import { imageUrl, names, type Photo } from "../lib/types";
+
+import { SegmentationControls, SegmentationMask } from "./segmentation-overlay";
 
 type Point = [number, number];
 const clamp = (value: number, max: number) => Math.min(Math.max(Math.round(value), 0), max);
@@ -29,6 +31,7 @@ export default function PhotoStage({
   onDraw: (box: number[]) => void;
 }) {
   const { scores } = photo;
+  const [mask, setMask] = useState<number | null>(null);
   const svg = useRef<SVGSVGElement>(null);
   const start = useRef<Point | null>(null);
   const width = scores.width ?? 0;
@@ -80,6 +83,11 @@ export default function PhotoStage({
         >
           <title>Original photo with an optional model search window</title>
           <image href={imageUrl(runId, photo.id)} width={width} height={height} />
+          <SegmentationMask
+            region={mask === null ? undefined : scores.segmentation?.regions[mask]}
+            width={width}
+            height={height}
+          />
           {windowVisible && scores.box && (
             <Box box={scores.box} className="search-window" stroke={stroke} dash="12 6" />
           )}
@@ -101,6 +109,9 @@ export default function PhotoStage({
           height={1024}
           unoptimized
         />
+      )}
+      {scores.segmentation && (
+        <SegmentationControls evidence={scores.segmentation} selected={mask} onSelect={setMask} />
       )}
       <span className="image-caption">{caption}</span>
     </div>

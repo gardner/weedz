@@ -63,11 +63,21 @@ class Region:
         output = io.BytesIO()
         Image.fromarray(rgba).save(output, format="PNG")
         return {
+            "id": hashlib.sha256(self.mask.tobytes()).hexdigest(),
             "box": list(self.box),
             "context_box": list(self.context_box),
             "mask_size": [self.mask.shape[1], self.mask.shape[0]],
             "mask_png": base64.b64encode(output.getvalue()).decode(),
             "mask_quality": self.quality,
+            "view_transforms": {
+                name: {
+                    "source_box": list(self.context_box if name == "context" else self.box),
+                    "resized_size": list(view.size),
+                    "resize": "LANCZOS",
+                    "padding": "centred neutral square before BioCLIP transform",
+                }
+                for name, view in self.views.items()
+            },
         }
 
 
@@ -83,14 +93,18 @@ def _region(image: Image.Image, mask: np.ndarray, raw: dict, config: ProposalCon
         min(image.width, x2 + pad),
         min(image.height, y2 + pad),
     )
-    neutral = Image.new("RGB", image.size, (124, 116, 104))
-    neutral.paste(image, mask=full.convert("L").point(lambda p: 255 if p else 0))
+    tight, surrounding = image.crop(box), image.crop(context)
+    for view in (tight, surrounding):
+        view.thumbnail((config.max_side, config.max_side), Image.Resampling.LANCZOS)
+    visible = full.crop(box).resize(tight.size, Image.Resampling.NEAREST).convert("L")
+    neutral = Image.new("RGB", tight.size, (124, 116, 104))
+    neutral.paste(tight, mask=visible.point(lambda p: 255 if p else 0))
     return Region(
         mask,
         box,
         context,
         {key: float(raw[key]) for key in ("predicted_iou", "stability_score")},
-        {"tight": image.crop(box), "masked": neutral.crop(box), "context": image.crop(context)},
+        {"tight": tight, "masked": neutral, "context": surrounding},
     )
 
 

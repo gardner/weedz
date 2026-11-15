@@ -4,7 +4,6 @@ import argparse
 import hashlib
 import json
 import resource
-import shutil
 import sqlite3
 import sys
 import time
@@ -14,7 +13,7 @@ from weedz.discovery.inference import Screener, subject_label
 from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.store import Store
 from weedz.segmentation.pipeline import SegmentedScreen
-from weedz.segmentation.regions import ProposalConfig
+from weedz.segmentation.regions import ProposalConfig, upright
 from weedz.segmentation.sam2 import CHECKPOINT_SHA256, Sam2Proposer
 
 
@@ -74,10 +73,17 @@ def main() -> None:
             raise ValueError("Source image escapes public pilot")
         if hashlib.sha256(original.read_bytes()).hexdigest() != photo.sha256:
             raise ValueError("Source photo checksum mismatch")
-        destination = output / "images" / f"{photo.photo_id}.jpg"
+        destination = output / "images" / f"{photo.photo_id}.png"
         destination.parent.mkdir(exist_ok=True)
-        shutil.copyfile(original, destination)
-        photo = photo.model_copy(update={"image_path": str(destination.relative_to(output))})
+        pixels = upright(original)
+        pixels.info.clear()
+        pixels.save(destination, format="PNG")
+        photo = photo.model_copy(
+            update={
+                "image_path": str(destination.relative_to(output)),
+                "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
+            }
+        )
         store.save_photos(run_id, [photo])
         proposer.torch.cuda.reset_peak_memory_stats() if args.device.startswith("cuda") else None
         start = time.monotonic()
