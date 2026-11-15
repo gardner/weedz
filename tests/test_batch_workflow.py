@@ -75,7 +75,9 @@ def test_large_or_inline_activity_result_never_reaches_another_activity(monkeypa
     assert calls == ["batch_validate_v1"]
 
 
-@pytest.mark.parametrize("path", ["/absolute", "../escape", "a/../escape", "a//b", "a\\b"])
+@pytest.mark.parametrize(
+    "path", ["/absolute", "../escape", "a/../escape", "a//b", "a\\b", "c:/escape"]
+)
 def test_artifact_paths_cannot_escape_owned_storage(monkeypatch, path):
     async def execute(*_args, **_options):
         pytest.fail("Invalid artifact path must not schedule activities")

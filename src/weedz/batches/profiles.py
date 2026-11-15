@@ -6,7 +6,12 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from weedz.annotation.semantic import CLASSIFIER_FIELDS, CONFIG_FIELDS, PROPOSER_FIELDS
+from weedz.annotation.semantic import (
+    CLASSIFIER_FIELDS,
+    CONFIG_FIELDS,
+    PROPOSER_FIELDS,
+    classifier_runtime,
+)
 from weedz.batches.contract import PROFILE
 
 Kind = Literal["proposals", "frame", "tiles", "regions"]
@@ -30,6 +35,21 @@ def model_identity(metadata: dict, kind: Kind) -> dict:
     if kind == "proposals":
         return sam_identity(metadata)
     selected = _fields(metadata, (*CLASSIFIER_FIELDS, "input_policy"))
+    runtime = classifier_runtime(metadata)
+    if runtime["status"] == "recorded":
+        selected.update({key: runtime[key] for key in ("pillow", "torchvision")})
+    selected.update(
+        {
+            key: metadata[key]
+            for key in (
+                "tile_geometry",
+                "proposer_kind",
+                "primary_view",
+                "crop_geometry_revision",
+            )
+            if key in metadata
+        }
+    )
     if kind == "tiles":
         selected.update(_fields(metadata, ("aggregation", "ranking_revision")))
     elif kind == "regions":

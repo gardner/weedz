@@ -16,6 +16,7 @@ def artifact(value: Any) -> dict[str, str]:
         not isinstance(path, str)
         or not 1 <= len(path) <= 512
         or "\\" in path
+        or ":" in path
         or any(part in {"", ".", ".."} for part in path.split("/"))
         or any(ord(character) < 32 for character in path)
         or not isinstance(digest, str)

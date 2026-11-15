@@ -49,3 +49,19 @@ def test_mask_grid_and_preprocessing_changes_produce_different_pins():
         ModelProfile("frame-v1", "frame", classifier, lambda: None).sha256
         != ModelProfile("frame-v1", "frame", changed, lambda: None).sha256
     )
+
+
+def test_declared_transform_libraries_and_tile_geometry_are_not_legacy_equivalents():
+    classifier, _ = metadata()
+    classifier.update(input_policy="Pinned tiles", aggregation="max", ranking_revision=1)
+    legacy = ModelProfile("tiles-v1", "tiles", classifier, lambda: None)
+    recorded = {
+        **classifier,
+        "pillow": "13",
+        "torchvision": "0.29",
+        "tile_geometry": {"max_tiles": 32},
+    }
+    current = ModelProfile("tiles-v2", "tiles", recorded, lambda: None)
+    changed = {**recorded, "tile_geometry": {"max_tiles": 64}}
+    assert legacy.sha256 != current.sha256
+    assert current.sha256 != ModelProfile("tiles-v3", "tiles", changed, lambda: None).sha256
