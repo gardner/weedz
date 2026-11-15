@@ -26,6 +26,11 @@ uv run python scripts/prepare_aotearoa_worker.py \
 
 The command checks the model/class-map hashes and actual ONNX interface, records
 CPU/ONNXRuntime/NumPy/Pillow/preprocessing identity, and pins the proposal metadata.
+`proposal_metadata_source_reference` records where those model/configuration declarations
+were discovered; it is not an artifact allowlist. The same worker can process other
+closed batches whose independently SHA-bound proposal artifacts pass the full source,
+semantic-model and mask validation. Hash integrity is not cryptographic attestation
+that a model generated the masks: operator-provided artifacts remain a trust boundary.
 The activity subsequently validates the complete proposal/source join against the
 closed manifest before frame inference. Requests must select only `frame` and
 provide `cached.proposals`. Unknown classifier kinds and a misleading cache-only

@@ -26,6 +26,7 @@ def nz_metadata():
         "pillow": "13.0.0",
         "preprocessing": {"resize_short_edge": 416, "crop": [384, 384]},
         "input_policy": "released416/384",
+        "frame_input_policy": "released416/384",
         "score_kind": "closed_set_softmax_uncalibrated",
         "supported_profiles": ["frame"],
     }
@@ -176,3 +177,102 @@ def test_runtime_configuration_cannot_restore_another_proposer_as_sam2(mismatch)
         worker["metadata"]["proposals"]["profile"] = "sam3-image-concept-v1"
     with pytest.raises(ValueError, match="cached SAM2"):
         registry_from_aotearoa_config(worker)
+
+
+def test_metadata_source_is_not_an_artifact_allowlist_but_every_batch_is_validated(
+    batch, monkeypatch
+):
+    import hashlib
+
+    import numpy as np
+    from PIL import Image
+    from test_batch_adoption import inputs
+    from test_batch_proposals import Proposer
+    from test_closed_batch import reference
+
+    from weedz.batches.aotearoa_runtime import prepare_aotearoa_config
+    from weedz.batches.profiles import ModelProfile
+    from weedz.batches.proposal_compute import segment
+    from weedz.batches.storage import validate_closed_batch
+    from weedz.classification.aotearoa import AotearoaClassifier
+    from weedz.contract import Sample
+    from weedz.manifest import write_manifest
+
+    root, original = inputs(batch)
+    first = original["cached"]["proposals"]
+    fake = type("Model", (), {"metadata": nz_metadata()})()
+    monkeypatch.setattr(AotearoaClassifier, "load", lambda *_args: fake)
+    prepared = prepare_aotearoa_config(root, root / "model", root / "labels", first)
+    assert prepared["proposal_metadata_source_reference"] == first
+    assert "proposal_preflight_reference" not in prepared
+    registry = registry_from_aotearoa_config(prepared)
+    old_sample = Sample.model_validate_json((root / original["manifest"]["path"]).read_text())
+    folder = root / "second"
+    folder.mkdir()
+    image = folder / "other.png"
+    Image.new("RGB", (6, 4), "blue").save(image)
+    media = old_sample.media.model_copy(
+        update={"uri": str(image), "sha256": hashlib.sha256(image.read_bytes()).hexdigest()}
+    )
+    sample = old_sample.model_copy(
+        update={"id": "deepweeds:second.jpg", "source_id": "second.jpg", "media": media}
+    )
+    manifest = folder / "samples.jsonl"
+    sha = write_manifest(manifest, [sample])
+    ready = folder / "ready.json"
+    ready.write_text(json.dumps({"schema": 1, "count": 1, "samples_sha256": sha}))
+    closed = validate_closed_batch(root, reference(manifest, root), reference(ready, root))
+
+    class Masked(Proposer):
+        def generate(self, image):
+            return [
+                {
+                    "segmentation": np.ones((image.height, image.width), dtype=bool),
+                    "predicted_iou": 0.9,
+                    "stability_score": 0.95,
+                }
+            ]
+
+    proposer = Masked()
+    second = segment(
+        root,
+        closed,
+        "second-proposals",
+        ModelProfile("sam-v1", "proposals", proposer.metadata, lambda: proposer),
+    ).artifact
+    request = {
+        **original,
+        "segmentation_profile": prepared["segmentation_profile"],
+        "classifier_profile": prepared["classifier_profile"],
+        "cached": {"proposals": first},
+    }
+    pins = registry.pins(request)
+    assert registry.pins({**request, "cached": {"proposals": second}}) == pins
+    from weedz.batches.activities import BatchActivities
+
+    other_request = {
+        **request,
+        "manifest": reference(manifest, root),
+        "ready": reference(ready, root),
+        "cached": {"proposals": second},
+    }
+    activities = BatchActivities(root, registry)
+    assert (
+        activities._context({"request": request, "completed": {}}).identity
+        != activities._context({"request": other_request, "completed": {}}).identity
+    )
+    sam = registry.segmentation[prepared["segmentation_profile"]]
+    assert segment(root, closed, "unused", sam, external=second).origin == "external-compute"
+    document = json.loads((root / second["path"]).read_text())
+    for change in ("policy", "source", "mask"):
+        altered = json.loads(json.dumps(document))
+        if change == "policy":
+            altered["segmentation"]["provenance"]["checkpoint_sha256"] = "0" * 64
+        elif change == "source":
+            altered["sample_id"] = "deepweeds:wrong.jpg"
+        else:
+            altered["segmentation"]["regions"][0]["box"][0] += 1
+        path = root / f"invalid-{change}.jsonl"
+        path.write_text(json.dumps(altered) + "\n")
+        with pytest.raises(ValueError):
+            segment(root, closed, "unused", sam, external=reference(path, root))

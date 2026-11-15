@@ -119,7 +119,7 @@ def prepare_aotearoa_config(root: Path, checkpoint: Path, labels: Path, proposal
         "segmentation_profile": "sam2.1-tiny-v1",
         "proposer_kind": "sam2",
         "metadata": {"frame": classifier_metadata(model, "frame"), "proposals": proposer},
-        "proposal_preflight_reference": proposals,
+        "proposal_metadata_source_reference": proposals,
     }
     registry_from_aotearoa_config(result)
     return result
