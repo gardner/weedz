@@ -39,7 +39,8 @@ export function queuePhotos(
   filters: { region: string; review: string; reviewer: string },
 ): Photo[] {
   const { region, review, reviewer } = filters;
-  const inRegion = (photo: Photo) => region === "all" || photo.region === region;
+  const inRegion = (photo: Photo) =>
+    view === "device" || region === "all" || photo.region === region;
   if (view === "audit") {
     return photos
       .filter((photo) => photo.audit_sample && inRegion(photo))
