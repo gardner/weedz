@@ -91,14 +91,6 @@ class Frames:
             y = 335 + index * 115
             draw.rounded_rectangle((1290, y, 1820, y + 85), radius=16, fill="#244f3e")
             text(canvas, (1320, y + 20), name, 32, ACCENT if index < 3 else MUTED)
-        text(
-            canvas,
-            (80, 912),
-            "Schematic search windows · a ranking for human investigation",
-            23,
-            MUTED,
-            width=110,
-        )
         return canvas
 
     def web_frame(self, elapsed: float) -> Image.Image:
@@ -286,7 +278,7 @@ class Frames:
         text(
             canvas,
             (90, 865),
-            "Research demonstration · uncertainty stays visible",
+            "Open-source tools for conservation",
             26,
             ACCENT,
             width=110,
