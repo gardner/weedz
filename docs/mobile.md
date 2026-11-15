@@ -272,8 +272,11 @@ found ─► pending ──approve──► approved ──send──► sending
   approves that exact snapshot and requests sending in one action. No photo is
   attached by default: its licence, uses and credit are also omitted. A recorded
   location with known accuracy is displayed and included by default, with an
-  obvious removal control. An optional photo requires a successfully decoded
-  preview and an explicitly chosen licence. A decoder failure removes the crop
+  obvious removal control. Callers construct a fresh draft with no image and
+  any available recorded location; pending is an approval status, not evidence
+  that sharing choices are untouched. Reopening a pending draft preserves its
+  recorded location opt-out and chosen photo/licence. An optional photo requires
+  a successfully decoded preview and an explicitly chosen licence. A decoder failure removes the crop
   and undoes any approval; a no-photo report remains available. Frozen retries
   retain their original payload and consent version. The current wording is
   [2026-11-15](report-consent.md#version-2026-11-15).

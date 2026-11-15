@@ -104,11 +104,10 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
     return image;
   }
 
-  /// New reports omit the photo and include the visible recorded location.
-  /// Previously decided reports retain their answers.
-  Choices _startingChoices() => _case.status == ApprovalStatus.pending
-      ? const Choices()
-      : Choices.fromReport(_case.report, _found);
+  /// Pending means unapproved, not untouched: reopening must preserve edits.
+  /// Callers create fresh drafts without an image and with any recorded
+  /// location they will visibly offer; findings only retain removable data.
+  Choices _startingChoices() => Choices.fromReport(_case.report, _found);
 
   @override
   void didUpdateWidget(ApprovalScreen oldWidget) {
@@ -117,10 +116,12 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
     if (newCase || !identical(oldWidget.findings, widget.findings)) {
       _found = _merged();
     }
+    // Sending and settlement may coalesce into a single parent rebuild.
+    // A new immutable settled case acknowledges work even at the same status.
     if (newCase ||
         (_case.status != ApprovalStatus.pending &&
             _case.status != ApprovalStatus.approved &&
-            oldWidget.reportCase.status != _case.status)) {
+            !identical(oldWidget.reportCase, _case))) {
       _requested = null;
       _requestUnconfirmed = false;
     }
