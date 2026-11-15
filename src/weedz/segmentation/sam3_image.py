@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import math
+from collections import Counter
 from collections.abc import Callable
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import asdict, dataclass
@@ -28,6 +29,7 @@ class Sam3Config:
     prompts: tuple[str, ...] = ("plant", "flower")
     max_side: int = 1024
     max_regions: int = 128
+    max_prompt_bytes: int = 8_000_000
     min_area: int = 4
     concept_threshold: float = 0.5
     context_fraction: float = 0.25
@@ -40,6 +42,8 @@ class Sam3Config:
             raise ValueError("Prompts must contain one to eighty characters")
         if not 64 <= self.max_side <= 1024 or not 1 <= self.max_regions <= 256:
             raise ValueError("SAM3 image/proposal cap exceeded")
+        if not 1 <= self.max_prompt_bytes <= 8_000_000:
+            raise ValueError("Serialized prompt retention budget exceeded")
         if not math.isfinite(self.concept_threshold) or not 0 <= self.concept_threshold <= 1:
             raise ValueError("Invalid concept threshold")
         if not 0 <= self.context_fraction <= 1 or self.min_area < 1:
@@ -82,10 +86,14 @@ def _validated_output(
     return masks, scores, boxes
 
 
+def _region_bytes(record: dict) -> int:
+    return len(json.dumps(record, allow_nan=False).encode()) + 2
+
+
 def concept_regions(image: Image.Image, prompt: str, raw: dict, config: Sam3Config) -> dict:
     masks, scores, boxes = _validated_output(image, raw, config)
     height, width = masks.shape[1:]
-    regions, seen, capped = [], set(), 0
+    regions, seen, capped, byte_capped, retained_bytes = [], set(), 0, 0, 0
     for index in np.argsort(-scores, kind="stable"):
         mask = masks[index]
         if scores[index] <= config.concept_threshold or int(mask.sum()) < config.min_area:
@@ -111,14 +119,24 @@ def concept_regions(image: Image.Image, prompt: str, raw: dict, config: Sam3Conf
             ).tolist(),
             views={},
         )
+        size = _region_bytes(region)
+        if retained_bytes + size > config.max_prompt_bytes:
+            capped += 1
+            byte_capped += 1
+            continue
+        retained_bytes += size
         regions.append(region)
+    exhausted = bool(byte_capped and not regions)
     return {
         "prompt": prompt,
-        "status": "ok" if regions else "empty",
+        "status": "failed" if exhausted else "ok" if regions else "empty",
         "regions": regions,
         "raw_count": len(masks),
         "truncated": capped > 0,
         "capped_count": capped,
+        "byte_capped_count": byte_capped,
+        "retained_region_bytes": retained_bytes,
+        **({"failure_type": "OutputBudgetExceeded"} if exhausted else {}),
     }
 
 
@@ -165,14 +183,28 @@ def _decoded_image(encoded: bytes) -> Image.Image:
         raise ValueError("Source exceeds the SAM3 pixel cap") from error
 
 
+def _validate_records(records: list[dict], config: Sam3Config) -> None:
+    if len(records) > config.max_regions * len(config.prompts):
+        raise ValueError("SAM3 record count exceeds the declared prompt/profile budget")
+    prompts = [record.get("prompt") for record in records]
+    if any(prompt not in config.prompts for prompt in prompts):
+        raise ValueError("SAM3 record prompt is outside the declared profile")
+    if max(Counter(prompts).values(), default=0) > config.max_regions:
+        raise ValueError("SAM3 record count exceeds its per-prompt budget")
+    sizes = Counter()
+    for record in records:
+        sizes[record["prompt"]] += _region_bytes(record)
+    if any(size > config.max_prompt_bytes for size in sizes.values()):
+        raise ValueError("SAM3 records exceed the declared per-prompt byte budget")
+
+
 def restore_concept_regions(
     encoded: bytes, records: list[dict], config: Sam3Config, *, expected_sha256: str
 ) -> list[Region]:
     """Verify the envelope's exact source, decode once, then restore real crop pixels."""
     if len(encoded) > MAX_SOURCE_BYTES or hashlib.sha256(encoded).hexdigest() != expected_sha256:
         raise ValueError("SAM3 source checksum or byte cap mismatch")
-    if len(records) > config.max_regions * len(config.prompts):
-        raise ValueError("SAM3 record count exceeds the declared prompt/profile budget")
+    _validate_records(records, config)
     image = _decoded_image(encoded)
     return [_restore_geometry(image, record, config) for record in records]
 
