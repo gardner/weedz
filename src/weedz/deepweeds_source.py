@@ -74,7 +74,7 @@ def verify(stream: BinaryIO, expected: str, maximum: int) -> None:
 
 
 def filename(name: str) -> bool:
-    return re.fullmatch(r"[0-9]{8}-[0-9]{6}-[0-3]\.jpg", name) is not None
+    return re.fullmatch(r"[0-9]{8}-[0-9]{6}-[0-9]\.jpg", name) is not None
 
 
 def _label_rows(labels: bytes, pins: SourcePins) -> list[dict[str, str]]:

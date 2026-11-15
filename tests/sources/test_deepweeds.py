@@ -223,3 +223,9 @@ def test_upright_derivative_strips_exif_and_retains_original_checksum(tmp_path):
     with Image.open(sample.media.uri) as normalized:
         assert normalized.size == (20, 30)
         assert not normalized.info and not normalized.getexif()
+
+
+def test_official_camera_four_filenames_are_admitted(tmp_path):
+    archive, labels, pins = fixture(tmp_path, ["20170906-091113-4.jpg"])
+    result = materialize(archive, labels, tmp_path / "out", limit=1, pins=pins)
+    assert result["count"] == 1
