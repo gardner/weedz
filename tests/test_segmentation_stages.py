@@ -243,3 +243,13 @@ def test_canonical_region_result_is_attached_when_late_classifier_fails(store, m
     first = store.photos("run")[0]
     assert first["scores"]["segmentation"]["regions"][0]["views"]["tight"]["margin"] == 0.123
     assert first["scores"]["margin"] == -0.04
+
+
+def test_late_baseline_attempt_cannot_erase_attached_region_evidence(store):
+    store.score("run", "0", {"margin": -0.04, "model": "baseline"})
+    stale = dict(store.photos("run")[0]["scores"])
+    stages = runner(store, Proposer())
+    evidence = {"status": "ok", "regions": [{"id": "durable-region"}]}
+    stages._attach("run", "0", evidence)
+    store.score("run", "0", stale)
+    assert store.photos("run")[0]["scores"] == {**stale, "segmentation": evidence}

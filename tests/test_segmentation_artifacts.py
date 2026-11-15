@@ -44,3 +44,54 @@ def test_completed_evidence_canonically_wins_a_late_matching_retry(tmp_path):
     actual = artifacts.write("proposals", "photo", {}, {**original, "elapsed_seconds": 2.0})
     assert actual == original
     assert path.read_bytes() == encoded
+
+
+def test_replacement_syncs_directory_before_reporting_success(tmp_path, monkeypatch):
+    import os
+    import stat
+
+    original = os.fsync
+    synced = []
+
+    def sync(fd):
+        synced.append("directory" if stat.S_ISDIR(os.fstat(fd).st_mode) else "file")
+        original(fd)
+
+    monkeypatch.setattr(os, "fsync", sync)
+    StageArtifacts(tmp_path, "run").write("proposals", "photo", {}, {"status": "empty"})
+    assert synced[-2:] == ["file", "directory"]
+
+
+def test_directory_sync_failure_is_not_acknowledged(tmp_path, monkeypatch):
+    artifacts = StageArtifacts(tmp_path, "run")
+    artifacts.root.mkdir(parents=True)
+
+    def unavailable(_path):
+        raise OSError("Directory sync failed")
+
+    monkeypatch.setattr("weedz.segmentation.artifacts.sync_directory", unavailable)
+    with pytest.raises(OSError, match="sync failed"):
+        artifacts.write("proposals", "photo", {}, {"status": "empty"})
+
+
+def test_retry_reestablishes_directory_durability_before_cached_success(tmp_path, monkeypatch):
+    from weedz.segmentation import artifacts as module
+
+    artifacts = StageArtifacts(tmp_path, "run")
+    artifacts.root.mkdir(parents=True)
+    original = module.sync_directory
+    calls = []
+
+    def fail_after_rename(path):
+        calls.append(path)
+        if len(calls) == 5:
+            raise OSError("Interrupted after replacement")
+        original(path)
+
+    monkeypatch.setattr(module, "sync_directory", fail_after_rename)
+    with pytest.raises(OSError, match="replacement"):
+        artifacts.write("proposals", "photo", {}, {"status": "empty"})
+    assert artifacts.read("proposals", "photo", {}) == {"status": "empty"}
+    calls.clear()
+    assert artifacts.write("proposals", "photo", {}, {"status": "empty"}) == {"status": "empty"}
+    assert calls == [artifacts.root, artifacts.root.parent, artifacts.root.parent.parent, tmp_path]

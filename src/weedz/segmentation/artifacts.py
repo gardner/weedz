@@ -16,10 +16,30 @@ def digest(value: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
 
 
+def sync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def durable_mkdir(path: Path) -> None:
+    missing = []
+    current = path
+    while not current.exists():
+        missing.append(current)
+        current = current.parent
+    for directory in reversed(missing):
+        directory.mkdir(exist_ok=True)
+        sync_directory(directory.parent)
+
+
 class StageArtifacts:
     def __init__(self, root: Path, run_id: str) -> None:
         if Path(run_id).name != run_id or run_id in {"", ".", ".."}:
             raise ValueError("Invalid run artifact namespace")
+        self.base = root
         self.root = root / "runs" / run_id / "pipeline-v1"
 
     def _path(self, stage: Stage, photo_id: str) -> Path:
@@ -53,7 +73,14 @@ class StageArtifacts:
         return record["result"]
 
     def write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
-        self.root.mkdir(parents=True, exist_ok=True)
+        durable_mkdir(self.root)
+        # A previous interrupted sync can leave existing but unacknowledged entries.
+        # Re-establish the whole artifact hierarchy before even a cached success returns.
+        directory = self.root
+        while directory != self.base:
+            sync_directory(directory)
+            directory = directory.parent
+        sync_directory(self.base)
         with self._path(stage, photo_id).with_suffix(".lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             return self._write(stage, photo_id, inputs, result)
@@ -66,7 +93,6 @@ class StageArtifacts:
         encoded = json.dumps({"schema": 1, **payload, "sha256": digest(payload)}, allow_nan=False)
         if len(encoded.encode()) > MAX_ARTIFACT_BYTES:
             raise ValueError("Stage artifact exceeds resource cap")
-        self.root.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(mode="w", dir=self.root, delete=False) as stream:
             temporary = Path(stream.name)
             try:
@@ -74,6 +100,7 @@ class StageArtifacts:
                 stream.flush()
                 os.fsync(stream.fileno())
                 os.replace(temporary, self._path(stage, photo_id))
+                sync_directory(self.root)
             finally:
                 temporary.unlink(missing_ok=True)
         return result

@@ -233,8 +233,11 @@ class Store:
     def score(self, run_id: str, photo_id: str, scores: dict) -> None:
         with self.connect() as db:
             db.execute(
-                "UPDATE photos SET scores=?, screened_at=? WHERE run_id=? AND id=?",
-                (json.dumps(scores), now(), run_id, photo_id),
+                "UPDATE photos SET scores=CASE "
+                "WHEN json_type(scores, '$.segmentation') IS NOT NULL "
+                "THEN json_set(?, '$.segmentation', json_extract(scores, '$.segmentation')) "
+                "ELSE ? END, screened_at=? WHERE run_id=? AND id=?",
+                (json.dumps(scores), json.dumps(scores), now(), run_id, photo_id),
             )
 
     def review(
