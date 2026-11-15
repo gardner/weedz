@@ -12,6 +12,9 @@ everything. Keys from an envelope or artifact host cannot add trust. Pass envelo
 and text-table bytes, a downloaded `imageModelFile`, last persisted installed
 sequence, current app version and current time to `verify`. Only a fully checked
 result produces the final `VerifiedBundle` type; there is no public constructor.
+Device versions may include build metadata such as `0.1.0+1`; the stable core
+is compared to the strict signed minimum `major.minor.patch`. Unsupported
+prerelease device versions are refused rather than treated as stable releases.
 The manifest is capped at 1 MiB, signatures at 16, and the table at 16 MiB. The
 configurable model limit defaults to 2 GiB and is a storage/verification limit,
 not a claim that a phone can execute a model of that size.

@@ -106,7 +106,8 @@ class BundleVerifier {
       if (DateTime.utc(utc.year, utc.month, utc.day).isAfter(expiry)) {
         throw const BundleRejected('Expired bundle');
       }
-      if (_version(appVersion) < _version(text(manifest['min_app_version']))) {
+      if (_deviceVersion(appVersion) <
+          _version(text(manifest['min_app_version']))) {
         throw const BundleRejected('App version is too old');
       }
       final tower = object(manifest['image_model']);
@@ -232,6 +233,19 @@ int _version(String value) {
       .split('.')
       .map(int.parse)
       .fold(0, (result, part) => result * 10000 + part);
+}
+
+int _deviceVersion(String value) {
+  // Build metadata does not affect precedence. Prerelease support needs its
+  // own compatibility policy; do not treat a prerelease as a stable release.
+  final match = RegExp(
+    r'^(\d{1,4}\.\d{1,4}\.\d{1,4})'
+    r'(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$',
+  ).firstMatch(value);
+  if (match == null) {
+    throw const BundleRejected('Unsupported device app version');
+  }
+  return _version(match.group(1)!);
 }
 
 ImageRuntime _runtime(Map<String, Object?> runtime) {

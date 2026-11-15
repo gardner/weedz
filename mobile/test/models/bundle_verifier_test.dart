@@ -158,6 +158,29 @@ void main() {
       }
     },
   );
+  test(
+    'device build metadata does not change stable minimum precedence',
+    () async {
+      expect((await verify(version: '0.1.0+1')).sequence, 7);
+      expect((await verify(version: '0.1.0+android.123')).sequence, 7);
+      await expectLater(
+        verify(version: '0.0.9+999'),
+        throwsA(isA<BundleRejected>()),
+      );
+      for (final value in ['0.1.0+', '0.1.0+bad!', '0.1.0-dev+1']) {
+        await expectLater(
+          verify(version: value),
+          throwsA(isA<BundleRejected>()),
+        );
+      }
+      final envelope = await edited((m) => m['min_app_version'] = '0.1.0+1');
+      await expectLater(
+        verify(envelope: envelope),
+        throwsA(isA<BundleRejected>()),
+      );
+    },
+  );
+
   test('cached capability expires on the day after signed expiry', () async {
     final bundle = await verify();
     bundle.ensureUsable(DateTime.utc(2027, 2, 14, 23, 59));
