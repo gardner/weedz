@@ -27,7 +27,7 @@ Because none of this exists, any claim about how well a model finds incidental N
 | --- | --- | --- |
 | [iNaturalist NZ](https://www.inaturalist.org/pages/developers) / [GBIF](https://www.gbif.org/) | Species-labelled, dated, located photos under per-photo licences | The label covers the photo's subject only. Nothing says where the plant is, or what else is in the frame |
 | [Aotearoa Species Classifier](https://github.com/Waikato/aotearoa-species-classifier) (Waikato / TAIAO) | An NZ-trained classifier with 14,991 classes, about 6,172 of them plants; weights under CC BY-NC 4.0. We already run it as an [optional baseline](aotearoa-baseline.md) | A whole-photo classifier trained on subject photos. No locations in the frame, and no published accuracy on background plants |
-| [DOC Smart Weed Alert Tool](https://weeds.doc.govt.nz/) ([launched October 2026](https://www.doc.govt.nz/news/media-releases/2026-media-releases/new-warning-system-to-whack-weeds/)) | Daily alerts on new weed records in GBIF | Works only on records someone has already identified, and holds no images to learn from. It's where Weedz finds should end up (problem 3), not a training source |
+| [DOC Smart Weed Alert Tool](https://weeds.doc.govt.nz/) ([launched October 2026](https://www.doc.govt.nz/news/media-releases/2026-media-releases/new-warning-system-to-whack-weeds/)) | Alerts (currently batched weekly) on new weed records it pulls from GBIF daily | Works only on records someone has already identified, and holds no images to learn from. It's where Weedz finds should end up (problem 3), not a training source |
 | Manaaki Whenua Central Plateau survey ([Peterson et al. 2024](https://doi.org/10.3390/rs16132503)) | Aerial photos from 2012–2023 of gorse, broom and tree lupin over 23,000 ha, with density layers by grid square. The paper says the data are on [LRIS](https://lris.scinfo.org.nz/data/?q=legumes) | Aerial, not ground photos. Labelled by grid square (about 6,000 squares), not by plant. An AI trial there was dropped after "several thousand false positives", including the native snow tōtara, kāretu and muddy puddles |
 | [Weed-AI](https://github.com/Weed-AI/Weed-AI) (University of Sydney) | An open repository of annotated weed images with boxes and segmentation, in WeedCOCO format | Mostly Australian crop weeds in crop rows; no NZ conservation weeds |
 | DeepWeeds, ImageWeeds, OpenWeeds, MAVSD ([shortlist](datasets.md#dataset-shortlist)) | Labelled weed photos: by photo, by box, or by pixel | Overseas species and settings. Useful for transfer experiments, not for measuring NZ performance |
@@ -42,7 +42,7 @@ Each sample follows the [common sample contract](datasets.md#a-common-sample-and
 - **The photo and its rights:** source, creator, attribution, and image and metadata licences recorded separately. We admit CC0, CC BY and CC BY-NC where the terms fit this non-commercial project.
 - **The original subject label**, kept as it was. A bird observation stays a bird observation; the plant labels sit alongside it.
 - **Target weeds in the frame,** each with a box or mask, a species, and a review state: confirmed, rejected, unsure or not yet reviewed.
-- **Explicit negatives:** "checked, no target weed in this photo", which is different from "not checked".
+- **Explicit negatives:** "checked, no target weed in this photo", which is different from "not checked". Schema version 1 can't record this yet: a detection sample must contain at least one box. The contract needs an annotation-completeness field (for example "all targets marked") before negatives can enter a detection release.
 - **The lookalikes checked,** so lookalike photos can be measured as a separate group (`src/weedz/discovery/lookalikes.py`).
 - **Exact location and date,** with coordinate accuracy. Points that a source or contributor obscured stay obscured, and we never try to sharpen them.
 - **Review history:** who decided, when, on what evidence, and anything they changed. Model suggestions stay marked as suggestions, never as labels.
@@ -50,7 +50,7 @@ Each sample follows the [common sample contract](datasets.md#a-common-sample-and
 
 ## How we'll make it
 
-Most of the plumbing exists. What's missing is human-checked labels.
+Most of the plumbing exists. What's missing is human-checked labels, plus the schema change for explicit negatives described above.
 
 1. **Collect.** Bounded, licensed NZ collections: iNaturalist photos where the subject is an animal or a landscape, plus labelled reference photos of each target weed and its lookalikes. Trail-camera frames come later.
 2. **Propose.** BioCLIP screening (whole photo and tiles) and the optional segmentation step suggest where a weed might be in each photo. Proposals are only starting points.
