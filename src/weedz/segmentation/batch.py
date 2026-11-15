@@ -8,6 +8,7 @@ import os
 import tempfile
 import time
 from collections.abc import Iterator
+from copy import deepcopy
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -132,6 +133,7 @@ def _rows(
     proposer: Proposer,
     config: ProposalConfig,
     version: str,
+    metadata: dict,
 ) -> Iterator[dict]:
     artifacts = StageArtifacts(output, "real-sam-proposals")
     for sample in samples:
@@ -142,9 +144,10 @@ def _rows(
         }
         result = artifacts.read("proposals", sample.id, inputs)
         if result is None or result["status"] == "failed":
-            result = _publish_sample(
-                artifacts, sample.id, inputs, _result(sample, root, proposer, config)
-            )
+            computed = _result(sample, root, proposer, config)
+            if proposer.metadata != metadata:
+                raise ValueError("Proposer metadata changed; complete preflight before the batch")
+            result = _publish_sample(artifacts, sample.id, inputs, computed)
         yield {
             "schema": 1,
             "sample_id": sample.id,
@@ -156,7 +159,7 @@ def _rows(
                 "baseline_retained": False,
                 "proposal_status": result["status"],
                 "view_status": "not_requested",
-                "provenance": proposer.metadata,
+                "provenance": metadata,
                 **result,
             },
         }
@@ -197,9 +200,10 @@ def _publish(
     config: ProposalConfig,
     manifest_sha: str,
 ) -> dict[str, Any]:
+    metadata = deepcopy(proposer.metadata)
     version = "canonical-proposals-batch-v1:" + digest(
         {
-            "provenance": proposer.metadata,
+            "provenance": metadata,
             "configuration": asdict(config),
             "schema": 1,
         }
@@ -212,7 +216,7 @@ def _publish(
             raise ValueError("Closed batch provenance changed; use a new output namespace")
     checksum, counts = _stream_rows(
         output / "proposals.jsonl",
-        _rows(samples, root, output, proposer, config, version),
+        _rows(samples, root, output, proposer, config, version, metadata),
         ready=ready,
     )
     summary = {

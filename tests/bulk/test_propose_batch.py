@@ -316,3 +316,20 @@ def test_malformed_exif_is_failed_without_stopping_later_photo(tmp_path):
     manifest.write_text(json.dumps(bad) + "\n" + json.dumps(healthy) + "\n")
     summary = propose_batch(manifest, manifest.parent, tmp_path / "out", Proposer())
     assert summary["counts"] == {"ok": 1, "empty": 0, "failed": 1}
+
+
+def test_lazy_metadata_mutation_cannot_publish_unbound_provenance(tmp_path):
+    manifest, _ = source(tmp_path)
+
+    class Lazy(Proposer):
+        metadata = {"model": {"checkpoint": "before-preflight"}}
+
+        def generate(self, image):
+            self.metadata["model"]["checkpoint"] = "different-model"
+            return super().generate(image)
+
+    output = tmp_path / "out"
+    with pytest.raises(ValueError, match="metadata changed"):
+        propose_batch(manifest, manifest.parent, output, Lazy())
+    assert not (output / "ready.json").exists()
+    assert not list(output.rglob("*.proposals.json"))
