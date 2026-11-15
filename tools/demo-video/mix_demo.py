@@ -5,10 +5,17 @@ import hashlib
 import json
 import subprocess
 import sys
+import wave
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import new_output  # noqa: E402
+
+
+def check_music(path: Path) -> None:
+    with wave.open(str(path)) as source:
+        if source.getnframes() < 180 * source.getframerate():
+            raise ValueError("Provide at least 180 seconds of original music before mixing")
 
 
 def main() -> None:
@@ -18,11 +25,12 @@ def main() -> None:
     parser.add_argument("--ffmpeg", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    check_music(args.music)
     output = new_output(args.output, sidecars=(".mix.json",))
     music_gain = 0.055
     filters = (
         "[1:a]aresample=48000,pan=stereo|c0=c0|c1=c0[voice];"
-        f"[2:a]aresample=48000,volume={music_gain},apad=whole_dur=180,"
+        f"[2:a]aresample=48000,volume={music_gain},"
         "atrim=duration=180,afade=t=in:d=3,afade=t=out:st=174:d=6[music];"
         "[voice][music]amix=inputs=2:duration=first:normalize=0[audio]"
     )
@@ -58,6 +66,8 @@ def main() -> None:
         "mov_text",
         "-metadata:s:s:0",
         "language=eng",
+        "-disposition:s:0",
+        "0",
         "-metadata",
         "title=Weedz — a second look",
         "-metadata",
