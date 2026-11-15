@@ -80,6 +80,8 @@ def test_region_method_describes_one_view_without_claiming_overlapping_tiles():
     from weedz.segmentation.pipeline import identify_views
 
     result = identify_views(fake_screener(), {"masked": Image.new("RGB", (8, 8))}, None)
+    assert "box" not in result["masked"]
+    assert all("box" not in row for row in result["masked"]["species"])
     assert (
         result["masked"]["method"]
         == "BioCLIP cosine similarity; one letterboxed masked proposal view"

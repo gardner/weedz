@@ -42,6 +42,9 @@ def identify_views(screener: Any, views: dict[str, Image.Image], subject: str | 
             features = screener.model.encode_image(batch, normalize=True)
             scores = (features.to(text.dtype) @ text.T).cpu().numpy()
         result[name] = summarize_scores(scores, [(0, 0, *image.size)], labels, len(SPECIES))
+        result[name].pop("box")
+        for species in result[name]["species"]:
+            species.pop("box")
         result[name]["method"] = f"BioCLIP cosine similarity; one letterboxed {name} proposal view"
     return result
 

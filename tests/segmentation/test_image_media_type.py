@@ -12,7 +12,15 @@ from weedz.discovery.store import Store
 
 
 @pytest.mark.parametrize(
-    "format,mime", [("JPEG", "image/jpeg"), ("PNG", "image/png"), ("WEBP", "image/webp")]
+    "format,mime",
+    [
+        ("JPEG", "image/jpeg"),
+        ("PNG", "image/png"),
+        ("WEBP", "image/webp"),
+        ("GIF", "image/gif"),
+        ("BMP", "image/bmp"),
+        ("TIFF", "image/tiff"),
+    ],
 )
 def test_review_image_uses_encoded_format_not_cache_suffix(tmp_path: Path, format: str, mime: str):
     store = Store(tmp_path)

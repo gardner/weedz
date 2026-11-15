@@ -4,15 +4,13 @@ from pathlib import Path
 
 from PIL import Image
 
-MIME_TYPES = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
-
 
 def image_media_type(path: Path) -> str:
     try:
         with Image.open(path) as image:
-            mime = MIME_TYPES.get(image.format or "")
+            mime = Image.MIME.get(image.format or "")
     except (OSError, Image.DecompressionBombError) as error:
         raise ValueError("Image is not available") from error
-    if mime is None:
+    if mime is None or not mime.startswith("image/"):
         raise ValueError("Unsupported encoded image")
     return mime
