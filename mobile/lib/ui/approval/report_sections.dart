@@ -45,19 +45,21 @@ class SuggestionSection extends StatelessWidget {
         Text('$taxon (${commonNames[taxon]})', style: text.titleMedium),
         const SizedBox(height: 4),
         const Text(
-          'A suggestion for an expert to check, not an identification. '
-          'Native lookalikes exist.',
+          'Unchecked suggestion, not an identification. '
+          'The score is not a probability.',
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Score ${report.candidate.score} ($meaning)',
-          style: text.bodyMedium,
+        Text('Model score: ${report.candidate.score}', style: text.bodyMedium),
+        ExpansionTile(
+          title: const Text('About this score'),
+          children: [
+            Text('Score meaning: $meaning'),
+            for (final point in explanation.points)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(point),
+              ),
+          ],
         ),
-        for (final point in explanation.points)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text('• $point'),
-          ),
         const SizedBox(height: 8),
         Text(
           capturedAt == null

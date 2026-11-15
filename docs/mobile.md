@@ -253,7 +253,13 @@ found ─► pending ──approve──► approved ──send──► sending
   pending/approved to this exact snapshot's sending state, and persist its outbox
   body atomically before network dispatch. Do not require an intermediate
   `onChanged(approved)` callback or parent rebuild. Reject duplicate sends once
-  sending. The local button guard blocks repeat taps while that commit is pending. It saves `startSending()`'s frozen case before
+  sending. The local button guard blocks repeat taps while that commit is pending.
+  The caller handles operational failures and reconciles the persisted case/outbox.
+  A thrown callback has an unknown commit outcome: the screen shows unconfirmed
+  status and retains its frozen snapshot. It must not be unlocked merely after a
+  timeout. Advance it using the reconciled settled status; only if storage proves
+  that nothing committed may the caller remount a fresh screen with a new key.
+  This callback contract is not a production outbox implementation. It saves `startSending()`'s frozen case before
   dispatching its `Upload`, and `revise()`'s retired and new cases in one
   transaction. The uploader sends an `Upload` only while the stored case for
   its id is `sending`.

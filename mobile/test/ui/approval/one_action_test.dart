@@ -79,4 +79,37 @@ void main() {
       expect(find.text('Reporting…'), findsOneWidget);
     },
   );
+  testWidgets(
+    'callback failure keeps uncertain snapshot locked until reconciled',
+    (tester) async {
+      var calls = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ApprovalScreen(
+            reportCase: foundCase(),
+            findings: fullFindings(),
+            onChanged: (_) {},
+            onSend: (_) {
+              calls++;
+              throw StateError('store unavailable');
+            },
+            onWithdraw: (_) {},
+            onRevised: (_, _) {},
+          ),
+        ),
+      );
+      final button = find.widgetWithText(FilledButton, 'Report sighting');
+      await tester.ensureVisible(button);
+      final request = tester.widget<FilledButton>(button).onPressed!;
+      expect(request, throwsStateError);
+      request();
+      await tester.pump();
+      expect(calls, 1);
+      expect(
+        find.textContaining('Report status is unconfirmed'),
+        findsOneWidget,
+      );
+      expect(find.text('Report sighting'), findsNothing);
+    },
+  );
 }

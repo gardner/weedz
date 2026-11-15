@@ -44,7 +44,11 @@ class ApprovalScreen extends StatefulWidget {
   /// atomically compare its id/status and commit this exact approved snapshot
   /// plus the frozen sending/outbox state. Serialize edits and send per case;
   /// reject a second send once sending. This callback must not depend on an
-  /// earlier onChanged callback or parent rebuild.
+  /// earlier onChanged callback or parent rebuild. Catch operational failures
+  /// in the caller and reconcile its persisted case/outbox: throwing has an
+  /// unknown commit outcome and leaves this snapshot locked. Only a known
+  /// settled status may advance it. If storage proves no commit occurred,
+  /// remount a fresh screen with a new key; never reset it merely on timeout.
   final ValueChanged<ReportCase> onSend;
 
   /// A sent case to withdraw with `DELETE`.
@@ -74,6 +78,7 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
   Crop? _decoded;
   Crop? _failed;
   ReportCase? _requested;
+  bool _requestUnconfirmed = false;
 
   ReportCase get _case => widget.reportCase;
 
@@ -117,6 +122,7 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
             _case.status != ApprovalStatus.approved &&
             oldWidget.reportCase.status != _case.status)) {
       _requested = null;
+      _requestUnconfirmed = false;
     }
     if (newCase) {
       _choices = _carried ?? _startingChoices();
@@ -168,7 +174,14 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
       return;
     }
     setState(() => _requested = snapshot);
-    widget.onSend(snapshot);
+    try {
+      widget.onSend(snapshot);
+    } catch (_) {
+      // The callback may have committed before throwing. Keep the frozen
+      // snapshot locked until the caller reconciles storage; never guess.
+      setState(() => _requestUnconfirmed = true);
+      rethrow;
+    }
   }
 
   void _revise(Report Function(Report) change) {
@@ -229,6 +242,7 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
               ApprovalActions(
                 reportCase: _case,
                 requested: _requested != null,
+                requestUnconfirmed: _requestUnconfirmed,
                 choicesComplete: _ready,
                 handlers: (
                   send: _send,

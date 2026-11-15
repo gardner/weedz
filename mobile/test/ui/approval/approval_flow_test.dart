@@ -172,6 +172,7 @@ void main() {
     expect(find.textContaining("old man's beard"), findsWidgets);
     expect(find.textContaining('not an identification'), findsOne);
     expect(find.textContaining('not a probability'), findsOne);
+    await tapText(tester, 'About this score');
     expect(find.textContaining('bioclip-2/ranking-4/meaning-1'), findsOne);
   });
 
@@ -189,6 +190,7 @@ void main() {
       location: base.location,
     );
     await pumpApproval(tester, ReportCase.found(id: foundId, report: report));
+    await tapText(tester, 'About this score');
     expect(find.textContaining('No meaning has been declared'), findsOne);
   });
 }

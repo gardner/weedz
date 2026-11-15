@@ -22,6 +22,7 @@ class ApprovalActions extends StatelessWidget {
     required this.choicesComplete,
     required this.handlers,
     this.requested = false,
+    this.requestUnconfirmed = false,
     super.key,
   });
 
@@ -31,10 +32,18 @@ class ApprovalActions extends StatelessWidget {
   final bool choicesComplete;
   final ActionHandlers handlers;
   final bool requested;
+  final bool requestUnconfirmed;
 
   @override
   Widget build(BuildContext context) {
-    if (requested) return const Text('Reporting…');
+    if (requested) {
+      return Text(
+        requestUnconfirmed
+            ? 'Report status is unconfirmed. '
+                  'Check the saved report status before trying again.'
+            : 'Reporting…',
+      );
+    }
     final report = reportCase.report;
     final buttons = switch (reportCase.status) {
       ApprovalStatus.pending || ApprovalStatus.approved => [
