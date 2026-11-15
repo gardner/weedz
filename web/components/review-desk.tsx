@@ -476,7 +476,7 @@ export default function ReviewDesk({
                 <h2>A closer look starts here.</h2>
                 <p>
                   {runId
-                    ? "Photos will appear as the regional workflow collects and screens them."
+                    ? "No photos match these filters. Choose another view or clear filters."
                     : "Open Run & collection settings to start the Nelson / Tasman pilot."}
                 </p>
               </div>
