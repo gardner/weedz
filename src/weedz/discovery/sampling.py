@@ -94,7 +94,7 @@ def select_across_strata(
     return chosen
 
 
-def coverage(photos: list[Photo], sampling: str) -> dict[str, Any]:
+def coverage(photos: list[Photo], sampling: str | None) -> dict[str, Any]:
     dated = [photo.observed_on for photo in photos if photo.observed_on]
     return {
         "sampling": sampling,

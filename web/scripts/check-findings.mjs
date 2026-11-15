@@ -1,6 +1,6 @@
 // Reviewers record a different or missed plant, with a box drawn or typed in image pixels.
 import assert from "node:assert/strict";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 
 const browser = await chromium.launch({
   headless: true,
@@ -66,6 +66,9 @@ try {
     };
     await route.fulfill({ json: { run, photos: [photo], review_effort } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.evaluate(() => localStorage.removeItem("weedz-reviewer"));
   await page.reload();
@@ -141,7 +144,7 @@ try {
     ],
   );
   assert.equal(typeof posted[0].effort_seconds, "number");
-  assert.equal(await open.getAttribute("aria-expanded"), "false", "the form closes once saved");
+  await expect(open, "the form closes once saved").toHaveAttribute("aria-expanded", "false");
 
   // A missed watchlist plant with no box sends no box.
   await open.click();

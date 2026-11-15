@@ -10,7 +10,7 @@ _Look _lookOf(ApprovalStatus status) => switch (status) {
   ApprovalStatus.pending => (
     icon: Icons.hourglass_empty,
     title: 'Waiting for your decision',
-    detail: 'Nothing is sent until you approve this report.',
+    detail: 'Report sighting approves and sends the choices shown below.',
     tone: _Tone.neutral,
   ),
   ApprovalStatus.approved => (

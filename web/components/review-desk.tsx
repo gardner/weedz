@@ -1,21 +1,20 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DEVICE_RUN } from "../lib/device-reports";
 import type { NewFinding } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
 import type { NewLeadEvent } from "../lib/leads";
-import { auditedBy, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
+import { auditedBy, defaultView, heldForAudit, queuePhotos, VIEWS, type View } from "../lib/queue";
 import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
 import { useReviewer } from "../lib/reviewer";
+import { initialRun } from "../lib/run-selection";
 import type { ScoreMeaning } from "../lib/score-meaning";
 import type { Study } from "../lib/study";
 import {
   type AuditSummary,
   effortNote,
-  imageUrl,
-  names,
   type Photo,
   type References,
   type ReviewEffort,
@@ -23,11 +22,11 @@ import {
   type RunDetail,
   request,
   type Status,
-  siteVisitNote,
 } from "../lib/types";
 import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
+import ReviewQueue from "./review-queue";
 import RunSettings from "./run-settings";
 import { ScreeningNote } from "./score-meaning";
 import StudyPanel from "./study-panel";
@@ -60,11 +59,15 @@ const UNTIMED = new Set<keyof Payloads>(["leads"]);
 export default function ReviewDesk({
   signedInAs,
   onSignOut,
+  canStartRuns = true,
 }: {
   signedInAs?: string;
   onSignOut?: () => void;
+  canStartRuns?: boolean;
 }) {
+  const historyUrl = process.env.NEXT_PUBLIC_TEMPORAL_UI_URL;
   const requestGeneration = useRef(0);
+  const initializedRun = useRef("");
   const [runs, setRuns] = useState<Run[]>([]);
   const [runId, setRunId] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -73,9 +76,7 @@ export default function ReviewDesk({
   const [auditSummary, setAuditSummary] = useState<AuditSummary>();
   const [study, setStudy] = useState<Study | null>(null);
   const [scoreMeaning, setScoreMeaning] = useState<ScoreMeaning>();
-  // Each view remembers its own open photo, so one opened in a view never carries into
-  // another (an audit photo must not open in the ranked queue) yet a glance at the
-  // references returns to the same incidental photo.
+  // Each view remembers its own photo; audit and ranked queues never share selection.
   const [activeIds, setActiveIds] = useState<Partial<Record<View, string>>>({});
   const [cohort, setCohort] = useState<View>("incidental");
   const [region, setRegion] = useState("all");
@@ -93,12 +94,22 @@ export default function ReviewDesk({
       const list = await request<Run[]>("runs");
       if (generation !== requestGeneration.current) return;
       setRuns(list);
-      const selected = runId || list[0]?.id;
+      const selected = runId || initialRun(list, process.env.NEXT_PUBLIC_WEEDZ_DEFAULT_RUN_ID);
       if (selected) {
-        if (!runId) setRunId(selected);
+        if (!runId) {
+          setRunId(selected);
+          setCohort(defaultView(selected));
+        }
         const result = await request<RunDetail>(`runs/${selected}`);
         if (generation !== requestGeneration.current) return;
         setPhotos(result.photos);
+        if (initializedRun.current !== selected) {
+          initializedRun.current = selected;
+          setCohort(
+            VIEWS.find(([view]) => result.photos.some((photo) => photo.cohort === view))?.[0] ??
+              defaultView(selected),
+          );
+        }
         setEffortSummary(result.review_effort);
         setAuditSummary(result.audit);
         setReferences(result.references ?? null);
@@ -150,6 +161,7 @@ export default function ReviewDesk({
     setStudy(null);
     setScoreMeaning(undefined);
     setActiveIds({});
+    setCohort(defaultView(id));
     setRunId(id);
   }
 
@@ -209,14 +221,11 @@ export default function ReviewDesk({
           <span aria-hidden="true">◉</span> Field review{" "}
           <span className="nav-count">{incidental.length}</span>
         </div>
-        <a
-          className="nav-link"
-          href={process.env.NEXT_PUBLIC_TEMPORAL_UI_URL ?? "http://127.0.0.1:8234"}
-          target="_blank"
-          rel="noreferrer"
-        >
-          ↗ Workflow history
-        </a>
+        {canStartRuns && historyUrl && (
+          <a className="nav-link" href={historyUrl} target="_blank" rel="noreferrer">
+            ↗ Workflow history
+          </a>
+        )}
         <div className="pilot-card">
           <span className="eyebrow">REGIONAL PILOT</span>
           <strong>Nelson / Tasman</strong>
@@ -306,6 +315,7 @@ export default function ReviewDesk({
             </div>
           </div>
           <RunSettings
+            canStartRuns={canStartRuns}
             runs={runs}
             runId={runId}
             createdAt={run?.created_at}
@@ -328,113 +338,30 @@ export default function ReviewDesk({
             }}
             onError={setError}
           />
-          <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />
+          {/* Suitability measures a sampled run; device reports are not one (#123). */}
+          {runId !== DEVICE_RUN && <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />}
           <ScreeningNote meaning={scoreMeaning} />
           <div className="workspace">
-            <section className="queue" aria-label="Photo review queue">
-              <div className="queue-heading">
-                <h2>
-                  Review queue <span>{filtered.length}</span>
-                </h2>
-                <p>
-                  {auditing
-                    ? "Fixed random sample · screening rank hidden"
-                    : `${specialist ? "Open referrals, longest waiting first" : "Highest relative similarity first"}${held ? ` · ${held} held for blind audit` : ""}`}
-                </p>
-              </div>
-              <div className="cohort-tabs">
-                {VIEWS.map(([view, label]) => (
-                  <button
-                    type="button"
-                    key={view}
-                    aria-pressed={cohort === view}
-                    onClick={() => setCohort(view)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="queue-filters">
-                <select
-                  aria-label="Filter region"
-                  value={region}
-                  onChange={(event) => setRegion(event.target.value)}
-                >
-                  <option value="all">Both regions</option>
-                  <option>Nelson</option>
-                  <option>Tasman</option>
-                </select>
-                {!auditing && !specialist && (
-                  <select
-                    aria-label="Filter review status"
-                    value={review}
-                    onChange={(event) => setReview(event.target.value)}
-                  >
-                    <option value="all">All decisions</option>
-                    <option value="unreviewed">Needs review</option>
-                    <option value="confirmed">Species visible</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="uncertain">Uncertain</option>
-                  </select>
-                )}
-              </div>
-              <div className="photo-list">
-                {filtered.map((photo, index) => (
-                  <button
-                    type="button"
-                    key={photo.id}
-                    className={`photo-row ${active?.id === photo.id ? "selected" : ""}`}
-                    onClick={() => {
-                      setActiveIds((ids) => ({ ...ids, [cohort]: photo.id }));
-                      setNotice("");
-                    }}
-                    aria-pressed={active?.id === photo.id}
-                  >
-                    <Image
-                      src={imageUrl(runId, photo.id)}
-                      alt={photo.original_common_name || photo.original_taxon}
-                      loading="lazy"
-                      width={68}
-                      height={74}
-                      unoptimized
-                    />
-                    <span className="photo-row-body">
-                      <span className="row-index">
-                        {String(index + 1).padStart(2, "0")} / {photo.region}
-                      </span>
-                      <strong>
-                        {auditing
-                          ? "Blind audit photo"
-                          : (names[photo.scores.best_species ?? ""] ?? "Awaiting screening")}
-                      </strong>
-                      <span>{photo.original_common_name || photo.original_taxon}</span>
-                      <small>
-                        {photo.observed_on ?? "Date unknown"} ·{" "}
-                        {auditing
-                          ? auditedBy(photo, reviewer)
-                            ? "Audited"
-                            : "Not yet audited"
-                          : photo.review_status === "unreviewed"
-                            ? "Needs review"
-                            : photo.review_status}
-                        {!auditing && photo.disputed && " · Reviewers disagree"}
-                        {!auditing && needsSpecialist(photo) && " · Needs specialist"}
-                        {!auditing && siteVisitNote(photo) && ` · ${siteVisitNote(photo)}`}
-                      </small>
-                    </span>
-                  </button>
-                ))}
-                {!filtered.length && (
-                  <div className="empty-state">
-                    {loading
-                      ? "Loading local evidence…"
-                      : run?.status === "acquiring"
-                        ? "Collecting eligible source photos…"
-                        : "No photos match this view."}
-                  </div>
-                )}
-              </div>
-            </section>
+            <ReviewQueue
+              declaredComparison={scoreMeaning?.declared === true}
+              photos={filtered}
+              activeId={active?.id}
+              runId={runId}
+              cohort={cohort}
+              region={region}
+              review={review}
+              reviewer={reviewer}
+              held={held}
+              loading={loading}
+              acquiring={run?.status === "acquiring"}
+              onCohortChange={setCohort}
+              onRegionChange={setRegion}
+              onReviewChange={setReview}
+              onSelect={(id) => {
+                setActiveIds((ids) => ({ ...ids, [cohort]: id }));
+                setNotice("");
+              }}
+            />
             {active && auditing ? (
               <AuditPanel
                 // A save, or another auditor taking over, starts a fresh draft so no
@@ -471,7 +398,7 @@ export default function ReviewDesk({
                 <h2>A closer look starts here.</h2>
                 <p>
                   {runId
-                    ? "Photos will appear as the regional workflow collects and screens them."
+                    ? "No photos match these filters. Choose another view or clear filters."
                     : "Open Run & collection settings to start the Nelson / Tasman pilot."}
                 </p>
               </div>

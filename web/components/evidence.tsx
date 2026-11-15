@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { hasImage } from "../lib/device-reports";
 import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
 import type { NewLeadEvent } from "../lib/leads";
+import { photoHint, sourceSubject } from "../lib/photo-labels";
 import type { Closing, NewReferral } from "../lib/referrals";
 import type { ScoreMeaning } from "../lib/score-meaning";
 import {
@@ -16,6 +18,7 @@ import {
   siteVisitSummary,
   statusLabels,
 } from "../lib/types";
+import DeviceReport from "./device-report";
 import { FindingForm, FindingList } from "./finding-form";
 import JudgementPanel from "./judgements";
 import LeadPanel from "./leads";
@@ -72,13 +75,22 @@ export default function Evidence({
   }
   const target = scores.best_species ?? "Pending screening";
   const blocked = saving || !reviewer.trim();
+  const device = photo.cohort === "device";
   return (
     <article className="evidence">
       <div className="evidence-heading">
         <div>
-          <span className="eyebrow">PHOTO EVIDENCE · {photo.region.toUpperCase()}</span>
-          <h2>{names[target] ?? target}</h2>
-          <p className="scientific">{scores.best_species ?? "Waiting for the worker"}</p>
+          <span className="eyebrow">
+            {device ? "DEVICE REPORT" : `PHOTO EVIDENCE · ${photo.region.toUpperCase()}`}
+          </span>
+          <h2>{sourceSubject(photo)}</h2>
+          {!device && <p className="scientific">{photo.original_taxon}</p>}
+          <p className="model-hint">{photoHint(photo, scoreMeaning?.declared === true, names)}</p>
+          {!device && scores.best_species && (
+            <small>
+              Relative comparison only; weeds may still be present. Human review is required.
+            </small>
+          )}
         </div>
         <span className={`badge ${photo.review_status}`}>
           {photo.review_status === "unreviewed" ? "Needs review" : photo.review_status}
@@ -99,6 +111,7 @@ export default function Evidence({
       <PhotoStage
         photo={photo}
         runId={runId}
+        declaredComparison={scoreMeaning?.declared === true && !device}
         windowVisible={windowVisible}
         drawing={recording}
         draft={recording ? parsedBox.box : null}
@@ -113,22 +126,30 @@ export default function Evidence({
           />{" "}
           Show search window
         </label>
-        <a href={imageUrl(runId, photo.id)} target="_blank" rel="noreferrer">
-          Open full image ↗
-        </a>
+        {hasImage(photo) && (
+          <a href={imageUrl(runId, photo.id)} target="_blank" rel="noreferrer">
+            Open full image ↗
+          </a>
+        )}
       </div>
-      <p className="attribution">
-        {photo.attribution} · {photo.photo_license.toUpperCase()} ·{" "}
-        <a href={photo.source_url} target="_blank" rel="noreferrer">
-          View on iNaturalist ↗
-        </a>
-      </p>
+      {device ? (
+        <DeviceReport photo={photo} />
+      ) : (
+        <p className="attribution">
+          {photo.attribution} · {photo.photo_license.toUpperCase()} ·{" "}
+          <a href={photo.source_url} target="_blank" rel="noreferrer">
+            View on iNaturalist ↗
+          </a>
+        </p>
+      )}
       <div className="context-grid">
-        <div>
-          <span>Original subject</span>
-          <strong>{photo.original_common_name || photo.original_taxon}</strong>
-          <small>{photo.original_taxon}</small>
-        </div>
+        {!device && (
+          <div>
+            <span>Original subject</span>
+            <strong>{photo.original_common_name || photo.original_taxon}</strong>
+            <small>{photo.original_taxon}</small>
+          </div>
+        )}
         <PhotoDates photo={photo} />
         <div>
           <span>Site visit</span>
@@ -147,9 +168,9 @@ export default function Evidence({
           </small>
         </div>
       </div>
-      <ScorePanel photo={photo} meaning={scoreMeaning} />
+      {!device && <ScorePanel photo={photo} meaning={scoreMeaning} />}
       <div className="review-form">
-        <h3>Is the suggested species visible?</h3>
+        <h3>Is the compared species visible: {names[target] ?? target}?</h3>
         <p>
           Check leaf shape, flowers and context. The dashed window is a search area, not a plant
           boundary.
@@ -245,7 +266,7 @@ export default function Evidence({
         onRefer={onRefer}
         onClose={onCloseReferral}
       />
-      {photo.cohort === "incidental" && (
+      {(photo.cohort === "incidental" || device) && (
         <LeadPanel photo={photo} blocked={blocked} onSelect={onSelectLead} />
       )}
       <ReviewHistory key={photo.review_count} runId={runId} photo={photo} />

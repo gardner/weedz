@@ -76,6 +76,8 @@ FEATURELESS_STD = 8.0
 # Bounds for degenerate panoramas: tiles per photo, and windows per encoder batch.
 MAX_TILES = 32
 ENCODE_BATCH = 16
+# Preserve the published 9K panorama and existing 12K geometry while bounding padding.
+MAX_VIEW_PIXELS = 160_000_000
 
 
 def _positions(length: int, side: int) -> list[int]:
@@ -117,6 +119,9 @@ def covers_every_pixel(width: int, height: int) -> bool:
 
 def square_view(image: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
     """Crop a box and pad it to a square, so centre-cropping cannot remove any of it."""
+    side = max(box[2] - box[0], box[3] - box[1])
+    if side * side > MAX_VIEW_PIXELS:
+        raise ValueError("Square view exceeds the pixel cap")
     crop = image.crop(box)
     side = max(crop.size)
     if crop.size == (side, side):

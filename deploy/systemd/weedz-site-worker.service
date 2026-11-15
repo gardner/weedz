@@ -1,0 +1,20 @@
+[Unit]
+Description=Weedz hosted model pipeline worker and owned Temporal evaluation service
+After=network-online.target
+[Service]
+WorkingDirectory=%h/.local/share/weedz/site/current
+Environment=PYTHONPATH=%h/.local/share/weedz/site/current/src
+Environment=VIRTUAL_ENV=%h/.cache/weedz-segmentation/runtime/.venv
+Environment=CUDA_VISIBLE_DEVICES=0
+Environment=WEEDZ_SAM2_DEVICE=cuda:0
+Environment=HF_HUB_OFFLINE=1
+EnvironmentFile=%h/.config/weedz/site/worker.env
+ExecStart=%h/.local/bin/uv run --no-sync --active python scripts/run_hosted_worker.py --data %h/.local/share/weedz/site/data
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=90
+KillMode=mixed
+UMask=0077
+NoNewPrivileges=true
+[Install]
+WantedBy=default.target

@@ -16,8 +16,11 @@ labelled species datasets remain supporting research paths.
 
 ## Are we using SAM today?
 
-**No. We do not currently use SAM or any other segmentation model.** The regional
-pilot now uses pinned **BioCLIP ViT-B/16** embeddings on CPU for screening, with
+**Default screening does not use segmentation.** An opt-in desktop SAM2.1 experiment
+now produces real masks and separate BioCLIP region evidence; see
+[reproduction, resource measurements and limitations](segmentation-experiment.md).
+It does not replace the baseline or establish plant recall. The regional
+pilot defaults to pinned **BioCLIP 2 ViT-L/14** (saved historical runs retain their declared model) embeddings on CPU for screening, with
 Temporal activities for acquisition, inference and export, and Next.js for review.
 Each image contributes a letterboxed whole frame and overlapping square tiles
 that cover every pixel. Targets and

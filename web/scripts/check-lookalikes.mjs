@@ -49,6 +49,9 @@ try {
     if (path.endsWith("/reviews")) return route.fulfill({ json: [] });
     await route.fulfill({ json: { run, photos } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.getByText("Name animal").first().waitFor();
   assert.equal(await page.getByText("Name toetoe").count(), 0, "lookalikes stay out of incidental");

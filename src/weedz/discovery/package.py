@@ -17,6 +17,7 @@ from weedz.discovery.records import SPECIES
 from weedz.discovery.sharing import (
     contributor_limits,
     image_use,
+    shared_credit,
     terms,
     with_location,
     withdrawn,
@@ -185,7 +186,7 @@ def follow_up_package(
     # Leads leave the reviewer's machine, so they carry only what the policy lets leave.
     # A withdrawn report leaves nothing at all, not even its selection.
     photos = {
-        photo["id"]: with_location(photo, "share")
+        photo["id"]: shared_credit(with_location(photo, "share"))
         for photo in export["photos"]
         if not withdrawn(photo)
     }
@@ -208,7 +209,7 @@ def follow_up_package(
 def _in_export(photos: dict[str, dict[str, Any]], selection: dict[str, Any]) -> bool:
     """Whether the export holds the selected plant. Selections are read after the photos,
     so a plant recorded and selected in between waits for the next package rather than
-    being packaged as some other plant."""
+    being packaged as some other plant. A withdrawn report is not among the photos."""
     photo = photos.get(selection["photo_id"])
     target = selection["finding_id"]
     return photo is not None and (

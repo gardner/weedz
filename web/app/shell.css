@@ -374,7 +374,7 @@ input[type="date"] {
 }
 .workspace {
   display: grid;
-  grid-template-columns: minmax(235px, 0.8fr) minmax(350px, 1.6fr) minmax(160px, 0.52fr);
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 205px);
   align-items: start;
   gap: 20px;
 }
