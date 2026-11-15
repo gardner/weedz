@@ -35,7 +35,11 @@ Start `worker --config PATH --roles control` and a resident
 separate `worker --config PATH --roles segmentation` and
 `worker --config PATH --roles classification` processes in the appropriate
 isolated model runtime. These use distinct versioned task queues, separate from
-the hosted discovery workflow. Submit with `submit --request PATH --workflow-id
+the hosted discovery workflow. This version requires one configured artifact
+root/profile pool per namespace. Use `--namespace NAME` before the subcommand
+for independent pools (for example, legacy adoption versus a new classifier).
+Register that namespace through the normal Temporal API on the same persisted
+service; do not start another server merely to isolate these fixed queue names. Submit with `submit --request PATH --workflow-id
 UNIQUE_ID`. A request contains pinned `manifest` and `ready` references,
 `segmentation_profile`, `classifier_profile`, selected `variants`, and the
 explicit destination `project_id`. Normal submission rejects duplicate workflow
