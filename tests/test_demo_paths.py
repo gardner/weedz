@@ -88,12 +88,25 @@ def tool_command(tool: str, output: Path, inputs: Path) -> list[str]:
         ]
         entry = root / "tools/demo-audio/main.py"
     else:
-        arguments = ["--captures", str(inputs / "missing-captures"), "--ffmpeg", "missing-ffmpeg"]
-        entry = root / "tools/demo-video/render_mobile_preview.py"
+        arguments = [
+            "--captures",
+            str(inputs / "missing-captures"),
+            "--audio",
+            str(inputs / "missing-audio"),
+            "--transcript",
+            str(inputs / "missing-transcript.json"),
+            "--mobile-captures",
+            str(inputs / "missing-mobile-captures"),
+            "--credit-font",
+            str(inputs / "missing-font.otf"),
+            "--ffmpeg",
+            "missing-ffmpeg",
+        ]
+        entry = root / "tools/demo-video/render_demo.py"
     return [sys.executable, str(entry), *arguments, "--output", str(output)]
 
 
-@pytest.mark.parametrize("tool,extension", [("audio", ".wav"), ("preview", ".mp4")])
+@pytest.mark.parametrize("tool,extension", [("audio", ".wav"), ("render", ".mp4")])
 def test_actual_tools_reject_git_outputs_before_loading_inputs(
     tmp_path: Path, tool: str, extension: str
 ) -> None:
@@ -109,7 +122,7 @@ def test_actual_tools_reject_git_outputs_before_loading_inputs(
 
 @pytest.mark.parametrize(
     "tool,extension,sidecar",
-    [("audio", ".wav", ".json"), ("preview", ".mp4", ".png"), ("preview", ".mp4", ".json")],
+    [("audio", ".wav", ".json")],
 )
 def test_actual_tools_reject_sidecars_before_inference_or_encoding(
     tmp_path: Path, tool: str, extension: str, sidecar: str
