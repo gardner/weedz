@@ -286,11 +286,11 @@ def generate_batch(seconds: float, folder: Path, preset_file: Path) -> None:
         outside_git(path)
         if path.exists() or path.is_symlink():
             raise FileExistsError(f"Refusing to overwrite {path}")
+    pipeline, snapshot = load_pipeline()
     folder.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(preset_file, folder / "presets.json")
     records: list[dict[str, Any]] = []
     write_catalog(folder, records, presets)
-    pipeline, snapshot = load_pipeline()
     shutil.copyfile(snapshot / "LICENSE", folder / "LICENSE.txt")
     for item, output in zip(presets, outputs, strict=True):
         print(f"BEGIN {item['name']}: seed {item['seed']}, upper bound {seconds}s", flush=True)

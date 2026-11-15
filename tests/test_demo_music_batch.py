@@ -90,3 +90,22 @@ def test_empty_cache_can_fetch_only_the_pinned_snapshot_before_local_loading(
     assert calls[0][2].get("local_files_only", False) is False
     assert calls[1] == ("from", str(tmp_path), {"local_files_only": True})
     assert calls[2] == ("components", {"dtype": "bfloat16", "local_files_only": True})
+
+
+@pytest.mark.parametrize("existing_folder", [False, True])
+def test_model_load_failure_does_not_publish_a_partial_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing_folder: bool
+) -> None:
+    folder = tmp_path / "auditions"
+    if existing_folder:
+        folder.mkdir()
+
+    def unavailable_model():
+        raise RuntimeError("Checkpoint is unavailable")
+
+    monkeypatch.setattr(music, "load_pipeline", unavailable_model)
+    with pytest.raises(RuntimeError, match="Checkpoint"):
+        music.generate_batch(180, folder, PRESETS)
+    assert folder.exists() == existing_folder
+    if existing_folder:
+        assert not list(folder.iterdir())
