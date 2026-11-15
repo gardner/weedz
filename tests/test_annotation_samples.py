@@ -315,3 +315,13 @@ def test_historical_runtime_absence_is_explicit_in_evidence_and_private_provenan
     assert json.loads(evidence)["classifier_runtime"]["status"] == "historical_unrecorded"
     private = json.loads((output / "private/provenance.json").read_text())
     assert private["classifier_runtime"]["frame"]["status"] == "historical_unrecorded"
+
+
+@pytest.mark.parametrize("invalid", [{}, [], None, False, 0, ""])
+def test_explicit_frame_results_cannot_silently_disappear(canonical_batch, tmp_path, invalid):
+    manifest, frame, _ = canonical_batch
+    frame.write_text(json.dumps(invalid))
+    output = tmp_path / "invalid-frame-document"
+    with pytest.raises(ValueError, match="classifier result document"):
+        export_samples(manifest, output, frame_results=frame)
+    assert not output.exists()
