@@ -70,6 +70,19 @@ def regions(
     external: dict | None = None,
     kind: Literal["sam2", "sam3"] = "sam2",
 ) -> Computed:
+    if profile.metadata.get("classifier_kind") == "bioclip-margin-cuda-v1":
+        from weedz.batches.bioclip_compute import run
+
+        return run(
+            root,
+            batch,
+            relative_output,
+            profile,
+            external=external,
+            proposals=proposals,
+            proposer=proposer,
+            kind=kind,
+        )
     if profile.kind != "regions":
         raise ValueError("Choose a registered regional classifier profile")
     source = proposal_rows(root, batch, proposals, proposer, kind)

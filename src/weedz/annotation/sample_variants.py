@@ -73,6 +73,11 @@ def _regional(
         or set(regions) != {r["id"] for r in classified}
     ):
         raise ValueError("Regional classifier and proposal identities disagree")
+    metadata = variant.document["model"]
+    if metadata.get("classifier_kind") == "bioclip-margin-cuda-v1":
+        from weedz.annotation.bioclip import regional_prediction as margin_regions
+
+        return margin_regions(proposed, classified, metadata, size)
     pairs = [(regions[r["id"]], _masked_topk(r)) for r in classified]
     metadata = variant.document["model"]
     if metadata.get("pipeline_name") == "WeedScan488":

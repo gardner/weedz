@@ -71,6 +71,21 @@ def classify(
     *,
     external: dict[str, str] | None = None,
 ) -> Computed:
+    if profile.metadata.get("classifier_kind") == "bioclip-margin-cuda-v1":
+        from weedz.batches.bioclip_compute import run
+
+        return run(root, batch, relative_output, profile, external=external)
+    return _probability_classify(root, batch, relative_output, profile, external=external)
+
+
+def _probability_classify(
+    root: Path,
+    batch: ClosedBatch,
+    relative_output: str,
+    profile: ModelProfile,
+    *,
+    external: dict[str, str] | None = None,
+) -> Computed:
     read_artifact(
         root,
         {
