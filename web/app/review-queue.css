@@ -2,9 +2,6 @@
 .workspace > .queue {
   grid-column: 1 / -1;
 }
-.workspace {
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 205px);
-}
 .queue .photo-list {
   display: flex;
   position: relative;
@@ -41,9 +38,4 @@
 .queue .queue-filters {
   margin-bottom: 10px;
   max-width: 420px;
-}
-@media (max-width: 1250px) {
-  .workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
