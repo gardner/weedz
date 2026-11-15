@@ -31,9 +31,12 @@ def _metadata(model: Classifier, profile: Profile) -> dict:
     if profile == "frame":
         return {
             **model.metadata,
-            "input_policy": (
-                "EXIF-upright source pixels; timm resize and centre crop; "
-                "no source taxonomy supplied"
+            "input_policy": model.metadata.get(
+                "frame_input_policy",
+                (
+                    "EXIF-upright source pixels; timm resize and centre crop; "
+                    "no source taxonomy supplied"
+                ),
             ),
         }
     return {
@@ -59,7 +62,7 @@ def _metadata(model: Classifier, profile: Profile) -> dict:
 
 def classifier_metadata(model: Classifier, profile: Profile) -> dict:
     """Canonical pipeline identity for worker preflight and the actual batch runner."""
-    if profile not in {"frame", "tiles"}:
+    if profile not in model.metadata.get("supported_profiles", ["frame", "tiles"]):
         raise ValueError("Unknown classification profile")
     return json.loads(json.dumps(_metadata(model, profile), allow_nan=False))
 
@@ -269,7 +272,8 @@ def classify_batch(
     stamp = hashlib.sha256(
         json.dumps(metadata, sort_keys=True, allow_nan=False).encode()
     ).hexdigest()
-    version = f"PlantCLEF {profile} auto-label · {stamp[:12]}"
+    name = metadata.get("pipeline_name", "PlantCLEF")
+    version = f"{name} {profile} auto-label · {stamp[:12]}"
     header = {
         "schema": 1,
         "model": metadata,

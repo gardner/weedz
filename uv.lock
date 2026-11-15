@@ -2351,6 +2351,11 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 
+[package.optional-dependencies]
+aotearoa = [
+    { name = "onnxruntime" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "onnx" },
@@ -2369,6 +2374,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huggingface-hub", specifier = ">=2.4.0" },
     { name = "numpy", specifier = ">=2.5.4" },
+    { name = "onnxruntime", marker = "extra == 'aotearoa'", specifier = ">=1.32.0" },
     { name = "open-clip-torch", specifier = ">=4.2.2" },
     { name = "pillow", specifier = ">=13.0.0" },
     { name = "pydantic", specifier = ">=2.14.3" },
@@ -2380,6 +2386,7 @@ requires-dist = [
     { name = "torchvision", specifier = ">=0.29.2", index = "https://download.pytorch.org/whl/cpu" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
+provides-extras = ["aotearoa"]
 
 [package.metadata.requires-dev]
 dev = [
