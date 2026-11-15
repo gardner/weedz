@@ -67,6 +67,7 @@ export default function ReviewDesk({
   canStartRuns?: boolean;
 }) {
   const requestGeneration = useRef(0);
+  const initializedRun = useRef("");
   const [runs, setRuns] = useState<Run[]>([]);
   const [runId, setRunId] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -75,9 +76,7 @@ export default function ReviewDesk({
   const [auditSummary, setAuditSummary] = useState<AuditSummary>();
   const [study, setStudy] = useState<Study | null>(null);
   const [scoreMeaning, setScoreMeaning] = useState<ScoreMeaning>();
-  // Each view remembers its own open photo, so one opened in a view never carries into
-  // another (an audit photo must not open in the ranked queue) yet a glance at the
-  // references returns to the same incidental photo.
+  // Each view remembers its own photo; audit and ranked queues never share selection.
   const [activeIds, setActiveIds] = useState<Partial<Record<View, string>>>({});
   const [cohort, setCohort] = useState<View>("incidental");
   const [region, setRegion] = useState("all");
@@ -95,12 +94,19 @@ export default function ReviewDesk({
       const list = await request<Run[]>("runs");
       if (generation !== requestGeneration.current) return;
       setRuns(list);
-      const selected = runId || list[0]?.id;
+      const selected = runId || list.find((item) => item.status === "completed")?.id || list[0]?.id;
       if (selected) {
         if (!runId) setRunId(selected);
         const result = await request<RunDetail>(`runs/${selected}`);
         if (generation !== requestGeneration.current) return;
         setPhotos(result.photos);
+        if (initializedRun.current !== selected) {
+          initializedRun.current = selected;
+          setCohort(
+            VIEWS.find(([view]) => result.photos.some((photo) => photo.cohort === view))?.[0] ??
+              "incidental",
+          );
+        }
         setEffortSummary(result.review_effort);
         setAuditSummary(result.audit);
         setReferences(result.references ?? null);
