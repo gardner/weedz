@@ -28,7 +28,7 @@ def test_missing_stages_prevent_a_successful_completion_manifest(store, monkeypa
 
 def test_partial_fallback_is_declared_in_manifest_and_run_detail(store, monkeypatch):
     monkeypatch.setattr("weedz.discovery.activities.activity.heartbeat", lambda *_: None)
-    stages = runner(store, Proposer(), 3)
+    stages = runner(store, Proposer())
     stages.segment("run")
     for photo in store.photos("run"):
         store.score("run", photo["id"], {"margin": 0.1})
