@@ -84,11 +84,19 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
   }
-  .sidebar > :not(.brand):not(.sidebar-footer) {
+  .sidebar > :not(.brand):not(.sidebar-footer):not(.signed-in) {
     display: none;
   }
+  .signed-in {
+    margin: 0 0 0 auto;
+    max-width: 48%;
+    text-align: right;
+  }
   .sidebar-footer {
+    flex-basis: 100%;
     padding: 0;
     margin: 0;
     font-size: 9px;

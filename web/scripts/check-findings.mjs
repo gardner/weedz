@@ -1,6 +1,6 @@
 // Reviewers record a different or missed plant, with a box drawn or typed in image pixels.
 import assert from "node:assert/strict";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 
 const browser = await chromium.launch({
   headless: true,
@@ -141,7 +141,7 @@ try {
     ],
   );
   assert.equal(typeof posted[0].effort_seconds, "number");
-  assert.equal(await open.getAttribute("aria-expanded"), "false", "the form closes once saved");
+  await expect(open, "the form closes once saved").toHaveAttribute("aria-expanded", "false");
 
   // A missed watchlist plant with no box sends no box.
   await open.click();
