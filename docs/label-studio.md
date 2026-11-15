@@ -88,7 +88,8 @@ Full original metadata and semantic hashes remain in private provenance. No scor
 are presented as calibrated confidence and no model output becomes human truth.
 New classifiers declare both Pillow and torchvision versions; both enter shared
 regional identities. Historical records missing both retain their existing hashes
-and explicitly report unrecorded runtime pins in new evidence/private provenance.
+and explicitly report unrecorded runtime pins in private provenance only. Their
+existing prediction result shape is preserved; recorded new pairs appear in evidence.
 Partial or blank version pairs are refused. Old imported predictions are not rewritten
 and historical versions are never inferred from the current environment.
 Invalid legacy result numbers (NaN or infinities) produce Unknown taxon proposals

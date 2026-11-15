@@ -63,6 +63,12 @@ def brush_class(taxon: str) -> str:
     )
 
 
+def _runtime_evidence(metadata: dict[str, Any]) -> dict[str, Any]:
+    runtime = classifier_runtime(metadata)
+    # Historical version IDs must retain their already-published result shape.
+    return {"classifier_runtime": runtime} if runtime["status"] == "recorded" else {}
+
+
 def frame_prediction(
     topk: list[dict[str, Any]],
     metadata: dict[str, Any],
@@ -84,7 +90,7 @@ def frame_prediction(
                 {
                     "interpretation": PLANTCLEF_POLICY,
                     "scope": scope,
-                    "classifier_runtime": classifier_runtime(metadata),
+                    **_runtime_evidence(metadata),
                     "topk": topk,
                     "limitations": metadata.get("limitations", []),
                     **({"alternatives": alternatives} if alternatives is not None else {}),
@@ -161,7 +167,7 @@ def regional_prediction(
             {
                 "interpretation": PLANTCLEF_POLICY,
                 "primary_view": "masked (fixed before inspection)",
-                "classifier_runtime": classifier_runtime(metadata),
+                **_runtime_evidence(metadata),
                 "alternatives": alternatives
                 if alternatives is not None
                 else [{"id": region["id"], "topk": topk} for region, topk in regions],

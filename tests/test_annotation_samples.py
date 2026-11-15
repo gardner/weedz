@@ -304,7 +304,7 @@ def test_nonfinite_model_metadata_is_still_refused(canonical_batch, tmp_path):
     assert not output.exists()
 
 
-def test_historical_runtime_absence_is_explicit_in_evidence_and_private_provenance(
+def test_historical_runtime_note_is_private_and_existing_prediction_shape_is_preserved(
     canonical_batch, tmp_path
 ):
     manifest, frame, _ = canonical_batch
@@ -312,7 +312,8 @@ def test_historical_runtime_absence_is_explicit_in_evidence_and_private_provenan
     export_samples(manifest, output, frame_results=frame)
     task = json.loads((output / "tasks.json").read_text())[0]
     evidence = task["predictions"][0]["result"][-1]["value"]["text"][0]
-    assert json.loads(evidence)["classifier_runtime"]["status"] == "historical_unrecorded"
+    assert "classifier_runtime" not in json.loads(evidence)
+    assert set(json.loads(evidence)) == {"interpretation", "scope", "topk", "limitations"}
     private = json.loads((output / "private/provenance.json").read_text())
     assert private["classifier_runtime"]["frame"]["status"] == "historical_unrecorded"
 
