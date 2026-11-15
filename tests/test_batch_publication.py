@@ -178,7 +178,7 @@ def test_publication_heartbeats_between_task_reads_and_reconciliation(canonical_
 
 
 def test_existing_image_is_resealed_before_any_rest_write(canonical_batch, tmp_path, monkeypatch):
-    import weedz.batches.publication as publication
+    import weedz.batches.receipts as receipts
 
     package = validate_package(
         exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
@@ -193,7 +193,7 @@ def test_existing_image_is_resealed_before_any_rest_write(canonical_batch, tmp_p
     def interrupted_barrier(path):
         raise OSError("Interrupted image directory barrier")
 
-    monkeypatch.setattr(publication, "sync_directory", interrupted_barrier)
+    monkeypatch.setattr(receipts, "_sync", interrupted_barrier)
     with pytest.raises(OSError, match="directory barrier"):
         run(service, package, tmp_path)
     assert service.requests == []
@@ -364,3 +364,38 @@ def test_pipeline_summary_and_extra_task_data_are_preserved_during_reuse(canonic
     assert current["data"]["pipeline_state"] == "Original pipeline summary"
     assert current["data"]["owner_note"] == "Keep this"
     assert len(service.predictions[current["id"]]) == 1
+
+
+def test_existing_image_data_is_synced_before_acknowledgement(
+    canonical_batch, tmp_path, monkeypatch
+):
+    import os
+    import stat
+
+    import weedz.batches.publication as publication
+
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    name, reference = next(iter(package.images.items()))
+    target = tmp_path / "images" / name
+    target.parent.mkdir(parents=True)
+    target.write_bytes((package.root / reference["path"]).read_bytes())
+    inode = target.stat().st_ino
+    original = os.fsync
+
+    def interrupted_data_sync(descriptor):
+        info = os.fstat(descriptor)
+        if stat.S_ISREG(info.st_mode) and info.st_ino == inode:
+            raise OSError("Interrupted existing image data sync")
+        return original(descriptor)
+
+    service = Service()
+    monkeypatch.setattr(publication.os, "fsync", interrupted_data_sync)
+    with pytest.raises(OSError, match="image data sync"):
+        run(service, package, tmp_path)
+    assert service.requests == []
+    assert not list((tmp_path / "state").rglob("*.json"))
+    monkeypatch.setattr(publication.os, "fsync", original)
+    run(service, package, tmp_path)
+    assert len(service.tasks) == 1

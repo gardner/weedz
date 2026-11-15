@@ -14,8 +14,9 @@ import httpx
 from weedz.batches.label_client import UndeliveredRequest
 from weedz.batches.package import Package, validate_package
 from weedz.batches.publication_state import Intents, writer_lock
+from weedz.batches.receipts import seal_file
 from weedz.batches.storage import read_artifact, read_owned_file
-from weedz.segmentation.artifacts import durable_mkdir, sync_directory
+from weedz.segmentation.artifacts import durable_mkdir
 
 REFUSAL_STATUSES = frozenset({400, 401, 403, 404, 405, 413, 415, 422, 429})
 Index = dict[str, dict[str, Any]]
@@ -96,7 +97,7 @@ def _copy_images(package: Package, destination: Path, heartbeat: Callable[[], No
             digest = hashlib.sha256(read_owned_file(target, destination, 160_000_000)).hexdigest()
             if digest != reference["sha256"]:
                 raise ValueError("Published image checksum mismatch")
-            sync_directory(target.parent)
+            seal_file(destination, target)
             continue
         with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as stream:
             temporary = Path(stream.name)
@@ -107,7 +108,7 @@ def _copy_images(package: Package, destination: Path, heartbeat: Callable[[], No
                 os.link(temporary, target)
             finally:
                 temporary.unlink(missing_ok=True)
-        sync_directory(target.parent)
+        seal_file(destination, target)
 
 
 @contextmanager
