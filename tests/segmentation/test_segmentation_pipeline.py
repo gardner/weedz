@@ -38,3 +38,16 @@ def test_proposal_failure_keeps_baseline_and_is_not_a_confirmed_negative(tmp_pat
     assert result["margin"] == 0.12
     assert result["segmentation"]["status"] == "failed"
     assert result["segmentation"]["regions"] == []
+
+
+def test_segmentation_specific_source_cap_does_not_discard_readable_baseline(tmp_path):
+    path = tmp_path / "large-valid.png"
+    Image.new("RGB", (8, 8)).save(path)
+    with path.open("ab") as output:
+        output.write(bytes(20_000_001))
+    with Image.open(path) as image:
+        image.load()  # Valid baseline-readable image despite the proposal input cap.
+    result = SegmentedScreen(Baseline(), Proposer(), ProposalConfig()).screen(path)
+    assert result["margin"] == 0.12
+    assert result["segmentation"]["status"] == "failed"
+    assert result["segmentation"]["failure_type"] == "ValueError"

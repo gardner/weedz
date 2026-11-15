@@ -19,7 +19,12 @@ from weedz.segmentation.sam2 import CHECKPOINT_SHA256, Sam2Proposer
 
 def public_photos(source: Path, run_id: str, limit: int) -> list[Photo]:
     with sqlite3.connect(f"file:{source / 'discovery.sqlite3'}?mode=ro", uri=True) as db:
-        rows = db.execute("SELECT record FROM photos WHERE run_id=? ORDER BY id", (run_id,))
+        rows = db.execute(
+            "SELECT record FROM photos WHERE run_id=? "
+            "AND json_extract(record, '$.photo_license') IN ('cc-by','cc0') "
+            "ORDER BY id LIMIT ?",
+            (run_id, limit),
+        )
         photos = [Photo.model_validate_json(row[0]) for row in rows]
     eligible = [p for p in photos if p.photo_license in {"cc-by", "cc0"}]
     # Clear coordinates and dates in the independent visual experiment; source stays untouched.

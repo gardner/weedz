@@ -62,7 +62,6 @@ class SegmentedScreen:
 
     def screen(self, path: Path, subject: str | None = None) -> dict[str, Any]:
         start = time.monotonic()
-        image = upright(path)
         experiment: dict[str, Any] = {
             "schema": 1,
             "baseline_retained": True,
@@ -71,6 +70,7 @@ class SegmentedScreen:
             "coordinate_frame": "EXIF-upright original; xyxy right/bottom exclusive",
         }
         try:
+            image = upright(path)
             regions = proposals(image, self.proposer.generate(image), self.config)
             experiment["status"] = "ok" if regions else "empty"
             for region in regions:
