@@ -1,9 +1,11 @@
 """Value-first film frames from actual segmentation and review evidence."""
 
 import json
-import subprocess
+import math
+import sys
 from pathlib import Path
 
+from demo_decoder import CaptureDecoder
 from demo_frames import ACCENT, CREAM, MUTED, Frames, text
 from PIL import Image, ImageDraw, ImageFont
 
@@ -12,7 +14,7 @@ class WebsiteFrames(Frames):
     def __init__(self, captures: Path, pipeline: Path, ffmpeg: Path, credit_font: Path) -> None:
         super().__init__(captures, ffmpeg, 24, credit_font, pipeline)
         self.pipeline = pipeline
-        self.pipeline_decoder: subprocess.Popen[bytes] | None = None
+        self.pipeline_decoder: CaptureDecoder | None = None
         self.last_pipeline: Image.Image | None = None
 
     def evidence_photo(
@@ -112,7 +114,7 @@ class WebsiteFrames(Frames):
         canvas = self.base("THE EVIDENCE, READY TO REVIEW")
         if elapsed < 15.6:
             if self.pipeline_decoder is None:
-                self.pipeline_decoder = subprocess.Popen(
+                self.pipeline_decoder = CaptureDecoder(
                     [
                         str(self.ffmpeg),
                         "-v",
@@ -120,21 +122,21 @@ class WebsiteFrames(Frames):
                         "-i",
                         str(self.pipeline / "sam21-pipeline-ui.mp4"),
                         "-vf",
-                        "fps=24,scale=1536:864",
+                        "fps=24:eof_action=pass,scale=1536:864",
+                        "-frames:v",
+                        str(math.ceil(15.6 * 24)),
                         "-f",
                         "rawvideo",
                         "-pix_fmt",
                         "rgb24",
                         "-",
                     ],
-                    stdout=subprocess.PIPE,
+                    (1536, 864),
+                    math.ceil(15.6 * 24),
+                    "Website pipeline",
                 )
-            assert self.pipeline_decoder.stdout is not None
-            data = self.pipeline_decoder.stdout.read(1536 * 864 * 3)
-            if len(data) == 1536 * 864 * 3:
-                self.last_pipeline = Image.frombytes("RGB", (1536, 864), data)
-            if self.last_pipeline is not None:
-                canvas.paste(self.last_pipeline, (192, 80))
+            self.last_pipeline = self.pipeline_decoder.frame()
+            canvas.paste(self.last_pipeline, (192, 80))
         else:
             self.evidence_photo(canvas, "human-review-controls.png", (150, 120, 1620, 740))
         return canvas
@@ -220,10 +222,8 @@ class WebsiteFrames(Frames):
         return methods[scene](elapsed)
 
     def close(self) -> None:
-        if self.pipeline_decoder is not None:
-            if self.pipeline_decoder.stdout is not None:
-                self.pipeline_decoder.stdout.close()
-            if self.pipeline_decoder.poll() is None:
-                self.pipeline_decoder.terminate()
-            self.pipeline_decoder.wait(timeout=10)
-        super().close()
+        try:
+            if self.pipeline_decoder is not None:
+                self.pipeline_decoder.close(check=sys.exc_info()[0] is None)
+        finally:
+            super().close()
