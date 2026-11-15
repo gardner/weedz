@@ -30,6 +30,14 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('credential hash'), findsNothing);
+      await tester.tap(find.text('Help'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Public request page is not configured.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Help'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Connection details'));
       await tester.pumpAndSettle();
       expect(

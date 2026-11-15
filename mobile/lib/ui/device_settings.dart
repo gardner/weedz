@@ -125,7 +125,9 @@ class _DeviceSettingsState extends State<DeviceSettings> {
                   OutlinedButton(
                     onPressed: () => _openPublicRoute(route),
                     child: const Text('Request deletion without this phone'),
-                  ),
+                  )
+                else
+                  const Text('Public request page is not configured.'),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 16),
                   child: Text(
