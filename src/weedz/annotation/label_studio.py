@@ -10,6 +10,8 @@ from urllib.parse import quote
 import numpy as np
 from PIL import Image
 
+from weedz.annotation.serialization import result_json
+
 Mode = Literal["assisted", "blind"]
 PROPOSAL = "Model-proposed region"
 
@@ -71,7 +73,7 @@ def evidence_result(evidence: dict[str, Any]) -> dict[str, Any]:
         "to_name": "image",
         "type": "textarea",
         "readonly": True,
-        "value": {"text": [json.dumps(evidence, ensure_ascii=False, allow_nan=False)]},
+        "value": {"text": [result_json(evidence)]},
     }
 
 

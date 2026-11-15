@@ -12,6 +12,7 @@ from typing import Any
 from PIL import Image
 
 from weedz.annotation.label_studio import Mode, label_config, model_version, task
+from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Annotation, Media, Rights, Sample
 from weedz.discovery.records import Photo
 from weedz.discovery.sharing import refuse_unadmitted
@@ -61,11 +62,12 @@ def _photo(source: Path, raw: str, scores: dict[str, Any]) -> tuple[Photo, bytes
     if hashlib.sha256(encoded).hexdigest() != photo.sha256:
         raise ValueError("Source image checksum mismatch")
     with Image.open(io.BytesIO(encoded)) as image:
+        if image.width * image.height > 40_000_000:
+            raise ValueError("Source image exceeds experiment geometry limits")
+        image.load()
         if image.format != "PNG" or image.mode != "RGB" or image.info or image.getexif():
             raise ValueError("Export requires the experiment's metadata-free upright RGB PNG")
         size = image.size
-        if image.width * image.height > 40_000_000:
-            raise ValueError("Source image exceeds experiment geometry limits")
     if (scores.get("width"), scores.get("height")) != size:
         raise ValueError("Model geometry does not match the source image")
     return (
@@ -141,11 +143,13 @@ def export_label_studio(
         or prefix.is_absolute()
         or any(part in {".", ".."} for part in image_prefix.split("/"))
         or "\\" in image_prefix
+        or ":" in image_prefix
     ):
         raise ValueError("Choose a relative image prefix with a real storage subdirectory")
     source = source.resolve()
     output = _output(source, output)
     model, rows = _read(source, run_id)
+    json.dumps(model, allow_nan=False)
     prepared = []
     for row in rows:
         scores = json.loads(row["scores"])
@@ -180,6 +184,7 @@ def export_label_studio(
         )
         (output / "label-config.xml").write_text(label_config(mode))
         document = {
+            "nonfinite_result_policy": NONFINITE_POLICY,
             "schema_version": 1,
             "source_run_id": run_id,
             "mode": mode,
@@ -194,9 +199,7 @@ def export_label_studio(
             ),
             "photos": provenance,
         }
-        (private / "provenance.json").write_text(
-            json.dumps(document, ensure_ascii=False, allow_nan=False) + "\n"
-        )
+        (private / "provenance.json").write_text(result_json(document) + "\n")
         files = {
             str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(output.rglob("*"))

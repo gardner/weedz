@@ -75,7 +75,10 @@ are relative comparisons: only finite positive recognized comparisons can propos
 a target, and positivity is not calibrated detection confidence. PlantCLEF frame
 and tiled top-k results propose an image taxon without inventing mask boundaries.
 Regional PlantCLEF uses the predetermined masked view for each actual SAM region,
-retaining alternative views privately. Its closed-set top taxon is tentative and
+retaining alternative views in assisted model evidence and full private provenance.
+Those alternatives do not change the fixed primary-view assignment policy. Assisted
+reviewers can inspect them; use a separate blind project for unbiased labels.
+Its closed-set top taxon is tentative and
 cannot establish that an image is a plant or reject non-plants reliably.
 
 The shared regional version binds classifier weights, taxonomy mapping, transform,
@@ -83,6 +86,9 @@ precision/runtime, SAM checkpoint/configuration/filtering, mask expansion and
 assignment policy. Corpus notes do not change it; changed inference settings do.
 Full original metadata and semantic hashes remain in private provenance. No scores
 are presented as calibrated confidence and no model output becomes human truth.
+Invalid legacy result numbers (NaN or infinities) produce Unknown taxon proposals
+and are represented as JSON null in evidence/provenance, never invented finite
+scores. Model metadata and version hashing remain strict and reject such numbers.
 
 ## Export an existing completed review run
 

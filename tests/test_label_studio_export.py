@@ -163,7 +163,20 @@ def test_local_storage_uses_a_registered_subdirectory(public_run: Path, tmp_path
     assert (output / "images" / relative).is_file()
 
 
-@pytest.mark.parametrize("prefix", ["", ".", "..", "../private", "/absolute", "a/../private"])
+@pytest.mark.parametrize(
+    "prefix",
+    [
+        "",
+        ".",
+        "..",
+        "../private",
+        "/absolute",
+        "a/../private",
+        "c:/outside",
+        "C:outside",
+        "folder:stream",
+    ],
+)
 def test_image_prefix_cannot_escape_registered_storage(public_run: Path, tmp_path: Path, prefix):
     output = tmp_path / "invalid-prefix"
     with pytest.raises(ValueError, match="image prefix"):
@@ -214,3 +227,37 @@ def test_existing_output_and_source_directory_are_preserved(public_run, tmp_path
     with pytest.raises(ValueError, match="independent"):
         export_label_studio(public_run, "run", public_run / "nested-output")
     assert not (public_run / "nested-output").exists()
+
+
+def test_completed_run_rejects_late_png_metadata(public_run: Path, tmp_path: Path):
+    from test_annotation_samples import late_metadata_png
+
+    image = public_run / "images/source.png"
+    encoded = late_metadata_png(image.read_bytes())
+    image.write_bytes(encoded)
+    with sqlite3.connect(public_run / "discovery.sqlite3") as db:
+        record = json.loads(db.execute("SELECT record FROM photos").fetchone()[0])
+        record["sha256"] = hashlib.sha256(encoded).hexdigest()
+        db.execute("UPDATE photos SET record=?", (json.dumps(record),))
+    output = tmp_path / "late-metadata-run"
+    with pytest.raises(ValueError, match="metadata-free"):
+        export_label_studio(public_run, "run", output)
+    assert not output.exists()
+
+
+def test_invalid_legacy_result_scores_are_null_not_invented_numbers(
+    public_run: Path, tmp_path: Path
+):
+    with sqlite3.connect(public_run / "discovery.sqlite3") as db:
+        scores = json.loads(db.execute("SELECT scores FROM photos").fetchone()[0])
+        scores["species"][0]["margin"] = float("nan")
+        db.execute("UPDATE photos SET scores=?", (json.dumps(scores),))
+    output = tmp_path / "legacy-invalid-score"
+    export_label_studio(public_run, "run", output)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    text = task["predictions"][0]["result"][0]["value"]["text"][0]
+    assert json.loads(text)["watchlist_comparisons"][0]["margin"] is None
+    private = json.loads((output / "private/provenance.json").read_text())
+    assert private["photos"][0]["scores"]["species"][0]["margin"] is None
+    assert "serialized as null" in private["nonfinite_result_policy"]
+    assert "annotations" not in task

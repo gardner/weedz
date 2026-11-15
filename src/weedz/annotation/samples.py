@@ -14,6 +14,7 @@ from weedz.annotation.auto_labels import frame_prediction, proposals_prediction
 from weedz.annotation.export import _output
 from weedz.annotation.label_studio import label_config
 from weedz.annotation.sample_variants import add_variants, load_variants
+from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Sample
 from weedz.manifest import read_manifest
 
@@ -45,7 +46,7 @@ def _media(sample: Sample, root: Path) -> tuple[bytes, str, tuple[int, int]]:
         raise ValueError("Only licensed public CC0/CC BY sample batches are supported")
     if sample.rights.metadata_license.lower() not in PUBLIC:
         raise ValueError("Sample metadata licence is outside this public handoff")
-    path = Path(sample.media.uri).resolve()
+    path = (root / sample.media.uri).resolve()
     if not path.is_relative_to(root):
         raise ValueError("Materialized image escapes the source batch")
     encoded = path.read_bytes()
@@ -53,11 +54,12 @@ def _media(sample: Sample, root: Path) -> tuple[bytes, str, tuple[int, int]]:
     if digest != sample.media.sha256:
         raise ValueError("Source image checksum mismatch")
     with Image.open(io.BytesIO(encoded)) as image:
-        if image.format != "PNG" or image.mode != "RGB" or image.info or image.getexif():
-            raise ValueError("Canonical media must be upright metadata-free RGB PNG")
         size = image.size
         if size != (sample.media.width, sample.media.height) or size[0] * size[1] > 40_000_000:
             raise ValueError("Canonical image geometry mismatch")
+        image.load()
+        if image.format != "PNG" or image.mode != "RGB" or image.info or image.getexif():
+            raise ValueError("Canonical media must be upright metadata-free RGB PNG")
     return encoded, digest, size
 
 
@@ -158,6 +160,7 @@ def _write(
         )
         (output / "label-config.xml").write_text(label_config("assisted"))
         provenance = {
+            "nonfinite_result_policy": NONFINITE_POLICY,
             "schema_version": 1,
             "source_manifest_sha256": source_digest,
             "frame_model": frames["model"] if frames else None,
@@ -169,9 +172,7 @@ def _write(
                 "Editable predictions only; source class is context, never annotation truth"
             ),
         }
-        (output / "private/provenance.json").write_text(
-            json.dumps(provenance, ensure_ascii=False, allow_nan=False) + "\n"
-        )
+        (output / "private/provenance.json").write_text(result_json(provenance) + "\n")
         files = {
             str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(output.rglob("*"))
@@ -207,6 +208,7 @@ def export_samples(
         not image_prefix
         or any(p in {"", ".", ".."} for p in image_prefix.split("/"))
         or "\\" in image_prefix
+        or ":" in image_prefix
     ):
         raise ValueError("Choose a relative image prefix with a storage subdirectory")
     source_digest, frames, frame_rows, proposal_rows, samples = _inputs(

@@ -205,3 +205,100 @@ def test_custom_image_prefix_is_url_encoded(canonical_batch, tmp_path, prefix):
     relative = parse_qs(parsed.query)["d"][0]
     assert not parsed.fragment
     assert (output / "images" / relative).is_file()
+
+
+def test_relative_media_is_resolved_from_manifest_not_working_directory(canonical_batch, tmp_path):
+    manifest, _, key = canonical_batch
+    document = json.loads(manifest.read_text())
+    document["media"]["uri"] = "images/source.png"
+    manifest.write_text(json.dumps(document) + "\n")
+    output = tmp_path / "portable"
+    export_samples(manifest, output)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    assert task["meta"]["external_id"] == key
+    assert len(list((output / "images/corpus").glob("*.png"))) == 1
+
+
+@pytest.mark.parametrize("prefix", ["c:/outside", "C:outside", "folder:stream"])
+def test_storage_prefix_rejects_windows_drive_and_stream_syntax(canonical_batch, tmp_path, prefix):
+    manifest, _, _ = canonical_batch
+    output = tmp_path / "drive-prefix"
+    with pytest.raises(ValueError, match="image prefix"):
+        export_samples(manifest, output, image_prefix=prefix)
+    assert not output.exists()
+
+
+def late_metadata_png(encoded):
+    import struct
+    import zlib
+
+    payload = b"tEXtprivate-coordinate\x00secret"
+    chunk = struct.pack(">I", len(payload) - 4) + payload + struct.pack(">I", zlib.crc32(payload))
+    return encoded[:-12] + chunk + encoded[-12:]
+
+
+def test_late_png_metadata_is_rejected_after_full_decode(canonical_batch, tmp_path):
+    manifest, _, _ = canonical_batch
+    document = json.loads(manifest.read_text())
+    image = Path(document["media"]["uri"])
+    encoded = late_metadata_png(image.read_bytes())
+    image.write_bytes(encoded)
+    document["media"]["sha256"] = hashlib.sha256(encoded).hexdigest()
+    manifest.write_text(json.dumps(document) + "\n")
+    output = tmp_path / "late-metadata"
+    with pytest.raises(ValueError, match="metadata-free"):
+        export_samples(manifest, output)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("score", [float("nan"), float("inf"), float("-inf")])
+@pytest.mark.parametrize("profile", ["frame", "regional"])
+def test_nonfinite_results_remain_unknown_and_serialize_as_null(
+    classified_batch, tmp_path, score, profile
+):
+    manifest, frame, proposals, regional, _ = classified_batch
+    source = frame if profile == "frame" else regional
+    document = json.loads(source.read_text())
+    row = document["predictions"][0]
+    topk = row["topk"] if profile == "frame" else row["regions"][0]["topk"]
+    topk[0]["score"] = score
+    if profile == "regional":
+        row["regions"][0]["views"]["masked"] = topk
+    source.write_text(json.dumps(document))
+    output = tmp_path / "invalid-score"
+    export_samples(
+        manifest,
+        output,
+        frame_results=frame,
+        proposals=proposals if profile == "regional" else None,
+        regional_results=regional if profile == "regional" else None,
+    )
+    task = json.loads((output / "tasks.json").read_text())[0]
+    prediction = task["predictions"][0]
+    text = next(
+        r for r in prediction["result"] if r["from_name"] in {"predicted_taxon", "region_taxon"}
+    )
+    assert text["value"]["text"] == ["Unknown"]
+    evidence = next(r for r in prediction["result"] if r["from_name"] == "model_evidence")
+    decoded = json.loads(evidence["value"]["text"][0])
+    invalid = decoded["topk"] if profile == "frame" else decoded["alternatives"][0]["topk"]
+    assert invalid[0]["score"] is None
+    private = json.loads((output / "private/provenance.json").read_text())
+    stored = (
+        private["samples"][0]["frame_result"]["topk"]
+        if profile == "frame"
+        else (private["additional_models"]["regional"]["predictions"][0]["regions"][0]["topk"])
+    )
+    assert stored[0]["score"] is None
+    assert "annotations" not in task
+
+
+def test_nonfinite_model_metadata_is_still_refused(canonical_batch, tmp_path):
+    manifest, frame, _ = canonical_batch
+    document = json.loads(frame.read_text())
+    document["model"]["invalid_pin"] = float("nan")
+    frame.write_text(json.dumps(document))
+    output = tmp_path / "invalid-pin"
+    with pytest.raises(ValueError, match="JSON compliant"):
+        export_samples(manifest, output, frame_results=frame)
+    assert not output.exists()
