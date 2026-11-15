@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "@playwright/test";
+import { finishRecordingInterval } from "./capture-duration.mjs";
 
 const output = path.resolve(process.env.WEEDZ_CAPTURE_DIR ?? "");
 assert(process.env.WEEDZ_CAPTURE_DIR, "Set an external WEEDZ_CAPTURE_DIR");
@@ -23,6 +24,7 @@ const context = await browser.newContext({
   reducedMotion: "reduce",
 });
 const page = await context.newPage();
+const recordingStarted = performance.now();
 const errors = [];
 let captureSuccess = false;
 page.on("pageerror", (error) => errors.push(error.message));
@@ -77,6 +79,7 @@ try {
       2,
     ),
   );
+  await finishRecordingInterval(page, recordingStarted, 13500);
   assert.deepEqual(errors, []);
   captureSuccess = true;
 } finally {
@@ -85,8 +88,12 @@ try {
   await video.saveAs(path.join(output, "web-review-interactions.webm"));
   await browser.close();
   if (captureSuccess) {
+    assert.deepEqual(errors, []);
     const filename = path.join(output, "web-capture.json");
     const evidence = JSON.parse(await readFile(filename, "utf8"));
-    await writeFile(filename, JSON.stringify({ ...evidence, captureSuccess: true }, null, 2));
+    await writeFile(
+      filename,
+      JSON.stringify({ ...evidence, browserErrors: errors, captureSuccess: true }, null, 2),
+    );
   }
 }
