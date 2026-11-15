@@ -175,3 +175,21 @@ def test_overlapping_retry_reuses_a_completed_result_instead_of_overwriting_it(t
     actual = classify_batch(manifest, tmp_path, out, Late())
     assert actual == first
     assert out.read_bytes() == encoded
+
+
+def test_metadata_after_pixel_chunks_is_not_accepted_as_canonical_media(tmp_path):
+    import struct
+    import zlib
+
+    manifest, image = corpus(tmp_path)
+    encoded = image.read_bytes()
+    chunk = b"tEXt" + b"private-location\0must-not-be-published"
+    payload = struct.pack(">I", len(chunk) - 4) + chunk + struct.pack(">I", zlib.crc32(chunk))
+    image.write_bytes(encoded[:-12] + payload + encoded[-12:])
+    record = Sample.model_validate_json(manifest.read_text())
+    media = record.media.model_copy(
+        update={"sha256": hashlib.sha256(image.read_bytes()).hexdigest()}
+    )
+    write_manifest(manifest, [record.model_copy(update={"media": media})])
+    with pytest.raises(ValueError, match="canonical"):
+        classify_batch(manifest, tmp_path, tmp_path / "out", Classifier())
