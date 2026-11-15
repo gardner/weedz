@@ -1,9 +1,11 @@
 """Generated media cannot escape the output policy through paths or sidecar links."""
 
 import importlib.util
+import os
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
@@ -50,6 +52,46 @@ def test_external_parent_alias_returns_real_path_for_every_writer(tmp_path: Path
     alias = repo / "outside-media"
     alias.symlink_to(external, target_is_directory=True)
     assert paths.outside_git(alias / "new/voice.wav") == external / "new/voice.wav"
+
+
+def test_external_destination_is_supported_under_translated_git_locale(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LANGUAGE", "de")
+    monkeypatch.setenv("LC_ALL", "en_US.UTF-8")
+
+    def translated_git(*args: Any, **options: Any) -> subprocess.CompletedProcess[str]:
+        environment = options.get("env", os.environ)
+        message = (
+            "fatal: not a git repository"
+            if environment.get("LC_ALL") == "C"
+            else "Schwerwiegend: Kein Git-Repository"
+        )
+        return subprocess.CompletedProcess(args, 128, stdout="", stderr=message)
+
+    monkeypatch.setattr(paths, "subprocess", SimpleNamespace(run=translated_git))
+    assert paths.outside_git(tmp_path / "voice.wav") == tmp_path / "voice.wav"
+    assert os.environ["LANGUAGE"] == "de"
+
+
+def test_git_context_from_a_caller_does_not_relocate_the_destination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = repository(tmp_path / "repo")
+    monkeypatch.setenv("GIT_DIR", str(repo / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(repo))
+    assert paths.outside_git(tmp_path / "voice.wav") == tmp_path / "voice.wav"
+
+
+def test_git_ceiling_cannot_hide_a_repository_around_the_destination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = repository(tmp_path / "repo")
+    nested = repo / "nested"
+    nested.mkdir()
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(repo))
+    with pytest.raises(ValueError, match="outside every git worktree"):
+        paths.outside_git(nested / "voice.wav")
 
 
 @pytest.mark.parametrize("suffix", [".wav", ".json", ".png"])
