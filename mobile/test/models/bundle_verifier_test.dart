@@ -8,28 +8,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weedz/models/bundle_verifier.dart';
 
 const folder = 'test/fixtures/model_bundle';
+late Directory artifactDirectory;
 
 Future<VerifiedBundle> verify({
   Uint8List? envelope,
   Uint8List? model,
+  File? modelFile,
+  int maxModelBytes = 2 * 1024 * 1024 * 1024,
   Uint8List? table,
   int installed = 0,
   String version = '0.1.0',
   DateTime? now,
   List<String>? pins,
-}) =>
-    BundleVerifier(
-      trustedPublicKeys:
-          pins ?? [File('$folder/public-key.txt').readAsStringSync().trim()],
-    ).verify(
-      envelopeBytes:
-          envelope ?? File('$folder/envelope.json').readAsBytesSync(),
-      imageModelBytes: model ?? File('$folder/model.onnx').readAsBytesSync(),
-      textTableBytes: table ?? File('$folder/text.f32').readAsBytesSync(),
-      installedSequence: installed,
-      appVersion: version,
-      now: now ?? DateTime.utc(2026, 11, 15),
-    );
+}) async {
+  var source = modelFile ?? File('$folder/model.onnx');
+  if (model != null) {
+    source = await File('${artifactDirectory.path}/download')
+        .writeAsBytes(model);
+  }
+  return await BundleVerifier(
+    trustedPublicKeys:
+        pins ?? [File('$folder/public-key.txt').readAsStringSync().trim()],
+    artifactDirectory: artifactDirectory,
+    maxModelBytes: maxModelBytes,
+  ).verify(
+    envelopeBytes: envelope ?? File('$folder/envelope.json').readAsBytesSync(),
+    imageModelFile: source,
+    textTableBytes: table ?? File('$folder/text.f32').readAsBytesSync(),
+    installedSequence: installed,
+    appVersion: version,
+    now: now ?? DateTime.utc(2026, 11, 15),
+  );
+}
 
 Future<Uint8List> edited(
   FutureOr<void> Function(Map<String, dynamic>) edit,
@@ -59,6 +69,14 @@ Future<Uint8List> edited(
 }
 
 void main() {
+  setUp(() async {
+    artifactDirectory = await Directory.systemTemp.createTemp(
+      'weedz-bundle-test-',
+    );
+  });
+  tearDown(() async {
+    await artifactDirectory.delete(recursive: true);
+  });
   test(
     'accepts Python DSSE bytes and exposes immutable verified artifacts',
     () async {
@@ -68,7 +86,15 @@ void main() {
       expect(bundle.runtime.format, 'onnx');
       expect(bundle.textRows.first, [0.5, 0.5, 0.5, 0.5]);
       expect(bundle.targetTaxa.length, 3);
-      expect(() => bundle.imageModelBytes[0] = 0, throwsUnsupportedError);
+      expect(
+        bundle.imageModel.path,
+        isNot(File('$folder/model.onnx').absolute.path),
+      );
+      expect(bundle.imageModel.sha256, hasLength(64));
+      expect(
+        await File(bundle.imageModel.path).length(),
+        bundle.imageModel.size,
+      );
       expect(() => bundle.textRows.first[0] = 0, throwsUnsupportedError);
     },
   );
@@ -161,16 +187,106 @@ void main() {
     },
   );
 
+  test('source replacement cannot alter the verifier-owned artifact', () async {
+    final original = File('$folder/model.onnx').readAsBytesSync();
+    final source = await File('${artifactDirectory.path}/source.onnx')
+        .writeAsBytes(original);
+    final bundle = await verify(modelFile: source);
+    await source.delete();
+    await source.writeAsBytes(List.filled(original.length, 0));
+    expect(await File(bundle.imageModel.path).readAsBytes(), original);
+  });
+
   test(
-    'caller changes during asynchronous verification cannot change artifacts',
+    'size limits and corrupt sources leave no owned staging directories',
     () async {
-      final model = File('$folder/model.onnx').readAsBytesSync();
-      final original = List<int>.of(model);
-      final future = verify(model: model);
-      model.fillRange(0, model.length, 0);
-      expect((await future).imageModelBytes, original);
+      await expectLater(
+        verify(maxModelBytes: 1),
+        throwsA(isA<BundleRejected>()),
+      );
+      await expectLater(
+        verify(model: Uint8List(1)),
+        throwsA(isA<BundleRejected>()),
+      );
+      final directories = await artifactDirectory
+          .list()
+          .where((v) => v is Directory)
+          .toList();
+      expect(directories, isEmpty);
     },
   );
+
+  test('existing digest names are never trusted or overwritten', () async {
+    final first = await verify();
+    final original = await File(first.imageModel.path).readAsBytes();
+    final plant = File(
+      '${artifactDirectory.path}/${first.imageModel.sha256}.onnx',
+    );
+    await plant.writeAsString('corrupt existing file');
+    final next = await verify();
+    expect(next.imageModel.path, isNot(first.imageModel.path));
+    expect(await File(first.imageModel.path).readAsBytes(), original);
+    expect(await File(next.imageModel.path).readAsBytes(), original);
+    expect(await plant.readAsString(), 'corrupt existing file');
+  });
+
+  test(
+    'large artifacts stream off the UI isolate into an owned snapshot',
+    () async {
+      final source = File('${artifactDirectory.path}/large-source.onnx');
+      final output = await source.open(mode: FileMode.writeOnly);
+      final chunk = Uint8List.fromList(
+        List.generate(64 * 1024, (i) => i % 256),
+      );
+      final sink = Sha256().newHashSink();
+      for (var i = 0; i < 128; i++) {
+        sink.add(chunk);
+        await output.writeFrom(chunk);
+      }
+      await output.close();
+      sink.close();
+      final digest = (await sink.hash()).bytes
+          .map((v) => v.toRadixString(16).padLeft(2, '0'))
+          .join();
+      final envelope = await edited((m) {
+        final tower = m['image_model'] as Map;
+        tower['size'] = chunk.length * 128;
+        tower['sha256'] = digest;
+      });
+      var ticks = 0;
+      final timer = Timer.periodic(
+        const Duration(milliseconds: 1),
+        (_) => ticks++,
+      );
+      late VerifiedBundle bundle;
+      try {
+        bundle = await verify(envelope: envelope, modelFile: source);
+      } finally {
+        timer.cancel();
+      }
+      expect(ticks, greaterThan(0));
+      expect(bundle.imageModel.size, chunk.length * 128);
+      expect(await File(bundle.imageModel.path).length(), chunk.length * 128);
+      expect(bundle.imageModel.sha256, digest);
+    },
+  );
+
+  test(
+    'symlink model sources fail before any owned snapshot is created',
+    () async {
+      final link = Link('${artifactDirectory.path}/source-link');
+      await link.create(File('$folder/model.onnx').absolute.path);
+      await expectLater(
+        verify(modelFile: File(link.path)),
+        throwsA(isA<BundleRejected>()),
+      );
+      expect(
+        await artifactDirectory.list().where((v) => v is Directory).toList(),
+        isEmpty,
+      );
+    },
+  );
+
   test(
     'comparison changes cannot redefine ranking 4 even with matching rows',
     () async {

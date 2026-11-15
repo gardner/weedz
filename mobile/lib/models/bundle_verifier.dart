@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -6,9 +7,11 @@ import 'package:cryptography/cryptography.dart';
 import 'package:weedz/inference/margin_scoring.dart';
 import 'package:weedz/inference/window_geometry.dart';
 import 'package:weedz/models/bundle_fields.dart';
+import 'package:weedz/models/model_artifact.dart';
 import 'package:weedz/models/ranking_contract.dart';
 
 export 'package:weedz/models/bundle_fields.dart' show BundleRejected;
+export 'package:weedz/models/model_artifact.dart' show VerifiedModelArtifact;
 
 const _payloadType = 'application/vnd.weedz.bundle+json; version=1';
 const _revisions = {
@@ -33,7 +36,7 @@ final class VerifiedBundle {
     required this.modelRevision,
     required this.runtime,
     required this.preprocessing,
-    required this.imageModelBytes,
+    required this.imageModel,
     required this.textRows,
     required this.targetTaxa,
   });
@@ -43,7 +46,7 @@ final class VerifiedBundle {
   final String modelRevision;
   final ImageRuntime runtime;
   final Map<String, Object?> preprocessing;
-  final Uint8List imageModelBytes;
+  final VerifiedModelArtifact imageModel;
   final List<List<double>> textRows;
   final List<String> targetTaxa;
   int get rankingRevision => 4;
@@ -58,14 +61,22 @@ final class VerifiedBundle {
 }
 
 class BundleVerifier {
-  new({required List<String> trustedPublicKeys})
-    : _pins = List<String>.unmodifiable(trustedPublicKeys);
+  new({
+    required List<String> trustedPublicKeys,
+    required Directory artifactDirectory,
+    this.maxModelBytes = 2 * 1024 * 1024 * 1024,
+  }) : _pins = List<String>.unmodifiable(trustedPublicKeys),
+       _artifactDirectory = artifactDirectory.absolute.path {
+    if (maxModelBytes <= 0) throw ArgumentError.value(maxModelBytes);
+  }
   final List<String> _pins;
+  final String _artifactDirectory;
+  final int maxModelBytes;
 
-  /// All inputs are copied before the first await, preventing caller mutation.
+  /// Small byte inputs are copied; the model is streamed to an owned snapshot.
   Future<VerifiedBundle> verify({
     required Uint8List envelopeBytes,
-    required Uint8List imageModelBytes,
+    required File imageModelFile,
     required Uint8List textTableBytes,
     required int installedSequence,
     required String appVersion,
@@ -74,7 +85,10 @@ class BundleVerifier {
     if (envelopeBytes.length > 1024 * 1024) {
       throw const BundleRejected('Manifest exceeds 1 MiB');
     }
-    final model = Uint8List.fromList(imageModelBytes).asUnmodifiableView();
+    if (textTableBytes.length > 16 * 1024 * 1024) {
+      throw const BundleRejected('Text table exceeds 16 MiB');
+    }
+    final sourcePath = imageModelFile.absolute.path;
     final table = Uint8List.fromList(textTableBytes).asUnmodifiableView();
     try {
       final envelope = object(jsonDecode(utf8.decode(envelopeBytes)));
@@ -97,7 +111,6 @@ class BundleVerifier {
       }
       final tower = object(manifest['image_model']);
       final entry = object(manifest['text_table']);
-      await _artifact(tower, model);
       await _artifact(entry, table);
       final key = text(tower['model_key']);
       final revision = text(tower['model_revision']);
@@ -130,6 +143,13 @@ class BundleVerifier {
       }
       final preprocessing = object(tower['preprocessing']);
       _preprocessing(preprocessing);
+      final model = await stageModelArtifact(
+        sourcePath: sourcePath,
+        artifactDirectory: _artifactDirectory,
+        sha256: text(tower['sha256']),
+        size: integer(tower['size'], minimum: 1),
+        maximumBytes: maxModelBytes,
+      );
       return VerifiedBundle._(
         sequence: sequence,
         expires: expiry,
@@ -137,7 +157,7 @@ class BundleVerifier {
         modelRevision: revision,
         runtime: runtime,
         preprocessing: frozen(preprocessing)! as Map<String, Object?>,
-        imageModelBytes: model,
+        imageModel: model,
         textRows: rows,
         targetTaxa: List.unmodifiable(taxa),
       );

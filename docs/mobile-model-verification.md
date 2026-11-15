@@ -6,22 +6,44 @@ native model or establish phone parity. The checked-in synthetic bundle contains
 fake model bytes and a public deterministic test key. Never configure that key in
 production.
 
-Construct `BundleVerifier` with public keys pinned by trusted app configuration.
-An empty list refuses everything. Keys from an envelope or an artifact host cannot
-add trust. Pass the envelope bytes, complete model and text-table bytes, the last
-persisted installed sequence, current app version, and current time to `verify`.
-Only a fully checked result produces `VerifiedBundle`; there is no public
-constructor. The manifest is capped at 1 MiB, signatures at 16. Artifacts must match
-both signed length and SHA-256; returned bytes, rows and metadata are immutable
-copies, protected from caller mutation while verification awaits crypto work.
+Construct `BundleVerifier` with public keys pinned by trusted app configuration and
+an `artifactDirectory` in the app's private storage. An empty pin list refuses
+everything. Keys from an envelope or artifact host cannot add trust. Pass envelope
+and text-table bytes, a downloaded `imageModelFile`, last persisted installed
+sequence, current app version and current time to `verify`. Only a fully checked
+result produces the final `VerifiedBundle` type; there is no public constructor.
+The manifest is capped at 1 MiB, signatures at 16, and the table at 16 MiB. The
+configurable model limit defaults to 2 GiB and is a storage/verification limit,
+not a claim that a phone can execute a model of that size.
 
-The caller owns download limits, atomic cache installation and durable sequence
-storage. Persist the new sequence only after verification and successful cache
-installation. Reject stale or replayed downloads. Revalidate stored artifacts on
-loading a cache with its own trusted installed-manifest policy: `verify` deliberately
-requires a newer sequence and is the update boundary, not a same-sequence cache
-loader. Do not bypass it by resetting the persisted sequence. This PR supplies no
-cache or networking implementation.
+The model never becomes a full in-memory Dart byte array. A worker isolate streams
+it in bounded chunks into a fresh owned `bundle-*` directory. It hashes/counts the
+copied bytes, refuses excess bytes immediately, flushes the completed file and
+renames it to `<sha256>.onnx` only after both signed size and digest match. Each
+verification gets its own directory: existing digest-named files are never trusted
+or overwritten. Failed invocations remove only their own staging directory. Small
+input bytes and metadata are defensively copied. The returned
+`bundle.imageModel` contains `path`, `sha256` and `size`; source-path replacement or
+later source deletion cannot change that verified snapshot.
+
+The native adapter opens only `bundle.imageModel.path`. App code must keep this
+private owned directory unchanged for the capability's lifetime, including every
+native session using it. Cache updates create new snapshots rather than replacing
+live files. Do not put this root in user-editable/shared storage, write these
+paths, or garbage-collect them while verification/native sessions are active.
+Retire a snapshot only after all users have released it. A killed process can
+leave an unpublished private stage or an unreferenced completed snapshot; cache
+recovery may remove such orphans only after establishing no live owner. Neither
+an incomplete stage nor its path is returned as a verified capability.
+
+The caller still owns network download limits, installed-manifest registration,
+durable sequence storage, cache loading and eviction. Persist the new sequence
+only after verification and successful registration of its owned artifact. Reject
+stale/replayed updates. Loading a previously installed cache needs its own trusted
+installed-manifest policy: `verify` deliberately requires a newer sequence and is
+the update boundary, not a same-sequence loader. Do not bypass it by resetting the
+persisted sequence. This PR provides managed artifact staging, not a downloader or
+complete persistent bundle cache.
 
 Before every inference, including offline reuse of a verified in-memory bundle,
 call `bundle.ensureUsable(now)`. Expiry dates include the whole UTC calendar day.
@@ -29,7 +51,8 @@ An expired bundle must not produce new candidates. The adapter must additionally
 check that its actual runtime supports `bundle.runtime` and the preprocessing;
 accepting signed ONNX provenance does not mean a native ONNX executor is installed.
 The target and comparison label order is pinned to ranking revision 4; a signed
-publisher regression cannot redefine it. The manifest names a parity admission at thresholds version 1.
+publisher regression cannot redefine it. The manifest names a parity admission
+at thresholds version 1.
 Its measurements are checked before signing by the Python publisher; a phone does
 not rerun that benchmark or infer hardware parity from the identifier.
 
