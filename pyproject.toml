@@ -28,6 +28,11 @@ dependencies = [
 [project.scripts]
 weedz = "weedz:main"
 
+[project.optional-dependencies]
+annotation = [
+    "label-studio-sdk>=2.1.5",
+]
+
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13.0"]
 build-backend = "uv_build"
@@ -61,6 +66,7 @@ torchvision = { index = "pytorch-cpu" }
 
 [dependency-groups]
 dev = [
+    "label-studio-sdk>=2.1.5",
     "onnx>=1.23.2",
     "onnxruntime>=1.32.0",
     "pre-commit>=4.7.0",
