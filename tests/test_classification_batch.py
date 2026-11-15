@@ -1,4 +1,6 @@
 import hashlib
+import json
+from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -73,3 +75,103 @@ def test_tiled_predictions_keep_regions_without_claiming_masks(tmp_path):
     assert len(row["views"]) > 1
     assert all("box" in view and "mask" not in view for view in row["views"])
     assert row["topk"][0]["score_kind"] == "maximum_closed_set_softmax_across_views_uncalibrated"
+
+
+def test_path_replacement_cannot_change_pixels_after_the_checksum_check(tmp_path, monkeypatch):
+    manifest, image = corpus(tmp_path)
+    original_open = Image.open
+
+    def replace_before_decode(source, *args, **kwargs):
+        if isinstance(source, (str, Path)):
+            Image.new("RGB", (32, 32), "red").save(image)
+        return original_open(source, *args, **kwargs)
+
+    class Inspect(Classifier):
+        def predict(self, images, top_k=5):
+            assert images[0].getpixel((0, 0)) == (0, 128, 0)
+            return super().predict(images, top_k)
+
+    monkeypatch.setattr("weedz.classification.batch.Image.open", replace_before_decode)
+    classify_batch(manifest, tmp_path, tmp_path / "out.json", Inspect())
+
+
+def test_cached_prediction_bytes_cannot_be_changed_without_detection(tmp_path):
+    manifest, _ = corpus(tmp_path)
+    out = tmp_path / "predictions.json"
+    model = Classifier()
+    classify_batch(manifest, tmp_path, out, model)
+    changed = json.loads(out.read_text())
+    changed["predictions"][0]["topk"][0]["score"] = 0.9
+    out.write_text(json.dumps(changed))
+    with pytest.raises(ValueError, match="checksum"):
+        classify_batch(manifest, tmp_path, out, model)
+    assert model.calls == 1
+
+
+def test_wrong_geometry_and_noncanonical_media_are_refused(tmp_path):
+    manifest, image = corpus(tmp_path)
+    record = Sample.model_validate_json(manifest.read_text())
+    write_manifest(
+        manifest,
+        [record.model_copy(update={"media": record.media.model_copy(update={"width": 31})})],
+    )
+    with pytest.raises(ValueError, match="geometry"):
+        classify_batch(manifest, tmp_path, tmp_path / "bad-size.json", Classifier())
+    jpeg = image.with_suffix(".jpg")
+    Image.new("RGB", (32, 32), "green").save(jpeg)
+    replacement = record.media.model_copy(
+        update={"uri": jpeg.name, "sha256": hashlib.sha256(jpeg.read_bytes()).hexdigest()}
+    )
+    write_manifest(manifest, [record.model_copy(update={"media": replacement})])
+    with pytest.raises(ValueError, match="canonical"):
+        classify_batch(manifest, tmp_path, tmp_path / "bad-format.json", Classifier())
+
+
+def test_legacy_results_need_an_explicit_verified_reference_and_complete_rows(tmp_path):
+    manifest, _ = corpus(tmp_path)
+    out = tmp_path / "predictions.json"
+    model = Classifier()
+    result = classify_batch(manifest, tmp_path, out, model)
+    result.pop("result_sha256")
+    out.write_text(json.dumps(result))
+    with pytest.raises(ValueError, match="verified legacy"):
+        classify_batch(manifest, tmp_path, out, model)
+    sha = hashlib.sha256(out.read_bytes()).hexdigest()
+    adopted = classify_batch(manifest, tmp_path, out, model, verified_existing_sha256=sha)
+    assert adopted == result and model.calls == 1
+    result["predictions"] = []
+    out.write_text(json.dumps(result))
+    with pytest.raises(ValueError, match="Incomplete"):
+        classify_batch(
+            manifest,
+            tmp_path,
+            out,
+            model,
+            verified_existing_sha256=hashlib.sha256(out.read_bytes()).hexdigest(),
+        )
+
+
+def test_overlapping_retry_reuses_a_completed_result_instead_of_overwriting_it(tmp_path):
+    manifest, _ = corpus(tmp_path)
+    out = tmp_path / "predictions.json"
+    first = classify_batch(manifest, tmp_path, out, Classifier())
+    encoded = out.read_bytes()
+    out.unlink()
+
+    class Late(Classifier):
+        def predict(self, images, top_k=5):
+            out.write_bytes(encoded)  # The other attempt commits while this inference is running.
+            return [
+                [
+                    {
+                        "taxon": "Different result",
+                        "score": 0.5,
+                        "score_kind": "closed_set_softmax_uncalibrated",
+                    }
+                ]
+                for _ in images
+            ]
+
+    actual = classify_batch(manifest, tmp_path, out, Late())
+    assert actual == first
+    assert out.read_bytes() == encoded
