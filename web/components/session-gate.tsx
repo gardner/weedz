@@ -22,7 +22,7 @@ export default function SessionGate() {
       const unavailable = () => {
         if (current())
           setSession((previous) =>
-            previous === null ? null : { ...previous, canStartRuns: false },
+            previous == null ? previous : { ...previous, canStartRuns: false },
           );
       };
       try {

@@ -4,6 +4,28 @@ import { chromium, expect } from "@playwright/test";
 
 const browser = await chromium.launch({ headless: true });
 try {
+  const initial = await browser.newPage();
+  let initialUnavailable = true;
+  await initial.route("**/api/**", (route) => {
+    if (new URL(route.request().url()).pathname !== "/api/session")
+      return route.fulfill({ json: [] });
+    return route.fulfill({
+      status: initialUnavailable ? 503 : 200,
+      json: initialUnavailable
+        ? { detail: "Unavailable" }
+        : { mode: "tokens", reviewer: "Recovered reviewer", can_start_runs: false },
+    });
+  });
+  await initial.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001", {
+    waitUntil: "domcontentloaded",
+  });
+  await initial.waitForTimeout(300);
+  assert.equal(await initial.locator(".review-desk, .workspace").count(), 0);
+  initialUnavailable = false;
+  await expect(initial.locator(".signed-in")).toContainText("Recovered reviewer", {
+    timeout: 8000,
+  });
+  await initial.close();
   const page = await browser.newPage();
   let ready = false;
   let unavailable = false;
