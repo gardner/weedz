@@ -219,3 +219,70 @@ def test_cached_featureless_eligibility_is_bound_to_verified_pixels(tmp_path):
     with pytest.raises(ValueError, match="eligibility"):
         classify_margin_batch(manifest, tmp_path, output, model)
     assert model.calls == 1
+
+
+def test_changed_canonical_pixels_are_rejected_before_cached_scores(tmp_path):
+    from PIL import Image
+
+    manifest, image = corpus(tmp_path)
+    model = Model()
+    output = tmp_path / "scores.json"
+    classify_margin_batch(manifest, tmp_path, output, model)
+    Image.new("RGB", (32, 32), "blue").save(image)
+    with pytest.raises(ValueError, match="checksum"):
+        classify_margin_batch(manifest, tmp_path, output, model)
+    assert model.calls == 1
+
+
+def test_empty_sam_is_coverage_evidence_and_never_invokes_crop_classifier(tmp_path):
+    import json
+
+    manifest, proposals, _ = inputs(tmp_path)
+    row = json.loads(proposals.read_text())
+    row["segmentation"].update(status="empty", regions=[])
+    proposals.write_text(json.dumps(row) + "\n")
+    model = Model()
+    result = classify_margin_batch(
+        manifest,
+        tmp_path,
+        tmp_path / "empty.json",
+        model,
+        scope="regions",
+        proposals=proposals,
+        proposer_kind="sam3",
+    )
+    assert result["predictions"][0]["regions"] == []
+    assert model.calls == 0
+
+
+def test_cache_requires_every_crop_view_even_if_masked_summary_is_valid(tmp_path):
+    import json
+
+    from weedz.segmentation.artifacts import digest
+
+    manifest, proposals, _ = inputs(tmp_path)
+    model = Model()
+    output = tmp_path / "scores.json"
+    result = classify_margin_batch(
+        manifest,
+        tmp_path,
+        output,
+        model,
+        scope="regions",
+        proposals=proposals,
+        proposer_kind="sam3",
+    )
+    del result["predictions"][0]["regions"][0]["views"]["context"]
+    result["result_sha256"] = digest({k: v for k, v in result.items() if k != "result_sha256"})
+    output.write_text(json.dumps(result))
+    with pytest.raises(ValueError, match="three"):
+        classify_margin_batch(
+            manifest,
+            tmp_path,
+            output,
+            model,
+            scope="regions",
+            proposals=proposals,
+            proposer_kind="sam3",
+        )
+    assert model.calls == 1

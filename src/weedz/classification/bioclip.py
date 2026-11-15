@@ -223,7 +223,11 @@ class BioClipClassifier:
     def profile_metadata(self, kind: str, proposer: dict | None = None) -> dict:
         metadata = {**self.metadata, "scope": kind}
         if kind == "regions":
-            metadata.update(proposer=proposer, views=["tight", "masked", "context"])
+            from weedz.batches.profiles import sam_identity
+
+            if proposer is None:
+                raise ValueError("Regional BioCLIP profile requires SAM metadata")
+            metadata.update(proposer=sam_identity(proposer), views=["tight", "masked", "context"])
         return identity(metadata, kind)
 
     def frame(self, encoded: bytes) -> dict:

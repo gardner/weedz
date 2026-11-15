@@ -145,3 +145,16 @@ def test_six_activity_pipeline_creates_margin_native_editable_package_and_retrie
         registry_from_config(bad)
     with pytest.raises(RuntimeError):
         registry.segmentation[worker["segmentation_profile"]].load()
+
+
+def test_reusable_regional_profile_ignores_corpus_notes_but_binds_sam_policy():
+    from test_annotation_versions import metadata
+
+    classifier = model()
+    proposer = metadata()[1]
+    first = classifier.profile_metadata("regions", proposer)
+    annotated = {**proposer, "corpus_note": "different valid source batch"}
+    assert classifier.profile_metadata("regions", annotated) == first
+    changed = deepcopy(proposer)
+    changed["proposal_config"]["context_fraction"] = 0.1
+    assert classifier.profile_metadata("regions", changed) != first

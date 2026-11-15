@@ -30,7 +30,10 @@ class View:
         self.metadata = model.profile_metadata(scope, proposer)
 
     def profile_metadata(self, scope, proposer=None):
-        return self.model.profile_metadata(scope, proposer)
+        actual = self.model.profile_metadata(scope, proposer)
+        if digest(identity(actual, scope)) != digest(identity(self.metadata, scope)):
+            raise ValueError("BioCLIP input/model profile changed before inference")
+        return actual
 
     def frame(self, encoded):
         return self.model.frame(encoded)
