@@ -45,7 +45,7 @@ class PlantClassifier:
             raise ValueError("PlantCLEF checkpoint checksum mismatch")
         if file_sha256(labels_path) != LABELS_SHA256:
             raise ValueError("PlantCLEF class mapping checksum mismatch")
-        labels = tuple(labels_path.read_text().splitlines())
+        labels = tuple(labels_path.read_text(encoding="utf-8").splitlines())
         if len(labels) != 7806 or len(set(labels)) != 7806:
             raise ValueError("Invalid PlantCLEF class mapping")
         timm = importlib.import_module("timm")

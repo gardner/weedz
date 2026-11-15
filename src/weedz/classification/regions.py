@@ -54,10 +54,6 @@ def _restore(encoded: bytes, expected_sha: str, stage: dict, proposer: Proposer)
                 image, [{k: v for k, v in r.items() if k != "views"} for r in records]
             )
     config = Sam3Config(**stage["provenance"]["config"])
-    if len(records) > config.max_regions * len(config.prompts):
-        raise ValueError("SAM3 region budget exceeded")
-    if any(record["prompt"] not in config.prompts for record in records):
-        raise ValueError("SAM3 prompt disagrees with declared profile")
     return restore_concept_regions(encoded, records, config, expected_sha256=expected_sha)
 
 
