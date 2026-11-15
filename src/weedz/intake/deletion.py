@@ -81,7 +81,7 @@ class Deletions:
                 (self.store.images / image["image_file"]).unlink(missing_ok=True)
             self.store._sync_images()
             db.execute(
-                "UPDATE reports SET body=NULL,content_sha256=NULL,image_file=NULL,"
+                "UPDATE reports SET body=NULL,content_sha256=NULL,image_file=NULL,consent=NULL,"
                 "withdrawn_at=COALESCE(withdrawn_at,?) WHERE submitter=?",
                 (row["requested_at"], submitter),
             )

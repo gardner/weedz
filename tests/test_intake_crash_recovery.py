@@ -21,7 +21,8 @@ def test_interrupted_withdrawal_is_hidden_and_resumed_at_startup(
     secret, report_id = token(tmp_path), new_id()
     headers, path = {"Authorization": f"Bearer {secret}"}, f"/reports/{report_id}"
     client, store = TestClient(create_intake_app(tmp_path)), ReportStore(tmp_path)
-    assert client.put(path, json=with_image(jpeg()), headers=headers).status_code == 201
+    body = with_image(jpeg(), uses=["review", "training"], credit="A. Contributor")
+    assert client.put(path, json=body, headers=headers).status_code == 201
 
     def fail_sync() -> None:
         raise OSError("Interrupted before deletion completed")
@@ -30,11 +31,15 @@ def test_interrupted_withdrawal_is_hidden_and_resumed_at_startup(
     with pytest.raises(OSError):
         store.withdraw(1, report_id)
     assert store.active() == []
-    assert client.get(path, headers=headers).json()["image"] is False
+    pending = client.get(path, headers=headers).json()
+    assert pending["image"] is False
+    assert pending["consent_version"] == "2026-11"
+    assert pending["uses"] == ["review", "training"]
     # A fresh process/app has no in-memory knowledge of the interruption.
     restarted = TestClient(create_intake_app(tmp_path))
-    assert restarted.get(path, headers=headers).json()["status"] == "withdrawn"
-    assert restarted.put(path, json=with_image(jpeg()), headers=headers).status_code == 410
+    assert restarted.get(path, headers=headers).json() == pending
+    assert restarted.put(path, json=body, headers=headers).status_code == 410
+    assert b"A. Contributor" not in store.path.read_bytes()
     assert list(store.images.iterdir()) == []
     with sqlite3.connect(store.path) as db:
         assert db.execute("SELECT body,content_sha256,image_file FROM reports").fetchone() == (

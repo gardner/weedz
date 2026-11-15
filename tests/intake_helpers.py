@@ -27,8 +27,22 @@ def report(**changes: Any) -> dict:
     return body | changes
 
 
-def with_image(data: bytes, licence: str = "cc-by", **changes: Any) -> dict:
-    consent = {"wording_version": "2026-11", "image": True, "location": True, "licence": licence}
+def with_image(
+    data: bytes,
+    licence: str = "cc-by",
+    uses: tuple[str, ...] | list[str] = ("review",),
+    credit: str | None = None,
+    **changes: Any,
+) -> dict:
+    consent = {
+        "wording_version": "2026-11",
+        "image": True,
+        "location": True,
+        "uses": list(uses),
+        "licence": licence,
+    }
+    if credit is not None:
+        consent["credit"] = credit
     return report(image=base64.b64encode(data).decode(), consent=consent, **changes)
 
 

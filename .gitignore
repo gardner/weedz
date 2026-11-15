@@ -24,3 +24,6 @@ web/.env.local
 # Bundle signing keys belong outside the repo (#59); this only catches accidents.
 *.ed25519
 *.pem
+
+# App Store Connect API private keys also belong outside the working tree (#114).
+*.p8

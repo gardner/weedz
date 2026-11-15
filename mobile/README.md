@@ -12,3 +12,8 @@ flutter test
 
 `lib/domain/` is pure Dart (no plugins or platform code), so its tests run
 without a device.
+
+Settings now supports secure pilot enrollment and restartable data deletion. See
+[mobile device settings](../docs/mobile-device-settings.md) for the two required
+deployment URL defines, the operator flow, and device verification still needed
+before store release. This client does not upload reports.

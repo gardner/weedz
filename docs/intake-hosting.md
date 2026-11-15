@@ -44,7 +44,10 @@ so a second process cannot delete another process's uncommitted upload crop.
 
 A report withdrawal first commits its `withdrawn_at` barrier, hiding the report
 from specialist reads and refusing late uploads. It then deletes and fsyncs the
-crop and erases content and its hash. A successful `DELETE` response confirms
+crop and erases content and its hash. The receipt retains the non-identifying
+consent wording version and permitted photo uses; it never retains a credit name.
+Whole-device deletion erases that consent audit as well as its temporary
+admission, image-work and pending-erasure records. A successful `DELETE` response confirms
 that physical erasure finished. If the process stops between those steps, the
 report remains logically withdrawn and its receipt exposes no crop. Startup or a
 repeated `DELETE` finishes the physical erasure. A small pending-erasure record

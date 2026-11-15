@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:weedz/ui/device_settings.dart';
 import 'package:weedz/ui/theme.dart';
 
 void main() {
@@ -15,8 +16,22 @@ class WeedzApp extends StatelessWidget {
     return MaterialApp(
       title: 'Weedz',
       theme: appTheme(),
-      home: const Scaffold(
-        body: SafeArea(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Weedz'),
+          actions: [
+            Builder(
+              builder: (context) => IconButton(
+                tooltip: 'Settings',
+                icon: const Icon(Icons.settings),
+                onPressed: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(builder: (_) => const DeviceSettings()),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: const SafeArea(
           child: Center(
             child: Padding(
               padding: EdgeInsets.all(24),

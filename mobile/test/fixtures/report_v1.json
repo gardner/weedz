@@ -11,9 +11,10 @@
   "captured_at": "2026-10-02T23:15:42.000Z",
   "location": {"latitude": -41.2706319, "longitude": 173.2839653, "accuracy_m": 4.7},
   "consent": {
-    "wording_version": "consent-2026-11",
+    "wording_version": "2026-11",
     "image": true,
     "location": true,
+    "uses": ["review"],
     "licence": "cc-by",
     "credit": "A. Contributor"
   },
