@@ -347,6 +347,7 @@ export default function ReviewDesk({
           <ScreeningNote meaning={scoreMeaning} />
           <div className="workspace">
             <ReviewQueue
+              declaredComparison={scoreMeaning?.declared === true}
               photos={filtered}
               activeId={active?.id}
               runId={runId}
