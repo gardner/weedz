@@ -1,10 +1,13 @@
 """A short music take must not quietly become a partly silent soundtrack."""
 
 import importlib.util
+import sys
 import wave
 from pathlib import Path
 
 import pytest
+
+sys.path.insert(0, str(Path(__file__).parents[1] / "tools/demo-video"))
 
 spec = importlib.util.spec_from_file_location(
     "demo_mix", Path(__file__).parents[1] / "tools/demo-video/mix_demo.py"
@@ -56,6 +59,11 @@ def test_encoder_uses_checked_music_snapshot_if_original_changes(
     checked = source.read_bytes()
     digest = hashlib.sha256(checked).hexdigest()
     source.with_suffix(".assembly.json").write_text(json.dumps({"sha256": digest}))
+    render_hashes = {}
+    for name in ("picture.mp4", "narration-native-24k.wav"):
+        (tmp_path / name).write_bytes(name.encode())
+        render_hashes[name] = hashlib.sha256(name.encode()).hexdigest()
+    (tmp_path / "sha256.json").write_text(json.dumps(render_hashes))
     movie = tmp_path / "movie.mp4"
     monkeypatch.setattr(
         sys,
@@ -77,6 +85,9 @@ def test_encoder_uses_checked_music_snapshot_if_original_changes(
         source.write_bytes(b"replaced after preflight")
         inputs = [command[index + 1] for index, arg in enumerate(command) if arg == "-i"]
         assert Path(inputs[2]).read_bytes() == checked
+        for index, name in enumerate(("picture.mp4", "narration-native-24k.wav")):
+            (tmp_path / name).write_bytes(b"replaced after preflight")
+            assert Path(inputs[index]).read_bytes() == name.encode()
         Path(command[-1]).write_bytes(b"test encoded output")
 
     monkeypatch.setattr(mix, "subprocess", SimpleNamespace(run=encode))
@@ -84,3 +95,27 @@ def test_encoder_uses_checked_music_snapshot_if_original_changes(
     metadata = json.loads(movie.with_suffix(".mix.json").read_text())
     assert metadata["music_sha256"] == digest
     assert str(tmp_path) not in json.dumps(metadata)
+
+
+def test_render_snapshot_requires_original_producer_checksums(tmp_path):
+    import hashlib
+    import json
+
+    rendered = tmp_path / "render"
+    rendered.mkdir()
+    name = "picture.mp4"
+    (rendered / name).write_bytes(b"original")
+    (rendered / "narration-native-24k.wav").write_bytes(b"voice")
+    (rendered / "sha256.json").write_text(
+        json.dumps(
+            {
+                name: hashlib.sha256(b"original").hexdigest(),
+                "narration-native-24k.wav": hashlib.sha256(b"voice").hexdigest(),
+            }
+        )
+    )
+    (rendered / name).write_bytes(b"unrelated valid movie")
+    private = tmp_path / "private"
+    private.mkdir()
+    with pytest.raises(ValueError, match="checksum"):
+        mix.snapshot_render(rendered, private)

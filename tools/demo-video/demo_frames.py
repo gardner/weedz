@@ -56,9 +56,16 @@ def text(
 
 class Frames:
     def __init__(
-        self, captures: Path, ffmpeg: Path, fps: int, credit_font: Path, mobile_captures: Path
+        self,
+        captures: Path,
+        ffmpeg: Path,
+        fps: int,
+        credit_font: Path,
+        mobile_captures: Path,
+        web_captures: Path | None = None,
     ) -> None:
         self.captures = captures
+        self.web_captures = web_captures or captures / "web-final"
         self.provenance = json.loads(
             (captures / "review-snapshot/capture-provenance.json").read_text()
         )
@@ -79,7 +86,12 @@ class Frames:
                     self.captures, relative.removeprefix("review-snapshot/"), self.provenance
                 )
             else:
-                with Image.open(self.captures / relative) as original:
+                path = (
+                    self.web_captures / relative.removeprefix("web-final/")
+                    if relative.startswith("web-final/")
+                    else self.captures / relative
+                )
+                with Image.open(path) as original:
                     self.images[relative] = original.convert("RGB")
         return self.images[relative]
 
@@ -130,7 +142,7 @@ class Frames:
                         "-v",
                         "error",
                         "-i",
-                        str(self.captures / "web-final/web-review-interactions.webm"),
+                        str(self.web_captures / "web-review-interactions.webm"),
                         "-t",
                         "13",
                         "-vf",

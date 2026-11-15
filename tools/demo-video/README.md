@@ -100,3 +100,10 @@ On another system, pass `--ui-font /path/to/regular.ttf` and
 `--ui-bold-font /path/to/bold.ttf` using existing readable font files. Both fonts
 are loaded before creating the output or starting a render; no OS installation
 is required. `--credit-font` remains separate for source-credit character coverage.
+
+New browser capture receipts bind the three consumed web media files by SHA-256,
+recorded only after capture closure. Rendering verifies them and consumes private
+checked snapshots. Mixing likewise verifies `picture.mp4` and the native narration
+against the render's `sha256.json`, then reads checked private copies. Replacement
+media cannot inherit an earlier receipt. Historical hashless receipts and delivered
+films remain untouched; a fresh render requires freshly produced complete receipts.
