@@ -12,6 +12,11 @@ await mkdir(output, { recursive: true });
 const enrollment = JSON.parse(
   await readFile(path.join(process.env.WEEDZ_PRIVATE_STATE, "enrollment.json"), "utf8"),
 );
+assert.equal(
+  createHash("sha256").update(Buffer.from(enrollment.report.image, "base64")).digest("hex"),
+  enrollment.source_provenance.report_image_sha256,
+  "Uploaded report pixels must match the verified source provenance",
+);
 const origin = "https://127.0.0.1:8443";
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({
@@ -86,12 +91,13 @@ try {
   assert.deepEqual(errors, [], "Actual app capture reported browser errors");
   evidence = {
     capture_instance: process.env.WEEDZ_CAPTURE_INSTANCE,
+    source_provenance: enrollment.source_provenance,
     runtime:
       "Actual release-compiled Flutter web application in Chromium, real secure-storage web plugin",
     backend: "Real isolated HTTPS intake, not a mock; self-signed loopback development certificate",
     report_created_via_real_api: upload.status(),
     report_source:
-      "Public CC BY gorse photo with its original desktop pilot model revision, score and ranking revision",
+      "Public CC BY source photo with verified upload bytes; original model context in source_provenance",
     stable_deletion_status: stable.status(),
     stable_deletion_receipt: await stable.json(),
     upload_after_deletion: revoked.status(),

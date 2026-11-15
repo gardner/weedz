@@ -12,6 +12,7 @@ from typing import Any
 from PIL import Image, ImageOps
 
 from weedz.discovery.inference import MODELS
+from weedz.discovery.sharing import refuse_unadmitted, terms
 
 SOURCE_RUN = "nelson-tasman-3e62ad801459"
 SOURCE_PHOTO = "inat-250240131-447484684"
@@ -33,7 +34,7 @@ def clean_public_image(pilot: Path, record: dict[str, Any]) -> bytes:
     return output.getvalue()
 
 
-def source_report(pilot: Path) -> dict[str, Any]:
+def source_capture(pilot: Path) -> dict[str, Any]:
     pilot = pilot.resolve()
     with closing(
         sqlite3.connect((pilot / "discovery.sqlite3").as_uri() + "?mode=ro", uri=True)
@@ -48,6 +49,7 @@ def source_report(pilot: Path) -> dict[str, Any]:
     record, scores, stamp = (json.loads(value) for value in row)
     if record["photo_license"] != "cc-by":
         raise ValueError("Only the attributed public CC BY source is allowed")
+    refuse_unadmitted(record["photo_license"], record.get("observation_license", ""))
     model_key = next(
         (
             key
@@ -58,7 +60,8 @@ def source_report(pilot: Path) -> dict[str, Any]:
     )
     if model_key is None:
         raise ValueError("The source model revision is not in the supported capture registry")
-    return {
+    encoded_image = clean_public_image(pilot, record)
+    report = {
         "schema_version": 1,
         "app_version": "0.1.0+capture",
         "candidate": {"taxon": scores["best_species"], "score": scores["margin"]},
@@ -75,5 +78,23 @@ def source_report(pilot: Path) -> dict[str, Any]:
             "credit": record["attribution"],
             "uses": ["review"],
         },
-        "image": base64.b64encode(clean_public_image(pilot, record)).decode(),
+        "image": base64.b64encode(encoded_image).decode(),
     }
+    return {
+        "report": report,
+        "source_provenance": {
+            "source_run_id": SOURCE_RUN,
+            "source_photo_id": SOURCE_PHOTO,
+            "source_image_sha256": record["sha256"],
+            "report_image_sha256": hashlib.sha256(encoded_image).hexdigest(),
+            "rights": terms(record),
+            "source_model": stamp,
+            "modifications": "Original encoded source checksum verified; EXIF orientation "
+            "applied; fresh RGB canvas strips metadata; JPEG re-encoding at quality95.",
+        },
+    }
+
+
+def source_report(pilot: Path) -> dict[str, Any]:
+    """Keep the intake payload API separate from capture-only public credits."""
+    return source_capture(pilot)["report"]

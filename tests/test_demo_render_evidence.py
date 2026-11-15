@@ -18,6 +18,20 @@ frames_module = importlib.import_module("demo_frames")
 renderer = importlib.import_module("render_demo")
 
 
+def mobile_provenance():
+    return {
+        "source_image_sha256": "a" * 64,
+        "report_image_sha256": "b" * 64,
+        "rights": {
+            "attribution": "Actual mobile source creator",
+            "observer": "Actual mobile observer",
+            "source_url": "https://example.test/mobile-source",
+            "photo_licence": "cc-by",
+            "observation_licence": "cc-by-nc",
+        },
+    }
+
+
 @pytest.fixture
 def produced_captures(incomplete_source: Path, tmp_path: Path) -> Path:
     Image.new("RGB", (10, 10), "green").save(incomplete_source / "images/missing.png")
@@ -113,6 +127,7 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
                 "report_created_via_real_api": 201,
                 "stable_deletion_status": 200,
                 "upload_after_deletion": 401,
+                "source_provenance": mobile_provenance(),
                 "media_sha256": {
                     name: hashlib.sha256((mobile / name).read_bytes()).hexdigest()
                     for name in renderer.MOBILE_MEDIA
@@ -178,6 +193,7 @@ def test_mobile_capture_requires_closed_error_free_real_api_evidence(tmp_path, c
         "report_created_via_real_api": 201,
         "stable_deletion_status": 200,
         "upload_after_deletion": 401,
+        "source_provenance": mobile_provenance(),
     }
     (tmp_path / "live-capture.json").write_text(json.dumps(proof | change))
     with pytest.raises(ValueError, match="Mobile browser capture"):
@@ -263,6 +279,7 @@ def test_replaced_mobile_media_cannot_inherit_real_deletion_receipt(tmp_path):
                 "report_created_via_real_api": 201,
                 "stable_deletion_status": 200,
                 "upload_after_deletion": 401,
+                "source_provenance": mobile_provenance(),
             }
         )
     )
@@ -278,3 +295,11 @@ def test_erasure_and_recording_must_belong_to_the_same_real_capture(erased, reco
         renderer.validate_capture_instances(
             {"capture_instance": erased}, {"capture_instance": recorded}
         )
+
+
+def test_mobile_credit_uses_its_own_source_not_a_review_snapshot():
+    source = mobile_provenance()
+    assert renderer.mobile_source_credit({"source_provenance": source}) is source
+    assert source["rights"]["attribution"] == "Actual mobile source creator"
+    with pytest.raises(ValueError, match="provenance"):
+        renderer.mobile_source_credit({})

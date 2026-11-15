@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import shutil
 import signal
 import sqlite3
 import ssl
@@ -45,6 +46,7 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     output = outside_git(args.output)
     source = args.source_pilot.resolve()
+    ffmpeg = Path(shutil.which(str(args.ffmpeg)) or args.ffmpeg).resolve()
     if output.is_relative_to(source) or source.is_relative_to(output):
         raise ValueError("Capture output and source pilot must be independent directories")
     instance = uuid.uuid4().hex
@@ -59,7 +61,7 @@ def main() -> None:
             "--web-build",
             str(root / "mobile/build/web"),
             "--source-pilot",
-            str(args.source_pilot),
+            str(source),
             "--private-state",
             str(state),
             "--instance",
@@ -80,7 +82,7 @@ def main() -> None:
                     "WEEDZ_PRIVATE_STATE": private,
                     "WEEDZ_CAPTURE_INSTANCE": instance,
                     "WEEDZ_CAPTURE_DIR": str(output),
-                    "WEEDZ_FFMPEG": str(args.ffmpeg),
+                    "WEEDZ_FFMPEG": str(ffmpeg),
                 }
                 subprocess.run(
                     ["pnpm", "--dir", "web", "exec", "node", "scripts/capture-live-flutter.mjs"],
