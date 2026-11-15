@@ -85,7 +85,6 @@ class Activities:
             self._proposer,
             self._screener,
             activity.heartbeat,
-            lambda: activity.info().attempt,
             while_heartbeating,
         )
 
