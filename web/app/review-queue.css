@@ -39,3 +39,8 @@
   margin-bottom: 10px;
   max-width: 420px;
 }
+
+.queue .photo-row-body > .model-hint {
+  white-space: normal;
+  overflow: visible;
+}

@@ -5,6 +5,7 @@ import { hasImage } from "../lib/device-reports";
 import { type BoxDraft, EMPTY_BOX, type NewFinding, parseBox } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
 import type { NewLeadEvent } from "../lib/leads";
+import { photoHint, sourceSubject } from "../lib/photo-labels";
 import type { Closing, NewReferral } from "../lib/referrals";
 import type { ScoreMeaning } from "../lib/score-meaning";
 import {
@@ -82,8 +83,14 @@ export default function Evidence({
           <span className="eyebrow">
             {device ? "DEVICE REPORT" : `PHOTO EVIDENCE · ${photo.region.toUpperCase()}`}
           </span>
-          <h2>{names[target] ?? target}</h2>
-          <p className="scientific">{scores.best_species ?? "Waiting for the worker"}</p>
+          <h2>{sourceSubject(photo)}</h2>
+          {!device && <p className="scientific">{photo.original_taxon}</p>}
+          <p className="model-hint">{photoHint(photo, scoreMeaning?.declared === true, names)}</p>
+          {!device && scores.best_species && (
+            <small>
+              Relative comparison only; weeds may still be present. Human review is required.
+            </small>
+          )}
         </div>
         <span className={`badge ${photo.review_status}`}>
           {photo.review_status === "unreviewed" ? "Needs review" : photo.review_status}
@@ -104,6 +111,7 @@ export default function Evidence({
       <PhotoStage
         photo={photo}
         runId={runId}
+        declaredComparison={scoreMeaning?.declared === true && !device}
         windowVisible={windowVisible}
         drawing={recording}
         draft={recording ? parsedBox.box : null}
@@ -162,7 +170,7 @@ export default function Evidence({
       </div>
       {!device && <ScorePanel photo={photo} meaning={scoreMeaning} />}
       <div className="review-form">
-        <h3>Is the suggested species visible?</h3>
+        <h3>Is the compared species visible: {names[target] ?? target}?</h3>
         <p>
           Check leaf shape, flowers and context. The dashed window is a search area, not a plant
           boundary.
