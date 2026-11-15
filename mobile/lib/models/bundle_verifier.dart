@@ -6,6 +6,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:weedz/inference/margin_scoring.dart';
 import 'package:weedz/inference/window_geometry.dart';
 import 'package:weedz/models/bundle_fields.dart';
+import 'package:weedz/models/ranking_contract.dart';
 
 export 'package:weedz/models/bundle_fields.dart' show BundleRejected;
 
@@ -321,11 +322,14 @@ void _targets(
   if (jsonEncode(taxa) != jsonEncode(targets)) {
     throw const BundleRejected('Unsupported target order');
   }
+  if (jsonEncode(manifest['comparisons']) != jsonEncode(ranking4Comparisons)) {
+    throw const BundleRejected('Unsupported comparison label order');
+  }
   final labels = [
     "Clematis vitalba, Old man's beard",
     'Cortaderia selloana, Pampas grass',
     'Ulex europaeus, Gorse',
-    ...array(manifest['comparisons']).map(text),
+    ...ranking4Comparisons,
   ];
   if (labels.length <= targets.length ||
       jsonEncode(entry['prompts']) !=

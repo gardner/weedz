@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -30,14 +31,16 @@ Future<VerifiedBundle> verify({
       now: now ?? DateTime.utc(2026, 11, 15),
     );
 
-Future<Uint8List> edited(void Function(Map<String, dynamic>) edit) async {
+Future<Uint8List> edited(
+  FutureOr<void> Function(Map<String, dynamic>) edit,
+) async {
   final envelope = jsonDecode(
     File('$folder/envelope.json').readAsStringSync(),
   ) as Map<String, dynamic>;
   final payload = jsonDecode(
     utf8.decode(base64Decode(envelope['payload'] as String)),
   ) as Map<String, dynamic>;
-  edit(payload);
+  await edit(payload);
   final bytes = utf8.encode(jsonEncode(payload));
   final message = [
     ...utf8.encode(
@@ -166,6 +169,48 @@ void main() {
       final future = verify(model: model);
       model.fillRange(0, model.length, 0);
       expect((await future).imageModelBytes, original);
+    },
+  );
+  test(
+    'comparison changes cannot redefine ranking 4 even with matching rows',
+    () async {
+      for (final change in ['replace', 'reorder', 'add', 'remove']) {
+        late Uint8List table;
+        final envelope = await edited((m) async {
+          final comparisons = List<String>.from(m['comparisons'] as List);
+          if (change == 'replace') comparisons[0] = 'a new comparison';
+          if (change == 'reorder') {
+            final first = comparisons[0];
+            comparisons[0] = comparisons[1];
+            comparisons[1] = first;
+          }
+          if (change == 'add') comparisons.add('another comparison');
+          if (change == 'remove') comparisons.removeLast();
+          m['comparisons'] = comparisons;
+          final entry = m['text_table'] as Map;
+          final targetPrompts = (entry['prompts'] as List).take(3).toList();
+          entry['prompts'] = [
+            ...targetPrompts,
+            ...comparisons.map((v) => 'a photograph of $v'),
+          ];
+          final rows = 3 + comparisons.length;
+          table = Uint8List(rows * 4 * 4);
+          final bytes = ByteData.sublistView(table);
+          for (var i = 0; i < rows * 4; i++) {
+            bytes.setFloat32(i * 4, 0.5, Endian.little);
+          }
+          entry['shape'] = [rows, 4];
+          entry['size'] = table.length;
+          entry['sha256'] = (await Sha256().hash(table)).bytes
+              .map((v) => v.toRadixString(16).padLeft(2, '0'))
+              .join();
+        });
+        await expectLater(
+          verify(envelope: envelope, table: table),
+          throwsA(isA<BundleRejected>()),
+          reason: change,
+        );
+      }
     },
   );
 }

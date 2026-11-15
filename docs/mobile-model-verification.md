@@ -28,7 +28,8 @@ call `bundle.ensureUsable(now)`. Expiry dates include the whole UTC calendar day
 An expired bundle must not produce new candidates. The adapter must additionally
 check that its actual runtime supports `bundle.runtime` and the preprocessing;
 accepting signed ONNX provenance does not mean a native ONNX executor is installed.
-The manifest names a publisher-validated parity admission at thresholds version 1.
+The target and comparison label order is pinned to ranking revision 4; a signed
+publisher regression cannot redefine it. The manifest names a parity admission at thresholds version 1.
 Its measurements are checked before signing by the Python publisher; a phone does
 not rerun that benchmark or infer hardware parity from the identifier.
 
