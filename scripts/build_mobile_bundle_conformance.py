@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from weedz.bundles.canonical import canonical
 from weedz.bundles.manifest import BundleSpec, build_manifest
 from weedz.bundles.signing import public_key_text, sign
-from weedz.bundles.text_table import prompts, save_table
+from weedz.bundles.text_table import preprocessing_sha256, prompts, save_table
 from weedz.discovery.inference import MODELS
 from weedz.discovery.parity import THRESHOLDS
 
@@ -49,6 +49,7 @@ def build(output: Path = OUTPUT) -> None:
                             "model": MODELS["bioclip-2"]["repo"],
                             "revision": MODELS["bioclip-2"]["revision"],
                             "artefact_sha256": hashlib.sha256(model.read_bytes()).hexdigest(),
+                            "preprocessing_sha256": preprocessing_sha256(preprocessing),
                             "runtime": {
                                 "format": "onnx",
                                 "precision": "fp16",

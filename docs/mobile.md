@@ -133,7 +133,10 @@ model, each runtime or accelerator setting, and each later "optimisation".
 A model of about 600 MB is not bundled in the app. It is downloaded after
 install, on Wi-Fi by default, then hash-checked (#59). The text table and the
 model revision travel with it, and each report records the model it came from
-(`model.model_key`, `revision`, `ranking_revision`, `score_meaning`).
+(`model.model_key`, `revision`, `ranking_revision`). Device `score_meaning` stays
+undeclared until device/population evidence supports an interpretation; raw margins
+are uncalibrated ranking values, not probabilities or confidence. See the
+[bundle provenance and device-score policy](model-bundle-provenance.md).
 
 ## Photo-library scanning flow
 
