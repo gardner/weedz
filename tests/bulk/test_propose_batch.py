@@ -233,3 +233,31 @@ def test_stable_traverse_only_ancestor_does_not_block_inner_output(tmp_path):
         assert result["counts"]["ok"] == 1
     finally:
         outer.chmod(0o700)
+
+
+def test_interrupted_retry_never_leaves_old_ready_over_new_rows(tmp_path, monkeypatch):
+    from weedz.segmentation import batch as module
+
+    manifest, _ = source(tmp_path)
+    output = tmp_path / "out"
+
+    class Failed(Proposer):
+        def generate(self, image):
+            raise RuntimeError("Interrupted processing")
+
+    assert propose_batch(manifest, manifest.parent, output, Failed())["counts"]["failed"] == 1
+    original = module._atomic
+
+    def interrupted(path, raw):
+        if path.name == "ready.json":
+            raise OSError("Interrupted before new marker")
+        original(path, raw)
+
+    monkeypatch.setattr(module, "_atomic", interrupted)
+    with pytest.raises(OSError, match="new marker"):
+        propose_batch(manifest, manifest.parent, output, Proposer())
+    assert not (output / "ready.json").exists()
+    monkeypatch.setattr(module, "_atomic", original)
+    resumed = Proposer()
+    assert propose_batch(manifest, manifest.parent, output, resumed)["counts"]["ok"] == 1
+    assert resumed.calls == 0

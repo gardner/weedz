@@ -134,7 +134,9 @@ def _rows(
         }
 
 
-def _stream_rows(path: Path, rows: Iterator[dict]) -> tuple[str, dict[str, int]]:
+def _stream_rows(
+    path: Path, rows: Iterator[dict], *, ready: Path | None = None
+) -> tuple[str, dict[str, int]]:
     checksum = hashlib.sha256()
     counts = {status: 0 for status in ("ok", "empty", "failed")}
     with tempfile.NamedTemporaryFile(
@@ -149,6 +151,9 @@ def _stream_rows(path: Path, rows: Iterator[dict]) -> tuple[str, dict[str, int]]
                 checksum.update(raw)
                 counts[row["segmentation"]["status"]] += 1
             os.fsync(stream.fileno())
+            # Keep the previous valid pair while computing; never leave its marker over new rows.
+            (ready or path.with_name("ready.json")).unlink(missing_ok=True)
+            sync_directory(path.parent)
             os.replace(temporary, path)
             sync_directory(path.parent)
         finally:
@@ -178,7 +183,9 @@ def _publish(
         if any(previous.get(key) != value for key, value in identity.items()):
             raise ValueError("Closed batch provenance changed; use a new output namespace")
     checksum, counts = _stream_rows(
-        output / "proposals.jsonl", _rows(samples, root, output, proposer, config, version)
+        output / "proposals.jsonl",
+        _rows(samples, root, output, proposer, config, version),
+        ready=ready,
     )
     summary = {
         "schema": 1,
