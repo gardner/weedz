@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -73,7 +74,9 @@ def _prefix(prefix: Any) -> str:
     return prefix
 
 
-def _read_package(root: Path, manifest_sha256: str) -> tuple[dict, dict]:
+def _read_package(
+    root: Path, manifest_sha256: str, heartbeat: Callable[[], None]
+) -> tuple[dict, dict]:
     manifest = json.loads(
         read_artifact(root, {"path": "manifest.json", "sha256": manifest_sha256}, 1024 * 1024)
     )
@@ -82,15 +85,18 @@ def _read_package(root: Path, manifest_sha256: str) -> tuple[dict, dict]:
         raise ValueError("Invalid bounded publication package file list")
     retained = {}
     for name, sha in files.items():
+        heartbeat()
         raw = read_artifact(root, {"path": name, "sha256": sha}, 160_000_000)
         if name in {"tasks.json", "private/provenance.json"}:
             retained[name] = json.loads(raw)
     return manifest, retained
 
 
-def validate_package(root: Path, manifest_sha256: str) -> Package:
+def validate_package(
+    root: Path, manifest_sha256: str, heartbeat: Callable[[], None] = lambda: None
+) -> Package:
     root = root.resolve()
-    manifest, retained = _read_package(root, manifest_sha256)
+    manifest, retained = _read_package(root, manifest_sha256, heartbeat)
     files = manifest["files"]
     tasks, provenance = retained["tasks.json"], retained["private/provenance.json"]
     if not isinstance(tasks, list) or not 1 <= len(tasks) <= 1000:
@@ -105,6 +111,7 @@ def validate_package(root: Path, manifest_sha256: str) -> Package:
     prefix = _prefix(manifest["image_prefix"])
     images, keys = {}, set()
     for task in tasks:
+        heartbeat()
         key = task["meta"]["external_id"]
         if key in keys or key not in samples:
             raise ValueError("Publication task identities are duplicated or unknown")

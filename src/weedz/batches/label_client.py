@@ -38,7 +38,9 @@ class LabelStudioClient(httpx.Client):
         if url.username or url.password or url.query or url.fragment or url.path not in {"", "/"}:
             raise ValueError("Use a credential-free Label Studio API origin")
         self.token_file = token_file
-        super().__init__(base_url=base_url, timeout=120, **kwargs)
+        super().__init__(
+            base_url=base_url, timeout=httpx.Timeout(30, connect=5, pool=5, write=10), **kwargs
+        )
         try:
             self.refresh()
         except BaseException:

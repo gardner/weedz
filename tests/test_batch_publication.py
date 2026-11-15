@@ -62,7 +62,7 @@ class Service:
         return httpx.Response(201, json={"created": 1})
 
 
-def run(service, package, tmp_path):
+def run(service, package, tmp_path, heartbeat=lambda: None):
     with httpx.Client(
         base_url="http://127.0.0.1:8068", transport=httpx.MockTransport(service.handle)
     ) as client:
@@ -74,6 +74,7 @@ def run(service, package, tmp_path):
             tmp_path / "images",
             tmp_path / "state",
             tmp_path / "import.lock",
+            heartbeat=heartbeat,
         )
 
 
@@ -152,3 +153,25 @@ def test_same_version_conflict_never_changes_existing_results(canonical_batch, t
         run(service, package, tmp_path)
     assert all(method == "GET" for method, _ in service.requests[before:])
     assert service.predictions[1][0]["result"] == [{"type": "human-independent-old-result"}]
+
+
+def test_publication_heartbeats_between_task_reads_and_reconciliation(canonical_batch, tmp_path):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    run(service, package, tmp_path)
+    service.predictions[1] = []
+    pulses, observed = [], []
+    original = service.handle
+
+    def handle(request):
+        if request.method == "GET":
+            observed.append(len(pulses))
+        return original(request)
+
+    service.handle = handle
+    run(service, package, tmp_path, heartbeat=lambda: pulses.append(1))
+    assert len(observed) >= 3
+    assert len(set(observed)) == len(observed)
+    assert min(observed) >= 5  # Package files/tasks have already pulsed before REST reconciliation.

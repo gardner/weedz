@@ -44,10 +44,15 @@ def _image_address(address: str) -> tuple:
 
 
 def _missing(
-    client: httpx.Client, tasks: tuple[dict, ...], index: Index, intents: Intents
+    client: httpx.Client,
+    tasks: tuple[dict, ...],
+    index: Index,
+    intents: Intents,
+    heartbeat: Callable[[], None],
 ) -> list[dict]:
     missing = []
     for task in tasks:
+        heartbeat()
         key = task["meta"]["external_id"]
         if key not in index:
             continue
@@ -67,8 +72,9 @@ def _missing(
     return missing
 
 
-def _copy_images(package: Package, destination: Path) -> None:
+def _copy_images(package: Package, destination: Path, heartbeat: Callable[[], None]) -> None:
     for name, reference in package.images.items():
+        heartbeat()
         encoded = read_artifact(package.root, reference, 160_000_000)
         target = destination / name
         if not target.resolve().is_relative_to(destination.resolve()):
@@ -117,9 +123,14 @@ def _import_tasks(
 
 
 def _append_predictions(
-    client: httpx.Client, project: int, missing: list[dict], intents: Intents
+    client: httpx.Client,
+    project: int,
+    missing: list[dict],
+    intents: Intents,
+    heartbeat: Callable[[], None],
 ) -> None:
     for start in range(0, len(missing), 32):
+        heartbeat()
         chunk = missing[start : start + 32]
         for prediction in chunk:
             key = f"prediction:{prediction['task']}:{prediction['model_version']}"
@@ -134,6 +145,7 @@ def _append_predictions(
         with suppress(httpx.TimeoutException, httpx.NetworkError):
             _require(client.post(f"/api/projects/{project}/import/predictions", json=chunk))
         for prediction in chunk:
+            heartbeat()
             current = _predictions(client, prediction["task"])
             if current.get(prediction["model_version"]) != prediction["result"]:
                 raise RuntimeError("Prediction publication outcome is uncertain or conflicting")
@@ -153,18 +165,18 @@ def publish(
     if type(project) is not int or project <= 0:
         raise ValueError("Choose a positive Label Studio project")
     # Re-read pinned bytes instead of trusting mutable nested dictionaries from a caller.
-    package = validate_package(package.root, package.sha256)
+    package = validate_package(package.root, package.sha256, heartbeat)
     with writer_lock(lock, heartbeat):
         intents = Intents(state, project)
         current = index()
         # Discover conflicts before importing new tasks or appending any model output.
-        _missing(client, package.tasks, current, intents)
-        _copy_images(package, images)
+        _missing(client, package.tasks, current, intents, heartbeat)
+        _copy_images(package, images, heartbeat)
         new = [task for task in package.tasks if task["meta"]["external_id"] not in current]
         if new:
             current = _import_tasks(client, project, new, index, intents)
-        missing = _missing(client, package.tasks, current, intents)
-        _append_predictions(client, project, missing, intents)
+        missing = _missing(client, package.tasks, current, intents, heartbeat)
+        _append_predictions(client, project, missing, intents, heartbeat)
         heartbeat()
         return {
             "schema": 1,
