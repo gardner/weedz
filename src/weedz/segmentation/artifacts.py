@@ -62,7 +62,15 @@ class StageArtifacts:
             raise ValueError("Stage artifact provenance mismatch")
         if not isinstance(record["inputs"], dict) or not isinstance(record["result"], dict):
             raise ValueError("Invalid stage evidence")
+        self._sync_hierarchy()
         return record
+
+    def _sync_hierarchy(self) -> None:
+        directory = self.root
+        while directory != self.base:
+            sync_directory(directory)
+            directory = directory.parent
+        sync_directory(self.base)
 
     def read(self, stage: Stage, photo_id: str, inputs: dict[str, Any]) -> dict[str, Any] | None:
         record = self.entry(stage, photo_id)
@@ -76,11 +84,7 @@ class StageArtifacts:
         durable_mkdir(self.root)
         # A previous interrupted sync can leave existing but unacknowledged entries.
         # Re-establish the whole artifact hierarchy before even a cached success returns.
-        directory = self.root
-        while directory != self.base:
-            sync_directory(directory)
-            directory = directory.parent
-        sync_directory(self.base)
+        self._sync_hierarchy()
         with self._path(stage, photo_id).with_suffix(".lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
             return self._write(stage, photo_id, inputs, result)
