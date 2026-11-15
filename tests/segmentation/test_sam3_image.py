@@ -313,3 +313,29 @@ def test_serialized_retention_budget_fits_artifact_and_reports_truncation(
     prompt = result["prompts"][0]
     assert result["status"] == status and len(result["regions"]) == retained
     assert prompt["truncated"] is True and prompt["byte_capped_count"] == 2 - retained
+
+
+@pytest.mark.parametrize("unknown_prompt", [False, True])
+def test_restoration_enforces_prompt_membership_and_each_prompt_cap(unknown_prompt):
+    import hashlib
+    import io
+
+    from weedz.segmentation.sam3_image import restore_concept_regions
+
+    image = Image.new("RGB", (8, 8))
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = buffer.getvalue()
+    config = Sam3Config(prompts=("plant", "flower"), max_regions=1)
+    prompt = "gorse" if unknown_prompt else "plant"
+    raw = {
+        "masks": np.ones((1, 8, 8), bool),
+        "scores": np.array([0.8]),
+        "boxes": np.array([[0, 0, 8, 8]]),
+    }
+    record = concept_regions(image, prompt, raw, config)["regions"][0]
+    records = [record] if unknown_prompt else [record, record]
+    with pytest.raises(ValueError, match="prompt"):
+        restore_concept_regions(
+            encoded, records, config, expected_sha256=hashlib.sha256(encoded).hexdigest()
+        )

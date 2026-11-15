@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import math
+from collections import Counter
 from collections.abc import Callable
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import asdict, dataclass
@@ -186,6 +187,11 @@ def restore_concept_regions(
         raise ValueError("SAM3 source checksum or byte cap mismatch")
     if len(records) > config.max_regions * len(config.prompts):
         raise ValueError("SAM3 record count exceeds the declared prompt/profile budget")
+    prompts = [record.get("prompt") for record in records]
+    if any(prompt not in config.prompts for prompt in prompts):
+        raise ValueError("SAM3 record prompt is outside the declared profile")
+    if max(Counter(prompts).values(), default=0) > config.max_regions:
+        raise ValueError("SAM3 record count exceeds its per-prompt budget")
     image = _decoded_image(encoded)
     return [_restore_geometry(image, record, config) for record in records]
 
