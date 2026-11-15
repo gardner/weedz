@@ -129,6 +129,13 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
+        find.text('Help'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Help'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
         find.text('Request deletion without this phone'),
         300,
         scrollable: find.byType(Scrollable).first,

@@ -104,26 +104,37 @@ class _DeviceSettingsState extends State<DeviceSettings> {
           padding: const EdgeInsets.all(24),
           children: [
             ..._content(),
-            const SizedBox(height: 24),
-            const Text(_retained),
-            const SizedBox(height: 24),
-            if (widget.deployment.publicDeletionRoute case final route?) ...[
-              OutlinedButton(
-                onPressed: () => _openPublicRoute(route),
-                child: const Text('Request deletion without this phone'),
-              ),
-              const Text(
-                'Use the public route if your token was lost or '
-                'independently revoked. Do not include your bearer token. '
-                'The operator verifies enrollment ownership before deleting '
-                'data.',
-              ),
-            ] else
-              const Text(
-                'The public deletion request page is unavailable in this '
-                'version. If you need help, contact the operator who '
-                'enrolled you. Do not send your token.',
-              ),
+            const SizedBox(height: 16),
+            const ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text('What deletion removes'),
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Text(_retained),
+                ),
+              ],
+            ),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('Help'),
+              children: [
+                if (widget.deployment.publicDeletionRoute case final route?)
+                  OutlinedButton(
+                    onPressed: () => _openPublicRoute(route),
+                    child: const Text('Request deletion without this phone'),
+                  ),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'If your token is lost or no longer works, contact the '
+                    'operator who enrolled you. They will verify ownership '
+                    'before deleting data. Never send your token by email '
+                    'or through a public request form.',
+                  ),
+                ),
+              ],
+            ),
             if (_routeError case final error?) Text(error),
           ],
         ),
@@ -136,8 +147,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
     final message = switch (controller.phase) {
       DeletionPhase.loading => 'Reading secure enrollment…',
       DeletionPhase.unenrolled => 'This app has no saved enrollment.',
-      DeletionPhase.ready =>
-        'Enrollment saved securely. Deletion applies only to this enrollment.',
+      DeletionPhase.ready => 'Enrollment saved',
       DeletionPhase.pending =>
         controller.busy ? 'Requesting deletion…' : 'Deletion not yet confirmed',
       DeletionPhase.deleted => 'Deletion confirmed',
@@ -151,7 +161,6 @@ class _DeviceSettingsState extends State<DeviceSettings> {
         liveRegion: true,
         child: Text(message, style: const TextStyle(fontSize: 20)),
       ),
-      if (controller.server case final server?) Text('Intake: $server'),
       if (controller.completedAt case final completed?)
         Text('Confirmed at ${completed.toLocal()}'),
       if (controller.busy) const LinearProgressIndicator(),
@@ -169,10 +178,31 @@ class _DeviceSettingsState extends State<DeviceSettings> {
                 'request are retained so you can retry. Reopen Settings to '
                 'resume after a restart.',
         }),
-      if (controller.phase == DeletionPhase.ready)
+      if (controller.phase == DeletionPhase.ready) ...[
+        const SizedBox(height: 12),
+        const Text(
+          'Delete your shared sightings. Originals stay on your phone.',
+        ),
+        const SizedBox(height: 20),
         FilledButton(
           onPressed: controller.busy ? null : _confirm,
           child: const Text('Delete my data'),
+        ),
+      ],
+      if (controller.server case final server?)
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: const Text('Connection details'),
+          children: [
+            Text('Intake: $server'),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Saved on this phone. Access is checked when a request '
+                'is sent.',
+              ),
+            ),
+          ],
         ),
       if (controller.phase == DeletionPhase.pending)
         FilledButton(
@@ -187,10 +217,22 @@ class _DeviceSettingsState extends State<DeviceSettings> {
       if (controller.phase == DeletionPhase.unenrolled ||
           controller.phase == DeletionPhase.deleted) ...[
         const SizedBox(height: 24),
-        DeviceEnrollmentForm(
-          controller: controller,
-          initialAddress: widget.deployment.enrollmentAddress,
-        ),
+        if (controller.phase == DeletionPhase.deleted)
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: const Text('Set up another enrollment'),
+            children: [
+              DeviceEnrollmentForm(
+                controller: controller,
+                initialAddress: widget.deployment.enrollmentAddress,
+              ),
+            ],
+          )
+        else
+          DeviceEnrollmentForm(
+            controller: controller,
+            initialAddress: widget.deployment.enrollmentAddress,
+          ),
       ],
     ];
   }
