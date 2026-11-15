@@ -41,7 +41,7 @@ Each sample follows the [common sample contract](datasets.md#a-common-sample-and
 
 - **The photo and its rights:** source, creator, attribution, and image and metadata licences recorded separately. We admit CC0, CC BY and CC BY-NC where the terms fit this non-commercial project.
 - **The original subject label**, kept as it was. A bird observation stays a bird observation; the plant labels sit alongside it.
-- **Target weeds in the frame,** each with a box or mask, a species, and a review state: confirmed, rejected, unsure or not yet reviewed.
+- **Target weeds in the frame,** each with a box, a species, and a review state: confirmed, rejected, unsure or not yet reviewed. A mask can be added for a segmentation release, but the contract treats box and mask as separate annotations. A detection release needs the box; turning a mask into a box has to be an explicit, recorded step.
 - **Explicit negatives:** "checked, no target weed in this photo", which is different from "not checked". Schema version 1 can't record this yet: a detection sample must contain at least one box. The contract needs an annotation-completeness field (for example "all targets marked") before negatives can enter a detection release.
 - **The lookalikes checked,** so lookalike photos can be measured as a separate group (`src/weedz/discovery/lookalikes.py`).
 - **Exact location and date,** with coordinate accuracy. Points that a source or contributor obscured stay obscured, and we never try to sharpen them.
@@ -50,11 +50,15 @@ Each sample follows the [common sample contract](datasets.md#a-common-sample-and
 
 ## How we'll make it
 
-Most of the plumbing exists. What's missing is human-checked labels, plus the schema change for explicit negatives described above.
+Most of the plumbing exists. What's missing:
+
+- human-checked labels;
+- the schema change for explicit negatives described above;
+- an importer that brings finished Label Studio work back as contract annotations. Today the Label Studio package carries only machine predictions out, and nothing reads people's completed labels back in.
 
 1. **Collect.** Bounded, licensed NZ collections: iNaturalist photos where the subject is an animal or a landscape, plus labelled reference photos of each target weed and its lookalikes. Trail-camera frames come later.
 2. **Propose.** BioCLIP screening (whole photo and tiles) and the optional segmentation step suggest where a weed might be in each photo. Proposals are only starting points.
-3. **Check.** People confirm, correct or reject each proposal, in the review app and the [Label Studio package](label-studio.md). They also mark photos with no target weed as negatives.
+3. **Check.** People confirm, correct or reject each proposal, in the review app and the [Label Studio package](label-studio.md). They also mark photos with no target weed as negatives. Completed Label Studio work is then imported back as contract annotations (still to build), keeping who checked it and when.
 4. **Measure without bias.** A random sample, including photos the model didn't flag, is checked blind in a separate project. This is the only way to count misses as well as false alarms.
 5. **Release.** Confirmed samples move from silver to a frozen, versioned gold release ([`release.py`](datasets.md#what-a-release-implements)), split by location group with a spatial buffer. Each release records its licences and how it was checked.
 
