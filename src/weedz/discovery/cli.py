@@ -148,6 +148,7 @@ async def discover(args: argparse.Namespace) -> None:
         sampling=args.sampling,
         lookalikes_per_taxon=args.lookalikes,
         model=args.model,
+        segmentation=getattr(args, "segmentation", "off"),
     )
     async with httpx.AsyncClient(timeout=30, headers=api_headers()) as client:
         response = await client.post(f"{args.api_url}/runs", json=spec.model_dump(mode="json"))
@@ -348,6 +349,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
         choices=["bioclip", "bioclip-2"],
         default="bioclip-2",
         help="Pinned screening model (see benchmarks/model-comparison.json)",
+    )
+    run.add_argument(
+        "--segmentation",
+        choices=["off", "sam2.1-tiny-v1"],
+        default="off",
+        help="Optional pinned SAM activities; the connected worker must preflight SAM",
     )
     snapshot = commands.add_parser(
         "references", help="Snapshot DOC weed records from GBIF for distance comparison"

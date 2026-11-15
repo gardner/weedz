@@ -110,3 +110,21 @@ def test_retry_reestablishes_directory_durability_before_cached_success(tmp_path
         artifacts.root.parent.parent,
         tmp_path,
     ]
+
+
+def test_late_failed_proposal_view_cannot_erase_retained_masks(tmp_path):
+    artifacts = StageArtifacts(tmp_path, "run")
+    retained = {
+        "status": "failed",
+        "proposal_status": "ok",
+        "view_status": "failed",
+        "regions": [{"id": "real-proposal"}],
+    }
+    skipped = {
+        "status": "failed",
+        "proposal_status": "failed",
+        "view_status": "skipped_proposal_failure",
+        "regions": [],
+    }
+    artifacts.write("views", "photo", {}, retained)
+    assert artifacts.write("views", "photo", {}, skipped) == retained

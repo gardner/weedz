@@ -15,7 +15,7 @@ from PIL import Image
 from weedz.discovery.inference import file_sha256, subject_label
 from weedz.discovery.records import RunSpec
 from weedz.discovery.store import Store
-from weedz.segmentation.artifacts import StageArtifacts
+from weedz.segmentation.artifacts import StageArtifacts, digest, evidence_priority
 from weedz.segmentation.pipeline import Proposer, identify_views
 from weedz.segmentation.regions import ProposalConfig, proposals, upright
 
@@ -131,9 +131,9 @@ class PipelineStages:
                 raise ValueError("Full-frame/tile baseline must complete before region scoring")
             proposal = self._proposal(artifacts, photo)
             inputs = {
-                "proposal_sha256": proposal["sha256"],
+                "proposal_inputs_sha256": digest(proposal["inputs"]),
                 "classifier": model.metadata,
-                "version": 1,
+                "version": 2,
             }
             evidence = artifacts.read("views", photo["id"], inputs)
             if evidence and evidence["view_status"] in {"ok", "empty"}:
@@ -160,7 +160,11 @@ class PipelineStages:
             "proposal_status": result["status"],
             "baseline_retained": True,
             "coordinate_frame": "EXIF-upright original; xyxy right/bottom exclusive",
-            "provenance": {"proposal": proposal["inputs"], "classification": inputs},
+            "provenance": {
+                "proposal": proposal["inputs"],
+                "proposal_artifact_sha256": proposal["sha256"],
+                "classification": inputs,
+            },
         }
         evidence["view_status"] = (
             "skipped_proposal_failure" if result["status"] == "failed" else "empty"
@@ -197,15 +201,12 @@ class PipelineStages:
         with self.store.connect() as db:
             db.execute(
                 "UPDATE photos SET scores=json_set(scores, '$.segmentation', json(?)) "
-                "WHERE run_id=? AND id=? AND (? OR "
-                "COALESCE(json_extract(scores, '$.segmentation.view_status'), '') "
-                "NOT IN ('ok', 'empty'))",
-                (
-                    json.dumps(evidence),
-                    run_id,
-                    photo_id,
-                    evidence.get("view_status") in {"ok", "empty"},
-                ),
+                "WHERE run_id=? AND id=? AND (CASE "
+                "WHEN json_extract(scores, '$.segmentation.view_status') IN ('ok','empty') THEN 2 "
+                "WHEN json_extract(scores, '$.segmentation.proposal_status') "
+                "IN ('ok','empty') THEN 1 "
+                "ELSE 0 END) <= ?",
+                (json.dumps(evidence), run_id, photo_id, evidence_priority(evidence)),
             )
 
     def summary(self, run_id: str) -> dict:

@@ -72,3 +72,21 @@ This was an actual inference/activity smoke, not a collection run, durable-servi
 restart proof, independent accuracy evaluation or human annotation. The hosted Temporal
 service/worker lifecycle is handled separately in #133; end-to-end restart verification
 must use that real service and preserve its history.
+
+
+CLI opt-in uses the same RunSpec field as the API:
+
+```sh
+uv run main.py discover --segmentation sam2.1-tiny-v1
+```
+
+The normal CLI default remains `off`; the connected worker must have the pinned SAM runtime and checkpoint configured.
+
+View-cache revision 2 keys on the exact proposal input identity (source hash, model pins,
+and configuration), rather than mutable failed-result/timing bytes. Completed proposal
+outputs are canonical and immutable; their actual artifact SHA remains in view evidence
+provenance for auditing. Evidence priority is completed views, then retained successful
+proposals with failed classification, then failed-proposal fallback. Artifact and database
+writes enforce that order atomically so a late fallback cannot erase real masks. Existing
+prototype view-cache revision 1 inputs require a new run namespace when executing these
+activities; completed historical runs and their exported evidence remain readable.

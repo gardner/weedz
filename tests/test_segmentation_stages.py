@@ -11,6 +11,7 @@ from test_discovery import observation
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import photo_from_observation
 from weedz.discovery.store import Store
+from weedz.segmentation.artifacts import digest
 from weedz.segmentation.stages import PipelineStages
 
 
@@ -216,9 +217,9 @@ def test_canonical_region_result_is_attached_when_late_classifier_fails(store, m
             proposal = artifacts.entry("proposals", first["id"])
             assert proposal
             inputs = {
-                "proposal_sha256": proposal["sha256"],
+                "proposal_inputs_sha256": digest(proposal["inputs"]),
                 "classifier": model.metadata,
-                "version": 1,
+                "version": 2,
             }
             canonical = {
                 **proposal["result"],
@@ -310,3 +311,51 @@ def test_successful_attachment_dominates_stale_failed_attempt(store, late_status
     stages._attach("run", "0", good)
     stages._attach("run", "0", failed)
     assert store.photos("run")[0]["scores"] == {**baseline, "segmentation": good}
+
+
+def test_failed_proposal_recovery_does_not_poison_existing_fallback_views(store, monkeypatch):
+    proposer = Proposer()
+    stages = runner(store, proposer)
+    assert stages.segment("run")["failed"] == 1
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    monkeypatch.setattr(
+        "weedz.segmentation.stages.identify_views",
+        lambda _model, views, _subject: {name: {"margin": -0.2} for name in views},
+    )
+    assert stages.score_regions("run")["failed"] == 1
+    proposer.fail_second = False
+    assert stages.segment("run")["completed"] == 2
+    result = stages.score_regions("run")
+    assert result["completed"] == 2 and result["cache_hits"] == 1
+    recovered = store.photos("run")[1]["scores"]
+    assert recovered["margin"] == -0.04
+    assert recovered["segmentation"]["view_status"] == "ok"
+    assert recovered["segmentation"]["regions"]
+    from weedz.segmentation.artifacts import StageArtifacts
+
+    canonical = StageArtifacts(store.root, "run").entry("proposals", "1")
+    assert canonical
+    assert (
+        recovered["segmentation"]["provenance"]["proposal_artifact_sha256"] == canonical["sha256"]
+    )
+
+
+def test_late_skipped_attachment_keeps_masks_when_classifier_failed(store):
+    stages = runner(store, Proposer())
+    store.score("run", "0", {"margin": -0.04})
+    retained = {
+        "status": "failed",
+        "proposal_status": "ok",
+        "view_status": "failed",
+        "regions": [{"id": "real-proposal"}],
+    }
+    skipped = {
+        "status": "failed",
+        "proposal_status": "failed",
+        "view_status": "skipped_proposal_failure",
+        "regions": [],
+    }
+    stages._attach("run", "0", retained)
+    stages._attach("run", "0", skipped)
+    assert store.photos("run")[0]["scores"]["segmentation"] == retained
