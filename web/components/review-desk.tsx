@@ -65,6 +65,7 @@ export default function ReviewDesk({
   onSignOut?: () => void;
   canStartRuns?: boolean;
 }) {
+  const historyUrl = process.env.NEXT_PUBLIC_TEMPORAL_UI_URL;
   const requestGeneration = useRef(0);
   const initializedRun = useRef("");
   const [runs, setRuns] = useState<Run[]>([]);
@@ -220,13 +221,8 @@ export default function ReviewDesk({
           <span aria-hidden="true">◉</span> Field review{" "}
           <span className="nav-count">{incidental.length}</span>
         </div>
-        {canStartRuns && (
-          <a
-            className="nav-link"
-            href={process.env.NEXT_PUBLIC_TEMPORAL_UI_URL ?? "http://127.0.0.1:8234"}
-            target="_blank"
-            rel="noreferrer"
-          >
+        {canStartRuns && historyUrl && (
+          <a className="nav-link" href={historyUrl} target="_blank" rel="noreferrer">
             ↗ Workflow history
           </a>
         )}

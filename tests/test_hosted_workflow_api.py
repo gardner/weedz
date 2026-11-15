@@ -69,3 +69,30 @@ def test_ready_hosted_start_uses_its_namespace_and_dedicated_queue(tmp_path, mon
     assert calls[0][1]["task_queue"] == "weedz-hosted-discovery-v2"
     assert calls[0][1]["id"] == response.json()["id"]
     assert len(client.get("/runs", headers=headers).json()) == 1
+
+
+def test_hosted_segmentation_default_is_for_new_submissions_not_explicit_off(tmp_path, monkeypatch):
+    calls = []
+
+    async def healthy(**kwargs):
+        return True
+
+    async def start(*args, **kwargs):
+        calls.append(args[1])
+
+    async def connect(*args, **kwargs):
+        return SimpleNamespace(
+            service_client=SimpleNamespace(check_health=healthy), start_workflow=start
+        )
+
+    monkeypatch.setattr("weedz.discovery.hosted_workflows.Client.connect", connect)
+    path = tmp_path / "private/worker.json"
+    connection = TemporalConnection()
+    publish_worker_health(path, connection, "test-worker")
+    hosted = HostedWorkflows(connection, path, segmentation_default="sam2.1-tiny-v1")
+    client = TestClient(create_app(tmp_path, access="tokens", hosted_workflows=hosted))
+    headers = {"Authorization": f"Bearer {Access(tmp_path).invite('Reviewer').token}"}
+    assert client.post("/runs", json={}, headers=headers).status_code == 202
+    assert client.post("/runs", json={"segmentation": "off"}, headers=headers).status_code == 202
+    assert calls[0]["segmentation"] == "sam2.1-tiny-v1"
+    assert calls[1]["segmentation"] == "off"

@@ -1,0 +1,84 @@
+"""One supervised hosted worker; its local SDK server and model instances share its lifetime."""
+
+import asyncio
+import os
+import uuid
+from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
+from pathlib import Path
+
+from temporalio.client import Client
+from temporalio.worker import Worker
+
+from weedz.discovery.activities import Activities
+from weedz.discovery.hosting import TemporalConnection, local_server_command
+from weedz.discovery.temporal_runtime import temporal_client
+from weedz.discovery.workflow_health import clear_worker_health, publish_worker_health
+from weedz.discovery.workflows import DiscoveryWorkflow
+
+HOSTED_LICENCES = frozenset({"cc0", "cc-by"})
+
+
+def preflight_models(activities: Activities) -> None:
+    """Load the real pinned models before this process advertises readiness."""
+    from weedz.discovery.inference import Screener
+
+    activities.preflight_segmentation()
+    activities.screeners["bioclip-2"] = Screener.load(
+        activities.store.root / "embeddings", model="bioclip-2"
+    )
+
+
+async def heartbeat(
+    client: Client,
+    connection: TemporalConnection,
+    health_file: Path,
+    identity: str,
+    stop: asyncio.Event,
+) -> None:
+    while not stop.is_set():
+        if not await client.service_client.check_health(timeout=timedelta(seconds=2)):
+            raise RuntimeError("Temporal service became unavailable")
+        publish_worker_health(health_file, connection, identity)
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=5)
+        except TimeoutError:
+            continue
+
+
+async def serve_worker(
+    root: Path,
+    connection: TemporalConnection,
+    temporal_state: Path,
+    health_file: Path,
+    stop: asyncio.Event,
+    executable: Path | None = None,
+) -> None:
+    if executable is not None and connection.address is None:
+        local_server_command(executable, temporal_state, namespace=connection.namespace)
+    if not (root / "discovery.sqlite3").is_file():
+        raise ValueError("Choose the existing private hosted review data directory")
+    activities = Activities(root, allowed_photo_licences=HOSTED_LICENCES)
+    await asyncio.to_thread(preflight_models, activities)
+    identity = f"weedz-hosted-{os.getpid()}-{uuid.uuid4().hex[:12]}"
+
+    async def fatal(error: BaseException) -> None:
+        stop.set()
+
+    try:
+        async with temporal_client(connection, temporal_state, executable) as client:
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                async with Worker(
+                    client,
+                    task_queue=connection.task_queue,
+                    workflows=[DiscoveryWorkflow],
+                    activities=activities.registered_activities(),
+                    activity_executor=executor,
+                    max_concurrent_activities=1,
+                    identity=identity,
+                    graceful_shutdown_timeout=timedelta(seconds=30),
+                    on_fatal_error=fatal,
+                ):
+                    await heartbeat(client, connection, health_file, identity, stop)
+    finally:
+        clear_worker_health(health_file, identity)

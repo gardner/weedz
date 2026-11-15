@@ -115,3 +115,39 @@ A source-only build is not proof of a functioning public route. Browser interact
 review writes and token revocation need their own verification; screenshots alone do
 not prove them. Cloudflare bot policy may refuse non-browser clients; normal HTTPS
 browser behavior is the user-facing acceptance target.
+
+## Hosted processing worker
+
+`scripts/run_hosted_worker.py --data PRIVATE_DATA` owns the pipeline worker. Without
+`--temporal-url`, it uses the Python SDK's local Temporal service automatically, on
+127.0.0.1:7258 with namespace `weedz-hosted`, no UI, and persistent state in
+`site/temporal/temporal.sqlite3`. The process is ephemeral; its workflow history is
+not. This is a single-host evaluation service, not a production cluster. A configured
+`--temporal-url HOST:PORT`, `--namespace` and optional `--tls` connect to an existing
+service instead. An optional existing CLI override never silently downloads a
+replacement if its path is invalid.
+
+The dedicated `weedz-hosted-discovery-v2` queue prevents unrelated development
+workers taking hosted jobs. The worker registers the project's activity registry,
+loads the actual pinned SAM/BioCLIP models before readiness, admits only hosted
+CC0/CC BY source data, and runs one activity at a time. Its private heartbeat is
+scoped to address/namespace/queue and expires after 20 seconds. The API requires
+both that live worker and a reachable Temporal service before accepting a start.
+A listening port alone is not readiness. Collection availability does not expose a
+Temporal history link; that needs a separately configured reachable UI.
+
+The worker unit uses the existing isolated SAM Python environment through `uv run
+--active --no-sync`, with an immutable Weedz wheel installed using `uv pip install
+--no-deps` and the matching release source path. It must never use an editable
+installation tied to a disposable worktree. `worker.env` is owner-private and sets
+`WEEDZ_SAM2_CHECKPOINT` to the verified cached checkpoint. CUDA is restricted to GPU0;
+the baseline encoder currently runs on CPU. Stop the worker before changing its
+installed release wheel. Restart only `weedz-site-worker`; review remains usable
+while processing is unavailable.
+
+New hosted requests can default to the versioned SAM profile after real validation;
+explicit `segmentation: off` is preserved, and old saved specifications retain their
+legacy off behavior. Failed and empty proposal results are distinct stage outcomes.
+Do not enable the website's collection flag until a real authenticated run and
+workflow/worker restart recovery have been verified against actual Temporal history
+and immutable model-stage artifacts.

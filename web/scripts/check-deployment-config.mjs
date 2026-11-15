@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { backendOrigin, privateHeaders, reviewJson, sessionOrigin } from "../lib/review-service.ts";
+import {
+  backendOrigin,
+  privateHeaders,
+  reviewJson,
+  sessionCanStartRuns,
+  sessionOrigin,
+} from "../lib/review-service.ts";
 
 const deployed = (value) => backendOrigin({ WEEDZ_DEPLOYMENT: "beast", WEEDZ_API_URL: value });
 assert.equal(backendOrigin({}), "http://127.0.0.1:8000");
@@ -56,3 +62,14 @@ assert.equal(
   "https",
 );
 assert.equal(privateHeaders({ Vary: "Accept-Encoding" }).get("Vary"), "Accept-Encoding, Cookie");
+
+const hosted = { WEEDZ_DEPLOYMENT: "beast", WEEDZ_RUN_CREATION: "enabled" };
+assert.equal(sessionCanStartRuns({}, hosted), false);
+assert.equal(sessionCanStartRuns({ can_start_runs: false }, hosted), false);
+assert.equal(sessionCanStartRuns({ can_start_runs: "true" }, hosted), false);
+assert.equal(sessionCanStartRuns({ can_start_runs: true }, hosted), true);
+assert.equal(
+  sessionCanStartRuns({ can_start_runs: true }, { ...hosted, WEEDZ_RUN_CREATION: "disabled" }),
+  false,
+);
+assert.equal(sessionCanStartRuns({}, {}), true, "Local dev retains its existing worker contract");

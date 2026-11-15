@@ -139,6 +139,8 @@ class ReviewAPI:
         return self.served()
 
     async def start(self, spec: RunSpec) -> dict:
+        if self.hosted_workflows:
+            spec = self.hosted_workflows.apply_defaults(spec)
         run_id = f"nelson-tasman-{uuid.uuid4().hex[:12]}"
         # Queue the workflow before exposing a queued run. Workers also ensure the
         # row exists, covering an API crash immediately after Temporal accepts it.

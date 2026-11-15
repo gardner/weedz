@@ -119,7 +119,7 @@ export default function RunSettings({
       </div>
       {!canStartRuns && (
         <p role="status">
-          New collections are not enabled on this review service. Existing evidence can be reviewed.
+          Collection processing is unavailable right now. Existing evidence can be reviewed.
         </p>
       )}
       <p>

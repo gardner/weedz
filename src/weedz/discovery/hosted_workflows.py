@@ -4,10 +4,12 @@ import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
+from typing import Literal
 
 from temporalio.client import Client
 
 from weedz.discovery.hosting import TemporalConnection
+from weedz.discovery.records import RunSpec
 from weedz.discovery.workflow_health import worker_is_ready
 
 
@@ -15,6 +17,12 @@ from weedz.discovery.workflow_health import worker_is_ready
 class HostedWorkflows:
     connection: TemporalConnection
     health_file: Path
+    segmentation_default: Literal["off", "sam2.1-tiny-v1"] = "off"
+
+    def apply_defaults(self, spec: RunSpec) -> RunSpec:
+        if "segmentation" in spec.model_fields_set:
+            return spec
+        return spec.model_copy(update={"segmentation": self.segmentation_default})
 
     async def client_if_ready(self) -> Client | None:
         if not worker_is_ready(self.health_file, self.connection):
