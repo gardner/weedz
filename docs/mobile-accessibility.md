@@ -112,9 +112,12 @@ this table describes assertions in source, not a new execution or a device pass.
 | `test/device/deletion_test.dart`, `deletion_http_test.dart`, `secure_record_store_test.dart` | Controller/HTTP failure handling, credential retention and native-acknowledgement contract using fakes/mocks | Actual OS storage, network deployment, force-stop durability or screen-reader operation |
 | `test/metadata/` | Missing/redacted/unknown-accuracy location and capture-time rules using supplied metadata | What the OS/plugin actually returns under each permission/library state |
 
-#125 adds regression coverage for default no-photo payloads, unreadable previews, reopened
-sharing choices and coalesced retries. Link its merged test files when that implementation
-lands; do not treat the pending PR or its widget fixtures as native-device evidence.
+The one-action report regressions are `test/ui/approval/one_action_test.dart`,
+`preview_failure_test.dart`, `reopened_choices_test.dart`, `fast_retry_test.dart`,
+`photo_credit_test.dart` and `compact_score_test.dart` in the same approval test directory.
+They cover outgoing sharing choices and model details, unreadable previews, reopened
+choices/attribution and coalesced retry settlement. Widget fixtures remain automated
+screen evidence, not native-device validation.
 
 ## Evidence record
 

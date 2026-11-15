@@ -10,7 +10,6 @@ import 'package:weedz/domain/report.dart';
 /// and withdraw receive the case the person was asked about, which may be
 /// out of date by the time they confirm.
 typedef ActionHandlers = ({
-  VoidCallback approve,
   VoidCallback send,
   ValueChanged<ReportCase> decline,
   ValueChanged<ReportCase> withdraw,
@@ -22,6 +21,8 @@ class ApprovalActions extends StatelessWidget {
     required this.reportCase,
     required this.choicesComplete,
     required this.handlers,
+    this.requested = false,
+    this.requestUnconfirmed = false,
     super.key,
   });
 
@@ -30,28 +31,28 @@ class ApprovalActions extends StatelessWidget {
   /// Whether the person has answered every choice the report needs.
   final bool choicesComplete;
   final ActionHandlers handlers;
+  final bool requested;
+  final bool requestUnconfirmed;
 
   @override
   Widget build(BuildContext context) {
+    if (requested) {
+      return Text(
+        requestUnconfirmed
+            ? 'Report status is unconfirmed. '
+                  'Check the saved report status before trying again.'
+            : 'Reporting…',
+      );
+    }
     final report = reportCase.report;
     final buttons = switch (reportCase.status) {
-      ApprovalStatus.pending => [
-        _gate(
-          FilledButton(
-            onPressed: choicesComplete ? handlers.approve : null,
-            child: const Text('Approve this report'),
-          ),
-          'approve',
-        ),
-        _decline(context),
-      ],
-      ApprovalStatus.approved => [
+      ApprovalStatus.pending || ApprovalStatus.approved => [
         _gate(
           FilledButton(
             onPressed: choicesComplete ? handlers.send : null,
-            child: const Text('Send report'),
+            child: const Text('Report sighting'),
           ),
-          'send',
+          'report this sighting',
         ),
         _decline(context),
       ],

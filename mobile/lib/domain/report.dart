@@ -30,7 +30,8 @@ const admittedLicences = {'cc0', 'cc-by', 'cc-by-nc'};
 
 /// Published versions of the consent text (`weedz.consent.VERSIONS`,
 /// `docs/report-consent.md`).
-const consentVersions = {'2026-11'};
+const currentConsentVersion = '2026-11-15';
+const Set<String> consentVersions = {'2026-11', currentConsentVersion};
 
 /// What a photo may be used for (`weedz.consent.PERMISSIONS`). A photo is
 /// sent for review, so its uses always include `review`; the rest are
