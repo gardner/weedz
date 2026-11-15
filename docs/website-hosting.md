@@ -22,6 +22,14 @@ experiment, not a claim of plant completeness or live inference. Coordinates,
 capture/upload dates, source reviewer notes/history and credentials are not copied.
 The source remains unchanged. New reviews belong to this independent hosted store.
 
+The default run is now `licensed-plants-sam21-20261115`: nine curated licensed plant
+photos (four source-labelled weed references and five lookalikes), with newly computed
+SAM2.1/BioCLIP2 outputs. This is not representative or stratified sampling; generic
+collection-query defaults do not describe the curated selection. The previous six-case
+run and its review history remain available. The import adds a distinct run and image
+namespace without replacing discovery history or reviewer credentials. Selection and
+runtime provenance are retained in the owner’s plant experiment artifact directory.
+
 There is no Temporal server/discovery worker in this service deployment. New collection
 creation is explicitly disabled by `WEEDZ_RUN_CREATION=disabled` in both proxy and UI;
 existing evidence, studies and review records remain usable. Enable collection creation
