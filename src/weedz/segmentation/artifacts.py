@@ -52,18 +52,16 @@ class StageArtifacts:
             raise ValueError("Stage artifact provenance changed; start a new run")
         return record["result"]
 
-    def write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> None:
+    def write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
         self.root.mkdir(parents=True, exist_ok=True)
         with self._path(stage, photo_id).with_suffix(".lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
-            self._write(stage, photo_id, inputs, result)
+            return self._write(stage, photo_id, inputs, result)
 
-    def _write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> None:
+    def _write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
         previous = self.read(stage, photo_id, inputs)
         if previous and previous.get("status") in {"ok", "empty"}:
-            if previous != result:
-                raise ValueError("A completed stage artifact cannot be replaced by a late retry")
-            return
+            return previous
         payload = {"stage": stage, "photo_id": photo_id, "inputs": inputs, "result": result}
         encoded = json.dumps({"schema": 1, **payload, "sha256": digest(payload)}, allow_nan=False)
         if len(encoded.encode()) > MAX_ARTIFACT_BYTES:
@@ -78,3 +76,4 @@ class StageArtifacts:
                 os.replace(temporary, self._path(stage, photo_id))
             finally:
                 temporary.unlink(missing_ok=True)
+        return result
