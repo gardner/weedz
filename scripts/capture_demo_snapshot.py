@@ -5,6 +5,7 @@ Outputs must be outside git. This is a curated capture subset, not a pilot evalu
 
 import argparse
 import hashlib
+import io
 import json
 import shutil
 import sqlite3
@@ -87,7 +88,10 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
             relative = Path("images") / f"{record['photo_id']}.png"
             target = output / relative
             target.parent.mkdir(exist_ok=True)
-            with Image.open(image) as original:
+            raw = image.read_bytes()
+            if hashlib.sha256(raw).hexdigest() != record.get("sha256"):
+                raise ValueError("Public source image checksum differs from its recorded evidence")
+            with Image.open(io.BytesIO(raw)) as original:
                 upright = ImageOps.exif_transpose(original).convert("RGB")
                 clean = Image.new("RGB", upright.size)
                 clean.paste(upright)

@@ -2,6 +2,7 @@
 
 import hashlib
 import importlib.util
+import io
 import json
 import sqlite3
 from pathlib import Path
@@ -31,6 +32,7 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
         "photo_id": 1,
         "photo_license": "cc-by",
         "image_path": "images/1.jpg",
+        "sha256": hashlib.sha256((source / "images/1.jpg").read_bytes()).hexdigest(),
         "attribution": "Example public creator, CC BY",
         "source_url": "https://example.test/observation/1",
         "image_url": "https://example.test/photo/1.jpg",
@@ -91,10 +93,13 @@ def test_explicit_run_must_exist_and_be_complete(requested: str) -> None:
 def incomplete_source(tmp_path: Path) -> Path:
     source = tmp_path / "live"
     (source / "images").mkdir(parents=True)
+    expected_image = io.BytesIO()
+    Image.new("RGB", (10, 10), "green").save(expected_image, format="PNG")
     record = {
         "photo_id": 1,
         "photo_license": "cc-by",
         "image_path": "images/missing.png",
+        "sha256": hashlib.sha256(expected_image.getvalue()).hexdigest(),
         "attribution": "Public creator, CC BY",
         "source_url": "https://example.test/observation/1",
         "image_url": "https://example.test/image/1",
@@ -169,3 +174,17 @@ def test_interruption_after_backup_never_publishes_private_state(
     with pytest.raises(KeyboardInterrupt):
         script.snapshot(incomplete_source, destination)
     assert not destination.exists()
+
+
+def test_replaced_public_cache_cannot_inherit_original_scores_or_attribution(
+    incomplete_source: Path, tmp_path: Path
+) -> None:
+    # The fixture records the green public image's actual encoded checksum.
+    Image.new("RGB", (10, 10), "red").save(incomplete_source / "images/missing.png")
+    source_database = incomplete_source / "discovery.sqlite3"
+    before = source_database.read_bytes()
+    destination = tmp_path / "capture"
+    with pytest.raises(ValueError, match="checksum"):
+        script.snapshot(incomplete_source, destination)
+    assert not destination.exists()
+    assert source_database.read_bytes() == before
