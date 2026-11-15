@@ -42,3 +42,13 @@ The delivered edit currently uses the earlier 180-second conservation bed while
 ten new songs are auditioned. Update checksums after the mix and any credit edits.
 Check the final container and full decode, inspect captions and credits, and keep
 all generated media, captures, photos and model checkpoints outside Git.
+
+New renders require a completed pipeline capture receipt: `capture-manifest.json` must
+contain `captureSuccess: true` and an empty `browser_errors` list. The capture helper
+publishes that success marker only after browser closure and successful encoding.
+Historical media is not rewritten or silently given new proof fields. For a new render,
+reproduce the capture with the documented helper if the older receipt lacks those fields.
+
+The renderer checks every requested pipeline video frame and the decoder exit status.
+The 15.6-second segment is sampled at 24 fps with its fractional final interval retained
+(`fps` EOF pass), giving 375 required frames; truncated footage aborts rather than freezing.

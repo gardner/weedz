@@ -18,6 +18,7 @@ const acknowledgements = [];
 const phases = [];
 let start;
 let end;
+let captureEvidence;
 const cdp = await context.newCDPSession(page);
 cdp.on("Page.screencastFrame", ({ data, metadata, sessionId }) => {
   frames.push({ data: Buffer.from(data, "base64"), time: metadata.timestamp });
@@ -107,32 +108,26 @@ try {
   end = Date.now() / 1000;
   await cdp.send("Page.stopScreencast");
   await Promise.all(acknowledgements);
-  await writeFile(
-    path.join(output, "capture-manifest.json"),
-    JSON.stringify(
-      {
-        description:
-          "Actual production review UI replaying saved outputs from a completed real SAM2.1 + BioCLIP2 inference run. No model inference happens during this UI recording.",
-        source: {
-          creator: photo.attribution,
-          licence: photo.photo_license,
-          source_url: photo.source_url,
-          source_pixels_sha256: createHash("sha256").update(source).digest("hex"),
-          modification:
-            "Metadata-free upright lossless PNG from the eligible public reference; actual mask overlay is drawn by the product UI.",
-        },
-        segmentation: evidence.provenance,
-        baseline: detail.run.model,
-        phases,
-        duration_seconds: end - start,
-        browser_errors: errors,
-        interpretation:
-          "Class-agnostic masks; partial regions are not complete plant boundaries. View margins are not confidence. No improved recall claim.",
-      },
-      null,
-      2,
-    ),
-  );
+  assert.deepEqual(errors, [], "Pipeline UI capture reported browser errors");
+  captureEvidence = {
+    description:
+      "Actual production review UI replaying saved outputs from a completed real SAM2.1 + BioCLIP2 inference run. No model inference happens during this UI recording.",
+    source: {
+      creator: photo.attribution,
+      licence: photo.photo_license,
+      source_url: photo.source_url,
+      source_pixels_sha256: createHash("sha256").update(source).digest("hex"),
+      modification:
+        "Metadata-free upright lossless PNG from the eligible public reference; actual mask overlay is drawn by the product UI.",
+    },
+    segmentation: evidence.provenance,
+    baseline: detail.run.model,
+    phases,
+    duration_seconds: end - start,
+    browser_errors: errors,
+    interpretation:
+      "Class-agnostic masks; partial regions are not complete plant boundaries. View margins are not confidence. No improved recall claim.",
+  };
 } finally {
   await context.close();
   await browser.close();
@@ -179,4 +174,10 @@ for (let index = 0; index < Math.ceil((end - start) * 25); index++) {
 }
 encoder.stdin.end();
 await finished;
+assert.deepEqual(errors, [], "Pipeline UI capture reported browser errors");
+assert(captureEvidence);
+await writeFile(
+  path.join(output, "capture-manifest.json"),
+  JSON.stringify({ ...captureEvidence, captureSuccess: true }, null, 2),
+);
 assert.deepEqual(errors, []);

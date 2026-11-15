@@ -15,8 +15,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import new_output  # noqa: E402
 
 
+def validate_pipeline_capture(pipeline: Path) -> dict:
+    try:
+        proof = json.loads((pipeline / "capture-manifest.json").read_text())
+    except (OSError, ValueError) as error:
+        raise ValueError("Pipeline browser capture verification is missing or malformed") from error
+    if (
+        not isinstance(proof, dict)
+        or proof.get("captureSuccess") is not True
+        or proof.get("browser_errors") != []
+    ):
+        raise ValueError("Pipeline browser capture must finish without browser errors")
+    return proof
+
+
 def render(args: argparse.Namespace) -> None:
     output = new_output(args.output)
+    pipeline = validate_pipeline_capture(args.pipeline)
     required = [
         args.pipeline / name
         for name in (
@@ -85,7 +100,6 @@ def render(args: argparse.Namespace) -> None:
     ]
     encode_picture(command, frames, scenes, cues, 24, output)
     sources = json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
-    pipeline = json.loads((args.pipeline / "capture-manifest.json").read_text())
     credits = {
         "project": "https://github.com/gardner/weedz",
         "photography": [r for r in sources["photos"] if r["file"] == "images/460347209.png"],
