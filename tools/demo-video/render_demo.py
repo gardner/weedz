@@ -28,6 +28,19 @@ def validate_erasure(mobile: Path) -> None:
         raise ValueError("Mobile erasure verification must confirm zero retained bodies and crops")
 
 
+def validate_browser_capture(web: Path) -> None:
+    try:
+        proof = json.loads((web / "web-capture.json").read_text())
+    except (OSError, ValueError) as error:
+        raise ValueError("Review browser capture verification is missing or malformed") from error
+    if (
+        not isinstance(proof, dict)
+        or proof.get("captureSuccess") is not True
+        or proof.get("browserErrors") != []
+    ):
+        raise ValueError("Review browser capture must have completed without browser errors")
+
+
 def validate_captures(args: argparse.Namespace) -> None:
     required = [
         args.captures / name
@@ -51,6 +64,7 @@ def validate_captures(args: argparse.Namespace) -> None:
         )
 
     validate_erasure(args.mobile_captures)
+    validate_browser_capture(args.captures / "web-final")
     manifest = json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
     for relative in ("images/460347209.png", "images/447484684.png"):
         verified_photo_bytes(args.captures, relative, manifest)

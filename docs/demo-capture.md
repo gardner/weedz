@@ -102,3 +102,10 @@ from both the manifest and vacuumed SQLite bytes, and copied pixels have no EXIF
 Capture metadata records browser errors; the recording is closed before delivery.
 Inspect the screenshots and video before adding them to the final edit. Do not
 commit video, audio, downloaded photos, screenshots or local pilot snapshots.
+
+The review capture server serves a temporary private copy of the closed sanitized
+snapshot, leaving the published database and image files unchanged. It rejects WAL
+sidecars. The orchestrator uses temporary local ports, checks its child processes,
+and verifies a per-capture identity through both API and web proxy before recording.
+The renderer requires successful browser-capture and mobile-erasure verification
+records; media left by a failed capture is not sufficient evidence.

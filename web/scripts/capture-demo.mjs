@@ -1,7 +1,7 @@
 // Capture the real review app against the external, read-only demo snapshot.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "@playwright/test";
 
@@ -24,6 +24,7 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 const errors = [];
+let captureSuccess = false;
 page.on("pageerror", (error) => errors.push(error.message));
 try {
   await page.goto(origin, { waitUntil: "networkidle" });
@@ -77,9 +78,15 @@ try {
     ),
   );
   assert.deepEqual(errors, []);
+  captureSuccess = true;
 } finally {
   const video = page.video();
   await context.close();
   await video.saveAs(path.join(output, "web-review-interactions.webm"));
   await browser.close();
+  if (captureSuccess) {
+    const filename = path.join(output, "web-capture.json");
+    const evidence = JSON.parse(await readFile(filename, "utf8"));
+    await writeFile(filename, JSON.stringify({ ...evidence, captureSuccess: true }, null, 2));
+  }
 }

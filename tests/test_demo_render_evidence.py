@@ -81,6 +81,7 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
         "web-candidate-window.png",
     ]:
         (web / name).touch()
+    (web / "web-capture.json").write_text(json.dumps({"browserErrors": [], "captureSuccess": True}))
     credit_font = tmp_path / "font.otf"
     credit_font.touch()
     (mobile / "erasure-verification.json").write_text(
@@ -119,3 +120,13 @@ def test_failed_or_unverified_mobile_erasure_is_not_renderable(produced_captures
         (mobile / "erasure-verification.json").write_text(json.dumps(proof))
     with pytest.raises(ValueError, match="erasure"):
         renderer.validate_erasure(mobile)
+
+
+@pytest.mark.parametrize(
+    "proof", [None, {}, [], {"browserErrors": ["Script failed"]}, {"browserErrors": ""}]
+)
+def test_failed_browser_capture_is_not_renderable(tmp_path, proof):
+    if proof is not None:
+        (tmp_path / "web-capture.json").write_text(json.dumps(proof))
+    with pytest.raises(ValueError, match="browser"):
+        renderer.validate_browser_capture(tmp_path)
