@@ -90,3 +90,9 @@ proposals with failed classification, then failed-proposal fallback. Artifact an
 writes enforce that order atomically so a late fallback cannot erase real masks. Existing
 prototype view-cache revision 1 inputs require a new run namespace when executing these
 activities; completed historical runs and their exported evidence remain readable.
+
+A failed-proposal fallback is re-read and committed under the same per-photo lock used
+by proposal writers, including its database attachment. Recovery that already won is
+consumed instead; immutable successful proposals release the lock before GPU scoring.
+Recovery committed after that fallback boundary requires another view-stage invocation;
+the completed partial outcome does not retroactively claim to have scored it.

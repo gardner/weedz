@@ -129,20 +129,40 @@ class PipelineStages:
             path = self._path(photo)
             if not photo["scores"]:
                 raise ValueError("Full-frame/tile baseline must complete before region scoring")
-            proposal = self._proposal(artifacts, photo)
-            inputs = {
-                "proposal_inputs_sha256": digest(proposal["inputs"]),
-                "classifier": model.metadata,
-                "version": 2,
-            }
-            evidence = artifacts.read("views", photo["id"], inputs)
-            if evidence and evidence["view_status"] in {"ok", "empty"}:
-                count["cache_hits"] += 1
-            else:
-                evidence = self._views(path, photo, proposal, model, artifacts, inputs)
-            self._attach(run_id, photo["id"], evidence)
+            evidence, cached = self._score_photo(run_id, path, photo, model, artifacts)
+            count["cache_hits"] += int(cached)
             count["failed" if evidence["status"] == "failed" else "completed"] += 1
         return count
+
+    def _score_photo(
+        self, run_id: str, path: Path, photo: dict, model: Any, artifacts: StageArtifacts
+    ) -> tuple[dict, bool]:
+        proposal = self._proposal(artifacts, photo)
+        if proposal["result"]["status"] == "failed":
+            # Linearize a fallback against the same lock used by recovering producers.
+            with artifacts.locked("proposals", photo["id"]):
+                proposal = self._proposal(artifacts, photo)
+                if proposal["result"]["status"] == "failed":
+                    evidence, cached = self._score_snapshot(path, photo, proposal, model, artifacts)
+                    self._attach(run_id, photo["id"], evidence)
+                    return evidence, cached
+        # Successful proposal output is immutable; do not hold its lock through GPU work.
+        evidence, cached = self._score_snapshot(path, photo, proposal, model, artifacts)
+        self._attach(run_id, photo["id"], evidence)
+        return evidence, cached
+
+    def _score_snapshot(
+        self, path: Path, photo: dict, proposal: dict, model: Any, artifacts: StageArtifacts
+    ) -> tuple[dict, bool]:
+        inputs = {
+            "proposal_inputs_sha256": digest(proposal["inputs"]),
+            "classifier": model.metadata,
+            "version": 2,
+        }
+        evidence = artifacts.read("views", photo["id"], inputs)
+        if evidence and evidence["view_status"] in {"ok", "empty"}:
+            return evidence, True
+        return self._views(path, photo, proposal, model, artifacts, inputs), False
 
     def _views(
         self,

@@ -5,6 +5,8 @@ import hashlib
 import json
 import os
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
 
@@ -87,13 +89,18 @@ class StageArtifacts:
             raise ValueError("Stage artifact provenance changed; start a new run")
         return record["result"]
 
-    def write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
+    @contextmanager
+    def locked(self, stage: Stage, photo_id: str) -> Iterator[None]:
         durable_mkdir(self.root)
         # A previous interrupted sync can leave existing but unacknowledged entries.
         # Re-establish the whole artifact hierarchy before even a cached success returns.
         self._sync_hierarchy()
         with self._path(stage, photo_id).with_suffix(".lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
+            yield
+
+    def write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
+        with self.locked(stage, photo_id):
             return self._write(stage, photo_id, inputs, result)
 
     def _write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:

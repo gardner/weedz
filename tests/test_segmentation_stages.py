@@ -359,3 +359,62 @@ def test_late_skipped_attachment_keeps_masks_when_classifier_failed(store):
     stages._attach("run", "0", retained)
     stages._attach("run", "0", skipped)
     assert store.photos("run")[0]["scores"]["segmentation"] == retained
+
+
+def test_failed_snapshot_is_revalidated_before_fallback_commit(store, monkeypatch):
+    proposer = Proposer()
+    stages = runner(store, proposer)
+    assert stages.segment("run")["failed"] == 1
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    original = stages._proposal
+    recovered = []
+
+    def interleaved(artifacts, photo):
+        snapshot = original(artifacts, photo)
+        if snapshot["result"]["status"] == "failed" and not recovered:
+            recovered.append(True)
+            proposer.fail_second = False
+            stages.segment("run")
+        return snapshot
+
+    monkeypatch.setattr(stages, "_proposal", interleaved)
+    monkeypatch.setattr(
+        "weedz.segmentation.stages.identify_views",
+        lambda _model, views, _subject: {name: {"margin": -0.2} for name in views},
+    )
+    assert stages.score_regions("run")["failed"] == 0
+    photo = store.photos("run")[1]
+    assert photo["scores"]["segmentation"]["regions"]
+    assert photo["scores"]["segmentation"]["view_status"] == "ok"
+
+
+def test_failed_fallback_attachment_holds_the_proposal_writer_lock(store, monkeypatch):
+    import fcntl
+
+    from weedz.segmentation.artifacts import StageArtifacts
+
+    stages = runner(store, Proposer())
+    stages.segment("run")
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    original = stages._attach
+    checked = []
+
+    def observed(run_id, photo_id, evidence):
+        if evidence["proposal_status"] == "failed":
+            path = (
+                StageArtifacts(store.root, run_id)._path("proposals", photo_id).with_suffix(".lock")
+            )
+            with path.open("a") as writer, pytest.raises(BlockingIOError):
+                fcntl.flock(writer, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            checked.append(True)
+        original(run_id, photo_id, evidence)
+
+    monkeypatch.setattr(stages, "_attach", observed)
+    monkeypatch.setattr(
+        "weedz.segmentation.stages.identify_views",
+        lambda _model, views, _subject: {name: {"margin": -0.2} for name in views},
+    )
+    stages.score_regions("run")
+    assert checked == [True]
