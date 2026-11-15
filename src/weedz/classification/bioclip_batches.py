@@ -2,11 +2,18 @@
 
 import fcntl
 import hashlib
+import json
 from pathlib import Path
 from typing import Any, Literal
 
 from weedz.batches.receipts import seal_file
-from weedz.classification.batch import _encoded_result, _identity, _snapshot, _verified_result
+from weedz.classification.batch import (
+    MAX_RESULT_BYTES,
+    _encoded_result,
+    _identity,
+    _snapshot,
+    _verified_result,
+)
 from weedz.classification.bioclip import validate_frame_geometry, validate_scores
 from weedz.classification.regions import _inputs, _restored_photo
 from weedz.discovery.inference import file_sha256
@@ -78,8 +85,25 @@ def _validate_row(row, sample, version, scope, proposed, root):
             validate_region(region)
 
 
+def _read_pinned_result(output: Path, verified: str | None) -> dict:
+    # The caller SHA and the internal digest must describe these same captured bytes.
+    with output.open("rb") as stream:
+        encoded = stream.read(MAX_RESULT_BYTES + 1)
+    if len(encoded) > MAX_RESULT_BYTES:
+        raise ValueError("BioCLIP result exceeds byte cap")
+    if verified is not None and hashlib.sha256(encoded).hexdigest() != verified:
+        raise ValueError("External BioCLIP artifact checksum changed")
+    result = json.loads(encoded)
+    if not isinstance(result, dict):
+        raise ValueError("Invalid BioCLIP result document")
+    body = {key: value for key, value in result.items() if key != "result_sha256"}
+    if result.get("result_sha256") != digest(body):
+        raise ValueError("BioCLIP result checksum mismatch")
+    return result
+
+
 def _cached(output, header, samples, proposed, scope, verified, root):
-    result = _verified_result(output, verified)
+    result = _read_pinned_result(output, verified)
     if any(digest({k: result.get(k)}) != digest({k: v}) for k, v in header.items()):
         raise ValueError("Existing BioCLIP batch has different provenance")
     rows = result.get("predictions")

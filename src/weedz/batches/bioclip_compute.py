@@ -78,5 +78,8 @@ def run(
     )
     if not profile.matches(result["model"]):
         raise ValueError("Computed BioCLIP profile disagrees")
+    if origin != "temporal-activity":
+        read_artifact(root, reference, 128_000_000)
+        return Computed(reference, origin)
     reference["sha256"] = hashlib.sha256(read_owned_file(output, root, 128_000_000)).hexdigest()
     return Computed(reference, origin)
