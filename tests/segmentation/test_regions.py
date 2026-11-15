@@ -96,3 +96,12 @@ def test_portrait_thumbnail_rounding_is_valid_but_distorted_masks_are_not():
     raw[0]["segmentation"] = np.ones((64, 64), bool)
     with pytest.raises(ValueError, match="aspect ratios"):
         proposals(Image.new("RGB", (700, 6000)), raw, ProposalConfig())
+
+
+def test_sparse_oversampled_mask_reports_a_value_error_when_source_grid_drops_it():
+    from weedz.segmentation.regions import region_from_mask
+
+    mask = np.zeros((768, 768), dtype=bool)
+    mask[0, 0] = True
+    with pytest.raises(ValueError, match="resampl"):
+        region_from_mask(Image.new("RGB", (64, 64)), mask, {}, max_side=768, context_fraction=0.25)

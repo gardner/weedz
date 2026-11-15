@@ -82,12 +82,20 @@ class Region:
         }
 
 
-def _region(image: Image.Image, mask: np.ndarray, raw: dict, config: ProposalConfig) -> Region:
+def region_from_mask(
+    image: Image.Image,
+    mask: np.ndarray,
+    quality: dict[str, float],
+    *,
+    max_side: int,
+    context_fraction: float,
+) -> Region:
     full = Image.fromarray(mask).resize(image.size, Image.Resampling.NEAREST)
     box = full.getbbox()
-    assert box is not None
+    if box is None:
+        raise ValueError("Mask is empty after source-grid resampling")
     x1, y1, x2, y2 = box
-    pad = round(max(x2 - x1, y2 - y1) * config.context_fraction)
+    pad = round(max(x2 - x1, y2 - y1) * context_fraction)
     context = (
         max(0, x1 - pad),
         max(0, y1 - pad),
@@ -96,7 +104,7 @@ def _region(image: Image.Image, mask: np.ndarray, raw: dict, config: ProposalCon
     )
     tight, surrounding = image.crop(box), image.crop(context)
     for view in (tight, surrounding):
-        view.thumbnail((config.max_side, config.max_side), Image.Resampling.LANCZOS)
+        view.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
     visible = full.crop(box).resize(tight.size, Image.Resampling.NEAREST).convert("L")
     neutral = Image.new("RGB", tight.size, (124, 116, 104))
     neutral.paste(tight, mask=visible.point(lambda p: 255 if p else 0))
@@ -104,7 +112,7 @@ def _region(image: Image.Image, mask: np.ndarray, raw: dict, config: ProposalCon
         mask,
         box,
         context,
-        {key: float(raw[key]) for key in ("predicted_iou", "stability_score")},
+        quality,
         {"tight": tight, "masked": neutral, "context": surrounding},
     )
 
@@ -125,7 +133,15 @@ def proposals(image: Image.Image, raw: list[dict], config: ProposalConfig) -> li
         if int(mask.sum()) < config.min_area or signature in seen:
             continue
         seen.add(signature)
-        result.append(_region(image, mask, row, config))
+        result.append(
+            region_from_mask(
+                image,
+                mask,
+                {key: float(row[key]) for key in ("predicted_iou", "stability_score")},
+                max_side=config.max_side,
+                context_fraction=config.context_fraction,
+            )
+        )
         if len(result) == config.max_proposals:
             break
     return result
