@@ -23,7 +23,7 @@ from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.sampling import coverage
 from weedz.discovery.score_meaning import pin_meaning, score_meaning
 from weedz.discovery.sharing import withdrawn
-from weedz.discovery.source import Inaturalist
+from weedz.discovery.source import Inaturalist, admitted_licences
 from weedz.discovery.store import Store
 from weedz.discovery.study_store import run_study
 from weedz.discovery.suitability import suitability
@@ -50,9 +50,42 @@ def while_heartbeating[T](work: Callable[[], T], detail: str, every: float = 20.
 
 
 class Activities:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, allowed_photo_licences: frozenset[str] | None = None) -> None:
         self.store = Store(root)
+        self.allowed_photo_licences = admitted_licences(allowed_photo_licences)
         self.screeners: dict[str, Any] = {}
+        self.proposer: Any = None
+
+    def preflight_segmentation(self) -> dict:
+        from weedz.segmentation.runtime import load_proposer
+
+        if self.proposer is None:
+            self.proposer = load_proposer(self.store.root)
+        return self.proposer.metadata
+
+    def _proposer(self) -> Any:
+        while_heartbeating(self.preflight_segmentation, "loading pinned SAM2.1 model")
+        return self.proposer
+
+    def _stages(self) -> Any:
+        from weedz.segmentation.stages import PipelineStages
+
+        return PipelineStages(
+            self.store,
+            self._proposer,
+            self._screener,
+            activity.heartbeat,
+            lambda: activity.info().attempt,
+            while_heartbeating,
+        )
+
+    @activity.defn
+    def segment_photos_v1(self, payload: dict) -> dict:
+        return self._stages().segment(payload["run_id"])
+
+    @activity.defn
+    def score_region_views_v1(self, payload: dict) -> dict:
+        return self._stages().score_regions(payload["run_id"])
 
     @activity.defn
     def collect_photos(self, payload: dict) -> dict:
@@ -61,21 +94,25 @@ class Activities:
         self.store.create_run(run_id, spec)
         self.store.status(run_id, "acquiring", "Fetching attributed regional photos")
         activity.heartbeat("acquiring")
-        source = Inaturalist(self.store.root)
+        source = Inaturalist(self.store.root, allowed_photo_licences=self.allowed_photo_licences)
         try:
             photos = source.collect(run_id, spec, progress=activity.heartbeat)
         finally:
             source.close()
+        if any(
+            photo.photo_license not in self.allowed_photo_licences
+            or photo.observation_license not in self.allowed_photo_licences
+            for photo in photos
+        ):
+            raise ValueError("Collected photo violates the trusted source licence policy")
         self.store.save_photos(run_id, photos)
         if not photos:
             raise ValueError("No eligible photos returned for the bounded regional query")
         return {"count": len(photos)}
 
-    @activity.defn
-    def screen_photos(self, payload: dict) -> dict:
-        from weedz.discovery.inference import Screener, subject_label
+    def _screener(self, run_id: str) -> Any:
+        from weedz.discovery.inference import Screener
 
-        run_id = payload["run_id"]
         self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
         run = next(item for item in self.store.runs() if item["id"] == run_id)
@@ -90,6 +127,14 @@ class Activities:
         screener = self.screeners[key]
         # Refuses a changed configuration; a resumed run keeps its pinned score meaning.
         self.store.model(run_id, pin_meaning(run["model"], screener.metadata))
+        return screener
+
+    @activity.defn
+    def screen_photos(self, payload: dict) -> dict:
+        from weedz.discovery.inference import subject_label
+
+        run_id = payload["run_id"]
+        screener = self._screener(run_id)
         photos = self.store.photos(run_id)
         for index, photo in enumerate(photos):
             activity.heartbeat(f"{index}/{len(photos)}")
@@ -107,8 +152,16 @@ class Activities:
         activity.heartbeat("exporting")
         self.store.status(run_id, "exporting", "Writing the screening manifest")
         result = export(self.store, run_id)
+        if result.get("pipeline", {}).get("missing"):
+            raise ValueError("Requested pipeline stages have not completed")
+        detail = "Screening complete; expert review is pending"
+        if result.get("pipeline", {}).get("outcome") == "partial":
+            detail = (
+                "Baseline screening complete; segmentation/region failures retained as "
+                "explicit fallback; expert review pending"
+            )
         result["run"]["status"] = "completed"
-        result["run"]["detail"] = "Screening complete; expert review is pending"
+        result["run"]["detail"] = detail
         # Summarised again, so it reads the run as completed rather than still exporting.
         result["source_suitability"] = suitability(result)
         destination = self.store.root / "runs" / run_id / "manifest.json"
@@ -116,8 +169,11 @@ class Activities:
         temporary = destination.with_suffix(".tmp")
         temporary.write_text(json.dumps(result, indent=2))
         temporary.replace(destination)
-        self.store.status(run_id, "completed", "Screening complete; expert review is pending")
-        return {"manifest": str(destination), "count": len(result["photos"])}
+        self.store.status(run_id, "completed", detail)
+        completion = {"manifest": str(destination), "count": len(result["photos"])}
+        if "pipeline" in result:
+            completion["pipeline_outcome"] = result["pipeline"]["outcome"]
+        return completion
 
     @activity.defn
     def fail_run(self, payload: dict) -> None:
@@ -226,5 +282,15 @@ def export(store: Store, run_id: str) -> dict:
             ),
         ],
     }
+    from weedz.segmentation.summary import pipeline_summary
+
+    pipeline = pipeline_summary(store, run_id)
+    if pipeline is not None:
+        result["pipeline"] = pipeline
+        result["limitations"][1] = (
+            "Baseline windows remain search regions, not plant boundaries; separate class-agnostic "
+            "SAM2.1 masks may miss plants or include other objects, and neither mask quality "
+            "nor proposal-view ranking is identification confidence"
+        )
     # What the collection can and cannot support, from the parts above (PRD P02, P14).
     return result | {"source_suitability": suitability(result)}

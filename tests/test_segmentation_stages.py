@@ -1,0 +1,143 @@
+"""Retries preserve completed model work and never convert outages to negative evidence."""
+
+import hashlib
+from types import SimpleNamespace
+
+import numpy as np
+import pytest
+from PIL import Image
+from test_discovery import observation
+
+from weedz.discovery.records import RunSpec
+from weedz.discovery.source import photo_from_observation
+from weedz.discovery.store import Store
+from weedz.segmentation.stages import PipelineStages
+
+
+@pytest.fixture
+def store(tmp_path):
+    result = Store(tmp_path)
+    result.create_run("run", RunSpec(segmentation="sam2.1-tiny-v1"))
+    (tmp_path / "images").mkdir()
+    for index in range(2):
+        photo = photo_from_observation(observation(), "Nelson", "incidental")
+        assert photo
+        photo = photo.model_copy(update={"id": str(index), "image_path": f"images/{index}.png"})
+        image = tmp_path / photo.image_path
+        Image.new("RGB", (8, 8), (index, 100, 50)).save(image)
+        photo.sha256 = hashlib.sha256(image.read_bytes()).hexdigest()
+        result.save_photos("run", [photo])
+    return result
+
+
+class Proposer:
+    metadata = {"checkpoint": "pinned", "version": 1}
+    calls = 0
+    fail_second = True
+
+    def generate(self, image):
+        self.calls += 1
+        if image.getpixel((0, 0))[0] == 1 and self.fail_second:
+            raise RuntimeError("Interrupted GPU stage")
+        return [
+            {"segmentation": np.ones((8, 8), bool), "predicted_iou": 0.9, "stability_score": 0.99}
+        ]
+
+
+def runner(store, proposer, attempt=1):
+    return PipelineStages(
+        store,
+        lambda: proposer,
+        lambda _run: SimpleNamespace(metadata={"classifier": "pinned"}),
+        lambda _detail: None,
+        lambda: attempt,
+    )
+
+
+def test_retry_skips_completed_proposals_but_retries_failed_work(store):
+    proposer = Proposer()
+    with pytest.raises(RuntimeError, match="Interrupted"):
+        runner(store, proposer).segment("run")
+    assert proposer.calls == 2
+    proposer.fail_second = False
+    result = runner(store, proposer, 2).segment("run")
+    assert proposer.calls == 3
+    assert result["cache_hits"] == 1
+    assert result["completed"] == 2 and result["failed"] == 0
+    assert runner(store, proposer, 2).segment("run")["cache_hits"] == 2
+    assert proposer.calls == 3
+
+
+def test_changed_source_or_model_provenance_refuses_cache_reuse(store):
+    proposer = Proposer()
+    proposer.fail_second = False
+    runner(store, proposer).segment("run")
+    proposer.metadata = {"checkpoint": "changed", "version": 1}
+    with pytest.raises(ValueError, match="provenance"):
+        runner(store, proposer).segment("run")
+
+
+def test_final_failed_photo_is_explicit_partial_fallback_not_negative(store, monkeypatch):
+    stages = runner(store, Proposer(), 3)
+    result = stages.segment("run")
+    assert result["completed"] == 1 and result["failed"] == 1
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": 0.12, "best_species": "Ulex europaeus"})
+    before = {p["id"]: (p["scores"].copy(), p["screened_at"]) for p in store.photos("run")}
+    monkeypatch.setattr(
+        "weedz.segmentation.stages.identify_views",
+        lambda _model, views, _subject: {name: {"margin": -0.2} for name in views},
+    )
+    stages.score_regions("run")
+    for photo in store.photos("run"):
+        evidence = photo["scores"].pop("segmentation")
+        assert photo["scores"] == before[photo["id"]][0]
+        assert photo["screened_at"] == before[photo["id"]][1]
+        assert evidence["baseline_retained"] is True
+    summary = stages.summary("run")
+    assert summary["outcome"] == "partial"
+    assert summary["warnings"]
+
+
+def test_model_startup_failure_is_not_committed_as_a_per_photo_negative(store):
+    def missing_runtime():
+        raise ValueError("Checkpoint mismatch")
+
+    stages = PipelineStages(
+        store, missing_runtime, lambda _run: None, lambda _detail: None, lambda: 1
+    )
+    with pytest.raises(ValueError, match="Checkpoint"):
+        stages.segment("run")
+    assert not list((store.root / "runs/run/pipeline-v1").glob("*.json"))
+
+
+def test_empty_proposals_are_valid_and_preserve_baseline_without_region_scoring(store, monkeypatch):
+    class Empty(Proposer):
+        def generate(self, image):
+            return []
+
+    stages = runner(store, Empty())
+    assert stages.segment("run")["completed"] == 2
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+
+    def no_views(*_args):
+        pytest.fail("An empty proposal set has no model views to score")
+
+    monkeypatch.setattr("weedz.segmentation.stages.identify_views", no_views)
+    stages.score_regions("run")
+    assert stages.summary("run")["outcome"] == "completed"
+    assert stages.summary("run")["proposals"]["empty"] == 2
+    assert all(photo["scores"]["margin"] == -0.04 for photo in store.photos("run"))
+
+
+def test_changed_image_bytes_are_not_hidden_by_a_completed_artifact(store):
+    proposer = Proposer()
+    proposer.fail_second = False
+    stages = runner(store, proposer)
+    stages.segment("run")
+    photo = store.photos("run")[0]
+    Image.new("RGB", (8, 8), "blue").save(store.root / photo["image_path"])
+    with pytest.raises(ValueError, match="provenance"):
+        stages.segment("run")
+    assert proposer.calls == 2

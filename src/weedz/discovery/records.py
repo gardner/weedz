@@ -18,6 +18,7 @@ ReviewStatus = Literal["unreviewed", "confirmed", "rejected", "uncertain"]
 
 
 class RunSpec(BaseModel):
+    segmentation: Literal["off", "sam2.1-tiny-v1"] = "off"
     limit_per_region: int = Field(default=12, ge=1, le=50)
     controls_per_species: int = Field(default=1, ge=0, le=3)
     before: date = date(2024, 12, 31)

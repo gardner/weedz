@@ -12,8 +12,17 @@ class DiscoveryWorkflow:
     async def run(self, spec: dict) -> dict:
         payload = {"run_id": workflow.info().workflow_id, "spec": spec}
         retry = RetryPolicy(initial_interval=timedelta(seconds=5), maximum_attempts=3)
+        names = ["collect_photos", "screen_photos", "export_run"]
+        if spec.get("segmentation") == "sam2.1-tiny-v1" and workflow.patched("sam21-stages-v1"):
+            names = [
+                "collect_photos",
+                "segment_photos_v1",
+                "screen_photos",
+                "score_region_views_v1",
+                "export_run",
+            ]
         try:
-            for name in ["collect_photos", "screen_photos", "export_run"]:
+            for name in names:
                 await workflow.execute_activity(
                     name,
                     payload,
