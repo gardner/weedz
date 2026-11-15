@@ -14,7 +14,6 @@ import type { Study } from "../lib/study";
 import {
   type AuditSummary,
   effortNote,
-  names,
   type Photo,
   type References,
   type ReviewEffort,
@@ -22,12 +21,11 @@ import {
   type RunDetail,
   request,
   type Status,
-  siteVisitNote,
 } from "../lib/types";
 import AuditPanel from "./audit-panel";
 import Evidence from "./evidence";
 import FieldNotes from "./field-notes";
-import { Thumbnail } from "./photo-stage";
+import ReviewQueue from "./review-queue";
 import RunSettings from "./run-settings";
 import { ScreeningNote } from "./score-meaning";
 import StudyPanel from "./study-panel";
@@ -347,103 +345,25 @@ export default function ReviewDesk({
           {runId !== DEVICE_RUN && <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />}
           <ScreeningNote meaning={scoreMeaning} />
           <div className="workspace">
-            <section className="queue" aria-label="Photo review queue">
-              <div className="queue-heading">
-                <h2>
-                  Review queue <span>{filtered.length}</span>
-                </h2>
-                <p>
-                  {auditing
-                    ? "Fixed random sample · screening rank hidden"
-                    : `${specialist ? "Open referrals, longest waiting first" : "Highest relative similarity first"}${held ? ` · ${held} held for blind audit` : ""}`}
-                </p>
-              </div>
-              <div className="cohort-tabs">
-                {VIEWS.map(([view, label]) => (
-                  <button
-                    type="button"
-                    key={view}
-                    aria-pressed={cohort === view}
-                    onClick={() => setCohort(view)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="queue-filters">
-                <select
-                  aria-label="Filter region"
-                  value={region}
-                  onChange={(event) => setRegion(event.target.value)}
-                >
-                  <option value="all">Both regions</option>
-                  <option>Nelson</option>
-                  <option>Tasman</option>
-                </select>
-                {!auditing && !specialist && (
-                  <select
-                    aria-label="Filter review status"
-                    value={review}
-                    onChange={(event) => setReview(event.target.value)}
-                  >
-                    <option value="all">All decisions</option>
-                    <option value="unreviewed">Needs review</option>
-                    <option value="confirmed">Species visible</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="uncertain">Uncertain</option>
-                  </select>
-                )}
-              </div>
-              <div className="photo-list">
-                {filtered.map((photo, index) => (
-                  <button
-                    type="button"
-                    key={photo.id}
-                    className={`photo-row ${active?.id === photo.id ? "selected" : ""}`}
-                    onClick={() => {
-                      setActiveIds((ids) => ({ ...ids, [cohort]: photo.id }));
-                      setNotice("");
-                    }}
-                    aria-pressed={active?.id === photo.id}
-                  >
-                    <Thumbnail photo={photo} runId={runId} />
-                    <span className="photo-row-body">
-                      <span className="row-index">
-                        {String(index + 1).padStart(2, "0")} / {photo.region}
-                      </span>
-                      <strong>
-                        {auditing
-                          ? "Blind audit photo"
-                          : (names[photo.scores.best_species ?? ""] ?? "Awaiting screening")}
-                      </strong>
-                      <span>{photo.original_common_name || photo.original_taxon}</span>
-                      <small>
-                        {photo.observed_on ?? "Date unknown"} ·{" "}
-                        {auditing
-                          ? auditedBy(photo, reviewer)
-                            ? "Audited"
-                            : "Not yet audited"
-                          : photo.review_status === "unreviewed"
-                            ? "Needs review"
-                            : photo.review_status}
-                        {!auditing && photo.disputed && " · Reviewers disagree"}
-                        {!auditing && needsSpecialist(photo) && " · Needs specialist"}
-                        {!auditing && siteVisitNote(photo) && ` · ${siteVisitNote(photo)}`}
-                      </small>
-                    </span>
-                  </button>
-                ))}
-                {!filtered.length && (
-                  <div className="empty-state">
-                    {loading
-                      ? "Loading local evidence…"
-                      : run?.status === "acquiring"
-                        ? "Collecting eligible source photos…"
-                        : "No photos match this view."}
-                  </div>
-                )}
-              </div>
-            </section>
+            <ReviewQueue
+              photos={filtered}
+              activeId={active?.id}
+              runId={runId}
+              cohort={cohort}
+              region={region}
+              review={review}
+              reviewer={reviewer}
+              held={held}
+              loading={loading}
+              acquiring={run?.status === "acquiring"}
+              onCohortChange={setCohort}
+              onRegionChange={setRegion}
+              onReviewChange={setReview}
+              onSelect={(id) => {
+                setActiveIds((ids) => ({ ...ids, [cohort]: id }));
+                setNotice("");
+              }}
+            />
             {active && auditing ? (
               <AuditPanel
                 // A save, or another auditor taking over, starts a fresh draft so no

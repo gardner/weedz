@@ -1,0 +1,49 @@
+/* The queue occupies a row, leaving the full evidence width available below it. */
+.workspace > .queue {
+  grid-column: 1 / -1;
+}
+.workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 205px);
+}
+.queue .photo-list {
+  display: flex;
+  position: relative;
+  gap: 8px;
+  overflow-x: auto;
+  max-height: none;
+  padding: 0 14px 14px;
+}
+.queue .photo-row {
+  flex: 0 0 220px;
+  width: 220px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 9px;
+}
+.queue .photo-row.selected {
+  border-color: #608349;
+  box-shadow: inset 0 0 0 1px #608349;
+}
+.queue .photo-row img {
+  width: 56px;
+  height: 62px;
+}
+.queue .photo-row-body {
+  overflow-wrap: anywhere;
+  gap: 4px;
+}
+.queue .queue-heading {
+  padding: 12px 14px 8px;
+}
+.queue .cohort-tabs {
+  margin-bottom: 8px;
+}
+.queue .queue-filters {
+  margin-bottom: 10px;
+  max-width: 420px;
+}
+@media (max-width: 1250px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
