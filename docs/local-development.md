@@ -133,6 +133,9 @@ are never served in either mode, and nothing is published on anyone's behalf.
 
 ### Reports from devices
 
+See [intake hosting](intake-hosting.md) for shared-process ordering, crash recovery,
+configurable deadlines, database contention and pre-authentication request limits.
+
 A future phone app (its platform is issue #50) sends only the reports a person
 has approved on the phone. The server side of that (issue #57) is a separate
 API, never mounted on the review API. Each device is a *submitter*, a different
@@ -174,9 +177,18 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   refused and nothing is stored. The server keeps only the pixels, re-encoded
   as a fresh JPEG, so EXIF (including GPS and camera serials), XMP, ICC
   profiles and comments never reach storage.
+- `consent` records what the person agreed to, under a published wording
+  (`wording_version`, from [the consent text](report-consent.md)). An unpublished
+  version is refused with 422. With a photo, `consent.uses` lists what it may be
+  used for. It must include `review`; `evidence`, `agencies`, `public` and
+  `training` are separate opt-ins. A report without a photo lists no uses. An
+  optional `credit` names the person in the attribution (#60).
 - `GET /reports/{uuid}` returns the submitter's own receipt. `DELETE` withdraws
   the report: its image is deleted and its content erased (zeroed in the
-  database file), leaving only ids and times so a retry can't bring it back.
+  database file), leaving only ids, times, the consent wording and the uses
+  that were permitted (never the credit name), so a retry can't bring it back
+  and the history shows what was agreed and when it ended. Receipts show the
+  wording and uses.
   `GET` for another submitter's report is a 404, the same as a missing one.
   Device `DELETE` records a tombstone even before an upload arrives, so a late
   `PUT` gets 410. Creating a new tombstone counts toward the daily report
@@ -187,10 +199,10 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   `intake withdraw`. An unknown id is an error. If the report may still be on
   its way, `--not-yet-received` records the withdrawal, so the report is
   refused (410) if it arrives.
-- One submitter's uploads and withdrawals are handled one at a time. A body
-  that stops arriving for 30 seconds gets 408, so a phone that drops off
-  mid-upload doesn't hold up its own retries or withdrawals. A slow but steady
-  upload is never cut off.
+- One submitter's uploads and withdrawals are handled one at a time across
+  local server and operator processes. A body that stops arriving for 30 seconds
+  or takes more than 120 seconds in total gets 408. Even a steady upload
+  must finish within that total deadline.
 - Each submitter may send 100 reports and 50 MB of images per rolling 24 hours,
   including withdrawn reports and crops refused after decoding. Past that, the
   server answers 429 with `Retry-After`. Usage records (ids, times and stored
@@ -707,6 +719,10 @@ Its eligibility is stated per use, with the reason whenever it is not eligible:
   reviewers saw the suggestion.
 - **Sharing:** an original or accepted label whose photo and observation licences
   the sharing policy admits. Non-commercial terms are flagged.
+- **Contributor consent:** a photo its person sent from the app (`rights.consent`)
+  is training- and evaluation-eligible only with their `training` permission,
+  and sharing-eligible only with `agencies`. Once withdrawn it is eligible for
+  nothing. Sourced photos have no consent record and are judged by licence alone.
 
 Coordinates are never included. Each example says only whether its location could
 be shared, or why it is withheld.
@@ -849,6 +865,13 @@ follow-up package and the image endpoint. It knows two uses:
   has its own licence), and whether non-commercial use applies.
 - Admitting ND or SA later means changing acquisition and this one table,
   with the handling the table names.
+- A photo sent from the app also carries what its person permitted
+  (`consent`, [consent text](report-consent.md)). The review app shows it only
+  with `review`, and an export or package includes it only with `agencies`.
+  Otherwise it is linked with the reason, and a withdrawn photo is used for
+  nothing. Its `sharing.terms` add `contributor_permits`, so a recipient knows,
+  for example, not to publish it, and its attribution is the credit the person
+  chose.
 
 **Locations.** Exact locations are the scientific value of a weed record. So
 a public point is shared exactly, with its accuracy, in every output. It is

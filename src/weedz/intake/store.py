@@ -2,11 +2,14 @@
 
 ``reports/reports.sqlite3`` holds each report under its submitter and device-chosen id;
 cleaned crops sit in ``reports/images`` under random names. Both are owner-only.
-Withdrawing a report deletes its image and erases its content, leaving a tombstone of ids
-and times so a retry cannot bring it back. ``secure_delete`` zeroes the erased content in
-the database file too. ``active()`` is where specialist review would read reports (#58).
+Withdrawing a report deletes its image and erases its content, leaving a tombstone of ids,
+times and what was agreed (the consent wording and permitted uses, never the credit name)
+so a retry cannot bring it back and the history shows when consent ended (#60).
+``secure_delete`` zeroes the erased content in the database file too. ``active()`` is
+where specialist review would read reports (#58).
 """
 
+import json
 import os
 import sqlite3
 import uuid
@@ -18,6 +21,8 @@ from pathlib import Path
 
 from weedz import tokens
 from weedz.intake import budget
+from weedz.intake.deletion import SCHEMA as DELETION_SCHEMA
+from weedz.intake.deletion import is_deleting
 from weedz.intake.limits import Limits
 from weedz.intake.schema import Report, ReportContent
 
@@ -25,11 +30,15 @@ SCHEMA = (
     """
 CREATE TABLE IF NOT EXISTS reports(
     submitter INTEGER NOT NULL, report_id TEXT NOT NULL, received_at TEXT NOT NULL,
-    content_sha256 TEXT, body TEXT, image_file TEXT, withdrawn_at TEXT,
+    content_sha256 TEXT, body TEXT, image_file TEXT, withdrawn_at TEXT, consent TEXT,
     PRIMARY KEY(submitter, report_id)
+);
+CREATE TABLE IF NOT EXISTS pending_report_erasures(
+    submitter INTEGER NOT NULL, report_id TEXT NOT NULL, PRIMARY KEY(submitter, report_id)
 );
 """
     + budget.SCHEMA
+    + DELETION_SCHEMA
 )
 
 
@@ -48,12 +57,26 @@ class Receipt:
     received_at: str
     withdrawn_at: str | None
     image: bool
+    # What the person agreed to, kept after withdrawal: the wording and the photo's uses.
+    # None and [] for an id withdrawn before it arrived, or stored before consent was
+    # recorded (#60).
+    consent_version: str | None
+    uses: list[str]
 
     @classmethod
     def of(cls, row: sqlite3.Row) -> "Receipt":
         status = "withdrawn" if row["withdrawn_at"] else "received"
-        image = row["image_file"] is not None
-        return cls(row["report_id"], status, row["received_at"], row["withdrawn_at"], image)
+        image = not row["withdrawn_at"] and row["image_file"] is not None
+        agreed = json.loads(row["consent"] or '{"version": null, "uses": []}')
+        return cls(
+            row["report_id"],
+            status,
+            row["received_at"],
+            row["withdrawn_at"],
+            image,
+            agreed["version"],
+            agreed["uses"],
+        )
 
 
 @dataclass(frozen=True)
@@ -66,7 +89,8 @@ class StoredReport:
 
 
 class ReportStore:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, sqlite_busy_seconds: float = 5) -> None:
+        self.sqlite_busy_seconds = sqlite_busy_seconds
         self.folder = root / "reports"
         self.images = self.folder / "images"
         self.path = self.folder / "reports.sqlite3"
@@ -74,8 +98,10 @@ class ReportStore:
     def _connect(self) -> sqlite3.Connection:
         for folder in (self.folder, self.images):
             folder.mkdir(mode=0o700, parents=True, exist_ok=True)
-        db = tokens.connect_private(self.path, SCHEMA)
+        db = tokens.connect_private(self.path, SCHEMA, self.sqlite_busy_seconds)
         db.execute("PRAGMA secure_delete=ON")
+        if not _records_consent(db):
+            _record_consent(db)
         return db
 
     @contextmanager
@@ -101,10 +127,30 @@ class ReportStore:
         having charged it to the submitter's budget. Raises Withdrawn, Conflict or
         OverBudget. ``receive`` then charges the stored crop's exact size."""
         with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
             earlier = _existing(db, submitter, report_id, digest)
             if earlier is None:
-                budget.charge(db, submitter, report_id, has_image, limits)
+                try:
+                    budget.reserve(db, submitter, report_id, digest, has_image, limits)
+                except budget.ReservationConflict as error:
+                    raise Conflict from error
             return earlier
+
+    def charge_image_attempt(self, submitter: int, report_id: str, limits: Limits) -> None:
+        """Persist a work charge before decoding, without holding the writer during CPU work."""
+        with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
+            row = _row(db, submitter, report_id)
+            if row is not None and row["withdrawn_at"]:
+                raise Withdrawn
+            budget.charge_image_attempt(db, submitter, report_id, limits)
+
+    def refused_admission(self, submitter: int, report_id: str) -> None:
+        """A completed decoding refusal still costs; it is not a crash reservation."""
+        with self._transaction() as db:
+            budget.finish(db, submitter, report_id)
 
     def receive(
         self,
@@ -118,23 +164,44 @@ class ReportStore:
         """Store a report that ``admit`` charged (True), or return the receipt of the same
         one received before (False). Raises Withdrawn, Conflict or OverBudget."""
         name = None
+        receipt: Receipt | None = None
+        refused: budget.OverBudget | None = None
         try:
             with self._transaction() as db:
+                if is_deleting(db, submitter):
+                    raise Withdrawn
                 existing = _existing(db, submitter, report_id, digest)
                 if existing:
                     return existing, False
-                budget.settle(db, submitter, report_id, len(image or b""), limits)
-                received = _now()
-                name = self._write_image(image) if image else None
-                content = report.model_dump_json(exclude={"image"})
-                row = (submitter, report_id, received, digest, content, name)
-                db.execute("INSERT INTO reports VALUES(?,?,?,?,?,?,NULL)", row)
+                try:
+                    budget.settle(db, submitter, report_id, len(image or b""), limits)
+                except budget.OverBudget as error:
+                    # Commit the completed refusal's cleanup before releasing the writer
+                    # lock. Raising inside this transaction would roll it back again.
+                    budget.finish(db, submitter, report_id)
+                    refused = error
+                else:
+                    received = _now()
+                    name = self._write_image(image) if image else None
+                    content = report.model_dump_json(exclude={"image"})
+                    row = (submitter, report_id, received, digest, content, name, agreed(report))
+                    db.execute(
+                        "INSERT INTO reports(submitter,report_id,received_at,content_sha256,"
+                        "body,image_file,consent) VALUES(?,?,?,?,?,?,?)",
+                        row,
+                    )
+                    stored = _row(db, submitter, report_id)
+                    assert stored is not None
+                    receipt = Receipt.of(stored)
         except BaseException:
             # Not committed, so no image is left behind without its report.
             if name:
                 (self.images / name).unlink(missing_ok=True)
             raise
-        return Receipt(report_id, "received", received, None, name is not None), True
+        if refused is not None:
+            raise refused
+        assert receipt is not None
+        return receipt, True
 
     def withdraw(
         self,
@@ -147,74 +214,149 @@ class ReportStore:
         ``before_arrival``, an id not yet received is recorded as withdrawn, so a report
         still on its way is refused when it arrives. Both the device API and the operator
         can record this intent before an upload arrives."""
+        if not self._mark_withdrawal(submitter, report_id, before_arrival, limits):
+            return None
+        return self._erase_withdrawal(submitter, report_id)
+
+    def _mark_withdrawal(
+        self, submitter: int, report_id: str, before_arrival: bool, limits: Limits | None
+    ) -> bool:
+        # Commit the barrier before touching a crop. A crash after this point cannot
+        # leave private report content active, and retries cannot resurrect the id.
         with self._transaction() as db:
+            if is_deleting(db, submitter):
+                raise Withdrawn
             row = _row(db, submitter, report_id)
-            if row is None and before_arrival:
-                # Device-created tombstones cost a new record; trusted operators may
-                # bypass the budget. Existing withdrawals and retries never cost.
+            pending = row is None or row["withdrawn_at"] is None or _has_content(row)
+            if row is None:
+                if not before_arrival:
+                    return False
                 if limits is not None:
-                    budget.charge(db, submitter, report_id, False, limits)
+                    budget.charge_withdrawal(db, submitter, report_id, limits)
                 now = _now()
+                # Never received, so nothing was agreed: no consent is recorded.
                 db.execute(
-                    "INSERT INTO reports VALUES(?,?,?,NULL,NULL,NULL,?)",
+                    "INSERT INTO reports(submitter, report_id, received_at, withdrawn_at) "
+                    "VALUES(?,?,?,?)",
                     (submitter, report_id, now, now),
                 )
-                return Receipt(report_id, "withdrawn", now, now, False)
-            if row is None:
-                return None
+            else:
+                db.execute(
+                    "UPDATE reports SET withdrawn_at=COALESCE(withdrawn_at,?) "
+                    "WHERE submitter=? AND report_id=?",
+                    (_now(), submitter, report_id),
+                )
+            budget.finish(db, submitter, report_id)
+            if pending:
+                db.execute(
+                    "INSERT OR IGNORE INTO pending_report_erasures VALUES(?,?)",
+                    (submitter, report_id),
+                )
+        return True
+
+    def _erase_withdrawal(self, submitter: int, report_id: str) -> Receipt:
+        with self._transaction() as db:
+            row = _row(db, submitter, report_id)
+            assert row is not None and row["withdrawn_at"]
+            pending = db.execute(
+                "SELECT 1 FROM pending_report_erasures WHERE submitter=? AND report_id=?",
+                (submitter, report_id),
+            ).fetchone()
+            if pending is None and not _has_content(row):
+                return Receipt.of(row)
             if row["image_file"]:
                 (self.images / row["image_file"]).unlink(missing_ok=True)
-                self._sync_images()  # the deletion is durable before the withdrawal commits
-            withdrawn = row["withdrawn_at"] or _now()
             db.execute(
-                "UPDATE reports SET withdrawn_at=?, body=NULL, content_sha256=NULL, "
-                "image_file=NULL WHERE submitter=? AND report_id=?",
-                (withdrawn, submitter, report_id),
+                "UPDATE reports SET body=NULL,content_sha256=NULL,image_file=NULL "
+                "WHERE submitter=? AND report_id=?",
+                (submitter, report_id),
             )
-            return Receipt(report_id, "withdrawn", row["received_at"], withdrawn, False)
+            # A failed upload can leave pixels without a committed owner row. Sweep
+            # those under the writer lock before acknowledging physical erasure.
+            self._sweep(db)
+            db.execute(
+                "DELETE FROM pending_report_erasures WHERE submitter=? AND report_id=?",
+                (submitter, report_id),
+            )
+            return Receipt.of(row)
+
+    def resume_withdrawals(self) -> None:
+        """Finish physical erasure behind committed withdrawal barriers after a crash."""
+        with closing(self._connect()) as db:
+            pending = db.execute(
+                "SELECT submitter,report_id FROM reports WHERE withdrawn_at IS NOT NULL "
+                "AND (body IS NOT NULL OR content_sha256 IS NOT NULL OR image_file IS NOT NULL "
+                "OR EXISTS (SELECT 1 FROM pending_report_erasures p WHERE "
+                "p.submitter=reports.submitter AND p.report_id=reports.report_id))"
+            ).fetchall()
+        for row in pending:
+            self._erase_withdrawal(row["submitter"], row["report_id"])
 
     def active(self) -> list[StoredReport]:
-        """Every report received and not withdrawn: unpublished, for review (#58)."""
-        with closing(self._connect()) as db:
+        """Materialize a specialist snapshot before a deletion marker can commit.
+
+        Already-returned snapshots cannot be revoked; callers must not cache report
+        content past its use or treat an old snapshot as current withdrawal state.
+        """
+        with closing(self._connect()) as db, db:
+            # SELECT alone is autocommit: fetchall would release its read lock before
+            # parsing. An explicit read transaction orders this call before erasure.
+            db.execute("BEGIN")
             rows = db.execute(
-                "SELECT * FROM reports WHERE withdrawn_at IS NULL ORDER BY received_at"
+                "SELECT * FROM reports WHERE withdrawn_at IS NULL AND submitter NOT IN "
+                "(SELECT submitter FROM submitter_deletions) ORDER BY received_at"
             ).fetchall()
-        return [
-            StoredReport(
-                row["submitter"],
-                row["report_id"],
-                row["received_at"],
-                ReportContent.model_validate_json(row["body"]),
-                self._image(row["image_file"]),
-            )
-            for row in rows
-        ]
+            return [
+                StoredReport(
+                    row["submitter"],
+                    row["report_id"],
+                    row["received_at"],
+                    ReportContent.model_validate_json(row["body"], context={"stored": True}),
+                    self._image(row["image_file"]),
+                )
+                for row in rows
+            ]
 
     def sweep(self) -> None:
-        """Delete crops no report names: left by a crash between writing an image and
-        committing its report. Run at start-up, before any request is taken."""
-        with closing(self._connect()) as db:
-            named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
+        """Resume withdrawals and remove orphan crops without racing another writer."""
+        self.resume_withdrawals()
+        with self._transaction() as db:
+            self._sweep(db)
+
+    def _sweep(self, db: sqlite3.Connection) -> None:
+        """Sweep within the caller's existing write transaction; never nest transactions.
+
+        Every normal image write holds that same transaction until its report commits,
+        so an unreferenced crop here belongs to an interrupted upload, not a live one.
+        """
+        named = {row[0] for row in db.execute("SELECT image_file FROM reports")}
         for path in self.images.iterdir():
             if path.name not in named:
                 path.unlink(missing_ok=True)
         self._sync_images()
 
     def _image(self, name: str | None) -> Path | None:
-        # Withdrawal deletes the file before erasing the row (privacy first), so a failed
-        # commit can leave a row naming a deleted image: that report has no image.
+        # Missing files are never exposed. Pending withdrawals are already excluded
+        # by active(), even when their physical erasure has not finished.
         path = self.images / name if name else None
         return path if path and path.exists() else None
 
     def _write_image(self, image: bytes) -> str:
         name = f"{uuid.uuid4().hex}.jpg"
         descriptor = os.open(self.images / name, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        with os.fdopen(descriptor, "wb") as out:
-            out.write(image)
-            out.flush()
-            os.fsync(out.fileno())
-        # Durable before the report naming it commits, so a 201 never names a lost crop.
-        self._sync_images()
+        try:
+            with os.fdopen(descriptor, "wb") as out:
+                out.write(image)
+                out.flush()
+                os.fsync(out.fileno())
+            # Durable before the report naming it commits, so a 201 never names a lost crop.
+            self._sync_images()
+        except BaseException:
+            # receive() cannot know this name until we return. Remove a failed write
+            # here; an actual process crash is recovered by the transactional sweep.
+            (self.images / name).unlink(missing_ok=True)
+            self._sync_images()
+            raise
         return name
 
     def _sync_images(self) -> None:
@@ -224,6 +366,46 @@ class ReportStore:
             os.fsync(folder)
         finally:
             os.close(folder)
+
+
+def _has_content(row: sqlite3.Row) -> bool:
+    return any(row[name] is not None for name in ("body", "content_sha256", "image_file"))
+
+
+def _records_consent(db: sqlite3.Connection) -> bool:
+    return any(row["name"] == "consent" for row in db.execute("PRAGMA table_info(reports)"))
+
+
+def _record_consent(db: sqlite3.Connection) -> None:
+    """Upgrade a store made before consent was recorded (#60). A photo was then sent for
+    review alone, so its report is read as permitting review and nothing more. Nothing
+    records that its person knowingly shared the exact point (#91), so consent is never
+    inferred from coordinates: an unconsented location is dropped."""
+    db.execute("BEGIN IMMEDIATE")  # another connection may be upgrading it too
+    if _records_consent(db):
+        db.rollback()
+        return
+    db.execute("ALTER TABLE reports ADD COLUMN consent TEXT")
+    rows = db.execute("SELECT rowid, body FROM reports WHERE body IS NOT NULL").fetchall()
+    for row in rows:
+        body = json.loads(row["body"])
+        consent = body["consent"]
+        consent.setdefault("uses", ["review"] if consent.get("image") else [])
+        if "location" not in consent:
+            consent["location"] = False
+            body["location"] = None
+        agreed = json.dumps({"version": consent["wording_version"], "uses": consent["uses"]})
+        db.execute(
+            "UPDATE reports SET body=?, consent=? WHERE rowid=?",
+            (json.dumps(body), agreed, row["rowid"]),
+        )
+    db.commit()
+
+
+def agreed(report: ReportContent) -> str:
+    """The non-identifying record of what was agreed: kept even after withdrawal."""
+    consent = report.consent
+    return json.dumps({"version": consent.wording_version, "uses": sorted(consent.uses)})
 
 
 def _row(db: sqlite3.Connection, submitter: int, report_id: str) -> sqlite3.Row | None:

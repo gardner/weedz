@@ -16,10 +16,13 @@ from pydantic import (
     ConfigDict,
     Field,
     StringConstraints,
+    ValidationInfo,
+    field_serializer,
     field_validator,
     model_validator,
 )
 
+from weedz.consent import VERSIONS, Permission
 from weedz.discovery.records import SPECIES
 from weedz.discovery.sharing import ADMITTED
 
@@ -70,15 +73,42 @@ class Location(Part):
 
 
 class Consent(Part):
-    """What the person agreed to on the device, under which wording."""
+    """What the person agreed to on the device, under which published wording (#60)."""
 
     wording_version: Token
     image: bool
     # Explicit agreement to share the exact point, independently of image consent.
     location: bool
+    # What the photo may be used for. Review is why a photo is sent, so a photo always
+    # permits it; a report without a photo permits no photo use at all.
+    uses: frozenset[Permission] = frozenset()
     # The cropped image's licence: one the collection admits, and only with image consent.
     licence: str | None = None
     credit: Credit | None = None
+
+    @field_serializer("uses")
+    def sorted_uses(self, uses: frozenset[str]) -> list[str]:
+        """Sorted, so a retry's digest does not depend on the process's hash seed."""
+        return sorted(uses)
+
+    @field_validator("wording_version")
+    @classmethod
+    def published(cls, version: str, info: ValidationInfo) -> str:
+        # A report already stored keeps the wording it was sent under, even one from
+        # before any consent text was published (#60); only intake refuses it.
+        if (info.context or {}).get("stored"):
+            return version
+        if version not in VERSIONS:
+            raise ValueError(f"Not a published consent wording; expected one of {sorted(VERSIONS)}")
+        return version
+
+    @model_validator(mode="after")
+    def uses_go_with_the_photo(self) -> "Consent":
+        if self.image and "review" not in self.uses:
+            raise ValueError("A photo is sent for review, so its uses include review")
+        if not self.image and self.uses:
+            raise ValueError("A report without a photo permits no photo use")
+        return self
 
     @field_validator("licence")
     @classmethod

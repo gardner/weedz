@@ -30,7 +30,7 @@ def test_an_invite_is_stored_only_as_a_hash(tmp_path: Path) -> None:
     assert invite.reviewer == "Ana"
     assert invite.token.startswith(f"weedz_{invite.id}_")
     assert invite.token not in repr(invite)
-    secret = invite.token.rsplit("_", 1)[-1]
+    secret = invite.token.split("_", 2)[2]
     with sqlite3.connect(tmp_path / "access.sqlite3") as db:
         rows = db.execute("SELECT * FROM reviewer_tokens").fetchall()
     assert secret not in repr(rows)
@@ -97,7 +97,7 @@ def test_the_listing_never_shows_a_token_or_its_hash(tmp_path: Path) -> None:
     invite = Access(tmp_path).invite("Ana")
     [row] = Access(tmp_path).reviewers()
     assert set(row) == {"id", "reviewer", "created_at", "revoked_at"}
-    assert invite.token.rsplit("_", 1)[-1] not in repr(row)
+    assert invite.token.split("_", 2)[2] not in repr(row)
 
 
 @pytest.mark.parametrize(
@@ -236,5 +236,5 @@ def test_tokens_are_never_logged(tmp_path: Path, caplog: pytest.LogCaptureFixtur
         json={"status": "confirmed", "reviewer": "Ben"},
         headers=bearer(token),
     )
-    secret = token.rsplit("_", 1)[-1]
+    secret = token.split("_", 2)[2]
     assert secret not in caplog.text

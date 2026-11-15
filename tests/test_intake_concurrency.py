@@ -46,7 +46,9 @@ def test_concurrent_uploads_decode_only_what_the_budget_allows(
             path = f"/reports/{new_id()}"
             return client.put(path, json=with_image(jpeg()), headers=headers).status_code
 
-        assert sorted(pool.map(send, range(4))) == [201, 429, 429, 429]
+        statuses = sorted(pool.map(send, range(4)))
+        assert statuses.count(201) == 1
+        assert all(status in {201, 429, 503} for status in statuses)
     assert len(decoded) == 1
 
 
@@ -141,7 +143,7 @@ def test_a_stalled_upload_times_out_instead_of_blocking_the_submitter(tmp_path: 
 
 
 def test_a_slow_but_steady_upload_is_not_cut_off(tmp_path: Path) -> None:
-    """Weak rural signal is slow, not stalled: only a gap between chunks times out."""
+    """Within the total deadline, a steady upload may outlast the idle limit in total."""
     app = create_intake_app(tmp_path, Limits(body_idle_seconds=0.3))
     body = json.dumps(with_image(jpeg())).encode()
     third = len(body) // 3

@@ -217,3 +217,27 @@ def test_an_onnx_graph_whose_weights_live_elsewhere_records_no_hash(tmp_path: Pa
     inline = tmp_path / "inline.onnx"
     onnx.save_model(helper.make_model(graph), str(inline))
     assert script.artefact_sha256(inline) == hashlib.sha256(inline.read_bytes()).hexdigest()
+
+
+@pytest.mark.parametrize("tensor_attribute", [False, True])
+def test_external_weights_in_control_flow_subgraphs_cannot_ship_as_one_file(
+    tmp_path: Path, tensor_attribute: bool
+) -> None:
+    import onnx
+    from onnx import TensorProto, helper
+
+    weight = helper.make_tensor("weight", TensorProto.FLOAT, [1], [1.0])
+    weight.ClearField("float_data")
+    weight.data_location = TensorProto.EXTERNAL
+    weight.external_data.add(key="location", value="separate-weights.bin")
+    nodes = [helper.make_node("Constant", [], ["result"], value=weight)] if tensor_attribute else []
+    branch = helper.make_graph(nodes, "branch", [], [], [] if tensor_attribute else [weight])
+    graph = helper.make_graph(
+        [helper.make_node("If", ["condition"], ["result"], then_branch=branch, else_branch=branch)],
+        "tower",
+        [],
+        [],
+    )
+    path = tmp_path / "visual.onnx"
+    onnx.save_model(helper.make_model(graph), str(path))
+    assert script.artefact_sha256(path) is None

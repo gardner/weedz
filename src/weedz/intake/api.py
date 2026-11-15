@@ -10,21 +10,27 @@ Nothing here logs or echoes a token.
 import asyncio
 import base64
 import hashlib
+import sqlite3
 import uuid
 from collections.abc import AsyncIterator, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
+from weedz import tokens
 from weedz.intake.budget import OverBudget
+from weedz.intake.deletion import Deletions
 from weedz.intake.images import ImageRefused, clean_image
 from weedz.intake.limits import Limits
 from weedz.intake.schema import Report
 from weedz.intake.store import Conflict, Receipt, ReportStore, Withdrawn
 from weedz.intake.submitters import Submitters, require_submitter
+from weedz.intake.throttle import BeforeAuthentication
+from weedz.intake.turns import SubmitterTurns, TurnBusy
+from weedz.intake.workers import finish_in_thread
 
 
 async def read_body(request: Request, limit: int, idle_seconds: float) -> bytes:
@@ -95,6 +101,10 @@ def refusals() -> Iterator[None]:
         raise HTTPException(410, "This report was withdrawn") from error
     except Conflict as error:
         raise HTTPException(409, "This report id was used for a different report") from error
+    except TurnBusy as error:
+        raise HTTPException(
+            503, "The submitter is busy; retry shortly", headers={"Retry-After": "1"}
+        ) from error
     except OverBudget as error:
         headers = {"Retry-After": str(error.retry_after)}
         raise HTTPException(429, str(error), headers=headers) from error
@@ -104,23 +114,28 @@ class IntakeAPI:
     """Each route acts for the submitter that ``require_submitter`` signed in."""
 
     def __init__(self, root: Path, limits: Limits) -> None:
-        self.store = ReportStore(root)
+        self.store = ReportStore(root, limits.sqlite_busy_seconds)
         self.limits = limits
-        # Each submitter's uploads and withdrawals are taken in turn, so the budget is checked
-        # against every earlier report before any image is decoded, and a withdrawal never
-        # slips between checking and storing a report. Waiting is on the event loop, so queued
-        # requests hold no worker thread. (One server process, as ``intake serve`` runs.)
-        self._submitting: dict[int, asyncio.Lock] = {}
+        self.turns = SubmitterTurns(root)
 
     async def put(self, report_id: uuid.UUID, request: Request, response: Response) -> Receipt:
         submitter: int = request.state.submitter
         # The body is received under the lock too: a withdrawal sent while it arrives waits,
         # and queued uploads are not buffered, as their bodies are not read until their turn.
-        async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            limits = self.limits
-            body = await read_body(request, limits.max_body_bytes, limits.body_idle_seconds)
-            # Parsing, image work and SQLite block, so they run off the event loop.
-            receipt, created = await run_in_threadpool(self.accept, submitter, str(report_id), body)
+        with refusals():
+            async with self.turns.wait(submitter, self.limits.submitter_wait_seconds):
+                limits = self.limits
+                try:
+                    async with asyncio.timeout(limits.body_total_seconds):
+                        body = await read_body(
+                            request, limits.max_body_bytes, limits.body_idle_seconds
+                        )
+                except TimeoutError as error:
+                    raise HTTPException(408, "The report took too long to arrive") from error
+                # Parsing, image work and SQLite block, so they run off the event loop.
+                receipt, created = await finish_in_thread(
+                    self.accept, submitter, str(report_id), body
+                )
         if created:
             response.status_code = 201
         return receipt
@@ -136,7 +151,13 @@ class IntakeAPI:
             earlier = self.store.admit(submitter, report_id, digest, bool(upload), self.limits)
             if earlier:
                 return earlier, False
-            image = cleaned_image(upload, self.limits) if upload else None
+            if upload is not None:
+                self.store.charge_image_attempt(submitter, report_id, self.limits)
+            try:
+                image = cleaned_image(upload, self.limits) if upload else None
+            except Exception:
+                self.store.refused_admission(submitter, report_id)
+                raise
             return self.store.receive(submitter, report_id, report, digest, image, self.limits)
 
     def get(self, report_id: uuid.UUID, request: Request) -> Receipt:
@@ -148,15 +169,16 @@ class IntakeAPI:
         its report is being stored waits for it. An earlier withdrawal also records intent,
         so a late upload cannot resurrect it."""
         submitter: int = request.state.submitter
-        async with self._submitting.setdefault(submitter, asyncio.Lock()):
-            with refusals():
-                receipt = await run_in_threadpool(
+        with refusals():
+            async with self.turns.wait(submitter, self.limits.submitter_wait_seconds):
+                receipt = await finish_in_thread(
                     self.store.withdraw,
                     submitter,
                     str(report_id),
                     before_arrival=True,
                     limits=self.limits,
                 )
+
         return receipt or receipt_missing()
 
 
@@ -165,18 +187,48 @@ def receipt_missing() -> Receipt:
 
 
 def create_intake_app(root: Path, limits: Limits | None = None) -> FastAPI:
-    """Every route needs a submitter token. No schema or docs are served: the contract
-    is documented in the repository, not advertised by the public endpoint."""
-    app = FastAPI(
-        title="Weedz report intake",
-        dependencies=[Depends(require_submitter(Submitters(root)))],
-        openapi_url=None,
-        docs_url=None,
-        redoc_url=None,
+    """Every route needs a submitter token, with revoked retry allowed only for erasure."""
+    limits = limits or Limits()
+    submitters = Submitters(root, limits.sqlite_busy_seconds)
+    app = FastAPI(title="Weedz report intake", openapi_url=None, docs_url=None, redoc_url=None)
+    app.add_middleware(
+        BeforeAuthentication, rate=limits.auth_requests_per_second, burst=limits.auth_burst
     )
-    api = IntakeAPI(root, limits or Limits())
+    app.add_exception_handler(sqlite3.OperationalError, database_busy)
+    api = IntakeAPI(root, limits)
+    deletions = Deletions(root, limits.sqlite_busy_seconds)
+    deletions.resume()
     api.store.sweep()
-    app.put("/reports/{report_id}")(api.put)
-    app.get("/reports/{report_id}")(api.get)
-    app.delete("/reports/{report_id}")(api.delete)
+    authenticated = [Depends(require_submitter(submitters))]
+
+    def delete_submitter(request: Request) -> dict[str, str | None]:
+        submitter = request.state.submitter
+        # A revoked secret can only resume an erasure already requested while active.
+        if (
+            not deletions.started(submitter)
+            and submitters.submitter(tokens.bearer(request)) is None
+        ):
+            raise HTTPException(401, "Send an active submitter token")
+        return deletions.delete(submitter).as_dict()
+
+    app.delete(
+        "/submitter",
+        dependencies=[Depends(require_submitter(submitters, allow_revoked=True))],
+    )(delete_submitter)
+    app.put("/reports/{report_id}", dependencies=authenticated)(api.put)
+    app.get("/reports/{report_id}", dependencies=authenticated)(api.get)
+    app.delete("/reports/{report_id}", dependencies=authenticated)(api.delete)
     return app
+
+
+async def database_busy(request: Request, error: Exception) -> JSONResponse:
+    """SQLite contention is retryable; unrelated database failures remain errors."""
+    if not isinstance(error, sqlite3.OperationalError) or (
+        getattr(error, "sqlite_errorcode", 0) & 0xFF
+    ) not in {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED}:
+        raise error
+    return JSONResponse(
+        {"detail": "The intake database is busy; retry shortly"},
+        status_code=503,
+        headers={"Retry-After": "1"},
+    )

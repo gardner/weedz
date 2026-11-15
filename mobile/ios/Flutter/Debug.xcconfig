@@ -1,1 +1,3 @@
 #include "Generated.xcconfig"
+
+WEEDZ_BUNDLE_IDENTIFIER = org.example.weedz

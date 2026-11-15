@@ -53,7 +53,13 @@ def parity_benchmark(
         "revision": model["revision"],
         "artefact_sha256": hashlib.sha256(tower.read_bytes()).hexdigest(),
         "runtime": {"format": "onnx", "precision": "fp16", "input_dtype": "float16"},
-        "parity": {"passed": passed},
+        "parity": {
+            "passed": passed,
+            "checks": {
+                name: {"value": 0, "limit": limit, "passed": True}
+                for name, limit in THRESHOLDS["limits"].items()
+            },
+        },
     } | override
     path = folder / "parity.json"
     benchmark = {"schema": 1, "thresholds": thresholds, "variants": {VARIANT: variant}}
