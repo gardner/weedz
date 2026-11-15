@@ -40,8 +40,11 @@ classifier metadata plus proposal artifact checksum. Completed evidence is immut
 a late retry cannot replace it. Failed work is not a successful cache hit. Changed
 inputs or corrupt artifacts are refused rather than silently mixed into a run.
 
-Transient per-photo runtime/I/O/memory failures retry the activity; completed matching
-photos survive. On the third attempt a per-photo failure becomes explicit fallback.
+Transient per-photo runtime/I/O/memory failures get up to three local attempts with
+heartbeats and bounded backoff, independently for every photo and stage. After three
+failed attempts that photo becomes explicit fallback. Process/activity interruptions
+use Temporal retries and reuse completed matching artifacts; batch-wide Temporal
+attempt numbers do not consume a later photo's local retry budget.
 Permanent image/proposal validation failures are recorded immediately. Startup/config
 failures remain activity failures. Empty proposal sets are valid empty results and
 leave the original baseline available. Long model operations heartbeat.
