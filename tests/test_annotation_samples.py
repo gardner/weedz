@@ -205,3 +205,15 @@ def test_custom_image_prefix_is_url_encoded(canonical_batch, tmp_path, prefix):
     relative = parse_qs(parsed.query)["d"][0]
     assert not parsed.fragment
     assert (output / "images" / relative).is_file()
+
+
+def test_relative_media_is_resolved_from_manifest_not_working_directory(canonical_batch, tmp_path):
+    manifest, _, key = canonical_batch
+    document = json.loads(manifest.read_text())
+    document["media"]["uri"] = "images/source.png"
+    manifest.write_text(json.dumps(document) + "\n")
+    output = tmp_path / "portable"
+    export_samples(manifest, output)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    assert task["meta"]["external_id"] == key
+    assert len(list((output / "images/corpus").glob("*.png"))) == 1

@@ -45,7 +45,7 @@ def _media(sample: Sample, root: Path) -> tuple[bytes, str, tuple[int, int]]:
         raise ValueError("Only licensed public CC0/CC BY sample batches are supported")
     if sample.rights.metadata_license.lower() not in PUBLIC:
         raise ValueError("Sample metadata licence is outside this public handoff")
-    path = Path(sample.media.uri).resolve()
+    path = (root / sample.media.uri).resolve()
     if not path.is_relative_to(root):
         raise ValueError("Materialized image escapes the source batch")
     encoded = path.read_bytes()
