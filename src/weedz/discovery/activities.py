@@ -158,7 +158,8 @@ def export(store: Store, run_id: str) -> dict:
         "score_meaning": score_meaning(run["model"]),
         "corpus_coverage": coverage(
             [Photo.model_validate(p) for p in photos if p["cohort"] == "incidental"],
-            RunSpec.from_saved(run["spec"]).sampling,
+            # The device-report run made no query, so it has no sampling (#58).
+            RunSpec.from_saved(run["spec"]).sampling if run["spec"] else None,
         ),
         "review_history": history,
         "review_effort": summarize_effort(photos, history),

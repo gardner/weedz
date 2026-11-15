@@ -170,10 +170,9 @@ def _gaps(photos: Photos, start: date | None, end: date) -> Gaps:
 Window = tuple[date | None, date]
 
 
-def _window(export: dict[str, Any], study: StudyDefinition | None) -> Window:
+def _window(spec: RunSpec, study: StudyDefinition | None) -> Window:
     """The part of the study period the run queried (the query period for an open end).
     A study period wholly outside the query period ends before it starts."""
-    spec = _spec(export) or RunSpec()
     after = spec.after if spec.sampling == "stratified" else None
     start = study.period_start if study and study.period_start else after
     end = study.period_end if study and study.period_end else spec.before
@@ -231,22 +230,23 @@ def _period(study: StudyDefinition | None) -> dict[str, str | None] | None:
 
 
 def dates(export: dict[str, Any], photos: Photos, study: StudyDefinition | None) -> dict:
-    spec = _spec(export) or RunSpec()
+    spec = _spec(export)
     period = _period(study)
-    start, end = _window(export, study)
+    # A run that made no query (the device run) has no period to fall outside of.
+    start, end = _window(spec, study) if spec else (date.min, date.max)
     dated = [p["observed_on"][:10] for p in photos if p.get("observed_on")]
     corpus = export.get("corpus_coverage") or {}
     outside = unknown = None
     if study and period:
         outside, unknown = tally(_placed(photos, study, False)), tally(_placed(photos, study, None))
-    # A gap is claimed only where no photo could fall.
-    years, seasons = _gaps(photos, start, end)
+    years, seasons = _gaps(photos, start, end) if spec else ([], [])  # only if queried
     undated = sum(_span(p.get("observed_on")) is None for p in photos)
     return {
         "corpus": corpus,
         "earliest": min(dated, default=None),
         "latest": max(dated, default=None),
-        "query_period": {
+        "query_period": spec
+        and {
             "start": spec.after.isoformat() if spec.sampling == "stratified" else None,
             "end": spec.before.isoformat(),
         },

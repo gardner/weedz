@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { type PointerEvent, type ReactNode, useRef, useState } from "react";
+import { hasImage, noImageReason } from "../lib/device-reports";
 import { findingName } from "../lib/findings";
 import { imageUrl, names, type Photo } from "../lib/types";
 
@@ -58,11 +59,23 @@ export default function PhotoStage({
   };
 
   const caption =
-    photo.cohort === "lookalike"
-      ? `Lookalike photo · ${photo.lookalike_taxon}, resembles ${names[photo.lookalike_of ?? ""] ?? photo.lookalike_of}`
-      : photo.cohort === "reference"
-        ? "Reference photo · kept outside discovery results"
-        : "Animal-subject photo · background plants unlabelled";
+    photo.cohort === "device"
+      ? hasImage(photo)
+        ? "Device report · crop approved and sent from a phone"
+        : "Device report · no crop to show"
+      : photo.cohort === "lookalike"
+        ? `Lookalike photo · ${photo.lookalike_taxon}, resembles ${names[photo.lookalike_of ?? ""] ?? photo.lookalike_of}`
+        : photo.cohort === "reference"
+          ? "Reference photo · kept outside discovery results"
+          : "Animal-subject photo · background plants unlabelled";
+  if (!hasImage(photo)) {
+    return (
+      <div className="image-stage">
+        <p className="no-image">{noImageReason(photo)}</p>
+        <span className="image-caption">{caption}</span>
+      </div>
+    );
+  }
   return (
     <>
       <div className="image-stage">
@@ -145,5 +158,20 @@ function Box({
     >
       {children}
     </rect>
+  );
+}
+
+/** A queue row's thumbnail; a device report without image consent has none to request. */
+export function Thumbnail({ photo, runId }: { photo: Photo; runId: string }) {
+  if (!hasImage(photo)) return <span className="no-thumbnail">No image</span>;
+  return (
+    <Image
+      src={imageUrl(runId, photo.id)}
+      alt={photo.original_common_name || photo.original_taxon}
+      loading="lazy"
+      width={68}
+      height={74}
+      unoptimized
+    />
   );
 }

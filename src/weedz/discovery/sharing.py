@@ -10,7 +10,7 @@ carries its accuracy. Nothing here, or anywhere in the project, publishes to a s
 
 from typing import Any, Literal, NamedTuple
 
-from weedz.consent import Permission, refusal
+from weedz.consent import LICENCE_NAMES, Permission, attribution, refusal
 
 Use = Literal["review", "share"]
 # The permission each use needs from a photo's contributor (docs/report-consent.md): every
@@ -67,6 +67,14 @@ SHARING = [
 ]
 
 
+# Device reports (#58): an image exists only with the person's consent, and only until
+# they withdraw the report.
+NO_IMAGE_CONSENT = "No image: the person who sent this report did not consent to share it"
+WITHDRAWN_REPORT = (
+    "Withdrawn by the person who sent it: its image is deleted and its details erased"
+)
+
+
 class ImageUse(NamedTuple):
     action: Literal["show", "include", "link"]
     reason: str
@@ -110,6 +118,11 @@ def contributor_refusal(photo: dict[str, Any], use: Use) -> str:
 
 def image_use(photo: dict[str, Any], use: Use) -> ImageUse:
     """Whether the photo may be shown (review) or included (share), or only linked."""
+    device = photo.get("device")
+    if withdrawn(photo):
+        return ImageUse("link", WITHDRAWN_REPORT)
+    if device and not device["image_consent"]:
+        return ImageUse("link", NO_IMAGE_CONSENT)
     licence = photo.get("photo_license")
     terms = ADMITTED.get(licence or "")
     if terms is None:
@@ -195,7 +208,19 @@ def with_location(photo: dict[str, Any], use: Use) -> dict[str, Any]:
     return kept
 
 
+def shared_credit(photo: dict[str, Any]) -> dict[str, Any]:
+    """The photo with only the credit that may leave with it (#60). A contributor's name
+    goes only with a crop they let leave; otherwise they are an anonymous contributor."""
+    licence = photo.get("photo_license") or ""
+    if not photo.get("consent") or licence not in LICENCE_NAMES:
+        return photo
+    if image_use(photo, "share").action == "include":
+        return photo
+    return photo | {"attribution": attribution(licence, None)}
+
+
 def shareable_photo(photo: dict[str, Any]) -> dict[str, Any]:
+    photo = shared_credit(photo)
     allowed = location(photo, "share")
     return with_location(photo, "share") | {
         "sharing": {

@@ -22,7 +22,7 @@ export type Suitability = {
     corpus: { sampling?: string; by_year?: Counts; by_season?: Counts };
     earliest: string | null;
     latest: string | null;
-    query_period: Period;
+    query_period: Period | null;
     study_period: Period | null;
     outside_study_period: Tally | null;
     study_period_unknown: Tally | null;

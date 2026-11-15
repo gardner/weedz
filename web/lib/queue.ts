@@ -1,15 +1,21 @@
+import { DEVICE_RUN } from "./device-reports";
 import { needsSpecialist, waitingSince } from "./referrals";
 import type { Photo } from "./types";
 
-export type View = "incidental" | "reference" | "lookalike" | "audit" | "specialist";
+export type View = "incidental" | "reference" | "lookalike" | "device" | "audit" | "specialist";
 
 export const VIEWS: [View, string][] = [
   ["incidental", "Incidental photos"],
+  ["device", "Device reports"],
   ["reference", "References"],
   ["lookalike", "Lookalikes"],
   ["audit", "Audit sample"],
   ["specialist", "Needs specialist"],
 ];
+
+/** The run of reports sent from phones opens on its own view (#58). */
+export const defaultView = (runId: string): View =>
+  runId === DEVICE_RUN ? "device" : "incidental";
 
 /** Whether this reviewer has audited the photo. Names are unauthenticated, as for reviews. */
 export const auditedBy = (photo: Photo, reviewer: string) =>
