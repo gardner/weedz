@@ -24,7 +24,7 @@ from weedz.bundles.manifest import (
     screening_stamp,
 )
 from weedz.bundles.signing import public_key_text, sign, verify
-from weedz.bundles.text_table import save_table
+from weedz.bundles.text_table import preprocessing_sha256, save_table
 from weedz.bundles.windows import ALGORITHM
 from weedz.discovery.inference import MODELS, RANKING_REVISION, region_boxes, summarize_scores
 from weedz.discovery.parity import THRESHOLDS
@@ -74,26 +74,28 @@ def test_a_signature_from_an_unpinned_key_fails(key: Ed25519PrivateKey) -> None:
     assert verify(envelope, [public_key_text(key), public_key_text(other)]) == b"{}"
 
 
-def test_the_screening_stamp_is_what_an_intake_report_carries() -> None:
+def test_device_stamp_does_not_inherit_server_population_score_meaning() -> None:
     stamp = screening_stamp("bioclip-2")
     assert stamp == {
         "model_key": "bioclip-2",
         "revision": MODELS["bioclip-2"]["revision"],
         "ranking_revision": RANKING_REVISION,
-        "score_meaning": "bioclip-2/ranking-4/meaning-1",
     }
 
 
 def test_the_screening_stamp_validates_as_an_intake_report_model() -> None:
     stamp = screening_stamp("bioclip-2")
-    assert Screening.model_validate(stamp).model_dump() == stamp
+    assert Screening.model_validate(stamp).model_dump(exclude_none=True) == stamp
 
 
 def test_publishing_is_refused_without_a_passing_parity_record(tmp_path: Path) -> None:
     tower, _ = write_artefacts(tmp_path)
     digest = artefact(tower)["sha256"]
     passing = json.loads(parity_benchmark(tmp_path, tower).read_text())
-    assert parity_record(passing, VARIANT, "bioclip-2", digest) == "onnx-fp16/thresholds-1"
+    assert (
+        parity_record(passing, VARIANT, "bioclip-2", digest, preprocessing_sha256(PREPROCESSING))
+        == "onnx-fp16/thresholds-1"
+    )
     failing = json.loads(parity_benchmark(tmp_path, tower, passed=False).read_text())
     refusals = [
         (passing, "torch-int8", digest, "no parity record"),
@@ -102,7 +104,7 @@ def test_publishing_is_refused_without_a_passing_parity_record(tmp_path: Path) -
     ]
     for benchmark, variant, sha, reason in refusals:
         with pytest.raises(ParityRefused, match=reason):
-            parity_record(benchmark, variant, "bioclip-2", sha)
+            parity_record(benchmark, variant, "bioclip-2", sha, preprocessing_sha256(PREPROCESSING))
 
 
 @pytest.mark.parametrize(
@@ -121,16 +123,26 @@ def test_a_record_for_other_bytes_model_or_thresholds_cannot_gate(tmp_path: Path
     tower, _ = write_artefacts(tmp_path)
     benchmark = json.loads(parity_benchmark(tmp_path, tower, **override).read_text())
     with pytest.raises(ParityRefused):
-        parity_record(benchmark, VARIANT, "bioclip-2", artefact(tower)["sha256"])
+        parity_record(
+            benchmark,
+            VARIANT,
+            "bioclip-2",
+            artefact(tower)["sha256"],
+            preprocessing_sha256(PREPROCESSING),
+        )
 
 
 def test_the_committed_benchmark_is_refused_until_it_records_artefact_hashes() -> None:
     committed = Path(__file__).parents[1] / "benchmarks" / "optimised-model-parity.json"
     benchmark = json.loads(committed.read_text())
     with pytest.raises(ParityRefused, match="SHA-256"):
-        parity_record(benchmark, "torch-fp16", "bioclip-2", "0" * 64)
+        parity_record(
+            benchmark, "torch-fp16", "bioclip-2", "0" * 64, preprocessing_sha256(PREPROCESSING)
+        )
     with pytest.raises(ParityRefused, match="did not pass"):
-        parity_record(benchmark, "onnx-int8", "bioclip-2", "0" * 64)
+        parity_record(
+            benchmark, "onnx-int8", "bioclip-2", "0" * 64, preprocessing_sha256(PREPROCESSING)
+        )
 
 
 def test_the_manifest_carries_the_preprocessing_the_tower_expects(tmp_path: Path) -> None:
@@ -288,7 +300,13 @@ def test_a_benchmark_with_other_limits_under_the_same_version_cannot_gate(tmp_pa
     looser = THRESHOLDS | {"limits": THRESHOLDS["limits"] | {"max_margin_drift": 0.5}}
     benchmark = json.loads(parity_benchmark(tmp_path, tower, thresholds=looser).read_text())
     with pytest.raises(ParityRefused, match="limits"):
-        parity_record(benchmark, VARIANT, "bioclip-2", artefact(tower)["sha256"])
+        parity_record(
+            benchmark,
+            VARIANT,
+            "bioclip-2",
+            artefact(tower)["sha256"],
+            preprocessing_sha256(PREPROCESSING),
+        )
 
 
 def test_the_written_conventions_cover_padding_and_luma() -> None:

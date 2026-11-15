@@ -26,9 +26,9 @@ void main() {
       findings: const Findings(),
     );
     await answerEverything(tester);
-    await tapText(tester, 'Approve this report');
+    await tapText(tester, 'Report sighting');
     final report = store.current.report;
-    expect(store.current.status, ApprovalStatus.approved);
+    expect(store.current.status, ApprovalStatus.sending);
     expect(report.image, isNotNull);
     expect(report.location, isNotNull);
   });

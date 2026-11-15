@@ -3,8 +3,9 @@
 ///
 /// The rules live in the domain ([ReportCase]); this screen only shows the
 /// case and asks it for transitions, which go out through callbacks for the
-/// store to commit. What it shows is `reportCase.report`, the value that
-/// will be serialised, so what is shown is what is sent.
+/// store to commit. Editable previews apply the visible choices locally;
+/// Report sighting approves that exact snapshot before asking the store
+/// to send.
 library;
 
 import 'package:material_ui/material_ui.dart';
@@ -39,7 +40,15 @@ class ApprovalScreen extends StatefulWidget {
   final ValueChanged<ReportCase> onChanged;
 
   /// An approved (or unanswered) case to freeze and send with
-  /// [ReportCase.startSending].
+  /// [ReportCase.startSending]. The persisted case may still be pending:
+  /// atomically compare its id/status and commit this exact approved snapshot
+  /// plus the frozen sending/outbox state. Serialize edits and send per case;
+  /// reject a second send once sending. This callback must not depend on an
+  /// earlier onChanged callback or parent rebuild. Catch operational failures
+  /// in the caller and reconcile its persisted case/outbox: throwing has an
+  /// unknown commit outcome and leaves this snapshot locked. Only a known
+  /// settled status may advance it. If storage proves no commit occurred,
+  /// remount a fresh screen with a new key; never reset it merely on timeout.
   final ValueChanged<ReportCase> onSend;
 
   /// A sent case to withdraw with `DELETE`.
@@ -66,41 +75,59 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
   /// The choices to carry over to a revision this screen just made.
   Choices? _carried;
 
+  Crop? _decoded;
+  Crop? _failed;
+  ReportCase? _requested;
+  bool _requestUnconfirmed = false;
+
   ReportCase get _case => widget.reportCase;
 
   bool get _editable =>
-      _case.status == ApprovalStatus.pending ||
-      _case.status == ApprovalStatus.approved;
+      _requested == null &&
+      (_case.status == ApprovalStatus.pending ||
+          _case.status == ApprovalStatus.approved);
 
   /// What the person may choose from: the scan's findings, or failing that
   /// what the report already holds, so nothing shown is silently dropped.
-  Findings _merged() => Findings(
+  Findings _merged({Findings? previous}) => Findings(
     crop: widget.findings.crop ?? _case.report.image,
     location: widget.findings.location ?? _case.report.location,
+    credit:
+        widget.findings.credit ??
+        _case.report.consent.credit ??
+        previous?.credit,
   );
 
   MemoryImage? get _photo {
     final crop = _found.crop;
     if (crop == null) return null;
     final cached = _preview;
-    if (cached != null && identical(cached.$1, crop)) return cached.$2;
+    if (cached != null && cached.$1 == crop) return cached.$2;
     final image = MemoryImage(crop.bytes);
     _preview = (crop, image);
     return image;
   }
 
-  /// A report waiting for a decision starts with nothing chosen. One already
-  /// decided on shows the answers it records.
-  Choices _startingChoices() => _case.status == ApprovalStatus.pending
-      ? const Choices()
-      : Choices.fromReport(_case.report, _found);
+  /// Pending means unapproved, not untouched: reopening must preserve edits.
+  /// Callers create fresh drafts without an image and with any recorded
+  /// location they will visibly offer; findings only retain removable data.
+  Choices _startingChoices() => Choices.fromReport(_case.report, _found);
 
   @override
   void didUpdateWidget(ApprovalScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     final newCase = oldWidget.reportCase.id != widget.reportCase.id;
     if (newCase || !identical(oldWidget.findings, widget.findings)) {
-      _found = _merged();
+      _found = _merged(previous: newCase ? null : _found);
+    }
+    // Sending and settlement may coalesce into a single parent rebuild.
+    // A new immutable settled case acknowledges work even at the same status.
+    if (newCase ||
+        (_case.status != ApprovalStatus.pending &&
+            _case.status != ApprovalStatus.approved &&
+            !identical(oldWidget.reportCase, _case))) {
+      _requested = null;
+      _requestUnconfirmed = false;
     }
     if (newCase) {
       _choices = _carried ?? _startingChoices();
@@ -113,13 +140,54 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
   /// Records an answer. Once every answer is given, the report is edited to
   /// match, which undoes any approval.
   void _choose(Choices next) {
+    if (!_editable) return;
     setState(() => _choices = next);
     if (!next.isCompleteFor(_found)) return;
     final edited = _case.edit(_applied());
     if (!identical(edited, _case)) widget.onChanged(edited);
   }
 
-  void _approve() => widget.onChanged(_case.edit(_applied()).approve());
+  bool get _ready =>
+      _choices.isCompleteFor(_found) &&
+      (_choices.sendPhoto != true || _decoded == _found.crop);
+
+  void _previewed(Crop crop, bool decoded) {
+    if (!mounted || crop != _found.crop || !_editable) return;
+    if (decoded ? _decoded == crop : _failed == crop) return;
+    setState(() {
+      if (decoded) {
+        _decoded = crop;
+      } else {
+        _failed = crop;
+      }
+    });
+    if (!decoded && _choices.sendPhoto == true) {
+      _choose(_choices.withPhoto(send: false));
+    }
+  }
+
+  void _send() {
+    if (_requested != null) return;
+    var snapshot = _case;
+    if (_editable) {
+      if (!_ready) return;
+      snapshot = _case.edit(_applied());
+      if (snapshot.status == ApprovalStatus.pending) {
+        snapshot = snapshot.approve();
+      }
+    } else if (_case.status != ApprovalStatus.unanswered) {
+      return;
+    }
+    setState(() => _requested = snapshot);
+    try {
+      widget.onSend(snapshot);
+    } catch (_) {
+      // The callback may have committed before throwing. Keep the frozen
+      // snapshot locked until the caller reconciles storage; never guess.
+      setState(() => _requestUnconfirmed = true);
+      rethrow;
+    }
+  }
 
   void _revise(Report Function(Report) change) {
     final (retired, revision) = _case.revise(
@@ -133,12 +201,14 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
   /// Whether the report the person confirmed is still this one. A send can
   /// settle while a dialog is open, so each action then checks that the
   /// current status still allows it.
-  bool _isSame(ReportCase asked) => asked.id == _case.id;
+  bool _isSame(ReportCase asked) => _requested == null && asked.id == _case.id;
 
   @override
   Widget build(BuildContext context) {
-    final report = _case.report;
+    final report =
+        _requested?.report ?? (_editable ? _applied() : _case.report);
     final choose = _editable ? _choose : null;
+    final crop = _found.crop;
     return Scaffold(
       appBar: AppBar(title: const Text('Review this report')),
       body: SafeArea(
@@ -156,6 +226,10 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
                 preview: _photo,
                 choices: _choices,
                 onChoose: choose,
+                failed: _failed == _found.crop && _found.crop != null,
+                onPreview: crop == null
+                    ? null
+                    : (decoded) => _previewed(crop, decoded),
               ),
               LocationSection(
                 report: report,
@@ -172,10 +246,11 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
               ),
               ApprovalActions(
                 reportCase: _case,
-                choicesComplete: _choices.isCompleteFor(_found),
+                requested: _requested != null,
+                requestUnconfirmed: _requestUnconfirmed,
+                choicesComplete: _ready,
                 handlers: (
-                  approve: _approve,
-                  send: () => widget.onSend(_case),
+                  send: _send,
                   decline: (asked) {
                     if (_isSame(asked) && _case.mayDecline) {
                       widget.onChanged(_case.decline());

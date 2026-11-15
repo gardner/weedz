@@ -8,7 +8,13 @@ import pytest
 from bundle_helpers import PREPROCESSING, VARIANT, parity_benchmark, write_artefacts
 
 from weedz.bundles.manifest import ParityRefused, artefact, parity_record
-from weedz.bundles.text_table import prompts, provenance_path, save_table, table_parts
+from weedz.bundles.text_table import (
+    preprocessing_sha256,
+    prompts,
+    provenance_path,
+    save_table,
+    table_parts,
+)
 from weedz.discovery.inference import file_sha256
 from weedz.discovery.parity import THRESHOLDS
 
@@ -40,7 +46,13 @@ def test_summary_flag_cannot_override_invalid_measurements(tmp_path: Path, inval
         drift["limit"] = 1
     benchmark["variants"][VARIANT]["parity"] = {"passed": True, "checks": measured}
     with pytest.raises(ParityRefused):
-        parity_record(benchmark, VARIANT, "bioclip-2", artefact(tower)["sha256"])
+        parity_record(
+            benchmark,
+            VARIANT,
+            "bioclip-2",
+            artefact(tower)["sha256"],
+            preprocessing_sha256(PREPROCESSING),
+        )
 
 
 @pytest.mark.parametrize(

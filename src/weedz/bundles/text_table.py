@@ -9,6 +9,7 @@ pre-processing, so a bundle cannot label one model's embeddings as another's, an
 is told how to prepare each window for the tower.
 """
 
+import hashlib
 import json
 from collections.abc import Mapping
 from pathlib import Path
@@ -16,6 +17,7 @@ from typing import Any
 
 import numpy as np
 
+from weedz.bundles.canonical import canonical
 from weedz.discovery.inference import LABELS, MODELS, file_sha256, prompt
 from weedz.discovery.records import SPECIES
 
@@ -36,6 +38,15 @@ def portable(value: Any) -> Any:
     if isinstance(value, float):
         return repr(value)
     return value
+
+
+def preprocessing_sha256(preprocessing: Mapping[str, Any]) -> str:
+    """Hash the portable transform exactly as both parity producer and publisher do.
+
+    Floats become decimal strings before canonical JSON, matching a saved sidecar;
+    this is distinct from the screener's library-inclusive embedding cache key.
+    """
+    return hashlib.sha256(canonical(portable(preprocessing))).hexdigest()
 
 
 def provenance_path(table: Path) -> Path:

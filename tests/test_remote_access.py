@@ -97,6 +97,7 @@ def test_the_listing_never_shows_a_token_or_its_hash(tmp_path: Path) -> None:
     invite = Access(tmp_path).invite("Ana")
     [row] = Access(tmp_path).reviewers()
     assert set(row) == {"id", "reviewer", "created_at", "revoked_at"}
+    # The secret is everything after "weedz_<id>_"; it may itself contain "_".
     assert invite.token.split("_", 2)[2] not in repr(row)
 
 

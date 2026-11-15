@@ -1,3 +1,4 @@
+@import "./segmentation.css";
 @import "./shell.css";
 @import "./evidence.css";
 @import "./notes.css";
@@ -6,4 +7,5 @@
 @import "./referrals.css";
 @import "./study.css";
 @import "./session.css";
+@import "./device.css";
 @import "./responsive.css";

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from weedz.bundles.manifest import BundleSpec
-from weedz.bundles.text_table import prompts, save_table
+from weedz.bundles.text_table import preprocessing_sha256, prompts, save_table
 from weedz.discovery.inference import MODELS
 from weedz.discovery.parity import THRESHOLDS
 
@@ -52,6 +52,7 @@ def parity_benchmark(
         "model": model["repo"],
         "revision": model["revision"],
         "artefact_sha256": hashlib.sha256(tower.read_bytes()).hexdigest(),
+        "preprocessing_sha256": preprocessing_sha256(PREPROCESSING),
         "runtime": {"format": "onnx", "precision": "fp16", "input_dtype": "float16"},
         "parity": {
             "passed": passed,
