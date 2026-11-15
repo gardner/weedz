@@ -27,8 +27,8 @@
       "id": "scene-04",
       "start": 66,
       "end": 93,
-      "visual": "Real Flutter approval widgets, clearly marked phone prototype",
-      "narration": "These phone screens are a working interface prototype. The design keeps private photographs on the phone and asks the person to approve each individual report. Library access and report approval are separate choices. Native phone inference still needs performance and parity testing: these screens demonstrate the controls, not a finished phone detector."
+      "visual": "Running mobile app: review a real photo and its report controls",
+      "narration": "On the phone, keep control of what you share. Library access and individual report approval are separate choices. Inspect the photograph and the candidate before deciding. Then approve one report, with the information you choose to include. A suggestion is a starting point for your judgment."
     },
     {
       "id": "scene-05",

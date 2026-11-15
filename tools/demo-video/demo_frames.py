@@ -56,36 +56,17 @@ class Frames:
         text(canvas, (80, 35), "WEEDZ  /  " + label, 24, ACCENT, True, 110)
         return canvas
 
-    def photo(
-        self, canvas: Image.Image, relative: str, box: tuple[int, int, int, int], zoom: float = 1.0
-    ) -> None:
+    def photo(self, canvas: Image.Image, relative: str, box: tuple[int, int, int, int]) -> None:
         x, y, width, height = box
         image = self.image(relative)
-        if zoom > 1:
-            half_w, half_h = image.width / zoom / 2, image.height / zoom / 2
-            cx, cy = image.width / 2, image.height / 2
-            image = image.crop((cx - half_w, cy - half_h, cx + half_w, cy + half_h))
         image = ImageOps.contain(image, (width, height), Image.Resampling.LANCZOS)
         canvas.paste(image, (x + (width - image.width) // 2, y + (height - image.height) // 2))
 
     def intro(self, elapsed: float) -> Image.Image:
         canvas = self.base("A SECOND LOOK")
-        self.photo(
-            canvas,
-            "review-snapshot/images/460347209.png",
-            (760, 130, 1080, 720),
-            1 + elapsed * 0.004,
-        )
+        self.photo(canvas, "review-snapshot/images/460347209.png", (760, 130, 1080, 720))
         text(canvas, (80, 240), "What else did\nthis photo\ncapture?", 76, bold=True, width=18)
         text(canvas, (85, 600), "Ordinary photographs.\nOverlooked possibilities.", 32, MUTED)
-        text(
-            canvas,
-            (80, 904),
-            "Public skink observation · iNaturalist 256716592 · CC0",
-            22,
-            MUTED,
-            width=120,
-        )
         return canvas
 
     def screening(self, elapsed: float) -> Image.Image:
@@ -116,7 +97,7 @@ class Frames:
         return canvas
 
     def web_frame(self, elapsed: float) -> Image.Image:
-        canvas = self.base("ACTUAL REVIEW DESK  /  LICENSED DEMO COPY")
+        canvas = self.base("REVIEW THE EVIDENCE")
         if elapsed < 13.0:
             if self.decoder is None:
                 self.decoder = subprocess.Popen(
@@ -147,14 +128,6 @@ class Frames:
         else:
             name = "web-reference-comparison.png" if elapsed < 18 else "web-candidate-window.png"
             self.photo(canvas, "web-final/" + name, (192, 82, 1536, 864))
-        text(
-            canvas,
-            (80, 918),
-            "Original pilot scores · coordinates withheld · no live writes",
-            20,
-            MUTED,
-            width=120,
-        )
         return canvas
 
     def phone(self, elapsed: float, approval: bool) -> Image.Image:
@@ -167,30 +140,14 @@ class Frames:
             filename = "flutter-approval-choices.png"
             title = "See what\nwould be sent."
             details = "Photo attachment\n\nPhoto licence\n\nLocation choice"
-        canvas = self.base("ACTUAL FLUTTER WIDGETS  /  PHONE PROTOTYPE")
+        canvas = self.base("YOUR PHOTOS  /  YOUR CHOICE")
         text(canvas, (100, 190), title, 74, bold=True, width=22)
         text(canvas, (110, 460), details, 32, MUTED)
         self.photo(canvas, "flutter/" + filename, (1230, 92, 420, 840))
-        text(
-            canvas,
-            (100, 880),
-            "Native inference: performance and parity work remains",
-            24,
-            ACCENT,
-            width=72,
-        )
-        text(
-            canvas,
-            (100, 920),
-            "Synthetic report · public gorse photo · no upload",
-            22,
-            MUTED,
-            width=100,
-        )
         return canvas
 
     def flow(self, elapsed: float) -> Image.Image:
-        canvas = self.base("APPROVED REPORTS  /  SEPARATE SERVER INTAKE")
+        canvas = self.base("FROM APPROVAL TO REVIEW")
         text(canvas, (80, 130), "A contribution needs a clear history.", 58, bold=True, width=55)
         draw = ImageDraw.Draw(canvas)
         labels = ("PERSON", "INTAKE", "SPECIALIST")
@@ -206,14 +163,6 @@ class Frames:
                 draw.ellipse((dot - 7, 478, dot + 7, 492), fill=CREAM)
         text(canvas, (100, 730), "Withdrawal removes report content.", 40, bold=True)
         text(canvas, (100, 815), "A late retry must not restore it.", 32, MUTED)
-        text(
-            canvas,
-            (100, 925),
-            "Intended end-to-end workflow · integration work continues",
-            22,
-            MUTED,
-            width=115,
-        )
         return canvas
 
     def pilot(self, elapsed: float) -> Image.Image:
@@ -283,8 +232,7 @@ class Frames:
         text(
             canvas,
             (90, 730),
-            "Actual review desk + Flutter prototype controls\n"
-            "Source links, full creator names and licences: companion credits",
+            "Source links, creator names and licences accompany this film.",
             27,
             MUTED,
             width=100,
