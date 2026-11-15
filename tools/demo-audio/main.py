@@ -27,9 +27,12 @@ def main() -> None:
     parser.add_argument("--text-file", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--reference-audio", type=Path)
     parser.add_argument("--reference-text-file", type=Path)
     args = parser.parse_args()
+    if args.gpu < 0:
+        parser.error("GPU index must be non-negative")
     if (args.reference_audio is None) != (args.reference_text_file is None):
         parser.error("Reference audio and its exact transcript must be provided together")
     try:
@@ -69,7 +72,7 @@ def main() -> None:
             "--ref-text",
             args.reference_text_file.read_text().strip(),
         ]
-    subprocess.run(command, env={**os.environ, "CUDA_VISIBLE_DEVICES": "0"}, check=True)
+    subprocess.run(command, env={**os.environ, "CUDA_VISIBLE_DEVICES": str(args.gpu)}, check=True)
     metadata = {
         "model": "BreezeBlue/Breeze-TTS-2",
         "expected_model_revision": MODEL_REVISION,
@@ -78,6 +81,7 @@ def main() -> None:
         "text": text,
         "instruction": VOICE,
         "seed": args.seed,
+        "gpu": args.gpu,
         "cfg_scale": 4,
         "fast_all": False,
         "purpose": "Non-commercial Weedz project demonstration",
