@@ -28,7 +28,12 @@ Run `prepare --root PATH --sam-checkpoint PATH --classifier-checkpoint PATH
 --labels PATH --device cuda:0`. Add `--proposer sam3 --prompts plant flower
 --concept-threshold 0.5` for SAM3. Preparation loads and records actual model,
 code, preprocessing and runtime metadata. Store its returned configuration
-reference with the source manifest. Choose the physical GPU through
+reference with the source manifest. Worker shutdown grants active activities sixty seconds to drain before SDK
+cancellation. Give a supervising unit a longer stop timeout. For a strict writer
+handoff, let the active publication finish and verify its lock is released; do
+not assume an arbitrarily long batch fits that grace window.
+
+Choose the physical GPU through
 `CUDA_VISIBLE_DEVICES`; SAM3 uses logical `cuda:0`.
 
 Start `worker --config PATH --roles control` and a resident
