@@ -265,3 +265,19 @@ def test_a_withdrawn_report_leaves_the_follow_up_package(intake: Path, client: T
     client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/leads", json=lead)
     ReportStore(intake).withdraw(1, report_id)
     assert client.get(f"/runs/{RUN_ID}/package").json()["leads"] == []
+
+
+def test_a_name_leaves_only_with_a_crop_its_person_let_leave(
+    intake: Path, client: TestClient
+) -> None:
+    """The credit is for the photo: where sharing the crop is refused, so is the name."""
+    send(intake, with_image(jpeg(), credit="Aroha Unique"))  # review only, the default
+    send(intake, with_image(jpeg(), uses=["review", "agencies"], credit="Bea Shared"))
+    lead = {"action": "selected", "selector": "Ana", "reason": "Gorse by the track"}
+    for photo in detail(client)["photos"]:
+        client.post(f"/runs/{RUN_ID}/photos/{photo['id']}/leads", json=lead)
+    export = client.get(f"/runs/{RUN_ID}/export").text
+    package = client.get(f"/runs/{RUN_ID}/package").text
+    for shared in (export, package):
+        assert "Aroha Unique" not in shared and "Bea Shared" in shared
+        assert "Photo: a Weedz contributor, CC BY 4.0" in shared
