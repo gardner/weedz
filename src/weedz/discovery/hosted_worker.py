@@ -79,7 +79,10 @@ async def serve_worker(
     await asyncio.to_thread(preflight_models, activities)
     identity = f"weedz-hosted-{os.getpid()}-{uuid.uuid4().hex[:12]}"
 
+    fatal_errors: list[BaseException] = []
+
     async def fatal(error: BaseException) -> None:
+        fatal_errors.append(error)
         stop.set()
 
     try:
@@ -101,5 +104,7 @@ async def serve_worker(
                     finally:
                         # Revoke acceptance before Worker.__aexit__ begins graceful draining.
                         clear_worker_health(health_file, identity)
+        if fatal_errors:
+            raise RuntimeError("Temporal worker stopped after a fatal error") from fatal_errors[0]
     finally:
         clear_worker_health(health_file, identity)

@@ -63,3 +63,38 @@ def test_readiness_clears_before_worker_context_drains(monkeypatch, tmp_path, fa
     else:
         asyncio.run(call)
     assert order[:3] == ["ready", "clear", "drain"]
+
+
+def test_fatal_callback_drains_then_fails_for_systemd_restart(monkeypatch, tmp_path):
+    order, callbacks = [], []
+    (tmp_path / "discovery.sqlite3").touch()
+    original = ValueError("Worker polling failed")
+
+    def worker(*_args, **kwargs):
+        callbacks.append(kwargs["on_fatal_error"])
+        return DrainingWorker(order)
+
+    async def heartbeat(*_args):
+        order.append("ready")
+        await callbacks[0](original)
+
+    monkeypatch.setattr("weedz.discovery.hosted_worker.Activities", Activities)
+    monkeypatch.setattr("weedz.discovery.hosted_worker.Worker", worker)
+    monkeypatch.setattr("weedz.discovery.hosted_worker.temporal_client", client)
+    monkeypatch.setattr("weedz.discovery.hosted_worker.preflight_models", lambda _: None)
+    monkeypatch.setattr("weedz.discovery.hosted_worker.heartbeat", heartbeat)
+    monkeypatch.setattr(
+        "weedz.discovery.hosted_worker.clear_worker_health", lambda *_: order.append("clear")
+    )
+    with pytest.raises(RuntimeError, match="fatal") as caught:
+        asyncio.run(
+            serve_worker(
+                tmp_path,
+                TemporalConnection(),
+                tmp_path / "state",
+                tmp_path / "health",
+                asyncio.Event(),
+            )
+        )
+    assert caught.value.__cause__ is original
+    assert order[:3] == ["ready", "clear", "drain"]
