@@ -53,12 +53,7 @@ async def worker(root: Path, address: str, stack: AsyncExitStack) -> None:
             await Client.connect(address),
             task_queue=TASK_QUEUE,
             workflows=[DiscoveryWorkflow],
-            activities=[
-                activities.collect_photos,
-                activities.screen_photos,
-                activities.export_run,
-                activities.fail_run,
-            ],
+            activities=activities.registered_activities(),
             activity_executor=executor,
             max_concurrent_activities=1,
         )
