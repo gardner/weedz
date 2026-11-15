@@ -53,3 +53,33 @@ Weights/code are not redistributed with this runner. The license includes an
 acceptable-use policy requiring clear disclosure for public machine-generated
 content; the video credits identify the AI-generated instrumental as MiniMax
 Music3. Generated music is not a guarantee of third-party rights clearance.
+
+## Delivered three-minute bed
+
+Two raw, distinct takes were generated: seed 112 (57.423 s, first seven-tag
+structure) and seed 113 (133.445 s, the current longer structure). Their original
+WAVs and JSON requests/results remain in `weedz-demo-artifacts/music/` outside
+Git. Both used the same original instrumental caption and no textual lyrics.
+
+The delivered `music3-conservation-180s-v1.wav` is assembled with:
+
+```sh
+UV_PROJECT_ENVIRONMENT="$HOME/.cache/weedz-demo/tools/music3-venv" \
+  uv run --locked --project tools/demo-music python tools/demo-music/assemble.py \
+  /path/to/music3-conservation-seed112-v1.wav \
+  /path/to/music3-conservation-seed113-v2.wav \
+  --output /path/outside/the/repository/music3-conservation-180s-v1.wav
+```
+
+Assembly uses a four-second linear crossfade, trims 6.868 seconds from the joined
+tail, and applies two-second fade-in/four-second fade-out. The result is exactly
+180 s, stereo 44.1 kHz PCM16, RMS 0.0917, peak 1.0. No looping, normalization,
+silence padding or narration processing occurs. Source arrays/files are preserved;
+insufficient material is refused. The `.assembly.json` records source checksums,
+settings and the output checksum. The video mixer applies its own quiet bed gain.
+
+CPU faster-whisper `base.en` with VAD found zero speech segments in both raw takes
+and the assembled bed. The screen resampled only an in-memory mono copy to 16 kHz;
+no raw audio changed. This is a heuristic check for intelligible speech, not a
+listening guarantee that every voice-like texture is absent. Each `.asr.json`
+records that limitation beside its result.
