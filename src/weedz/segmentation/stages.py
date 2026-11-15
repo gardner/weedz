@@ -15,7 +15,7 @@ from PIL import Image
 from weedz.discovery.inference import file_sha256, subject_label
 from weedz.discovery.records import RunSpec
 from weedz.discovery.store import Store
-from weedz.segmentation.artifacts import StageArtifacts
+from weedz.segmentation.artifacts import StageArtifacts, digest, evidence_priority
 from weedz.segmentation.pipeline import Proposer, identify_views
 from weedz.segmentation.regions import ProposalConfig, proposals, upright
 
@@ -98,7 +98,6 @@ class PipelineStages:
                 )
             except (ValueError, *RETRYABLE) as error:
                 result.update(status="failed", failure_type=type(error).__name__)
-                result = artifacts.write("proposals", photo["id"], inputs, result)
             result["elapsed_seconds"] = time.monotonic() - start
             result = artifacts.write("proposals", photo["id"], inputs, result)
             count["failed" if result["status"] == "failed" else "completed"] += 1
@@ -129,20 +128,40 @@ class PipelineStages:
             path = self._path(photo)
             if not photo["scores"]:
                 raise ValueError("Full-frame/tile baseline must complete before region scoring")
-            proposal = self._proposal(artifacts, photo)
-            inputs = {
-                "proposal_sha256": proposal["sha256"],
-                "classifier": model.metadata,
-                "version": 1,
-            }
-            evidence = artifacts.read("views", photo["id"], inputs)
-            if evidence and evidence["view_status"] in {"ok", "empty"}:
-                count["cache_hits"] += 1
-            else:
-                evidence = self._views(path, photo, proposal, model, artifacts, inputs)
-            self._attach(run_id, photo["id"], evidence)
+            evidence, cached = self._score_photo(run_id, path, photo, model, artifacts)
+            count["cache_hits"] += int(cached)
             count["failed" if evidence["status"] == "failed" else "completed"] += 1
         return count
+
+    def _score_photo(
+        self, run_id: str, path: Path, photo: dict, model: Any, artifacts: StageArtifacts
+    ) -> tuple[dict, bool]:
+        proposal = self._proposal(artifacts, photo)
+        if proposal["result"]["status"] == "failed":
+            # Linearize a fallback against the same lock used by recovering producers.
+            with artifacts.locked("proposals", photo["id"]):
+                proposal = self._proposal(artifacts, photo)
+                if proposal["result"]["status"] == "failed":
+                    evidence, cached = self._score_snapshot(path, photo, proposal, model, artifacts)
+                    self._attach(run_id, photo["id"], evidence)
+                    return evidence, cached
+        # Successful proposal output is immutable; do not hold its lock through GPU work.
+        evidence, cached = self._score_snapshot(path, photo, proposal, model, artifacts)
+        self._attach(run_id, photo["id"], evidence)
+        return evidence, cached
+
+    def _score_snapshot(
+        self, path: Path, photo: dict, proposal: dict, model: Any, artifacts: StageArtifacts
+    ) -> tuple[dict, bool]:
+        inputs = {
+            "proposal_inputs_sha256": digest(proposal["inputs"]),
+            "classifier": model.metadata,
+            "version": 2,
+        }
+        evidence = artifacts.read("views", photo["id"], inputs)
+        if evidence and evidence["view_status"] in {"ok", "empty"}:
+            return evidence, True
+        return self._views(path, photo, proposal, model, artifacts, inputs), False
 
     def _views(
         self,
@@ -160,7 +179,11 @@ class PipelineStages:
             "proposal_status": result["status"],
             "baseline_retained": True,
             "coordinate_frame": "EXIF-upright original; xyxy right/bottom exclusive",
-            "provenance": {"proposal": proposal["inputs"], "classification": inputs},
+            "provenance": {
+                "proposal": proposal["inputs"],
+                "proposal_artifact_sha256": proposal["sha256"],
+                "classification": inputs,
+            },
         }
         evidence["view_status"] = (
             "skipped_proposal_failure" if result["status"] == "failed" else "empty"
@@ -177,7 +200,6 @@ class PipelineStages:
                 evidence.update(
                     status="failed", view_status="failed", failure_type=type(error).__name__
                 )
-                evidence = artifacts.write("views", photo["id"], inputs, evidence)
         return artifacts.write("views", photo["id"], inputs, evidence)
 
     def _classified_regions(self, path: Path, result: dict, model: Any, photo: dict) -> list:
@@ -197,8 +219,12 @@ class PipelineStages:
         with self.store.connect() as db:
             db.execute(
                 "UPDATE photos SET scores=json_set(scores, '$.segmentation', json(?)) "
-                "WHERE run_id=? AND id=?",
-                (json.dumps(evidence), run_id, photo_id),
+                "WHERE run_id=? AND id=? AND (CASE "
+                "WHEN json_extract(scores, '$.segmentation.view_status') IN ('ok','empty') THEN 2 "
+                "WHEN json_extract(scores, '$.segmentation.proposal_status') "
+                "IN ('ok','empty') THEN 1 "
+                "ELSE 0 END) <= ?",
+                (json.dumps(evidence), run_id, photo_id, evidence_priority(evidence)),
             )
 
     def summary(self, run_id: str) -> dict:

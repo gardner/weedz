@@ -160,3 +160,34 @@ The SAM3 experiment classified 2,099 actual masked crops from the first 133 imag
 using separately versioned plant, flower, yellow-flower, and leaf prompt profiles.
 Concept scores remain distinct from species softmax scores; neither is a calibrated
 confidence measure. See [SAM3 comparison setup](sam3-image-comparison.md).
+
+## Hosted-stage recovery and CLI opt-in
+
+CLI opt-in uses the same RunSpec field as the API:
+
+```sh
+uv run main.py discover --segmentation sam2.1-tiny-v1
+```
+
+The normal CLI default remains `off`; the connected worker must have the pinned SAM runtime and checkpoint configured.
+
+View-cache revision 2 keys on the exact proposal input identity (source hash, model pins,
+and configuration), rather than mutable failed-result/timing bytes. Completed proposal
+outputs are canonical and immutable; their actual artifact SHA remains in view evidence
+provenance for auditing. Evidence priority is completed views, then retained successful
+proposals with failed classification, then failed-proposal fallback. Artifact and database
+writes enforce that order atomically so a late fallback cannot erase real masks. Existing
+prototype view-cache revision 1 inputs require a new run namespace when executing these
+activities; completed historical runs and their exported evidence remain readable.
+
+A failed-proposal fallback is re-read and committed under the same per-photo lock used
+by proposal writers, including its database attachment. Recovery that already won is
+consumed instead; immutable successful proposals release the lock before GPU scoring.
+Recovery committed after that fallback boundary requires another view-stage invocation;
+the completed partial outcome does not retroactively claim to have scored it.
+
+PlantCLEF comparisons run with explicit FP32 weights/inputs, TF32 disabled and
+autocast disabled during classification. The math policy and NumPy version are
+part of new model identities; historical results retain their original declarations.
+SAM3 and classifier GPU worker roles use separate processes in the batch runner,
+so SAM3 import-time CUDA policy changes cannot race classifier inference.

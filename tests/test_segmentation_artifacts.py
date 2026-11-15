@@ -110,3 +110,40 @@ def test_retry_reestablishes_directory_durability_before_cached_success(tmp_path
         artifacts.root.parent.parent,
         tmp_path,
     ]
+
+
+def test_late_failed_proposal_view_cannot_erase_retained_masks(tmp_path):
+    artifacts = StageArtifacts(tmp_path, "run")
+    retained = {
+        "status": "failed",
+        "proposal_status": "ok",
+        "view_status": "failed",
+        "regions": [{"id": "real-proposal"}],
+    }
+    skipped = {
+        "status": "failed",
+        "proposal_status": "failed",
+        "view_status": "skipped_proposal_failure",
+        "regions": [],
+    }
+    artifacts.write("views", "photo", {}, retained)
+    assert artifacts.write("views", "photo", {}, skipped) == retained
+
+
+def test_failed_proposal_is_canonical_until_success_and_remains_addressable(tmp_path):
+    import json
+
+    artifacts = StageArtifacts(tmp_path, "run")
+    first = {"status": "failed", "elapsed_seconds": 1.0}
+    artifacts.write("proposals", "photo", {}, first)
+    consumed = artifacts.entry("proposals", "photo")
+    assert consumed is not None
+    assert artifacts.write("proposals", "photo", {}, first | {"elapsed_seconds": 2.0}) == first
+    assert artifacts.entry("proposals", "photo") == consumed
+    success = {"status": "empty", "regions": []}
+    assert artifacts.write("proposals", "photo", {}, success) == success
+    retained = artifacts.root / f"{consumed['sha256']}.proposals-history.json"
+    assert json.loads(retained.read_text()) == consumed
+    assert artifacts.proposal_at("photo", consumed["sha256"]) == consumed
+    completed = artifacts.entry("proposals", "photo")
+    assert completed is not None and completed["result"] == success
