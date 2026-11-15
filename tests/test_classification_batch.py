@@ -103,6 +103,24 @@ def test_tiled_panorama_is_refused_before_view_allocation_or_model_calls(tmp_pat
     assert not (tmp_path / "tiles.json").exists()
 
 
+@pytest.mark.parametrize("profile", ["frame", "tiles"])
+def test_output_cap_applies_equally_to_fresh_and_cached_batches(tmp_path, monkeypatch, profile):
+    import weedz.classification.batch as batch
+
+    manifest, _ = corpus(tmp_path)
+    output = tmp_path / "completed.json"
+    result = classify_batch(manifest, tmp_path, output, Classifier(), profile)
+    monkeypatch.setattr(batch, "MAX_RESULT_BYTES", output.stat().st_size)
+    assert classify_batch(manifest, tmp_path, output, Classifier(), profile) == result
+    assert (
+        classify_batch(manifest, tmp_path, tmp_path / "exact.json", Classifier(), profile) == result
+    )
+    monkeypatch.setattr(batch, "MAX_RESULT_BYTES", output.stat().st_size - 1)
+    with pytest.raises(ValueError, match="output exceeds the resource cap"):
+        classify_batch(manifest, tmp_path, tmp_path / "too-large.json", Classifier(), profile)
+    assert not (tmp_path / "too-large.json").exists()
+
+
 def test_path_replacement_cannot_change_pixels_after_the_checksum_check(tmp_path, monkeypatch):
     manifest, image = corpus(tmp_path)
     original_open = Image.open

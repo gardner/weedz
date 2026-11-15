@@ -12,6 +12,7 @@ from PIL import Image
 from weedz.classification.batch import (
     Classifier,
     _check_topk,
+    _encoded_result,
     _identity,
     _snapshot,
     _verified_result,
@@ -21,6 +22,7 @@ from weedz.discovery import inference
 from weedz.discovery.inference import file_sha256, square_view
 from weedz.manifest import read_manifest, write_atomic
 from weedz.segmentation.artifacts import digest
+from weedz.segmentation.regions import ProposalConfig
 from weedz.segmentation.sam3_image import Sam3Config, restore_concept_regions
 from weedz.segmentation.stages import restored_regions
 
@@ -51,7 +53,9 @@ def _restore(encoded: bytes, expected_sha: str, stage: dict, proposer: Proposer)
     if proposer == "sam2":
         with Image.open(io.BytesIO(encoded)) as image:
             return restored_regions(
-                image, [{k: v for k, v in r.items() if k != "views"} for r in records]
+                image,
+                [{k: v for k, v in r.items() if k != "views"} for r in records],
+                ProposalConfig(**stage["provenance"]["proposal_config"]),
             )
     config = Sam3Config(**stage["provenance"]["config"])
     return restore_concept_regions(encoded, records, config, expected_sha256=expected_sha)
@@ -184,5 +188,5 @@ def classify_region_batch(
             return _cached(
                 output, header, samples, rows, verified_existing_sha256, media_root, proposer
             )
-        write_atomic(output, (json.dumps(result, indent=2, allow_nan=False) + "\n").encode())
+        write_atomic(output, _encoded_result(result))
     return result
