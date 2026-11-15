@@ -297,3 +297,16 @@ def test_region_classification_retries_are_independent_for_later_photos(store, m
     result = stages.score_regions("run")
     assert result["completed"] == 2 and result["failed"] == 0
     assert seen == {0: 3, 1: 2}
+
+
+@pytest.mark.parametrize("late_status", ["failed", "skipped_proposal_failure"])
+def test_successful_attachment_dominates_stale_failed_attempt(store, late_status):
+    stages = runner(store, Proposer())
+    baseline = {"margin": -0.04, "model": "unchanged-baseline"}
+    store.score("run", "0", baseline)
+    good = {"status": "ok", "view_status": "ok", "regions": [{"id": "canonical-success"}]}
+    failed = {"status": "failed", "view_status": late_status, "regions": []}
+    stages._attach("run", "0", failed)
+    stages._attach("run", "0", good)
+    stages._attach("run", "0", failed)
+    assert store.photos("run")[0]["scores"] == {**baseline, "segmentation": good}

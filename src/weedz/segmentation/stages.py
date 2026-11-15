@@ -197,8 +197,15 @@ class PipelineStages:
         with self.store.connect() as db:
             db.execute(
                 "UPDATE photos SET scores=json_set(scores, '$.segmentation', json(?)) "
-                "WHERE run_id=? AND id=?",
-                (json.dumps(evidence), run_id, photo_id),
+                "WHERE run_id=? AND id=? AND (? OR "
+                "COALESCE(json_extract(scores, '$.segmentation.view_status'), '') "
+                "NOT IN ('ok', 'empty'))",
+                (
+                    json.dumps(evidence),
+                    run_id,
+                    photo_id,
+                    evidence.get("view_status") in {"ok", "empty"},
+                ),
             )
 
     def summary(self, run_id: str) -> dict:
