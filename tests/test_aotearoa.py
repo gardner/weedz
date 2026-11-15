@@ -107,3 +107,35 @@ def test_orientation_is_applied_before_resize_and_crop():
     tensor = preprocess(image)
     assert tensor[0, 2, 192, 0] == 1
     assert tensor[0, 0, 192, -1] == 1
+
+
+def test_session_consumes_verified_snapshot_not_replaced_checkpoint_path(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from weedz.classification import aotearoa
+
+    checkpoint, mapping = tmp_path / "model", tmp_path / "labels"
+    checkpoint.write_bytes(b"weights")
+    mapping.write_text(
+        json.dumps(
+            {str(i): {"scientific_name": f"Taxon {i}"} for i in range(aotearoa.CLASS_COUNT)}
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(aotearoa, "WEIGHTS_SHA256", hashlib.sha256(b"weights").hexdigest())
+    monkeypatch.setattr(aotearoa, "LABELS_SHA256", hashlib.sha256(mapping.read_bytes()).hexdigest())
+    session = SimpleNamespace(
+        get_inputs=lambda: [SimpleNamespace(shape=[1, 3, 384, 384], type="tensor(float)")],
+        get_outputs=lambda: [SimpleNamespace(shape=[1, aotearoa.CLASS_COUNT])],
+    )
+
+    def create(encoded, **kwargs):
+        checkpoint.write_bytes(b"replaced")
+        assert encoded == b"weights"
+        assert kwargs["providers"] == ["CPUExecutionProvider"]
+        return session
+
+    runtime = SimpleNamespace(SessionOptions=SimpleNamespace, InferenceSession=create)
+    monkeypatch.setattr(aotearoa.importlib, "import_module", lambda _: runtime)
+    model = aotearoa.AotearoaClassifier.load(checkpoint, mapping)
+    assert model.labels[14305] == "Taxon 14305"
