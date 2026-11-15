@@ -38,12 +38,15 @@ void _checkBox(img.Image image, PixelBox box) {
   }
 }
 
-/// Population deviation of PIL-compatible integer luma before padding.
-double greyscaleStd(img.Image image, PixelBox box) {
+/// Integer moments avoid scan-order error at the strict featureless boundary.
+({int count, int sum, int squares}) _lumaMoments(
+  img.Image image,
+  PixelBox box,
+) {
   _checkBox(image, box);
   var count = 0;
-  var mean = 0.0;
-  var squares = 0.0;
+  var sum = 0;
+  var squares = 0;
   for (var y = box.top; y < box.bottom; y++) {
     for (var x = box.left; x < box.right; x++) {
       final pixel = image.getPixel(x, y);
@@ -54,16 +57,29 @@ double greyscaleStd(img.Image image, PixelBox box) {
               32768) >>
           16;
       count++;
-      final delta = grey - mean;
-      mean += delta / count;
-      squares += delta * (grey - mean);
+      sum += grey;
+      squares += grey * grey;
     }
   }
-  return math.sqrt(math.max(0, squares / count));
+  return (count: count, sum: sum, squares: squares);
 }
 
-bool isFeatureless(img.Image image, PixelBox box) =>
-    greyscaleStd(image, box) < 8;
+/// Population deviation of PIL-compatible integer luma before padding.
+double greyscaleStd(img.Image image, PixelBox box) {
+  final moments = _lumaMoments(image, box);
+  final mean = moments.sum / moments.count;
+  return math.sqrt(math.max(0, moments.squares / moments.count - mean * mean));
+}
+
+bool isFeatureless(img.Image image, PixelBox box) {
+  final moments = _lumaMoments(image, box);
+  // Compare variance < 8^2 exactly, without a rounded square root or 64-bit
+  // overflow when multiplying moments of large, otherwise supported images.
+  final count = BigInt.from(moments.count);
+  final sum = BigInt.from(moments.sum);
+  final varianceNumerator = BigInt.from(moments.squares) * count - sum * sum;
+  return varianceNumerator < BigInt.from(64) * count * count;
+}
 
 /// Letterbox the exact crop; odd spare pixels go to the right and bottom.
 img.Image squareWindow(img.Image image, PixelBox box) {
