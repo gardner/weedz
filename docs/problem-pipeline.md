@@ -21,13 +21,13 @@ A person should then be able to confirm or reject each find in seconds.
 That's harder than it sounds, for four reasons:
 
 - **The weed is small and in the background.** It may fill a few percent of the frame, partly hidden, out of focus, or seen from far away. Classifiers trained on photos of the plant itself aren't built for this.
-- **Natives look like weeds.** Native clematis looks like old man's beard, toetoe like pampas, broom, mānuka and kānuka like gorse. A false alarm on a native wastes reviewer time, and if it's acted on, it can harm the native plant.
+- **Other plants look like the weeds.** Native clematis looks like old man's beard, toetoe like pampas, and mānuka and kānuka like gorse. A false alarm on a native wastes reviewer time, and if it's acted on, it can harm the native plant. Broom also looks like gorse; it's a weed too, but not a target, so flagging it as gorse is still a wrong answer.
 - **Reviewer time is the real budget.** Weeds are rare in incidental photos. A pipeline that flags 10% of photos, when only a fraction of 1% hold a weed, buries reviewers. What matters is real finds per hour of review, not accuracy on a balanced test set.
 - **The phone has to run it.** People's photos live on their phones and should stay there unless they approve a report. So screening has to run on the device, within the phone's memory, battery and background-time limits.
 
 ## Where we are today
 
-The steps run end to end, but nothing has been shown to work yet.
+On the desktop, the steps run end to end, but nothing has been shown to work yet. The phone path is only partly built.
 
 | Stage | What runs today | What we don't know |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ The steps run end to end, but nothing has been shown to work yet.
 | **Identify** | BioCLIP 2 compares each window with the target weeds, lookalikes and scene descriptions. The Aotearoa Species Classifier, PlantCLEF and WeedScan run as optional comparisons | Accuracy on background plants. Which model, or which combination |
 | **Rank** | Photos are ordered by the best margin between a target weed and any comparison label. [Score meaning is versioned](../src/weedz/discovery/score_meaning.py) | Margins are uncalibrated; there's no agreed threshold (#16) |
 | **Review** | The Next.js review desk, a blind audit sample, a lookalike queue, reviewer attribution, and Label Studio export | Reviewer effort per real find |
-| **Run on a phone** | Device intake, signed model bundles, and a parity harness: fp16 matches the desktop model, int8 doesn't ([parity](../benchmarks/optimised-model-parity.json)) | Phone speed, memory and battery; Core ML / LiteRT conversion (#51) |
+| **Run on a phone** | Not yet. The [Flutter app](mobile.md) has its scaffold, its domain layer and a library scanner, but no on-device model: only test fakes implement the screener. The server side exists: device intake, signed model bundles, and a parity harness (fp16 matches the desktop model, int8 doesn't; [parity](../benchmarks/optimised-model-parity.json)) | Phone speed, memory and battery; Core ML / LiteRT conversion (#51) |
 
 What we've measured, on small samples of source-labelled photos:
 
