@@ -12,6 +12,7 @@ from PIL import Image
 from weedz.annotation.auto_labels import frame_prediction, proposals_prediction
 from weedz.annotation.export import _output
 from weedz.annotation.label_studio import label_config
+from weedz.annotation.sample_variants import add_variants, load_variants
 from weedz.contract import Sample
 from weedz.manifest import read_manifest
 
@@ -128,7 +129,12 @@ def _prepare(
 
 
 def _write(
-    output: Path, prepared: list, frames: dict | None, source_digest: str, image_prefix: str
+    output: Path,
+    prepared: list,
+    frames: dict | None,
+    source_digest: str,
+    image_prefix: str,
+    variants: dict,
 ) -> dict:
     output.mkdir(parents=True, exist_ok=False)
     try:
@@ -155,6 +161,9 @@ def _write(
             "source_manifest_sha256": source_digest,
             "frame_model": frames["model"] if frames else None,
             "samples": records,
+            "additional_models": {
+                name: variant.document for name, variant in variants.items() if variant is not None
+            },
             "interpretation": (
                 "Editable predictions only; source class is context, never annotation truth"
             ),
@@ -188,6 +197,8 @@ def export_samples(
     frame_results: Path | None = None,
     proposals: Path | None = None,
     image_prefix: str = "corpus",
+    regional_results: Path | None = None,
+    tiled_results: Path | None = None,
 ) -> dict[str, Any]:
     manifest = manifest.resolve()
     output = _output(manifest.parent, output)
@@ -200,6 +211,7 @@ def export_samples(
     source_digest, frames, frame_rows, proposal_rows, samples = _inputs(
         manifest, frame_results, proposals
     )
+    variants = load_variants(manifest, proposals, regional_results, tiled_results)
     prepared = [
         _prepare(
             sample,
@@ -212,4 +224,5 @@ def export_samples(
         )
         for sample in samples
     ]
-    return _write(output, prepared, frames, source_digest, image_prefix)
+    add_variants(prepared, variants)
+    return _write(output, prepared, frames, source_digest, image_prefix, variants)

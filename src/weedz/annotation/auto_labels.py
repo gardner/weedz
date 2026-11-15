@@ -62,17 +62,30 @@ def brush_class(taxon: str) -> str:
     )
 
 
-def frame_prediction(topk: list[dict[str, Any]], metadata: dict[str, Any]) -> dict[str, Any]:
+def frame_prediction(
+    topk: list[dict[str, Any]],
+    metadata: dict[str, Any],
+    *,
+    display_name: str = "PlantCLEF frame auto-label",
+    scope: str = "whole frame, not mask regions",
+    alternatives: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    policy = (
+        PLANTCLEF_POLICY
+        if scope == "whole frame, not mask regions"
+        else f"{PLANTCLEF_POLICY}; {scope}"
+    )
     return {
-        "model_version": display_version("PlantCLEF frame auto-label", metadata, PLANTCLEF_POLICY),
+        "model_version": display_version(display_name, metadata, policy),
         "result": [
             taxon_result(top_taxon(topk)),
             evidence_result(
                 {
                     "interpretation": PLANTCLEF_POLICY,
-                    "scope": "whole frame, not mask regions",
+                    "scope": scope,
                     "topk": topk,
                     "limitations": metadata.get("limitations", []),
+                    **({"alternatives": alternatives} if alternatives is not None else {}),
                 }
             ),
         ],
