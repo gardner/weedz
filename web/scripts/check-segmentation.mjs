@@ -6,6 +6,25 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3022");
+  const origin = new URL(page.url()).origin;
+  const detail = await page.request.get(`${origin}/api/runs/segmentation-experiment-v1`);
+  assert.equal(detail.status(), 200);
+  const { photos } = await detail.json();
+  assert(photos.length > 0);
+  for (const photo of photos) {
+    assert(Array.isArray(photo.scores.box), "original baseline geometry retained");
+    for (const region of photo.scores.segmentation.regions) {
+      for (const score of Object.values(region.views)) {
+        assert.match(score.method, /one letterboxed .* proposal view/);
+        assert(!("box" in score), "single view has no ambiguous local box");
+        assert(score.species.every((species) => !("box" in species)));
+      }
+    }
+  }
+  const image = await page.request.get(
+    `${origin}/api/runs/segmentation-experiment-v1/photos/${photos[0].id}/image`,
+  );
+  assert.equal(image.headers()["content-type"], "image/png");
   const mask = page.getByLabel("Mask overlay", { exact: true });
   await mask.waitFor();
   assert.equal(await mask.inputValue(), "");

@@ -42,7 +42,8 @@ box expanded by 25% of its longest side, clipped at image edges. Tight, neutral-
 background masked, and context views record their source box/resized size and are
 centrally padded to square before the pinned BioCLIP preprocessing. The unchanged
 baseline supplies original-scene plus tile context. Quality values remain separate
-from the species cosine margins. An empty or failed stage explicitly retains the
+from the species cosine margins. Single-view results omit local boxes; their
+original-frame extent is recorded only in `view_transforms.source_box`. An empty or failed stage explicitly retains the
 baseline, so missing proposals cannot silently become confirmed negatives.
 
 Mask caches key exact image pixels/dimensions, pinned source/checkpoint/config,
@@ -92,18 +93,18 @@ This is a feasibility smoke run, not a representative accuracy comparison.
 
 | Public photo ID | Retained masks | Total seconds | Proposal + region scoring seconds |
 | --- | ---: | ---: | ---: |
-|447484684|2|6.18|3.01|
-|455546899|2|5.59|2.64|
-|460262550|4|7.64|5.45|
-|460262714|3|6.23|4.08|
-|460262865|6|10.29|8.14|
-|460263038|5|8.82|6.70|
+|447484684|2|6.24|3.13|
+|455546899|2|5.73|2.80|
+|460262550|4|7.63|5.42|
+|460262714|3|6.23|4.07|
+|460262865|6|10.25|8.08|
+|460263038|5|9.04|6.86|
 
 Peak allocated GPU memory was 617,309,696 bytes (~589MiB) for each photo; process
-maximum RSS was 4,622,568KiB (~4.41GiB), including both loaded models. These timings
+maximum RSS was 4,621,944KiB (~4.41GiB), including both loaded models. These timings
 exclude model startup/download and include CPU BioCLIP2 encoding. The proposal
-column includes region classification, not solely SAM execution. CUDA reserved
-memory/whole-system peak, phone heat/battery and sustained throughput were not measured.
+column includes region classification, not solely SAM execution. These are single-run shared-workstation timings, not an isolated latency benchmark.
+CUDA reserved memory/whole-system peak, phone heat/battery and sustained throughput were not measured.
 
 Visual inspection found partial flower/leaf masks on the gorse/clematis references,
 and shell/crab regions on coastal photos. This demonstrates why generic masks do
