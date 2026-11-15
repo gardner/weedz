@@ -72,3 +72,14 @@ def test_bad_image_provenance_never_publishes_a_site(tmp_path):
     with pytest.raises(ValueError, match="provenance"):
         script.seed(source.root, output, "source")
     assert not output.exists()
+
+
+@pytest.mark.parametrize("timestamp", ["2025-03-04T05:06:07+00:00", None])
+def test_seed_preserves_original_screening_timestamp(tmp_path, timestamp):
+    source = source_store(tmp_path / "source")
+    with sqlite3.connect(source.database) as db:
+        db.execute("UPDATE photos SET screened_at=?", (timestamp,))
+    output = tmp_path / "site"
+    script.seed(source.root, output, "source")
+    with sqlite3.connect(output / "discovery.sqlite3") as db:
+        assert db.execute("SELECT screened_at FROM photos").fetchone()[0] == timestamp

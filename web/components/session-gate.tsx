@@ -20,10 +20,10 @@ export default function SessionGate() {
         const body = await response.json().catch(() => ({}));
         const signedIn = body.mode === "tokens" && typeof body.reviewer === "string";
         return signedIn
-          ? { signedInAs: body.reviewer, canStartRuns: body.can_start_runs !== false }
-          : { canStartRuns: body.can_start_runs !== false };
+          ? { signedInAs: body.reviewer, canStartRuns: body.can_start_runs === true }
+          : { canStartRuns: body.can_start_runs === true };
       })
-      .catch(() => ({}))
+      .catch(() => ({ canStartRuns: false }))
       .then(setSession);
   }, []);
 

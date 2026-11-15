@@ -30,7 +30,7 @@ export default function SignIn({
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.detail ?? `Sign-in failed (${response.status})`);
       setToken("");
-      onSignedIn(body.reviewer, body.can_start_runs !== false);
+      onSignedIn(body.reviewer, body.can_start_runs === true);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Sign-in failed");
     } finally {

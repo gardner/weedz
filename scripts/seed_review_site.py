@@ -28,7 +28,7 @@ def seed(source: Path, output: Path, run_id: str) -> int:
         if run is None:
             raise ValueError("Choose an existing completed source run")
         rows = db.execute(
-            "SELECT record,scores FROM photos WHERE run_id=? ORDER BY id", (run_id,)
+            "SELECT record,scores,screened_at FROM photos WHERE run_id=? ORDER BY id", (run_id,)
         ).fetchall()
     with tempfile.TemporaryDirectory(prefix="weedz-site-seed-") as temporary:
         staged = Path(temporary) / "data"
@@ -45,6 +45,11 @@ def seed(source: Path, output: Path, run_id: str) -> int:
             sanitized = _copy_photo(source, staged, photo)
             target.save_photos(run_id, [sanitized])
             target.score(run_id, sanitized.id, scores)
+            with closing(sqlite3.connect(target.database)) as copied, copied:
+                copied.execute(
+                    "UPDATE photos SET screened_at=? WHERE run_id=? AND id=?",
+                    (row["screened_at"], run_id, sanitized.id),
+                )
             count += 1
         if not count:
             raise ValueError("Source run has no admitted scored public photos")
