@@ -237,10 +237,10 @@ cohort, so they never change an iNaturalist run's counts.
   example, from a wrong `--intake-dir`) is left as it was.
 - Once it holds device reports, the review database is owner-only.
 - Without `--intake-dir`, the review app does not serve a device run it
-  stored earlier, since withdrawals cannot be checked. The `outcomes`,
-  `suitability`, `study` and `package` commands need `--intake-dir` for
-  `--run device-reports`, and apply withdrawals first. Device reports are not
-  reference examples, so `reference` refuses that run.
+  stored earlier, since withdrawals cannot be checked. The `study` and
+  `package` commands need `--intake-dir` for `--run device-reports`, and apply
+  withdrawals first. Device reports are neither a sample nor reference
+  examples, so `outcomes`, `suitability` and `reference` refuse that run.
 
 Hosting, accounts and enrolment, the retention period, and whether images are
 uploaded at all are the project owner's decisions; see issues #55 and #57.

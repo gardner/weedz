@@ -219,12 +219,21 @@ def _print(args: argparse.Namespace, result: dict, markdown: str) -> None:
         args.json.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
 
 
+def sampled_only(args: argparse.Namespace) -> None:
+    """Outcomes and suitability measure a sampled run's incidental photos. Device reports
+    are not a sample, so an empty report would mislead."""
+    if args.run == DEVICE_RUN:
+        raise SystemExit(f"{args.command} is for sampled iNaturalist runs, not {DEVICE_RUN}")
+
+
 def report(args: argparse.Namespace) -> None:
+    sampled_only(args)
     result = outcomes(export(run_store(args), args.run))
     _print(args, result, to_markdown(result))
 
 
 def suitability(args: argparse.Namespace) -> None:
+    sampled_only(args)
     result = export(run_store(args), args.run)["source_suitability"]
     _print(args, result, suitability_markdown(result))
 
@@ -382,7 +391,7 @@ def parse(argv: list[str]) -> argparse.Namespace:
     bundle.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     bundle.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     bundle.add_argument("--out", type=Path, required=True, help="New or empty folder to write")
-    for command in (measures, suits, define, bundle):
+    for command in (define, bundle):
         command.add_argument(
             "--intake-dir", type=Path, help=f"Report intake folder, needed for --run {DEVICE_RUN}"
         )

@@ -26,6 +26,7 @@ from typing import Literal
 from PIL import Image
 from pydantic import BaseModel
 
+from weedz import consent
 from weedz.discovery.records import SPECIES
 from weedz.discovery.sharing import withdrawn
 from weedz.discovery.store import Store, now
@@ -36,7 +37,8 @@ IMAGES = "images/device"
 LOCK = "device-reports.lock"
 # A temporary crop older than this is left from a failed write, not one in progress.
 STALE_WRITE_SECONDS = 600
-NO_CREDIT = "Device report (no credit given)"
+# A report without a photo licence shares nothing under one, so it gets no credit line.
+NO_LICENCE = "Device report (no photo licence)"
 
 
 class Provenance(BaseModel):
@@ -105,7 +107,8 @@ def item(stored: StoredReport) -> DeviceItem:
     captured = content.captured_at
     return DeviceItem(
         id=item_id(stored),
-        attribution=content.consent.credit or NO_CREDIT,
+        # The credit as the consent text promised it, a blank one as "a Weedz contributor".
+        attribution=consent.attribution(licence, content.consent.credit) if licence else NO_LICENCE,
         photo_license=licence,
         observation_license=licence,
         observer=f"submitter {stored.submitter}",

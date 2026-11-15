@@ -208,3 +208,15 @@ def test_device_reports_are_not_offered_as_reference_examples(tmp_path: Path) ->
     command = ["reference", "--run", RUN_ID, "--pilot-dir", str(pilot)]
     with pytest.raises(SystemExit, match="not reference examples"):
         cli.main(command)
+
+
+@pytest.mark.parametrize("command", ["outcomes", "suitability"])
+def test_sampled_run_measures_refuse_the_device_run(tmp_path: Path, command: str) -> None:
+    """They measure a sampled iNaturalist run's incidental photos; device reports are not
+    a sample, so an empty report would mislead."""
+    intake, pilot = tmp_path / "intake", tmp_path / "pilot"
+    send(intake, report())
+    synced(tmp_path, intake)
+    argv = [command, "--run", RUN_ID, "--pilot-dir", str(pilot)]
+    with pytest.raises(SystemExit, match="sampled iNaturalist runs"):
+        cli.main(argv)

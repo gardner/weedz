@@ -79,7 +79,17 @@ def test_a_report_becomes_a_review_item_with_its_provenance(tmp_path: Path, inta
     # What the person permitted, in the shape the sharing policy reads (#60).
     assert photo["consent"] == {"version": "2026-11", "uses": ["review"], "withdrawn_at": None}
     assert (photo["photo_license"], photo["observation_license"]) == ("cc-by", "cc-by")
-    assert photo["attribution"] == "Aroha"
+    # The credit exactly as the consent text promised it (docs/report-consent.md).
+    assert photo["attribution"] == "Photo: Aroha via Weedz, CC BY 4.0"
+
+
+def test_a_blank_credit_is_a_weedz_contributor(tmp_path: Path, intake: Path) -> None:
+    send(intake, with_image(jpeg(), licence="cc0"))
+    send(intake, report())
+    credits = {photo["photo_license"]: photo["attribution"] for photo in synced(tmp_path, intake)}
+    assert credits["cc0"] == "Photo: a Weedz contributor, CC0 1.0"
+    # Without a photo licence nothing is shared under one, so no credit line is made up.
+    assert credits[""] == "Device report (no photo licence)"
 
 
 def test_the_exact_device_location_is_kept_with_its_accuracy(tmp_path: Path, intake: Path) -> None:
