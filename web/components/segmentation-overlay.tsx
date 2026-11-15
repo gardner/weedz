@@ -48,7 +48,7 @@ export function SegmentationControls({
   onSelect: (index: number | null) => void;
 }) {
   return (
-    <fieldset>
+    <fieldset className="segmentation-controls">
       <legend>Experimental segmentation</legend>
       <p>
         Class-agnostic regions may miss plants or include other objects. Original ranking retained.
@@ -57,6 +57,7 @@ export function SegmentationControls({
         <label>
           Mask overlay
           <select
+            aria-label="Mask overlay"
             value={selected ?? ""}
             onChange={(event) =>
               onSelect(event.target.value === "" ? null : Number(event.target.value))

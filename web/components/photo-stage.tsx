@@ -64,57 +64,59 @@ export default function PhotoStage({
         ? "Reference photo · kept outside discovery results"
         : "Animal-subject photo · background plants unlabelled";
   return (
-    <div className="image-stage">
-      {width && height ? (
-        <svg
-          ref={svg}
-          viewBox={`0 0 ${width} ${height}`}
-          role="img"
-          aria-label={`Source photo of ${photo.original_common_name || photo.original_taxon}; highlighted search window`}
-          className={drawing ? "drawing" : undefined}
-          onPointerDown={(event) => {
-            if (!drawing) return;
-            event.currentTarget.setPointerCapture(event.pointerId);
-            start.current = imagePoint(event);
-          }}
-          onPointerMove={drag}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-        >
-          <title>Original photo with an optional model search window</title>
-          <image href={imageUrl(runId, photo.id)} width={width} height={height} />
-          <SegmentationMask
-            region={mask === null ? undefined : scores.segmentation?.regions[mask]}
-            width={width}
-            height={height}
+    <>
+      <div className="image-stage">
+        {width && height ? (
+          <svg
+            ref={svg}
+            viewBox={`0 0 ${width} ${height}`}
+            role="img"
+            aria-label={`Source photo of ${photo.original_common_name || photo.original_taxon}; highlighted search window`}
+            className={drawing ? "drawing" : undefined}
+            onPointerDown={(event) => {
+              if (!drawing) return;
+              event.currentTarget.setPointerCapture(event.pointerId);
+              start.current = imagePoint(event);
+            }}
+            onPointerMove={drag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
+            <title>Original photo with an optional model search window</title>
+            <image href={imageUrl(runId, photo.id)} width={width} height={height} />
+            <SegmentationMask
+              region={mask === null ? undefined : scores.segmentation?.regions[mask]}
+              width={width}
+              height={height}
+            />
+            {windowVisible && scores.box && (
+              <Box box={scores.box} className="search-window" stroke={stroke} dash="12 6" />
+            )}
+            {(photo.findings ?? []).map(
+              (finding) =>
+                finding.box && (
+                  <Box key={finding.id} box={finding.box} className="finding-box" stroke={stroke}>
+                    <title>{`${findingName(finding)}, recorded by ${finding.reviewer}`}</title>
+                  </Box>
+                ),
+            )}
+            {draft && <Box box={draft} className="draft-box" stroke={stroke * 1.5} />}
+          </svg>
+        ) : (
+          <Image
+            src={imageUrl(runId, photo.id)}
+            alt={`Original observation of ${photo.original_taxon}`}
+            width={1024}
+            height={1024}
+            unoptimized
           />
-          {windowVisible && scores.box && (
-            <Box box={scores.box} className="search-window" stroke={stroke} dash="12 6" />
-          )}
-          {(photo.findings ?? []).map(
-            (finding) =>
-              finding.box && (
-                <Box key={finding.id} box={finding.box} className="finding-box" stroke={stroke}>
-                  <title>{`${findingName(finding)}, recorded by ${finding.reviewer}`}</title>
-                </Box>
-              ),
-          )}
-          {draft && <Box box={draft} className="draft-box" stroke={stroke * 1.5} />}
-        </svg>
-      ) : (
-        <Image
-          src={imageUrl(runId, photo.id)}
-          alt={`Original observation of ${photo.original_taxon}`}
-          width={1024}
-          height={1024}
-          unoptimized
-        />
-      )}
+        )}
+        <span className="image-caption">{caption}</span>
+      </div>
       {scores.segmentation && (
         <SegmentationControls evidence={scores.segmentation} selected={mask} onSelect={setMask} />
       )}
-      <span className="image-caption">{caption}</span>
-    </div>
+    </>
   );
 }
 
