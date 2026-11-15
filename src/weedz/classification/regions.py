@@ -97,10 +97,20 @@ def _cached(
         if [r["id"] for r in regions] != [r["id"] for r in source["segmentation"]["regions"]]:
             raise ValueError("Cached region identities differ")
         for region in regions:
-            _check_topk(region["topk"])
-            if region["topk"] != region["views"].get("masked"):
-                raise ValueError("Cached primary classifier view changed")
+            validate_region_scores(region, header["model"])
     return result
+
+
+def validate_region_scores(region: dict, metadata: dict) -> None:
+    """Validate all declared views on both normal retries and external adoption."""
+    _check_topk(region["topk"])
+    if region["topk"] != region["views"].get("masked"):
+        raise ValueError("Cached primary classifier view changed")
+    if metadata.get("pipeline_name") == "WeedScan488":
+        if set(region["views"]) != {"tight", "masked", "context"}:
+            raise ValueError("Incomplete WeedScan regional views")
+        for topk in region["views"].values():
+            _check_topk(topk)
 
 
 def _predict(samples, rows, root, model, proposer, version):
@@ -110,11 +120,26 @@ def _predict(samples, rows, root, model, proposer, version):
         classified = []
         for start in range(0, len(regions), 32):
             part = regions[start : start + 32]
-            views = [region.views["masked"] for region in part]
-            alternatives = model.predict([square_view(view, (0, 0, *view.size)) for view in views])
-            for region_id, topk in zip(ids[start : start + 32], alternatives, strict=True):
-                _check_topk(topk)
-                classified.append({"id": region_id, "topk": topk, "views": {"masked": topk}})
+            names = (
+                ("tight", "masked", "context")
+                if model.metadata.get("pipeline_name") == "WeedScan488"
+                else ("masked",)
+            )
+            predictions = {}
+            for name in names:
+                views = [region.views[name] for region in part]
+                predictions[name] = model.predict(
+                    [square_view(view, (0, 0, *view.size)) for view in views]
+                )
+                if len(predictions[name]) != len(part):
+                    raise ValueError("Regional classifier returned a different image count")
+            for index, region_id in enumerate(ids[start : start + 32]):
+                alternatives = {name: predictions[name][index] for name in names}
+                for topk in alternatives.values():
+                    _check_topk(topk)
+                classified.append(
+                    {"id": region_id, "topk": alternatives["masked"], "views": alternatives}
+                )
         result.append({**_identity(sample, version), "regions": classified})
     return result
 
@@ -137,6 +162,13 @@ def regional_metadata(model: Classifier, provenance: dict, proposer: Proposer) -
             "transform": "recorded timm preprocessing",
         },
     }
+    if model.metadata.get("pipeline_name") == "WeedScan488":
+        metadata["input_policy"] = (
+            "Source-bound SAM tight/masked/context crops; complete neutral square letterbox "
+            "before WeedScan bicubic480 preprocessing; no source taxonomy supplied"
+        )
+        metadata["views"] = ["tight", "masked", "context"]
+        metadata["masked_view_policy"]["transform"] = "recorded WeedScan RGB preprocessing"
     return json.loads(json.dumps(metadata, allow_nan=False))
 
 
@@ -185,7 +217,8 @@ def classify_region_batch(
     if any(digest(row["segmentation"]["provenance"]) != digest(provenance) for row in rows):
         raise ValueError("Proposal model provenance differs within the batch")
     metadata = regional_metadata(model, provenance, proposer)
-    version = f"{proposer.upper()} + PlantCLEF masked · {digest(metadata)[:12]}"
+    name = model.metadata.get("pipeline_name", "PlantCLEF")
+    version = f"{proposer.upper()} + {name} masked · {digest(metadata)[:12]}"
     header = {
         "schema": 1,
         "model": metadata,

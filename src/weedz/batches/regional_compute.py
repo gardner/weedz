@@ -11,7 +11,7 @@ from weedz.batches.profiles import ModelProfile
 from weedz.batches.proposal_compute import proposal_rows
 from weedz.batches.storage import ClosedBatch, read_artifact, read_owned_file
 from weedz.classification.batch import _check_topk, _identity
-from weedz.classification.regions import classify_region_batch
+from weedz.classification.regions import classify_region_batch, validate_region_scores
 
 
 def _legacy_header(
@@ -55,6 +55,7 @@ def _legacy(
             _check_topk(region["topk"])
             if region["topk"] != region["views"].get("masked"):
                 raise ValueError("Regional primary classification must be the declared masked view")
+            validate_region_scores(region, document["model"])
     return Computed(artifact(external), "external-compute")
 
 

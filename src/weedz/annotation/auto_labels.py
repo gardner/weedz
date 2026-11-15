@@ -64,6 +64,10 @@ def brush_class(taxon: str) -> str:
 
 
 def _runtime_evidence(metadata: dict[str, Any]) -> dict[str, Any]:
+    if metadata.get("pipeline_name") == "WeedScan488":
+        from weedz.annotation.weedscan import runtime as weedscan_runtime
+
+        return {"classifier_runtime": weedscan_runtime(metadata), "model": metadata}
     runtime = classifier_runtime(metadata)
     # Historical version IDs must retain their already-published result shape.
     return {"classifier_runtime": runtime} if runtime["status"] == "recorded" else {}
@@ -77,6 +81,12 @@ def frame_prediction(
     scope: str = "whole frame, not mask regions",
     alternatives: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    if metadata.get("pipeline_name") == "WeedScan488":
+        if scope != "whole frame, not mask regions" or alternatives is not None:
+            raise ValueError("WeedScan supports separate frame and SAM-region predictions")
+        from weedz.annotation.weedscan import frame_prediction as weedscan_frame
+
+        return weedscan_frame(topk, metadata)
     if metadata.get("pipeline_name") == "Aotearoa NZ":
         if scope != "whole frame, not mask regions" or alternatives is not None:
             raise ValueError("Aotearoa supports only released frame predictions")
@@ -183,6 +193,11 @@ def regional_prediction(
     alternatives: list[dict[str, Any]] | None = None,
     version_name_override: str | None = None,
 ) -> dict[str, Any]:
+    policy = PLANTCLEF_POLICY
+    if metadata.get("pipeline_name") == "WeedScan488":
+        from weedz.annotation.weedscan import POLICY
+
+        policy = POLICY
     results = []
     for region, topk in regions:
         taxon = top_taxon(topk)
@@ -191,7 +206,7 @@ def regional_prediction(
     results.append(
         evidence_result(
             {
-                "interpretation": PLANTCLEF_POLICY,
+                "interpretation": policy,
                 "primary_view": "masked (fixed before inspection)",
                 **_runtime_evidence(metadata),
                 "alternatives": alternatives
@@ -202,6 +217,10 @@ def regional_prediction(
         )
     )
     name = display_version("SAM + PlantCLEF masked", metadata, PLANTCLEF_POLICY)
+    if metadata.get("pipeline_name") == "WeedScan488":
+        from weedz.annotation.semantic import shared_regional_version
+
+        name = shared_regional_version(metadata)["model_version"]
     if version_name_override is not None:
         from weedz.annotation.semantic import shared_regional_version
 

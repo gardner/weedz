@@ -16,10 +16,25 @@ labelled species datasets remain supporting research paths.
 
 ## Are we using SAM today?
 
-**Default screening does not use segmentation.** An opt-in desktop SAM2.1 experiment
-now produces real masks and separate BioCLIP region evidence; see
+**The default regional screener does not use segmentation.** The optional desktop
+comparison pipeline does run real SAM2.1/SAM3 masks, restores each retained region
+against its original image, and identifies the resulting crops. SAM2.1/BioCLIP2
+compares tight, masked and context views; SAM2/SAM3 with PlantCLEF uses the
+complete square-padded masked view. The separately selectable
+[WeedScan488 pipeline](weedscan-comparison.md) retains three crop views and a
+full-frame baseline with its actual CPU ONNX runtime. Aotearoa NZ currently uses
+its released full-frame input, not a validated regional policy.
+
+Canonical batch jobs run through [Temporal](canonical-temporal-batches.md) and
+publish separate editable predictions and actual masks to Label Studio. Completed
+artifacts can be verified and adopted without rerunning a model; their original
+external-compute provenance remains recorded. See the initial SAM2.1 experiment's
 [reproduction, resource measurements and limitations](segmentation-experiment.md).
-It does not replace the baseline or establish plant recall. The regional
+These paths do not establish plant recall or improved species identification.
+SAM regions can be parts/clumps, and whole-photo downsampling still limits tiny
+background proposals: high-resolution tiling before SAM is not implemented.
+No plant pose-alignment/deskew is applied. Independent proposal and species-label
+evaluation, including unknown/nonplant handling, remains necessary. The regional
 pilot defaults to pinned **BioCLIP 2 ViT-L/14** (saved historical runs retain their declared model) embeddings on CPU for screening, with
 Temporal activities for acquisition, inference and export, and Next.js for review.
 Each image contributes a letterboxed whole frame and overlapping square tiles
