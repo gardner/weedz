@@ -11,6 +11,7 @@ from typing import Any
 
 from PIL import Image
 
+from weedz.annotation.credits import photo_credit
 from weedz.annotation.label_studio import Mode, label_config, model_version, task
 from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Annotation, Media, Rights, Sample
@@ -155,6 +156,9 @@ def export_label_studio(
         scores = json.loads(row["scores"])
         photo, encoded, size = _photo(source, row["record"], scores)
         imported, masks = task(photo.id, photo.sha256, scores, model, size, mode, image_prefix)
+        imported["data"]["photo_credit"] = photo_credit(
+            photo.attribution, photo.photo_license, photo.observation_license, photo.source_url
+        )
         prepared.append((photo, encoded, size, scores, imported, masks))
     output.mkdir(parents=True, exist_ok=False)
     try:

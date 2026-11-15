@@ -326,3 +326,17 @@ def test_explicit_frame_results_cannot_silently_disappear(canonical_batch, tmp_p
     with pytest.raises(ValueError, match="classifier result document"):
         export_samples(manifest, output, frame_results=frame)
     assert not output.exists()
+
+
+def test_canonical_credit_is_visible_plain_text_without_source_class(canonical_batch, tmp_path):
+    manifest, _, _ = canonical_batch
+    document = json.loads(manifest.read_text())
+    document["rights"]["attribution"] = '<Creator & friends> "authoritative"'
+    manifest.write_text(json.dumps(document) + "\n")
+    output = tmp_path / "visible-credit"
+    export_samples(manifest, output)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    credit = task["data"]["photo_credit"]
+    assert '<Creator & friends> "authoritative"' in credit
+    assert "CC-BY-4.0" in credit and "https://example.test/source" in credit
+    assert "Private source class context" not in json.dumps(task)

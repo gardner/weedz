@@ -118,7 +118,7 @@ def test_official_mask_roundtrip_and_prediction_truth_separation(public_run: Pat
         assert saved_mask.size == (6, 4)
 
 
-def test_blind_tasks_have_no_model_taxonomy_or_source_identity(public_run: Path, tmp_path: Path):
+def test_blind_tasks_have_no_model_or_source_taxonomy_prelabels(public_run: Path, tmp_path: Path):
     output = tmp_path / "blind"
     export_label_studio(public_run, "run", output, mode="blind")
     task = json.loads((output / "tasks.json").read_text())[0]
@@ -261,3 +261,20 @@ def test_invalid_legacy_result_scores_are_null_not_invented_numbers(
     assert private["photos"][0]["scores"]["species"][0]["margin"] is None
     assert "serialized as null" in private["nonfinite_result_policy"]
     assert "annotations" not in task
+
+
+@pytest.mark.parametrize("mode", ["assisted", "blind"])
+def test_required_public_photo_credit_is_visible_in_each_mode(public_run, tmp_path, mode):
+    output = tmp_path / f"credit-{mode}"
+    export_label_studio(public_run, "run", output, mode=mode)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    credit = task["data"]["photo_credit"]
+    assert "Actual creator 前" in credit and "CC BY" in credit
+    assert "https://www.inaturalist.org/observations/1" in credit
+    config = ET.fromstring((output / "label-config.xml").read_text())
+    display = config.find("Text[@name='photo_credit']")
+    assert display is not None
+    assert display.attrib["value"] == "$photo_credit"
+    assert display.attrib["valueType"] == "text"
+    assert display.attrib["selectionEnabled"] == "false"
+    assert config.find("HyperText") is None

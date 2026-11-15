@@ -55,6 +55,14 @@ LOCAL_FILES_DOCUMENT_ROOT. With document root `/private/published-images`, regis
 select another relative subdirectory. Merely setting the document root returns
 404 in Label Studio 1.23.2 without the registered project storage.
 
+Every task carries `data.photo_credit`, displayed by a plain-text object tag beside
+the photo in both modes: authoritative attribution, separate image/metadata licences,
+public source URL and normalization notice. Credit strings are not HTML and do not
+cause source pages to be fetched. Keep these required public credits visible; only
+the fuller provenance belongs in the private directory. When upgrading an existing
+project, migrate this data field and the configuration without reimporting tasks or
+changing identities, images, predictions or human annotations.
+
 An API publisher must serialize reconciliation by external ID. Import new tasks
 once. On existing tasks append only missing prediction model_versions; never
 reimport the task, replace annotations, or manufacture a human acceptance. If a
@@ -106,7 +114,9 @@ uv run --extra annotation python scripts/export_label_studio.py \
 
 This read-only adapter excludes private device reports and unsupported licences.
 `--mode blind` removes model predictions, hints and original taxonomy from imported
-tasks; the private provenance remains available to the experiment owner. The
+tasks; required credit and public source URLs remain. Someone can deliberately look
+up those public sources, so this does not guarantee prevention of unblinding. The
+private provenance remains available to the experiment owner. The
 canonical-batch assisted command does not promise a blind export mode.
 
 The output follows the official [prediction import format](https://labelstud.io/guide/predictions),

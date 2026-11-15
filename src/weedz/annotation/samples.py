@@ -11,6 +11,7 @@ from urllib.parse import quote
 from PIL import Image
 
 from weedz.annotation.auto_labels import frame_prediction, proposals_prediction
+from weedz.annotation.credits import photo_credit
 from weedz.annotation.export import _output
 from weedz.annotation.label_studio import label_config
 from weedz.annotation.sample_variants import add_variants, load_variants
@@ -121,6 +122,12 @@ def _prepare(
         "data": {
             "image": f"/data/local-files/?d={quote(f'{image_prefix}/{digest}.png')}",
             "source_dataset": sample.source,
+            "photo_credit": photo_credit(
+                sample.rights.attribution,
+                sample.rights.media_license,
+                sample.rights.metadata_license,
+                sample.rights.license_source,
+            ),
             "pipeline_state": "; ".join(s for s in (proposal_state, frame_state) if s)
             or "Awaiting model output",
         },
