@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:weedz/domain/approval.dart';
 import 'package:weedz/domain/report.dart';
 import 'package:weedz/ui/approval/approval_screen.dart';
@@ -9,40 +8,38 @@ import 'package:weedz/ui/approval/approval_screen.dart';
 import 'harness.dart';
 
 void main() {
-  group('a report is not sendable until approved', () {
-    testWidgets('a found report offers no way to send it', (tester) async {
+  group('reporting approves and sends the visible choices', () {
+    testWidgets('a found report sends nothing before the report action', (
+      tester,
+    ) async {
       await pumpApproval(tester, foundCase());
       expect(find.text('Send report'), findsNothing);
       expect(find.text('Waiting for your decision'), findsOneWidget);
     });
 
-    testWidgets('approving reveals Send, and Send sends that exact report', (
-      tester,
-    ) async {
-      final store = await pumpApproval(tester, foundCase());
-      await answerEverything(tester);
-      await tapText(tester, 'Approve this report');
-
-      expect(store.current.status, ApprovalStatus.approved);
-      expect(find.text('Send report'), findsOneWidget);
-
-      await tapText(tester, 'Send report');
-      expect(store.uploads, hasLength(1));
-      final body =
-          jsonDecode(store.uploads.single.body) as Map<String, Object?>;
-      expect(body['location'], {
-        'latitude': -41.2706319,
-        'longitude': 173.2839653,
-        'accuracy_m': 4.7,
-      });
-      final consent = body['consent']! as Map<String, Object?>;
-      expect(consent['licence'], 'cc-by-nc');
-      expect(consent['image'], isTrue);
-      expect(consent['uses'], ['review']);
-      expect(consent['location'], isTrue);
-      expect(body['image'], isNotNull);
-      expect(store.current.status, ApprovalStatus.sending);
-    });
+    testWidgets(
+      'one action approves and sends the exact optional-photo report',
+      (tester) async {
+        final store = await pumpApproval(tester, foundCase());
+        await answerEverything(tester);
+        await tapText(tester, 'Report sighting');
+        expect(store.uploads, hasLength(1));
+        final body =
+            jsonDecode(store.uploads.single.body) as Map<String, Object?>;
+        expect(body['location'], {
+          'latitude': -41.2706319,
+          'longitude': 173.2839653,
+          'accuracy_m': 4.7,
+        });
+        final consent = body['consent']! as Map<String, Object?>;
+        expect(consent['licence'], 'cc-by-nc');
+        expect(consent['image'], isTrue);
+        expect(consent['uses'], ['review']);
+        expect(consent['location'], isTrue);
+        expect(body['image'], isNotNull);
+        expect(store.current.status, ApprovalStatus.sending);
+      },
+    );
 
     testWidgets('declining is final and asks first', (tester) async {
       final store = await pumpApproval(tester, foundCase());
@@ -63,7 +60,7 @@ void main() {
       tester,
     ) async {
       final store = await pumpApproval(tester, approvedCase());
-      expect(find.text('Send report'), findsOneWidget);
+      expect(find.text('Report sighting'), findsOneWidget);
 
       await tapText(tester, licenceLabels['cc0']!);
 
@@ -102,25 +99,19 @@ void main() {
   });
 
   group('consent choices are required and explicit', () {
-    testWidgets('nothing is chosen for the person', (tester) async {
+    testWidgets('photo is off and visible recorded location is included', (
+      tester,
+    ) async {
       final handle = tester.ensureSemantics();
       await pumpApproval(tester, foundCase());
-
-      for (final label in [
-        'Send this photo',
-        "Don't send the photo",
-        'Share this exact location',
-        'Remove the location',
-      ]) {
+      for (final label in ['Share this exact location']) {
         expect(
           tester.getSemantics(find.text(label)),
-          isSemantics(hasCheckedState: true, isChecked: false),
-          reason: label,
+          isSemantics(hasCheckedState: true, isChecked: true),
         );
       }
-      expect(find.byType(Checkbox), findsNothing);
-      expect(approveButton(tester).onPressed, isNull);
-      expect(find.text('Answer every choice above to approve.'), findsOne);
+      expect(find.text('Licence for the photo'), findsNothing);
+      expect(approveButton(tester).onPressed, isNotNull);
       handle.dispose();
     });
 
@@ -132,7 +123,10 @@ void main() {
 
       await tapText(tester, licenceLabels['cc-by']!);
       expect(approveButton(tester).onPressed, isNotNull);
-      expect(find.text('Answer every choice above to approve.'), findsNothing);
+      expect(
+        find.text('Answer every choice above to report this sighting.'),
+        findsNothing,
+      );
     });
 
     testWidgets('the choices are applied before approval, so what is shown '

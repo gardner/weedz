@@ -106,9 +106,13 @@ class PhotoSection extends StatelessWidget {
     required this.preview,
     required this.choices,
     required this.onChoose,
+    this.failed = false,
+    this.onPreview,
     super.key,
   });
 
+  final bool failed;
+  final ValueChanged<bool>? onPreview;
   final Report report;
 
   /// The crop the person may send, or null when there is none.
@@ -122,6 +126,12 @@ class PhotoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = preview;
     final choose = onChoose;
+    void previewed(bool decoded) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => onPreview?.call(decoded),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -134,40 +144,57 @@ class PhotoSection extends StatelessWidget {
             child: Image(
               image: image,
               semanticLabel: 'The cropped part of your photo',
-              errorBuilder: (context, error, stack) =>
-                  const Text('The photo could not be shown.'),
+              frameBuilder: (context, child, frame, synchronous) {
+                if (synchronous || frame != null) previewed(true);
+                return child;
+              },
+              errorBuilder: (context, error, stack) {
+                previewed(false);
+                return const Text(
+                  'The photo could not be shown. It cannot be attached.',
+                );
+              },
             ),
           ),
           const SizedBox(height: 8),
           if (choose == null)
             Text(_frozenSummary())
-          else ...[
-            _YesNo(
-              value: choices.sendPhoto,
-              yes: 'Send this photo',
-              no: "Don't send the photo",
-              onChanged: (send) => choose(choices.withPhoto(send: send)),
-            ),
-            if (choices.sendPhoto ?? false) ...[
-              const SectionTitle('Licence for the photo'),
-              const Text(
-                'Choose how others may use it. Experts always see a photo '
-                'you send, to check the report.',
+          else if (!failed)
+            ExpansionTile(
+              title: const Text('Attach a photo (optional)'),
+              subtitle: const Text(
+                'No photo is sent unless you choose to attach it.',
               ),
-              RadioGroup<String>(
-                groupValue: choices.licence,
-                onChanged: (licence) {
-                  if (licence != null) choose(choices.withLicence(licence));
-                },
-                child: Column(
-                  children: [
-                    for (final MapEntry(:key, :value) in licenceLabels.entries)
-                      RadioListTile<String>(value: key, title: Text(value)),
-                  ],
+              initiallyExpanded: choices.sendPhoto ?? false,
+              children: [
+                _YesNo(
+                  value: choices.sendPhoto,
+                  yes: 'Send this photo',
+                  no: "Don't send the photo",
+                  onChanged: (send) => choose(choices.withPhoto(send: send)),
                 ),
-              ),
-            ],
-          ],
+                if (choices.sendPhoto ?? false) ...[
+                  const SectionTitle('Licence for the photo'),
+                  const Text(
+                    'Choose how others may use it. Experts always see a photo '
+                    'you send, to check the report.',
+                  ),
+                  RadioGroup<String>(
+                    groupValue: choices.licence,
+                    onChanged: (licence) {
+                      if (licence != null) choose(choices.withLicence(licence));
+                    },
+                    child: Column(
+                      children: [
+                        for (final MapEntry(:key, :value)
+                            in licenceLabels.entries)
+                          RadioListTile<String>(value: key, title: Text(value)),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
         ],
       ],
     );

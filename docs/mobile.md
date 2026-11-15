@@ -247,8 +247,13 @@ found ─► pending ──approve──► approved ──send──► sending
 - **The store commits each transition by id, compare-and-set.** A
   `ReportCase` is an immutable value, so an old copy (for example, the
   approved case after `startSending()`) can still be called. The store
-  therefore saves a transition only if the stored case still has the status
-  it started from. It saves `startSending()`'s frozen case before
+  therefore saves a transition only if the stored case still has the expected
+  id/status. The screen's `onSend` receives an approved snapshot while the persisted
+  case may still be pending: serialize edits and send per case, compare-and-set
+  pending/approved to this exact snapshot's sending state, and persist its outbox
+  body atomically before network dispatch. Do not require an intermediate
+  `onChanged(approved)` callback or parent rebuild. Reject duplicate sends once
+  sending. The local button guard blocks repeat taps while that commit is pending. It saves `startSending()`'s frozen case before
   dispatching its `Upload`, and `revise()`'s retired and new cases in one
   transaction. The uploader sends an `Upload` only while the stored case for
   its id is `sending`.
@@ -257,14 +262,20 @@ found ─► pending ──approve──► approved ──send──► sending
 - **After sending**, the receipt is kept. The person can withdraw the report
   from the same screen (`DELETE`), which deletes the crop on the server.
 
-- **Choices start unanswered.** Sending the photo, its licence and sharing
-  the location are each an explicit choice with nothing preselected, and
-  Approve stays disabled, saying why, until they are answered. The screen
-  is `mobile/lib/ui/approval/approval_screen.dart`; it shows the case and
-  asks the domain for each transition, which the store then commits.
+- **One explicit report action.** `Report sighting` applies the visible choices,
+  approves that exact snapshot and requests sending in one action. No photo is
+  attached by default: its licence, uses and credit are also omitted. A recorded
+  location with known accuracy is displayed and included by default, with an
+  obvious removal control. An optional photo requires a successfully decoded
+  preview and an explicitly chosen licence. A decoder failure removes the crop
+  and undoes any approval; a no-photo report remains available. Frozen retries
+  retain their original payload and consent version. The current wording is
+  [2026-11-15](report-consent.md#version-2026-11-15).
+  Native camera-roll and inference/runtime integration remain separate work; the
+  main route remains a placeholder, so this is not a claim of end-to-end scanning.
 
 Accessibility (VoiceOver, TalkBack, dynamic type, large tap targets for
-Approve and Decline) is part of this flow, not an add-on
+Report sighting and Decline) is part of this flow, not an add-on
 ([#63](https://github.com/gardner/weedz/issues/63)). Every state of the
 approval screen is tested against Flutter's tap-target, label and contrast
 guidelines and at a text scale of 2.0 on a 360 × 640 phone; the status is a

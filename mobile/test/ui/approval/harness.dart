@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:weedz/domain/approval.dart';
+import 'package:weedz/domain/report.dart';
 import 'package:weedz/ui/approval/approval_screen.dart';
 import 'package:weedz/ui/theme.dart';
 
@@ -9,9 +12,16 @@ import '../../domain/fixtures.dart';
 const foundId = '6f1c2a4e-8b3d-4c5e-9f70-1a2b3c4d5e6f';
 const revisedId = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
 
+Report previewReport() => fullReport().copyWith(
+  image: Crop.fromBytes(
+    File('test/fixtures/model_conformance/std-7-window-0.png')
+        .readAsBytesSync(),
+  ),
+);
+
 /// What the scan found: the fixture's crop and exact location.
 Findings fullFindings() {
-  final report = fullReport();
+  final report = previewReport();
   return Findings(crop: report.image, location: report.location);
 }
 
@@ -21,7 +31,7 @@ ReportCase foundCase() =>
 
 /// Every choice made (photo under CC BY, exact location shared) and approved.
 ReportCase approvedCase() =>
-    ReportCase.found(id: foundId, report: fullReport()).approve();
+    ReportCase.found(id: foundId, report: previewReport()).approve();
 
 ReportCase sendingCase() => approvedCase().startSending().$1;
 
@@ -98,6 +108,11 @@ Future<FakeStore> pumpApproval(
       ),
     ),
   );
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 40)),
+  );
+  await tester.pump();
+  await tester.pump();
   return store;
 }
 
@@ -105,6 +120,15 @@ Future<FakeStore> pumpApproval(
 /// settling, since a sending report shows an endless progress indicator.
 Future<void> tapText(WidgetTester tester, String text) async {
   final target = find.text(text);
+  if (target.evaluate().isEmpty &&
+      (text == 'Send this photo' ||
+          text == "Don't send the photo" ||
+          licenceLabels.containsValue(text))) {
+    final options = find.text('Attach a photo (optional)');
+    await tester.ensureVisible(options);
+    await tester.tap(options);
+    await tester.pumpAndSettle();
+  }
   await tester.ensureVisible(target);
   await tester.pump();
   await tester.tap(target);
@@ -114,7 +138,7 @@ Future<void> tapText(WidgetTester tester, String text) async {
 
 /// The approve button, found by its label.
 FilledButton approveButton(WidgetTester tester) => tester.widget<FilledButton>(
-  find.widgetWithText(FilledButton, 'Approve this report'),
+  find.widgetWithText(FilledButton, 'Report sighting'),
 );
 
 /// Answers every choice: send the photo under CC BY-NC, share the location.
