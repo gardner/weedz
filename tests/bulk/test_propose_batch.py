@@ -154,3 +154,69 @@ def test_relative_media_uri_is_resolved_from_media_root(tmp_path):
     assert (
         propose_batch(manifest, manifest.parent, tmp_path / "out", Proposer())["counts"]["ok"] == 1
     )
+
+
+def test_interrupted_cache_cannot_reuse_contradictory_declared_dimensions(tmp_path):
+    manifest, _ = source(tmp_path)
+    output = tmp_path / "out"
+    propose_batch(manifest, manifest.parent, output, Proposer())
+    (output / "ready.json").unlink()
+    (output / "proposals.jsonl").unlink()
+    sample = json.loads(manifest.read_text())
+    sample["media"]["width"] = 65
+    manifest.write_text(json.dumps(sample) + "\n")
+    with pytest.raises(ValueError, match="provenance"):
+        propose_batch(manifest, manifest.parent, output, Proposer())
+    assert not (output / "ready.json").exists()
+
+
+def test_decompression_bomb_is_explicit_failed_photo(tmp_path, monkeypatch):
+    manifest, _ = source(tmp_path)
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 10)
+    result = propose_batch(manifest, manifest.parent, tmp_path / "out", Proposer())
+    assert result["counts"] == {"ok": 0, "empty": 0, "failed": 1}
+
+
+def test_first_output_row_streams_before_processing_second_photo(tmp_path):
+    manifest, _ = source(tmp_path)
+    first = json.loads(manifest.read_text())
+    second = {**first, "id": "test:second", "source_id": "second"}
+    manifest.write_text(json.dumps(first) + "\n" + json.dumps(second) + "\n")
+    output = tmp_path / "out"
+
+    class Streaming(Proposer):
+        def generate(self, image):
+            if self.calls == 1:
+                temporary = list(output.glob("proposals-*.tmp"))
+                assert len(temporary) == 1
+                assert json.loads(temporary[0].read_text())["sample_id"] == "test:plant"
+            return super().generate(image)
+
+    assert propose_batch(manifest, manifest.parent, output, Streaming())["count"] == 2
+
+
+def test_retry_syncs_output_parent_after_interrupted_directory_creation(tmp_path, monkeypatch):
+    from weedz.segmentation import batch as module
+
+    manifest, _ = source(tmp_path)
+    output = tmp_path / "out"
+    original = module.durable_mkdir
+
+    def interrupted(path):
+        path.mkdir()
+        raise OSError("Interrupted directory creation sync")
+
+    monkeypatch.setattr(module, "durable_mkdir", interrupted)
+    with pytest.raises(OSError, match="Interrupted"):
+        propose_batch(manifest, manifest.parent, output, Proposer())
+    monkeypatch.setattr(module, "durable_mkdir", original)
+    synced = []
+    sync = module.sync_directory
+
+    def observed(path):
+        synced.append(path)
+        sync(path)
+
+    monkeypatch.setattr(module, "sync_directory", observed)
+    propose_batch(manifest, manifest.parent, output, Proposer())
+    assert output.parent in synced
