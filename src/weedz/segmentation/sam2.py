@@ -3,6 +3,7 @@
 import importlib
 import importlib.metadata
 import json
+import zipfile
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -83,7 +84,7 @@ class Sam2Proposer:
         if path.exists():
             try:
                 return self._cached(path)
-            except (ValueError, OSError, KeyError, EOFError):
+            except (ValueError, OSError, KeyError, EOFError, zipfile.BadZipFile):
                 pass
         with self.torch.inference_mode():
             raw = self.generator.generate(np.asarray(thumbnail))
