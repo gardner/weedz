@@ -19,6 +19,7 @@ def publisher_from_config(config: dict):
             raise ValueError("This publication worker is restricted to its configured project")
         keys = [task["meta"]["external_id"] for task in package.tasks]
         with LabelStudioClient(config["api_url"], Path(config["token_file"])) as client:
+            client.refresh()
             return publish(
                 package,
                 project,

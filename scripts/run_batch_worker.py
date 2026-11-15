@@ -42,12 +42,32 @@ ROLES = {
 }
 
 
-async def worker(args, config):
-    selected = args.roles.split(",")
-    if not selected or any(role not in ROLES for role in selected):
+def worker_roles(value: str) -> list[str]:
+    selected = value.split(",")
+    if (
+        not selected
+        or len(set(selected)) != len(selected)
+        or any(role not in ROLES for role in selected)
+    ):
         raise ValueError(
-            "Choose explicit control, segmentation, classification or publication roles"
+            "Choose distinct explicit control, segmentation, classification or publication roles"
         )
+    if {"segmentation", "classification"}.issubset(selected):
+        raise ValueError(
+            "Segmentation and classification require separate processes for CUDA policy isolation"
+        )
+    if "control" in selected:
+        try:
+            from label_studio_sdk.converter.brush import mask2rle
+        except ImportError as error:
+            raise RuntimeError("Control workers require: uv sync --extra annotation") from error
+        if not callable(mask2rle):
+            raise RuntimeError("Label Studio annotation encoder is unavailable")
+    return selected
+
+
+async def worker(args, config):
+    selected = worker_roles(args.roles)
     client = await Client.connect(args.address, namespace=args.namespace)
     publisher = None
     if "publication" in selected:

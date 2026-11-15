@@ -62,7 +62,7 @@ def test_auth_refresh_does_not_reveal_token_or_response_body(tmp_path):
     assert "private-test-token" not in str(caught.value)
     path.chmod(0o644)
     with (
-        pytest.raises(ValueError, match="owner-private"),
+        pytest.raises(RuntimeError, match="authentication prevented"),
         LabelStudioClient("http://127.0.0.1:8068", path, transport=transport) as client,
     ):
         client.get("/api/projects/1/")
@@ -87,3 +87,31 @@ def test_successful_authentication_can_be_used_in_a_normal_client_context(tmp_pa
         "http://127.0.0.1:8068", path, transport=httpx.MockTransport(respond)
     ) as client:
         assert client.get("/api/projects/1/").json() == {"ready": True}
+
+
+def test_failed_reauthentication_marks_post_as_definitely_not_delivered(tmp_path):
+    import httpx
+
+    from weedz.batches.label_client import LabelStudioClient, UndeliveredRequest
+
+    path = tmp_path / "token"
+    path.write_text("private-test-token", encoding="utf-8")
+    path.chmod(0o600)
+    refreshes = []
+
+    def respond(request):
+        if request.url.path == "/api/token/refresh/":
+            refreshes.append(1)
+            return (
+                httpx.Response(200, json={"access": "first"})
+                if len(refreshes) == 1
+                else httpx.Response(503)
+            )
+        return httpx.Response(401)
+
+    with LabelStudioClient(
+        "http://127.0.0.1:8068", path, transport=httpx.MockTransport(respond)
+    ) as client:
+        client.refresh()
+        with pytest.raises(UndeliveredRequest):
+            client.post("/api/projects/1/import", json=[])

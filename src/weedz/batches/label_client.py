@@ -30,6 +30,10 @@ def task_index(database: Path, project: int, keys: list[str]) -> dict[str, dict[
     return result
 
 
+class UndeliveredRequest(RuntimeError):
+    """Authentication proved that the intended mutation was not delivered."""
+
+
 class LabelStudioClient(httpx.Client):
     def __init__(self, base_url: str, token_file: Path, **kwargs: Any) -> None:
         url = httpx.URL(base_url)
@@ -64,11 +68,21 @@ class LabelStudioClient(httpx.Client):
             raise RuntimeError("Label Studio returned no access credential")
         self.headers["Authorization"] = f"Bearer {access}"
 
+    def _authenticate(self) -> None:
+        try:
+            self.refresh()
+        except Exception as error:
+            raise UndeliveredRequest(
+                "Label Studio authentication prevented request delivery"
+            ) from error
+
     def request(self, method: str, url: Any, *args: Any, **kwargs: Any) -> httpx.Response:
         if "Authorization" not in self.headers:
-            self.refresh()
+            self._authenticate()
         response = super().request(method, url, *args, **kwargs)
         if response.status_code == 401:
-            self.refresh()
+            self._authenticate()
             response = super().request(method, url, *args, **kwargs)
+        if response.status_code == 401:
+            raise UndeliveredRequest("Label Studio refused request authentication")
         return response

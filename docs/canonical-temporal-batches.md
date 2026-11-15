@@ -9,15 +9,17 @@ Temporal history.
 
 The ordered stages are validate, segment, frame classification, tiled
 classification, masked-region classification, package, and publish. A request
-selects the classifier variants explicitly. The resident worker loads a model
-once per process. SAM2 and SAM3 use separate pinned profiles; SAM3 partial or
+selects the classifier variants explicitly. Each resident worker loads its model
+once per process. Segmentation and classification cannot share a process: model
+imports can mutate global CUDA math settings. SAM2 and SAM3 use separate pinned profiles; SAM3 partial or
 failed prompts remain retryable. Successful per-photo work survives process
 loss. Completed artifacts and their directory hierarchy are verified and synced
 again when adopted after interruption.
 
 ## Running
 
-Use `uv run scripts/run_batch_worker.py --help`. The service address defaults to
+Install the control role with `uv sync --extra annotation` (the official Label
+Studio RLE encoder is required). Use `uv run scripts/run_batch_worker.py --help`. The service address defaults to
 `127.0.0.1:7258`, namespace `weedz-hosted`; this runner connects to the existing
 service and never starts another server. The hosted single-machine persisted
 SQLite service is an evaluation service, not a production Temporal cluster.
@@ -30,7 +32,8 @@ reference with the source manifest. Choose the physical GPU through
 `CUDA_VISIBLE_DEVICES`; SAM3 uses logical `cuda:0`.
 
 Start `worker --config PATH --roles control` and a resident
-`worker --config PATH --roles segmentation,classification` in the appropriate
+separate `worker --config PATH --roles segmentation` and
+`worker --config PATH --roles classification` processes in the appropriate
 isolated model runtime. These use distinct versioned task queues, separate from
 the hosted discovery workflow. Submit with `submit --request PATH --workflow-id
 UNIQUE_ID`. A request contains pinned `manifest` and `ready` references,
@@ -107,7 +110,14 @@ A separate actual SAM3 execution, `canonical-batch-148-sam3-20261115`, run
 `01a1dddf-bb7b-77e8-b205-f218c697a13b`, completed six compute/package activities
 for three canonical images: two masks, two ok results, one empty result and no
 partial/failed results. History references and output SHA joins were verified.
-Its publication activity remains pending without a publication worker; this is
-compute/package proof, not a completed workflow or a SAM3 restart test. Evidence
+A later bounded publication attempt correctly refused existing same-version
+classifier results with different numeric scores, before any REST writes. SAM3
+imports had changed global TF32 flags, which the historical classifier identity
+did not record. That execution is retained as failed; it is compute/package
+proof, not a completed workflow or a SAM3 restart test. No existing prediction
+was overwritten. Protected task/annotation snapshots remained identical. Evidence
 is `proof-sam3-package.json` and `history-sam3-package.json` in the same directory.
-Both owned smoke workers were stopped after verification.
+All owned smoke/publication workers were stopped and the shared lock released.
+The refusal history, snapshots and exact score/metadata/source diagnosis are
+retained alongside it as `proof-sam3-publication-refused.json` and
+`diagnostic-sam3-math-policy-conflict.json`.

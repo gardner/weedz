@@ -3,14 +3,15 @@
 import hashlib
 import os
 import tempfile
-from collections.abc import Callable
-from contextlib import suppress
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
 
+from weedz.batches.label_client import UndeliveredRequest
 from weedz.batches.package import Package, validate_package
 from weedz.batches.publication_state import Intents, writer_lock
 from weedz.batches.storage import read_artifact, read_owned_file
@@ -98,6 +99,18 @@ def _copy_images(package: Package, destination: Path, heartbeat: Callable[[], No
         sync_directory(target.parent)
 
 
+@contextmanager
+def _delivery(intents: Intents, keys: list[str]) -> Iterator[None]:
+    try:
+        yield
+    except (UndeliveredRequest, httpx.ConnectError, httpx.ConnectTimeout):
+        for key in keys:
+            intents.complete(key)
+        raise
+    except (httpx.TimeoutException, httpx.NetworkError):
+        pass  # Delivery may have occurred: reconcile without blindly resending.
+
+
 def _import_tasks(
     client: httpx.Client,
     project: int,
@@ -111,7 +124,7 @@ def _import_tasks(
     for task in tasks:
         intents.begin(f"task:{task['meta']['external_id']}", task)
     # A timeout is not a refusal. Re-index before deciding what remains unresolved.
-    with suppress(httpx.TimeoutException, httpx.NetworkError):
+    with _delivery(intents, [f"task:{task['meta']['external_id']}" for task in tasks]):
         _require(
             client.post(
                 f"/api/projects/{project}/import", params={"return_task_ids": "true"}, json=tasks
@@ -143,7 +156,8 @@ def _append_predictions(
             intents.begin(
                 f"prediction:{prediction['task']}:{prediction['model_version']}", prediction
             )
-        with suppress(httpx.TimeoutException, httpx.NetworkError):
+        keys = [f"prediction:{p['task']}:{p['model_version']}" for p in chunk]
+        with _delivery(intents, keys):
             _require(client.post(f"/api/projects/{project}/import/predictions", json=chunk))
         for prediction in chunk:
             heartbeat()

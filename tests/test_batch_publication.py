@@ -197,3 +197,26 @@ def test_existing_image_is_resealed_before_any_rest_write(canonical_batch, tmp_p
     with pytest.raises(OSError, match="directory barrier"):
         run(service, package, tmp_path)
     assert service.requests == []
+
+
+@pytest.mark.parametrize("failure", [httpx.ConnectError, httpx.ConnectTimeout])
+def test_definite_connection_failure_releases_only_its_new_intents(
+    canonical_batch, tmp_path, failure
+):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    original = service.handle
+
+    def offline(request):
+        if request.method == "POST":
+            raise failure("No connection established", request=request)
+        return original(request)
+
+    service.handle = offline
+    with pytest.raises(failure):
+        run(service, package, tmp_path)
+    service.handle = original
+    run(service, package, tmp_path)
+    assert len(service.tasks) == 1
