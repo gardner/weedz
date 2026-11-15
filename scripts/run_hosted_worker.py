@@ -3,10 +3,15 @@
 import argparse
 import asyncio
 import signal
+import sys
 from pathlib import Path
 
-from weedz.discovery.hosted_worker import serve_worker
-from weedz.discovery.hosting import HOSTED_NAMESPACE, HOSTED_TASK_QUEUE, TemporalConnection
+# Resolve the immutable release before importing project code; a later UI deployment
+# may move site/current while this worker is still finishing a durable activity.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from weedz.discovery.hosted_worker import serve_worker  # noqa: E402
+from weedz.discovery.hosting import HOSTED_NAMESPACE, HOSTED_TASK_QUEUE, TemporalConnection  # noqa: E402
 
 
 async def run(args: argparse.Namespace) -> None:

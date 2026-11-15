@@ -1,7 +1,6 @@
 [Unit]
-Description=Weedz isolated Cloudflare Tunnel
-After=weedz-site-web.service
-Requires=weedz-site-web.service
+Description=Weedz review and annotation Cloudflare Tunnel
+After=network-online.target
 [Service]
 ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate run --token-file %h/.config/weedz/cloudflare/site-tunnel-token
 Restart=on-failure
