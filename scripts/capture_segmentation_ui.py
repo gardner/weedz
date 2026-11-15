@@ -23,6 +23,7 @@ def main() -> None:
     }
     subprocess.run(
         ["pnpm", "--dir", "web", "exec", "node", "scripts/capture-segmentation-ui.mjs"],
+        cwd=Path(__file__).resolve().parents[1],
         env=environment,
         check=True,
     )

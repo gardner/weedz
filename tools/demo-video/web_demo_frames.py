@@ -192,7 +192,7 @@ class WebsiteFrames(Frames):
         text(
             canvas,
             (85, 660),
-            "Public photography: iNaturalist / CC BY and CC0. "
+            "Non-commercial demo: photo and observation-data terms are separate. "
             "Full source links accompany this film.",
             25,
             MUTED,

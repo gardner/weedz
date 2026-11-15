@@ -49,3 +49,16 @@ user-local font directory if the browser otherwise shows missing glyphs. No syst
 package installation or image alteration is needed. Credits must retain the full
 creator string and source/licence from the manifest even when composing a cropped
 UI view. Capture assets are never committed.
+
+The launcher refuses existing output directories and any Git worktree. It resolves
+paths before running the project from its own root. The current compared-species
+heading is selected semantically; no review action is submitted. Recording waits
+at least 16 seconds so the strict 15.6-second edit has complete source frames.
+The closed receipt pins consumed media/model-evidence bytes and carries both photo
+and observation-data rights, observer credit and the exact encoded source-image
+SHA-256. Existing recordings/receipts are not retroactively upgraded.
+
+The capture explicitly selects `segmentation-experiment-v1` through the real saved-run
+control, selects photo 447484684 by its run-qualified image URL, and waits for that
+exact image in the evidence stage. The receipt and saved model evidence must agree
+on run/photo identity, source image/credit and both model stamps before rendering.

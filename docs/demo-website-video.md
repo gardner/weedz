@@ -52,3 +52,15 @@ reproduce the capture with the documented helper if the older receipt lacks thos
 The renderer checks every requested pipeline video frame and the decoder exit status.
 The 15.6-second segment is sampled at 24 fps with its fractional final interval retained
 (`fps` EOF pass), giving 375 required frames; truncated footage aborts rather than freezing.
+
+Fresh captures now require a closed success receipt with SHA-256 pins for every
+consumed pipeline PNG/video and model-evidence JSON. Rendering checks those bytes
+and uses private copies, including the separately verified source photograph.
+Photo and observation-data credits remain separate; CC BY-NC observation data is
+retained for this explicitly non-commercial demonstration. Generic codes do not
+imply a licence version. Existing films and historical hashless receipts remain
+unchanged; a fresh render requires new complete receipts and snapshot rights.
+
+Optional `--ui-font` and `--ui-bold-font` select existing regular/bold UI fonts.
+These and `--credit-font` are loaded before output creation. No OS installation
+or historical media regeneration is part of this source-tooling update.
