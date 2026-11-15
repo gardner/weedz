@@ -200,7 +200,6 @@ class PipelineStages:
                 evidence.update(
                     status="failed", view_status="failed", failure_type=type(error).__name__
                 )
-                evidence = artifacts.write("views", photo["id"], inputs, evidence)
         return artifacts.write("views", photo["id"], inputs, evidence)
 
     def _classified_regions(self, path: Path, result: dict, model: Any, photo: dict) -> list:
