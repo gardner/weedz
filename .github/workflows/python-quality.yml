@@ -36,7 +36,7 @@ jobs:
         uses: astral-sh/setup-uv@v10.3.3
 
       - name: Sync locked dependencies
-        run: uv sync --locked
+        run: uv sync --locked --extra annotation
 
       - name: Ruff lint (includes McCabe complexity)
         run: uv run --locked ruff check
