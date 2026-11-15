@@ -163,7 +163,20 @@ def test_local_storage_uses_a_registered_subdirectory(public_run: Path, tmp_path
     assert (output / "images" / relative).is_file()
 
 
-@pytest.mark.parametrize("prefix", ["", ".", "..", "../private", "/absolute", "a/../private"])
+@pytest.mark.parametrize(
+    "prefix",
+    [
+        "",
+        ".",
+        "..",
+        "../private",
+        "/absolute",
+        "a/../private",
+        "c:/outside",
+        "C:outside",
+        "folder:stream",
+    ],
+)
 def test_image_prefix_cannot_escape_registered_storage(public_run: Path, tmp_path: Path, prefix):
     output = tmp_path / "invalid-prefix"
     with pytest.raises(ValueError, match="image prefix"):

@@ -217,3 +217,12 @@ def test_relative_media_is_resolved_from_manifest_not_working_directory(canonica
     task = json.loads((output / "tasks.json").read_text())[0]
     assert task["meta"]["external_id"] == key
     assert len(list((output / "images/corpus").glob("*.png"))) == 1
+
+
+@pytest.mark.parametrize("prefix", ["c:/outside", "C:outside", "folder:stream"])
+def test_storage_prefix_rejects_windows_drive_and_stream_syntax(canonical_batch, tmp_path, prefix):
+    manifest, _, _ = canonical_batch
+    output = tmp_path / "drive-prefix"
+    with pytest.raises(ValueError, match="image prefix"):
+        export_samples(manifest, output, image_prefix=prefix)
+    assert not output.exists()

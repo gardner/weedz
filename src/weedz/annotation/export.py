@@ -141,6 +141,7 @@ def export_label_studio(
         or prefix.is_absolute()
         or any(part in {".", ".."} for part in image_prefix.split("/"))
         or "\\" in image_prefix
+        or ":" in image_prefix
     ):
         raise ValueError("Choose a relative image prefix with a real storage subdirectory")
     source = source.resolve()

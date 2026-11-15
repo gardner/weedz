@@ -207,6 +207,7 @@ def export_samples(
         not image_prefix
         or any(p in {"", ".", ".."} for p in image_prefix.split("/"))
         or "\\" in image_prefix
+        or ":" in image_prefix
     ):
         raise ValueError("Choose a relative image prefix with a storage subdirectory")
     source_digest, frames, frame_rows, proposal_rows, samples = _inputs(
