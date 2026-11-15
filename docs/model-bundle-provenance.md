@@ -28,3 +28,14 @@ pinned model and inputs to obtain new measured provenance. Never repair an old
 benchmark by inventing a transform hash after the measurement. The screener's
 embedding-cache hash is a different, library-inclusive serialization and is not
 interchangeable with this portable configuration hash.
+
+## Device score interpretation
+
+Published device `screening` stamps include model key, exact model revision and
+ranking revision, and deliberately omit `score_meaning`. Fixed-prompt arithmetic
+can match the server while camera-roll photos differ from the pilot population.
+Without on-device/population evidence, inheriting `meaning-1` or inventing a new
+meaning identifier would imply an unsupported interpretation. Raw margins remain
+uncalibrated ranking evidence, never probability or confidence of weed presence.
+Server discovery declarations and their existing records are unchanged. A future
+device meaning needs evidence and its own explicit declaration before it is used.

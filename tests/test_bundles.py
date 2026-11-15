@@ -74,19 +74,18 @@ def test_a_signature_from_an_unpinned_key_fails(key: Ed25519PrivateKey) -> None:
     assert verify(envelope, [public_key_text(key), public_key_text(other)]) == b"{}"
 
 
-def test_the_screening_stamp_is_what_an_intake_report_carries() -> None:
+def test_device_stamp_does_not_inherit_server_population_score_meaning() -> None:
     stamp = screening_stamp("bioclip-2")
     assert stamp == {
         "model_key": "bioclip-2",
         "revision": MODELS["bioclip-2"]["revision"],
         "ranking_revision": RANKING_REVISION,
-        "score_meaning": "bioclip-2/ranking-4/meaning-1",
     }
 
 
 def test_the_screening_stamp_validates_as_an_intake_report_model() -> None:
     stamp = screening_stamp("bioclip-2")
-    assert Screening.model_validate(stamp).model_dump() == stamp
+    assert Screening.model_validate(stamp).model_dump(exclude_none=True) == stamp
 
 
 def test_publishing_is_refused_without_a_passing_parity_record(tmp_path: Path) -> None:

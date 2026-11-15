@@ -24,7 +24,6 @@ from weedz.discovery.inference import COMPARISONS, MODELS, RANKING_REVISION, fil
 from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.parity import THRESHOLDS
 from weedz.discovery.records import REGIONS, SPECIES
-from weedz.discovery.score_meaning import pin_meaning
 
 __all__ = ["PAYLOAD_TYPE", "BundleRejected", "BundleSpec", "ParityRefused"]
 
@@ -140,20 +139,12 @@ def _measured_these_bytes(record: Mapping[str, Any], variant: str, sha256: str) 
 
 
 def screening_stamp(model_key: str) -> dict[str, Any]:
-    """What a device report's `model` block carries (#57) for scores from this bundle."""
+    """Device model identity, without borrowing server-population score meaning."""
     model = MODELS[model_key]
-    configuration = {
-        "model_key": model_key,
-        "revision": model["revision"],
-        "ranking_revision": RANKING_REVISION,
-        "calibrated": False,
-    }
-    meaning = pin_meaning(None, configuration)["score_meaning"]
     return {
         "model_key": model_key,
         "revision": model["revision"],
         "ranking_revision": RANKING_REVISION,
-        "score_meaning": meaning,
     }
 
 
