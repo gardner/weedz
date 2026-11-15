@@ -14,6 +14,10 @@ Stage = Literal["proposals", "views"]
 MAX_ARTIFACT_BYTES = 32_000_000
 
 
+class ArtifactTooLarge(ValueError):
+    """The new result cannot fit the publication budget; existing evidence is unchanged."""
+
+
 def digest(value: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
 
@@ -131,7 +135,7 @@ class StageArtifacts:
         payload = {"stage": stage, "photo_id": photo_id, "inputs": inputs, "result": result}
         encoded = json.dumps({"schema": 1, **payload, "sha256": digest(payload)}, allow_nan=False)
         if len(encoded.encode()) > MAX_ARTIFACT_BYTES:
-            raise ValueError("Stage artifact exceeds resource cap")
+            raise ArtifactTooLarge("Stage artifact exceeds resource cap")
         with tempfile.NamedTemporaryFile(mode="w", dir=self.root, delete=False) as stream:
             temporary = Path(stream.name)
             try:
