@@ -102,6 +102,9 @@ and explicitly report unrecorded runtime pins in private provenance only. Their
 existing prediction result shape is preserved; recorded new pairs appear in evidence.
 Partial or blank version pairs are refused. Old imported predictions are not rewritten
 and historical versions are never inferred from the current environment.
+Recorded masked-view policy and crop-geometry revision also enter shared identities,
+so rectangular historical crops and square-padded crops cannot share a declared
+method identity. Historical records omitting those fields keep their original hashes.
 Invalid legacy result numbers (NaN or infinities) produce Unknown taxon proposals
 and are represented as JSON null in evidence/provenance, never invented finite
 scores. Model metadata and version hashing remain strict and reject such numbers.
