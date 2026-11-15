@@ -56,6 +56,16 @@ class Activities:
         self.screeners: dict[str, Any] = {}
         self.proposer: Any = None
 
+    def registered_activities(self) -> list[Callable[..., Any]]:
+        return [
+            self.collect_photos,
+            self.segment_photos_v1,
+            self.screen_photos,
+            self.score_region_views_v1,
+            self.export_run,
+            self.fail_run,
+        ]
+
     def preflight_segmentation(self) -> dict:
         from weedz.segmentation.runtime import load_proposer
 
