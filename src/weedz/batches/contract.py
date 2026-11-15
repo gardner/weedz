@@ -34,7 +34,11 @@ def batch_request(value: Any) -> dict[str, Any]:
         "variants",
         "project_id",
     }
-    if not isinstance(value, dict) or set(value) != fields:
+    if (
+        not isinstance(value, dict)
+        or not fields.issubset(value)
+        or set(value) - fields - {"cached"}
+    ):
         raise ValueError("Unknown or incomplete batch request")
     profiles = (value["segmentation_profile"], value["classifier_profile"])
     if any(not isinstance(p, str) or PROFILE.fullmatch(p) is None for p in profiles):
@@ -50,4 +54,15 @@ def batch_request(value: Any) -> dict[str, Any]:
     project = value["project_id"]
     if type(project) is not int or not 1 <= project <= 2**31 - 1:
         raise ValueError("Choose a positive Label Studio project ID")
-    return {**value, "manifest": artifact(value["manifest"]), "ready": artifact(value["ready"])}
+    return {
+        **value,
+        "manifest": artifact(value["manifest"]),
+        "ready": artifact(value["ready"]),
+        "cached": cached_artifacts(value.get("cached", {}), variants),
+    }
+
+
+def cached_artifacts(value: Any, variants: list[str]) -> dict[str, dict[str, str]]:
+    if not isinstance(value, dict) or set(value) - {"proposals", *variants}:
+        raise ValueError("Cache references must name requested inference stages")
+    return {name: artifact(reference) for name, reference in value.items()}

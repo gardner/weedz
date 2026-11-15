@@ -13,7 +13,7 @@ CLASSIFICATION = "weedz-batch-classification-v1"
 PUBLICATION = "weedz-batch-publication-v1"
 
 
-@workflow.defn
+@workflow.defn(failure_exception_types=[ValueError])
 class BatchAnnotationWorkflow:
     @workflow.run
     async def run(self, request: dict) -> dict:

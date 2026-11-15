@@ -100,3 +100,30 @@ def test_failed_inference_never_packages_or_publishes(monkeypatch):
     with pytest.raises(RuntimeError, match="Pinned model unavailable"):
         asyncio.run(BatchAnnotationWorkflow().run(request()))
     assert calls == ["batch_validate_v1", "batch_segment_v1"]
+
+
+def test_external_cache_adoption_requires_an_explicit_pinned_reference(monkeypatch):
+    calls = []
+    value = request()
+    value["cached"] = {"frame": {"path": "external/frame.json", "sha256": "d" * 64}}
+
+    async def execute(name, payload, **_options):
+        calls.append(payload["request"])
+        return {"path": f"batch-0001/{name}.json", "sha256": "c" * 64}
+
+    monkeypatch.setattr("weedz.batches.workflow.workflow.execute_activity", execute)
+    asyncio.run(BatchAnnotationWorkflow().run(value))
+    assert calls[0]["cached"] == value["cached"]
+
+
+@pytest.mark.parametrize(
+    "cached",
+    [{"unknown": {"path": "x", "sha256": "d" * 64}}, {"frame": {"path": "x"}}, {"frame": "x"}],
+)
+def test_bad_cache_references_never_schedule_work(monkeypatch, cached):
+    async def execute(*_args, **_options):
+        pytest.fail("Malformed cache references must not schedule activities")
+
+    monkeypatch.setattr("weedz.batches.workflow.workflow.execute_activity", execute)
+    with pytest.raises(ValueError):
+        asyncio.run(BatchAnnotationWorkflow().run({**request(), "cached": cached}))
