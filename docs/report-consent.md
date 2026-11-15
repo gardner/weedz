@@ -22,8 +22,39 @@ How the photo choices are enforced:
 A withdrawn report permits none of these. Material from sources such as iNaturalist has
 no consent record and stays governed by its own licence (`docs/datasets.md`).
 
-Defaults (decisions pending on #60): only `review` is ticked, the licence offered first
-is CC BY-NC, and the credit name is empty, which credits "a Weedz contributor".
+Current defaults (#121): no photo, photo licence, photo permissions or credit are
+sent. A recorded photo location with known accuracy is included and displayed,
+with an obvious removal control. Optional photo sharing requires a chosen licence;
+`review` is its only permitted use in this screen.
+
+## Version 2026-11-15
+
+**Report sighting** approves and sends the suggested species, raw model score,
+model version and available capture time shown above. The score is not a calibrated
+probability or confirmed identification. Nothing is sent before you press this button.
+
+**Location:** the exact recorded photo location and its accuracy are shown before
+the button. It is included when available; choose **Remove the location** to omit
+it. We do not substitute the phone's current GPS or invent an accuracy. People who
+check and follow up sightings can see the included point.
+
+**Photo (optional):** no photo is sent by default. If you choose **Send this photo**,
+first check the preview and choose a licence. An unreadable crop cannot be attached.
+A specialist can use an attached crop to review the suggestion. This screen grants
+no evidence-retention, agency-photo-sharing, public-publication or training permission.
+The photo licence options are CC BY-NC 4.0 (credit, noncommercial reuse), CC BY 4.0
+(credit, any reuse), and CC0 1.0 (no rights reserved). A supplied credit name is shown
+and sent only with an attached photo. Removing the photo also removes its licence,
+photo permissions and credit. Structured report details remain the sighting report.
+
+**Changing your mind:** after sending, retrying preserves the same id and content.
+You may withdraw the report; the intake deletes its identifying report details and
+crop, retaining only a non-identifying id/time tombstone and consent version/use
+audit. Already distributed copies cannot be recalled. Device-wide deletion and
+lost-phone requests are described in [device deletion](device-deletion.md).
+
+This screen and its consent flow are implemented independently of native scan and
+runtime wiring; a production intake and public privacy contact still need deployment.
 
 ## Version 2026-11
 

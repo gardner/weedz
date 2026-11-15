@@ -28,11 +28,13 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  cryptography: ^2.9.0
   drift: ^2.35.0
   flutter:
     sdk: flutter
   flutter_secure_storage: ^11.2.0
   http: ^1.6.0
+  image: ^4.13.1
   material_ui: ^1.1.0
   meta: ^1.19.0
   photo_manager: ^3.12.0

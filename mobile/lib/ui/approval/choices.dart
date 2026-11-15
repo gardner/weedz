@@ -1,8 +1,7 @@
 /// What the person chooses to share, before the choices become a report.
 ///
-/// The domain [Consent] is a plain yes or no, so it cannot say "not answered
-/// yet". [Choices] can: each answer starts null, and approval waits until
-/// every needed answer is given. Nothing is chosen for the person.
+/// New reports omit the photo and include a recorded location when available.
+/// An optional photo still requires its own explicitly chosen licence.
 library;
 
 import 'package:meta/meta.dart';
@@ -22,16 +21,20 @@ const licenceLabels = {
 /// location with a known accuracy (#54).
 @immutable
 final class Findings {
-  const new({this.crop, this.location});
+  const new({this.crop, this.location, this.credit});
 
   final Crop? crop;
   final Location? location;
+
+  /// Locally retained attribution supplied by the person.
+  /// Sent only with a crop.
+  final String? credit;
 }
 
-/// The person's answers. Null means not answered yet.
+/// The visible sharing choices. Null is accepted for older absent findings.
 @immutable
 final class Choices {
-  const new({this.sendPhoto, this.licence, this.shareLocation});
+  const new({this.sendPhoto = false, this.licence, this.shareLocation = true});
 
   /// The answers a report already records, for a report the person has
   /// decided on (approved, sent, or revised from their earlier answers).
@@ -68,12 +71,11 @@ final class Choices {
   }
 
   /// [report] with these answers applied, checked by the domain's [Report].
-  /// Only an explicit yes puts a photo or a location in.
+  /// The report action approves these visible choices together.
   Report applyTo(Report report, Findings found) {
     final place = (shareLocation ?? false) ? found.location : null;
     final licence_ = licence;
     final crop = (sendPhoto ?? false) && licence_ != null ? found.crop : null;
-    final consent = report.consent;
     // Each part goes with its consent (#60, #91); the domain refuses either
     // without the other.
     return Report(
@@ -84,7 +86,7 @@ final class Choices {
       location: place,
       image: crop,
       consent: Consent(
-        wordingVersion: consent.wordingVersion,
+        wordingVersion: currentConsentVersion,
         image: crop != null,
         location: place != null,
         // A photo is sent for review. The other uses (`evidence`, `agencies`,
@@ -92,7 +94,7 @@ final class Choices {
         // none is given (docs/report-consent.md).
         uses: crop == null ? const {} : const {'review'},
         licence: crop == null ? null : licence_,
-        credit: consent.credit,
+        credit: crop == null ? null : found.credit,
       ),
     );
   }
