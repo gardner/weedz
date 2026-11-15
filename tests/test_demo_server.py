@@ -24,7 +24,18 @@ def test_serving_snapshot_leaves_published_database_unchanged(tmp_path, monkeypa
     Store(source)
     with closing(sqlite3.connect(source / "discovery.sqlite3")) as db:
         db.execute("PRAGMA journal_mode=DELETE")
-    (source / "capture-provenance.json").write_text('{"photos": []}')
+    import json
+
+    (source / "capture-provenance.json").write_text(
+        json.dumps(
+            {
+                "photos": [],
+                "database_sha256": hashlib.sha256(
+                    (source / "discovery.sqlite3").read_bytes()
+                ).hexdigest(),
+            }
+        )
+    )
     database = source / "discovery.sqlite3"
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     files = set(source.rglob("*"))
@@ -137,3 +148,32 @@ def test_matching_external_image_symlink_is_not_served(tmp_path, monkeypatch):
         module.copy_verified_images(source, target)
     assert external.read_bytes() == b"external bytes stay unchanged"
     assert not (target / "images").exists()
+
+
+def test_changed_snapshot_database_is_rejected_before_serving(tmp_path, monkeypatch):
+    import json
+
+    import pytest
+
+    root = Path(__file__).parents[1]
+    monkeypatch.syspath_prepend(str(root / "scripts"))
+    spec = importlib.util.spec_from_file_location(
+        "database_pin", root / "scripts/serve_demo_snapshot.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = tmp_path / "published"
+    Store(source)
+    database = source / "discovery.sqlite3"
+    with closing(sqlite3.connect(database)) as db:
+        db.execute("PRAGMA journal_mode=DELETE")
+    (source / "capture-provenance.json").write_text(
+        json.dumps(
+            {"photos": [], "database_sha256": hashlib.sha256(database.read_bytes()).hexdigest()}
+        )
+    )
+    with closing(sqlite3.connect(database)) as db:
+        db.execute("PRAGMA user_version=42")
+    with pytest.raises(ValueError, match="checksum"), module.snapshot_app(source):
+        pass

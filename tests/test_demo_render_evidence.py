@@ -98,6 +98,7 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
     (mobile / "erasure-verification.json").write_text(
         json.dumps(
             {
+                "capture_instance": "test-instance",
                 "active_report_bodies_after_real_app_deletion": 0,
                 "remaining_crop_files": 0,
             }
@@ -108,6 +109,7 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
             {
                 "captureSuccess": True,
                 "browser_errors": [],
+                "capture_instance": "test-instance",
                 "report_created_via_real_api": 201,
                 "stable_deletion_status": 200,
                 "upload_after_deletion": 401,
@@ -257,6 +259,7 @@ def test_replaced_mobile_media_cannot_inherit_real_deletion_receipt(tmp_path):
                 "captureSuccess": True,
                 "browser_errors": [],
                 "media_sha256": hashes,
+                "capture_instance": "test-instance",
                 "report_created_via_real_api": 201,
                 "stable_deletion_status": 200,
                 "upload_after_deletion": 401,
@@ -267,3 +270,11 @@ def test_replaced_mobile_media_cannot_inherit_real_deletion_receipt(tmp_path):
     (tmp_path / renderer.MOBILE_MEDIA[0]).write_bytes(b"unrelated valid app video")
     with pytest.raises(ValueError, match="checksum"):
         renderer.validate_mobile_capture(tmp_path)
+
+
+@pytest.mark.parametrize("erased,recorded", [("old", "new"), (None, None), ("", "")])
+def test_erasure_and_recording_must_belong_to_the_same_real_capture(erased, recorded):
+    with pytest.raises(ValueError, match="capture instance"):
+        renderer.validate_capture_instances(
+            {"capture_instance": erased}, {"capture_instance": recorded}
+        )

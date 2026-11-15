@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import outside_git  # noqa: E402
 
 
-def validate_erasure(mobile: Path) -> None:
+def validate_erasure(mobile: Path) -> dict:
     try:
         proof = json.loads((mobile / "erasure-verification.json").read_text())
     except (OSError, ValueError) as error:
@@ -29,6 +29,7 @@ def validate_erasure(mobile: Path) -> None:
         type(proof.get(key)) is not int or proof[key] != 0 for key in keys
     ):
         raise ValueError("Mobile erasure verification must confirm zero retained bodies and crops")
+    return proof
 
 
 def validate_browser_capture(web: Path) -> dict:
@@ -72,6 +73,12 @@ def validate_mobile_capture(mobile: Path) -> dict:
     return proof
 
 
+def validate_capture_instances(erasure: dict, mobile: dict) -> None:
+    instance = erasure.get("capture_instance")
+    if not isinstance(instance, str) or not instance or mobile.get("capture_instance") != instance:
+        raise ValueError("Erasure and mobile recording must share one nonempty capture instance")
+
+
 def validate_credit_font(path: Path) -> None:
     try:
         ImageFont.truetype(str(path), 27)
@@ -102,8 +109,9 @@ def validate_captures(args: argparse.Namespace) -> tuple[dict, dict]:
         )
 
     validate_credit_font(args.credit_font)
-    validate_erasure(args.mobile_captures)
+    erasure = validate_erasure(args.mobile_captures)
     mobile = validate_mobile_capture(args.mobile_captures)
+    validate_capture_instances(erasure, mobile)
     proof = validate_browser_capture(args.captures / "web-final")
     manifest = json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
     for relative in ("images/460347209.png", "images/447484684.png"):

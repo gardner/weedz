@@ -7,6 +7,8 @@ import sys
 import wave
 from pathlib import Path
 
+import pytest
+
 
 def test_breeze_generation_records_the_exact_native_wav_hash(tmp_path, monkeypatch):
     root = Path(__file__).parents[1]
@@ -41,7 +43,9 @@ def test_breeze_generation_records_the_exact_native_wav_hash(tmp_path, monkeypat
         ],
     )
     monkeypatch.setattr(
-        module.subprocess, "check_output", lambda *_args, **_kwargs: module.SOURCE_REVISION
+        module.subprocess,
+        "check_output",
+        lambda command, **_: module.SOURCE_REVISION if "rev-parse" in command else "",
     )
     monkeypatch.setattr(module.importlib.metadata, "version", lambda _: "test-version")
     monkeypatch.setattr(module, "new_output", lambda path, **_kwargs: path.resolve())
@@ -61,3 +65,22 @@ def test_breeze_generation_records_the_exact_native_wav_hash(tmp_path, monkeypat
     assert "checkpoint_path" not in proof
     assert proof["reference_audio"] == reference.name
     assert proof["reference_audio_sha256"] == hashlib.sha256(reference.read_bytes()).hexdigest()
+
+
+@pytest.mark.parametrize("status", [" M infer.py\n", "?? shadow_module.py\n"])
+def test_modified_source_checkout_cannot_claim_the_pinned_revision(tmp_path, monkeypatch, status):
+
+    root = Path(__file__).parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "checked_voice", root / "tools/demo-audio/main.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(
+        module.subprocess,
+        "check_output",
+        lambda command, **_: module.SOURCE_REVISION if "rev-parse" in command else status,
+    )
+    with pytest.raises(ValueError, match="clean"):
+        module.verified_source_revision(tmp_path)

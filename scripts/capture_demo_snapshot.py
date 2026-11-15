@@ -139,6 +139,7 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
         raise ValueError("Sanitized snapshot must be a standalone database without journal files")
     manifest = {
         "run": run_id,
+        "database_sha256": hashlib.sha256((output / "discovery.sqlite3").read_bytes()).hexdigest(),
         "disclosure": "Curated CC0/CC BY subset of a completed public pilot. Original screening "
         "scores, not a new evaluation. Review decisions are demonstration-only. "
         "Locations withheld.",

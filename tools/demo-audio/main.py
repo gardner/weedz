@@ -20,6 +20,20 @@ VOICE = (
 )
 
 
+def verified_source_revision(source: Path) -> str:
+    revision = subprocess.check_output(
+        ["git", "-C", str(source), "rev-parse", "HEAD"], text=True
+    ).strip()
+    if revision != SOURCE_REVISION:
+        raise ValueError("Check out the documented Breeze source revision first")
+    dirty = subprocess.check_output(
+        ["git", "-C", str(source), "status", "--porcelain", "--untracked-files=normal"], text=True
+    ).strip()
+    if dirty:
+        raise ValueError("Use a clean Breeze checkout without modified or untracked source")
+    return revision
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
@@ -37,11 +51,10 @@ def main() -> None:
     except ValueError as error:
         parser.error(str(error))
     source = args.source.resolve()
-    revision = subprocess.check_output(
-        ["git", "-C", str(source), "rev-parse", "HEAD"], text=True
-    ).strip()
-    if revision != SOURCE_REVISION:
-        parser.error("Check out the documented Breeze source revision first")
+    try:
+        revision = verified_source_revision(source)
+    except ValueError as error:
+        parser.error(str(error))
     text = args.text_file.read_text().strip()
     if not text:
         parser.error("The narration text file is empty")

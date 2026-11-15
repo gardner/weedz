@@ -58,6 +58,10 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
         db.execute("INSERT INTO reviews VALUES('private live decision')")
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     result = script.snapshot(source, target)
+    assert (
+        result["database_sha256"]
+        == hashlib.sha256((target / "discovery.sqlite3").read_bytes()).hexdigest()
+    )
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
     with sqlite3.connect(target / "discovery.sqlite3") as copied:
         row = copied.execute(

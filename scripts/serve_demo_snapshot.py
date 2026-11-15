@@ -3,10 +3,9 @@
 import argparse
 import hashlib
 import json
-import sqlite3
 import tempfile
 from collections.abc import Iterator
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 from pathlib import Path
 
 import uvicorn
@@ -18,12 +17,17 @@ from starlette.middleware.base import RequestResponseEndpoint
 from weedz.discovery.api import create_app
 
 
-def copy_verified_images(source: Path, target: Path) -> None:
-    proof = json.loads((source / "capture-provenance.json").read_text())
+def _photo_rows(source: Path, proof: dict | None) -> list[dict]:
+    if proof is None:
+        proof = json.loads((source / "capture-provenance.json").read_text())
     if not isinstance(proof, dict) or not isinstance(proof.get("photos"), list):
         raise ValueError("Snapshot photo manifest is missing or malformed")
+    return proof["photos"]
+
+
+def copy_verified_images(source: Path, target: Path, proof: dict | None = None) -> None:
     copied: set[str] = set()
-    for record in proof["photos"]:
+    for record in _photo_rows(source, proof):
         name = record.get("file") if isinstance(record, dict) else None
         if not isinstance(name, str):
             raise ValueError("Snapshot photo path is missing")
@@ -50,16 +54,14 @@ def snapshot_app(source: Path, instance: str = "") -> Iterator[FastAPI]:
         raise ValueError("Serve only a closed standalone snapshot without WAL sidecars")
     with tempfile.TemporaryDirectory(prefix="weedz-snapshot-server-") as temporary:
         copy = Path(temporary)
-        with (
-            closing(
-                sqlite3.connect(
-                    (source / "discovery.sqlite3").as_uri() + "?mode=ro&immutable=1", uri=True
-                )
-            ) as original,
-            closing(sqlite3.connect(copy / "discovery.sqlite3")) as target,
+        proof = json.loads((source / "capture-provenance.json").read_text())
+        raw = (source / "discovery.sqlite3").read_bytes()
+        if not isinstance(proof, dict) or hashlib.sha256(raw).hexdigest() != proof.get(
+            "database_sha256"
         ):
-            original.backup(target)
-        copy_verified_images(source, copy)
+            raise ValueError("Snapshot database checksum differs from its producer receipt")
+        (copy / "discovery.sqlite3").write_bytes(raw)
+        copy_verified_images(source, copy, proof)
         app = create_app(copy)
 
         @app.middleware("http")

@@ -111,3 +111,6 @@ The same checksum/private-copy contract covers the mobile WebM and deletion
 screenshot. The snapshot server copies only manifest-listed image bytes whose
 checksums match their source credits. The credit font is loaded during preflight
 alongside UI font checks, before output creation or encoding.
+New snapshot manifests also pin the fully closed sanitized database bytes; the
+server verifies and copies those exact bytes before initializing its private app.
+Mobile erasure and recording receipts must share the same nonempty capture instance.
