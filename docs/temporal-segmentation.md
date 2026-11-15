@@ -72,3 +72,12 @@ This was an actual inference/activity smoke, not a collection run, durable-servi
 restart proof, independent accuracy evaluation or human annotation. The hosted Temporal
 service/worker lifecycle is handled separately in #133; end-to-end restart verification
 must use that real service and preserve its history.
+
+
+CLI opt-in uses the same RunSpec field as the API:
+
+```sh
+uv run main.py discover --segmentation sam2.1-tiny-v1
+```
+
+The normal CLI default remains `off`; the connected worker must have the pinned SAM runtime and checkpoint configured.
