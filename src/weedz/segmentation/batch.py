@@ -223,6 +223,9 @@ def propose_batch(
         raise ValueError("Batch outputs must remain outside Git")
     samples = _samples(raw, root)
     durable_mkdir(destination)
+    # Existing directories can be remnants of an interrupted creation/sync attempt.
+    for directory in (destination, *destination.parents):
+        sync_directory(directory)
     output = destination
     with (output / ".batch.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)

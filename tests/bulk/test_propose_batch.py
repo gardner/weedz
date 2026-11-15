@@ -193,3 +193,30 @@ def test_first_output_row_streams_before_processing_second_photo(tmp_path):
             return super().generate(image)
 
     assert propose_batch(manifest, manifest.parent, output, Streaming())["count"] == 2
+
+
+def test_retry_syncs_output_parent_after_interrupted_directory_creation(tmp_path, monkeypatch):
+    from weedz.segmentation import batch as module
+
+    manifest, _ = source(tmp_path)
+    output = tmp_path / "out"
+    original = module.durable_mkdir
+
+    def interrupted(path):
+        path.mkdir()
+        raise OSError("Interrupted directory creation sync")
+
+    monkeypatch.setattr(module, "durable_mkdir", interrupted)
+    with pytest.raises(OSError, match="Interrupted"):
+        propose_batch(manifest, manifest.parent, output, Proposer())
+    monkeypatch.setattr(module, "durable_mkdir", original)
+    synced = []
+    sync = module.sync_directory
+
+    def observed(path):
+        synced.append(path)
+        sync(path)
+
+    monkeypatch.setattr(module, "sync_directory", observed)
+    propose_batch(manifest, manifest.parent, output, Proposer())
+    assert output.parent in synced
