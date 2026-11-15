@@ -28,3 +28,21 @@ def test_discover_transmits_explicit_segmentation_profile(monkeypatch, profile):
 
 def test_discover_default_profile_remains_off():
     assert cli.parse(["discover"]).segmentation == "off"
+
+
+@pytest.mark.parametrize("backend", ["cpu", "cuda-fp32-v1"])
+def test_discover_transmits_explicit_screening_backend(monkeypatch, backend):
+    payloads = []
+
+    def response(request):
+        payloads.append(json.loads(request.content))
+        return httpx.Response(200, json={"id": "test-run"})
+
+    client_type = httpx.AsyncClient
+    monkeypatch.setattr(
+        cli.httpx,
+        "AsyncClient",
+        lambda **kwargs: client_type(transport=httpx.MockTransport(response), **kwargs),
+    )
+    asyncio.run(cli.discover(cli.parse(["discover", "--screening-backend", backend])))
+    assert payloads[0]["screening_backend"] == backend

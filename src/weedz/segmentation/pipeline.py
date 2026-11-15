@@ -7,6 +7,7 @@ from typing import Any, Protocol
 
 from PIL import Image
 
+from weedz.discovery.encoder_backend import cosine_scores
 from weedz.discovery.inference import COMPARISONS, LETTERBOX, prompt, summarize_scores
 from weedz.discovery.records import SPECIES
 from weedz.segmentation.regions import MAX_SOURCE_PIXELS, ProposalConfig, proposals, upright
@@ -40,7 +41,7 @@ def identify_views(screener: Any, views: dict[str, Image.Image], subject: str | 
         with torch.inference_mode():
             batch = torch.stack([screener.transform(padded)])
             features = screener.model.encode_image(batch, normalize=True)
-            scores = (features.to(text.dtype) @ text.T).cpu().numpy()
+            scores = cosine_scores(screener, features, text)
         result[name] = summarize_scores(scores, [(0, 0, *image.size)], labels, len(SPECIES))
         result[name].pop("box")
         for species in result[name]["species"]:
