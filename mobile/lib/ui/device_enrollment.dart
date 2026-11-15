@@ -74,6 +74,10 @@ class _DeviceEnrollmentFormState extends State<DeviceEnrollmentForm> {
         enableIMEPersonalizedLearning: false,
         enabled: !widget.controller.busy,
       ),
+      const Text(
+        'Keep this token private. Never send it by email or through a '
+        'public request form.',
+      ),
       if (_error case final error?) Text(error, semanticsLabel: error),
       const SizedBox(height: 16),
       FilledButton(

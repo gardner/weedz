@@ -24,6 +24,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.textContaining('Keep this token private.'), findsOneWidget);
       final tokenField = find.widgetWithText(TextField, 'Submitter token');
       expect(tester.widget<TextField>(tokenField).obscureText, isTrue);
       await tester.enterText(tokenField, fixtures.enrollment.token);
