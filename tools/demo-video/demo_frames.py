@@ -7,6 +7,7 @@ import textwrap
 from functools import lru_cache
 from pathlib import Path
 
+from demo_evidence import verified_photo
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 SIZE = (1920, 1080)
@@ -40,6 +41,9 @@ class Frames:
         self, captures: Path, ffmpeg: Path, fps: int, credit_font: Path, mobile_captures: Path
     ) -> None:
         self.captures = captures
+        self.provenance = json.loads(
+            (captures / "review-snapshot/capture-provenance.json").read_text()
+        )
         self.ffmpeg = ffmpeg
         self.fps = fps
         self.credit_font = credit_font
@@ -52,8 +56,13 @@ class Frames:
 
     def image(self, relative: str) -> Image.Image:
         if relative not in self.images:
-            with Image.open(self.captures / relative) as original:
-                self.images[relative] = original.convert("RGB")
+            if relative.startswith("review-snapshot/images/"):
+                self.images[relative] = verified_photo(
+                    self.captures, relative.removeprefix("review-snapshot/"), self.provenance
+                )
+            else:
+                with Image.open(self.captures / relative) as original:
+                    self.images[relative] = original.convert("RGB")
         return self.images[relative]
 
     def base(self, label: str) -> Image.Image:
@@ -135,7 +144,7 @@ class Frames:
             y = 400 + index * 145
             draw.rounded_rectangle((100, y, 1200, y + 106), radius=18, fill="#244f3e")
             text(canvas, (135, y + 27), label, 35, ACCENT)
-        self.photo(canvas, "assets/gorse-reference.jpg", (1370, 180, 400, 650))
+        self.photo(canvas, "review-snapshot/images/447484684.png", (1370, 180, 400, 650))
         text(canvas, (1365, 860), "Photo stays local", 27, MUTED, width=25)
         return canvas
 
@@ -244,9 +253,7 @@ class Frames:
             MUTED,
             width=100,
         )
-        records = json.loads(
-            (self.captures / "review-snapshot/capture-provenance.json").read_text()
-        )
+        records = self.provenance
         names = sorted(
             {
                 p["creator_attribution"].removeprefix("(c) ").split(", some rights")[0]

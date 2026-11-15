@@ -113,6 +113,7 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
                 {
                     "photo_id": row["id"],
                     "file": str(relative),
+                    "sha256": record["sha256"],
                     "creator_attribution": record["attribution"],
                     "license": record["photo_license"],
                     "license_url": "https://creativecommons.org/"

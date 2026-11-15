@@ -43,6 +43,15 @@ must exist and be completed; an invalid selection fails without a successful man
 Include those attributions in the video's credits/description
 or companion credit document. Never copy exact locations into production assets.
 
+The snapshot is also the only source-photo producer used by the renderer. It
+writes `review-snapshot/images/447484684.png` (gorse) and the other selected public
+photos, with each encoded PNG's SHA-256 in `capture-provenance.json`. No separately
+prepared `assets/gorse-reference.jpg` or `assets/attribution.json` is required.
+Renderer preflight and `Frames` verify those hashes and decode the same checked
+bytes. Photo credits, including the report photo's credit, come from the matching
+snapshot record. Regenerate older manifests that lack encoded-image hashes;
+replaced files must fail instead of inheriting an unrelated attribution.
+
 The capture server binds loopback port 8312 and refuses every non-GET/HEAD request.
 The real, production-built Next application binds loopback port 3012 and targets
 only that snapshot. The orchestrator owns both process groups and stops only its
