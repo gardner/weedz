@@ -40,7 +40,11 @@ def render(args: argparse.Namespace) -> None:
     scenes = load_timeline(args.script, args.audio)
     measured = json.loads(args.transcript.read_text())
     flattened = [
-        {"words": [w for segment in scene["segments"] for w in segment["words"]]}
+        {
+            "scene": scene["scene"],
+            "file": scene["file"],
+            "words": [w for segment in scene["segments"] for w in segment["words"]],
+        }
         for scene in measured["scenes"]
     ]
     with tempfile.TemporaryDirectory(prefix="weedz-caption-") as private:
