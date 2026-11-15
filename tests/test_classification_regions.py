@@ -148,3 +148,57 @@ def test_one_prompt_cannot_consume_another_prompts_region_budget(tmp_path):
     with pytest.raises(ValueError, match="per-prompt"):
         classify_region_batch(manifest, tmp_path, proposal, tmp_path / "out", model, "sam3")
     assert model.calls == 0
+
+
+@pytest.mark.parametrize(
+    "config_values,count", [({"context_fraction": 0}, 1), ({"max_proposals": 24}, 13)]
+)
+def test_sam2_restoration_uses_the_declared_proposal_config(tmp_path, config_values, count):
+    from dataclasses import asdict
+
+    from weedz.segmentation.regions import ProposalConfig, proposals
+
+    manifest, image = corpus(tmp_path)
+    sample = Sample.model_validate_json(manifest.read_text())
+    config = ProposalConfig(**config_values)
+    raw = []
+    for index in range(count):
+        mask = np.zeros((32, 32), bool)
+        x, y = (index % 8) * 4, (index // 8) * 4
+        mask[y : y + 4, x : x + 4] = True
+        raw.append({"segmentation": mask, "predicted_iou": 0.9, "stability_score": 0.95})
+    with Image.open(image) as source:
+        records = [r.record() for r in proposals(source, raw, config)]
+    assert len(records) == count
+    proposal = tmp_path / "sam2.jsonl"
+    proposal.write_text(
+        json.dumps(
+            {
+                "sample_id": sample.id,
+                "image_sha256": sample.media.sha256,
+                "segmentation": {
+                    "status": "ok",
+                    "regions": records,
+                    "provenance": {"proposal_config": asdict(config)},
+                },
+            }
+        )
+        + "\n"
+    )
+    output = tmp_path / "regions.json"
+    model = Classifier()
+    result = classify_region_batch(manifest, tmp_path, proposal, output, model, "sam2")
+    assert len(result["predictions"][0]["regions"]) == count
+    assert classify_region_batch(manifest, tmp_path, proposal, output, model, "sam2") == result
+    assert model.calls == 1
+
+
+def test_oversized_regional_output_is_never_committed(tmp_path, monkeypatch):
+    import weedz.classification.batch as batch
+
+    manifest, proposal, _ = inputs(tmp_path)
+    monkeypatch.setattr(batch, "MAX_RESULT_BYTES", 1, raising=False)
+    output = tmp_path / "regions.json"
+    with pytest.raises(ValueError, match="output exceeds the resource cap"):
+        classify_region_batch(manifest, tmp_path, proposal, output, Classifier(), "sam3")
+    assert not output.exists()
