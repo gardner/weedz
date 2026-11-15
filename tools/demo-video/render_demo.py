@@ -10,7 +10,7 @@ from pathlib import Path
 from demo_credits import portable_credits
 from demo_evidence import photo_record, verified_photo_bytes
 from demo_frames import Frames, caption, dissolve
-from demo_timeline import caption_cues, load_timeline, narration_master, srt
+from demo_timeline import caption_cues, load_timeline, narration_master, portable_timeline, srt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import outside_git  # noqa: E402
@@ -105,7 +105,7 @@ def render(args: argparse.Namespace) -> None:
         "font_source": "https://github.com/notofonts/noto-cjk",
     }
     (output / "credits.json").write_text(json.dumps(credits, ensure_ascii=False, indent=2) + "\n")
-    (output / "timeline.json").write_text(json.dumps(scenes, indent=2) + "\n")
+    (output / "timeline.json").write_text(json.dumps(portable_timeline(scenes), indent=2) + "\n")
     manifest = {
         path.name: hashlib.sha256(path.read_bytes()).hexdigest()
         for path in output.iterdir()

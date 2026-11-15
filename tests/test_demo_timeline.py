@@ -96,3 +96,21 @@ def test_caption_identity_accepts_the_selected_filename_from_another_machine(
         }
     ]
     assert timeline.caption_cues(scenes, transcript)[0]["text"] == "Hello"
+
+
+def test_delivered_timeline_is_portable_without_changing_runtime_audio_paths(
+    tmp_path: Path,
+) -> None:
+    scenes = [
+        {
+            "id": "scene-01",
+            "audio": str(tmp_path / "voice.wav"),
+            "audio_file": str(tmp_path / "voice.wav"),
+            "narration": "Hello",
+        }
+    ]
+    delivered = timeline.portable_timeline(scenes)
+    assert delivered[0]["audio"] == "voice.wav"
+    assert delivered[0]["audio_file"] == "voice.wav"
+    assert str(tmp_path) not in json.dumps(delivered)
+    assert scenes[0]["audio"] == str(tmp_path / "voice.wav")

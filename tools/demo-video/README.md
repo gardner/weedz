@@ -75,3 +75,9 @@ the instrumental's provenance, update final checksums, and verify the final
 container with ffprobe. Listen to the whole movie and inspect the beginning,
 scene changes, captions and credits. Include `credits.json` when sharing it.
 Do not commit any generated media or checkpoint to the repository.
+
+The mixer requires the selected score's adjacent `.assembly.json` and verifies
+its encoded WAV SHA-256 before encoding. It gives FFmpeg a private checked copy
+so replacing the original during mixing cannot inherit the Music3 attribution.
+The delivered timeline contains narration basenames only; full paths are retained
+only in memory for reading the local source audio.
