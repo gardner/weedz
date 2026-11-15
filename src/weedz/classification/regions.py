@@ -17,10 +17,11 @@ from weedz.classification.batch import (
     _verified_result,
 )
 from weedz.contract import Sample
-from weedz.discovery.inference import file_sha256
+from weedz.discovery import inference
+from weedz.discovery.inference import file_sha256, square_view
 from weedz.manifest import read_manifest, write_atomic
 from weedz.segmentation.artifacts import digest
-from weedz.segmentation.sam3_image import Sam3Config, restore_concept_region
+from weedz.segmentation.sam3_image import Sam3Config, restore_concept_regions
 from weedz.segmentation.stages import restored_regions
 
 Proposer = Literal["sam2", "sam3"]
@@ -45,22 +46,41 @@ def _inputs(manifest: Path, manifest_sha: str, encoded: bytes, root: Path):
     return samples, rows
 
 
-def _restore(image: Image.Image, stage: dict, proposer: Proposer) -> list:
+def _restore(encoded: bytes, expected_sha: str, stage: dict, proposer: Proposer) -> list:
     records = stage["regions"]
     if proposer == "sam2":
-        return restored_regions(
-            image, [{k: v for k, v in r.items() if k != "views"} for r in records]
-        )
+        with Image.open(io.BytesIO(encoded)) as image:
+            return restored_regions(
+                image, [{k: v for k, v in r.items() if k != "views"} for r in records]
+            )
     config = Sam3Config(**stage["provenance"]["config"])
     if len(records) > config.max_regions * len(config.prompts):
         raise ValueError("SAM3 region budget exceeded")
     if any(record["prompt"] not in config.prompts for record in records):
         raise ValueError("SAM3 prompt disagrees with declared profile")
-    return [restore_concept_region(image, record, config) for record in records]
+    return restore_concept_regions(encoded, records, config, expected_sha256=expected_sha)
+
+
+def _restored_photo(sample: Sample, source: dict, root: Path, proposer: Proposer) -> tuple:
+    stage = source["segmentation"]
+    ids = [record["id"] for record in stage["regions"]]
+    if len(set(ids)) != len(ids):
+        raise ValueError("Duplicate region identities")
+    encoded = _snapshot(sample, root)
+    expected_sha = sample.media.sha256
+    if not expected_sha:
+        raise ValueError("Missing regional source checksum")
+    return _restore(encoded, expected_sha, stage, proposer), ids
 
 
 def _cached(
-    output: Path, header: dict, samples: list[Sample], proposed: list[dict], sha: str | None
+    output: Path,
+    header: dict,
+    samples: list[Sample],
+    proposed: list[dict],
+    sha: str | None,
+    root: Path,
+    proposer: Proposer,
 ):
     result = _verified_result(output, sha)
     if any(digest({key: result.get(key)}) != digest({key: value}) for key, value in header.items()):
@@ -69,6 +89,7 @@ def _cached(
     if not isinstance(rows, list) or len(rows) != len(samples):
         raise ValueError("Incomplete regional prediction rows")
     for sample, source, row in zip(samples, proposed, rows, strict=True):
+        _restored_photo(sample, source, root, proposer)
         expected = _identity(sample, header["model_version"])
         if any(row.get(key) != value for key, value in expected.items()):
             raise ValueError("Cached regional asset identity mismatch")
@@ -85,17 +106,12 @@ def _cached(
 def _predict(samples, rows, root, model, proposer, version):
     result = []
     for sample, row in zip(samples, rows, strict=True):
-        with Image.open(io.BytesIO(_snapshot(sample, root))) as original:
-            image = original.convert("RGB")
-        stage = row["segmentation"]
-        regions = _restore(image, stage, proposer)
-        ids = [record["id"] for record in stage["regions"]]
-        if len(set(ids)) != len(ids):
-            raise ValueError("Duplicate region identities")
+        regions, ids = _restored_photo(sample, row, root, proposer)
         classified = []
         for start in range(0, len(regions), 32):
             part = regions[start : start + 32]
-            alternatives = model.predict([region.views["masked"] for region in part])
+            views = [region.views["masked"] for region in part]
+            alternatives = model.predict([square_view(view, (0, 0, *view.size)) for view in views])
             for region_id, topk in zip(ids[start : start + 32], alternatives, strict=True):
                 _check_topk(topk)
                 classified.append({"id": region_id, "topk": topk, "views": {"masked": topk}})
@@ -130,11 +146,19 @@ def classify_region_batch(
         raise ValueError("Proposal model provenance differs within the batch")
     metadata = {
         **model.metadata,
-        "input_policy": "Actual SAM masked crop only; source taxonomy not supplied",
+        "input_policy": (
+            "Actual SAM masked crop, centred neutral square letterbox before timm transform; "
+            "source taxonomy not supplied"
+        ),
         "proposer": provenance,
         "proposer_kind": proposer,
         "primary_view": "masked",
-        "crop_geometry_revision": 1,
+        "crop_geometry_revision": 2,
+        "masked_view_policy": {
+            "padding": "centred square",
+            "colour": list(inference.LETTERBOX),
+            "transform": "recorded timm preprocessing",
+        },
     }
     metadata = json.loads(json.dumps(metadata, allow_nan=False))
     version = f"{proposer.upper()} + PlantCLEF masked · {digest(metadata)[:12]}"
@@ -146,7 +170,9 @@ def classify_region_batch(
         "proposals_sha256": source_sha,
     }
     if output.exists():
-        return _cached(output, header, samples, rows, verified_existing_sha256)
+        return _cached(
+            output, header, samples, rows, verified_existing_sha256, media_root, proposer
+        )
     predicted = _predict(samples, rows, media_root, model, proposer, version)
     body = {**header, "predictions": predicted}
     result = {**body, "result_sha256": digest(body)}
@@ -154,6 +180,8 @@ def classify_region_batch(
     with output.with_suffix(output.suffix + ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if output.exists():
-            return _cached(output, header, samples, rows, verified_existing_sha256)
+            return _cached(
+                output, header, samples, rows, verified_existing_sha256, media_root, proposer
+            )
         write_atomic(output, (json.dumps(result, indent=2, allow_nan=False) + "\n").encode())
     return result
