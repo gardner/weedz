@@ -81,17 +81,32 @@ def test_retry_reestablishes_directory_durability_before_cached_success(tmp_path
     artifacts.root.mkdir(parents=True)
     original = module.sync_directory
     calls = []
+    failed = False
 
     def fail_after_rename(path):
+        nonlocal failed
         calls.append(path)
-        if len(calls) == 5:
+        if len(calls) == 5 and not failed:
+            failed = True
             raise OSError("Interrupted after replacement")
         original(path)
 
     monkeypatch.setattr(module, "sync_directory", fail_after_rename)
     with pytest.raises(OSError, match="replacement"):
         artifacts.write("proposals", "photo", {}, {"status": "empty"})
-    assert artifacts.read("proposals", "photo", {}) == {"status": "empty"}
+    calls.clear()
+    assert artifacts.entry("proposals", "photo")
+    assert calls[:4] == [
+        artifacts.root,
+        artifacts.root.parent,
+        artifacts.root.parent.parent,
+        tmp_path,
+    ]
     calls.clear()
     assert artifacts.write("proposals", "photo", {}, {"status": "empty"}) == {"status": "empty"}
-    assert calls == [artifacts.root, artifacts.root.parent, artifacts.root.parent.parent, tmp_path]
+    assert calls[:4] == [
+        artifacts.root,
+        artifacts.root.parent,
+        artifacts.root.parent.parent,
+        tmp_path,
+    ]

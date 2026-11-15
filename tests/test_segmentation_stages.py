@@ -44,28 +44,26 @@ class Proposer:
         ]
 
 
-def runner(store, proposer, attempt=1):
+def runner(store, proposer):
     return PipelineStages(
         store,
         lambda: proposer,
         lambda _run: SimpleNamespace(metadata={"classifier": "pinned"}),
         lambda _detail: None,
-        lambda: attempt,
     )
 
 
 def test_retry_skips_completed_proposals_but_retries_failed_work(store):
     proposer = Proposer()
-    with pytest.raises(RuntimeError, match="Interrupted"):
-        runner(store, proposer).segment("run")
-    assert proposer.calls == 2
+    assert runner(store, proposer).segment("run")["failed"] == 1
+    assert proposer.calls == 4
     proposer.fail_second = False
-    result = runner(store, proposer, 2).segment("run")
-    assert proposer.calls == 3
+    result = runner(store, proposer).segment("run")
+    assert proposer.calls == 5
     assert result["cache_hits"] == 1
     assert result["completed"] == 2 and result["failed"] == 0
-    assert runner(store, proposer, 2).segment("run")["cache_hits"] == 2
-    assert proposer.calls == 3
+    assert runner(store, proposer).segment("run")["cache_hits"] == 2
+    assert proposer.calls == 5
 
 
 def test_changed_source_or_model_provenance_refuses_cache_reuse(store):
@@ -78,7 +76,7 @@ def test_changed_source_or_model_provenance_refuses_cache_reuse(store):
 
 
 def test_final_failed_photo_is_explicit_partial_fallback_not_negative(store, monkeypatch):
-    stages = runner(store, Proposer(), 3)
+    stages = runner(store, Proposer())
     result = stages.segment("run")
     assert result["completed"] == 1 and result["failed"] == 1
     for photo in store.photos("run"):
@@ -103,9 +101,7 @@ def test_model_startup_failure_is_not_committed_as_a_per_photo_negative(store):
     def missing_runtime():
         raise ValueError("Checkpoint mismatch")
 
-    stages = PipelineStages(
-        store, missing_runtime, lambda _run: None, lambda _detail: None, lambda: 1
-    )
+    stages = PipelineStages(store, missing_runtime, lambda _run: None, lambda _detail: None)
     with pytest.raises(ValueError, match="Checkpoint"):
         stages.segment("run")
     assert not list((store.root / "runs/run/pipeline-v1").glob("*.json"))
@@ -157,10 +153,11 @@ def test_region_runtime_failure_keeps_masks_and_is_retryable_before_final_fallba
         raise RuntimeError("Classifier interrupted")
 
     monkeypatch.setattr("weedz.segmentation.stages.identify_views", interrupted)
-    with pytest.raises(RuntimeError, match="Classifier interrupted"):
-        stages.score_regions("run")
-    assert all("segmentation" not in photo["scores"] for photo in store.photos("run"))
-    result = runner(store, proposer, 3).score_regions("run")
+    assert stages.score_regions("run")["failed"] == 2
+    assert all(
+        photo["scores"]["segmentation"]["view_status"] == "failed" for photo in store.photos("run")
+    )
+    result = runner(store, proposer).score_regions("run")
     assert result["failed"] == 2 and result["cache_hits"] == 0
     assert all(
         photo["scores"]["segmentation"]["regions"][0]["views"] == {}
@@ -196,7 +193,7 @@ def test_completed_matching_proposals_win_even_if_late_local_work_fails(store):
                 raise RuntimeError("Late attempt failed after another attempt committed")
             return super().generate(image)
 
-    result = runner(store, Racing(), 1).segment("run")
+    result = runner(store, Racing()).segment("run")
     assert result["completed"] == 2 and result["failed"] == 0
 
 
@@ -253,3 +250,50 @@ def test_late_baseline_attempt_cannot_erase_attached_region_evidence(store):
     stages._attach("run", "0", evidence)
     store.score("run", "0", stale)
     assert store.photos("run")[0]["scores"] == {**stale, "segmentation": evidence}
+
+
+def test_each_photo_gets_its_own_bounded_transient_retry_budget(store):
+    class Flaky(Proposer):
+        seen = {0: 0, 1: 0}
+
+        def generate(self, image):
+            index = image.getpixel((0, 0))[0]
+            self.seen[index] += 1
+            if self.seen[index] <= (2 if index == 0 else 1):
+                raise RuntimeError("Transient per-photo failure")
+            return super().generate(image)
+
+    proposer = Flaky()
+    proposer.fail_second = False
+    result = runner(store, proposer).segment("run")
+    assert result["completed"] == 2 and result["failed"] == 0
+    assert proposer.seen == {0: 3, 1: 2}
+
+
+def test_late_progress_cannot_regress_terminal_run_state(store):
+    store.status("run", "completed", "Canonical export complete")
+    store.status("run", "screening", "Late timed-out worker progress")
+    run = store.runs()[0]
+    assert run["status"] == "completed" and run["detail"] == "Canonical export complete"
+
+
+def test_region_classification_retries_are_independent_for_later_photos(store, monkeypatch):
+    proposer = Proposer()
+    proposer.fail_second = False
+    stages = runner(store, proposer)
+    stages.segment("run")
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    seen = {0: 0, 1: 0}
+
+    def flaky(_model, views, _subject):
+        index = views["tight"].getpixel((0, 0))[0]
+        seen[index] += 1
+        if seen[index] <= (2 if index == 0 else 1):
+            raise RuntimeError("Transient classifier interruption")
+        return {name: {"margin": -0.2} for name in views}
+
+    monkeypatch.setattr("weedz.segmentation.stages.identify_views", flaky)
+    result = stages.score_regions("run")
+    assert result["completed"] == 2 and result["failed"] == 0
+    assert seen == {0: 3, 1: 2}

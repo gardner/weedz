@@ -162,7 +162,11 @@ class Store:
 
     def status(self, run_id: str, status: str, detail: str = "") -> None:
         with self.connect() as db:
-            db.execute("UPDATE runs SET status=?, detail=? WHERE id=?", (status, detail, run_id))
+            db.execute(
+                "UPDATE runs SET status=?, detail=? WHERE id=? "
+                "AND status NOT IN ('completed', 'failed')",
+                (status, detail, run_id),
+            )
 
     def model(self, run_id: str, metadata: dict) -> None:
         with self.connect() as db:
