@@ -85,7 +85,7 @@ def registry_from_aotearoa_config(config: dict) -> BatchRegistry:
         {
             frame_name: {
                 "frame": ModelProfile(
-                    f"{frame_name}-frame",
+                    frame_name,
                     "frame",
                     metadata["frame"],
                     classifier,

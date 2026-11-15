@@ -276,3 +276,17 @@ def test_metadata_source_is_not_an_artifact_allowlist_but_every_batch_is_validat
         path.write_text(json.dumps(altered) + "\n")
         with pytest.raises(ValueError):
             segment(root, closed, "unused", sam, external=reference(path, root))
+
+
+def test_full_length_classifier_group_does_not_grow_an_internal_name_suffix():
+    worker = config()
+    worker["classifier_profile"] = "a" * 80
+    registry = registry_from_aotearoa_config(worker)
+    profile = registry.classifiers["a" * 80]["frame"]
+    assert profile.name == "a" * 80
+    assert (
+        profile.sha256
+        == registry_from_aotearoa_config(config())
+        .classifiers[config()["classifier_profile"]]["frame"]
+        .sha256
+    )
