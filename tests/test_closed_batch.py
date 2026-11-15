@@ -89,3 +89,34 @@ def test_reference_hash_cannot_be_replaced_by_current_file_hash(batch):
     manifest.write_bytes(manifest.read_bytes() + b"\n")
     with pytest.raises(ValueError, match="checksum"):
         validate_closed_batch(root, pinned, reference(ready, root))
+
+
+def test_late_png_metadata_cannot_enter_a_claimed_metadata_free_batch(batch):
+    import struct
+    import zlib
+
+    root, manifest, ready, image = batch
+    raw = image.read_bytes()
+    content = b"private-coordinate\0secret"
+    kind = b"tEXt"
+    chunk = (
+        struct.pack(">I", len(content))
+        + kind
+        + content
+        + struct.pack(">I", zlib.crc32(kind + content) & 0xFFFFFFFF)
+    )
+    image.write_bytes(raw[:-12] + chunk + raw[-12:])
+    sample = Sample.model_validate_json(manifest.read_text())
+    sample = sample.model_copy(
+        update={
+            "media": sample.media.model_copy(
+                update={
+                    "sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+                }
+            )
+        }
+    )
+    sha = write_manifest(manifest, [sample])
+    ready.write_text(json.dumps({"schema": 1, "count": 1, "samples_sha256": sha}))
+    with pytest.raises(ValueError, match="metadata-free"):
+        validate_closed_batch(root, reference(manifest, root), reference(ready, root))

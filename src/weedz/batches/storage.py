@@ -59,13 +59,13 @@ def _media(sample: Sample, folder: Path) -> None:
         if (
             image.format != "PNG"
             or image.mode != "RGB"
-            or image.info
             or image.size != (sample.media.width, sample.media.height)
             or image.width * image.height > 40_000_000
-            or image.getexif()
         ):
             raise ValueError("Canonical pixels must be bounded metadata-free upright RGB PNG")
         image.load()
+        if image.info or image.getexif():
+            raise ValueError("Canonical pixels must be metadata-free upright RGB PNG")
 
 
 def _samples(encoded: bytes) -> tuple[Sample, ...]:
