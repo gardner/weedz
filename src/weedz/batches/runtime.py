@@ -67,6 +67,10 @@ def prepare_config(
 
 
 def registry_from_config(config: dict) -> BatchRegistry:
+    if config.get("cache_only") is True:
+        from weedz.batches.adoption import adoption_registry
+
+        return adoption_registry(config)
     metadata = config["metadata"]
     device = config["device"]
     proposer_kind = config.get("proposer_kind", "sam2")

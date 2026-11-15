@@ -17,6 +17,7 @@ from temporalio.common import WorkflowIDReusePolicy
 from temporalio.worker import Worker
 
 from weedz.batches.activities import BatchActivities
+from weedz.batches.adoption import prepare_adoption
 from weedz.batches.contract import batch_request
 from weedz.batches.publisher_runtime import publisher_from_config
 from weedz.batches.receipts import write_receipt
@@ -110,6 +111,10 @@ def main():
     prepare.add_argument("--proposer", choices=["sam2", "sam3"], default="sam2")
     prepare.add_argument("--prompts", nargs="+", default=["plant", "flower"])
     prepare.add_argument("--concept-threshold", type=float, default=0.5)
+    adopt = commands.add_parser("adopt")
+    adopt.add_argument("--root", type=Path, required=True)
+    adopt.add_argument("--request", type=Path, required=True)
+    adopt.add_argument("--proposer", choices=["sam2", "sam3"], default="sam2")
     serve = commands.add_parser("worker")
     serve.add_argument("--config", type=Path, required=True)
     serve.add_argument("--roles", required=True)
@@ -119,17 +124,25 @@ def main():
     start.add_argument("--workflow-id", required=True)
     start.add_argument("--retry-failed", action="store_true")
     args = parser.parse_args()
-    if args.command == "prepare":
-        config = prepare_config(
-            args.root,
-            args.sam_checkpoint,
-            args.classifier_checkpoint,
-            args.labels,
-            args.device,
-            proposer_kind=args.proposer,
-            sam3_config=Sam3Config(
-                prompts=tuple(args.prompts), concept_threshold=args.concept_threshold
-            ),
+    if args.command in {"prepare", "adopt"}:
+        config = (
+            prepare_adoption(
+                args.root,
+                json.loads(args.request.read_text(encoding="utf-8")),
+                proposer_kind=args.proposer,
+            )
+            if args.command == "adopt"
+            else prepare_config(
+                args.root,
+                args.sam_checkpoint,
+                args.classifier_checkpoint,
+                args.labels,
+                args.device,
+                proposer_kind=args.proposer,
+                sam3_config=Sam3Config(
+                    prompts=tuple(args.prompts), concept_threshold=args.concept_threshold
+                ),
+            )
         )
         digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()
         print(
