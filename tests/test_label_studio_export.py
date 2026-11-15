@@ -243,3 +243,21 @@ def test_completed_run_rejects_late_png_metadata(public_run: Path, tmp_path: Pat
     with pytest.raises(ValueError, match="metadata-free"):
         export_label_studio(public_run, "run", output)
     assert not output.exists()
+
+
+def test_invalid_legacy_result_scores_are_null_not_invented_numbers(
+    public_run: Path, tmp_path: Path
+):
+    with sqlite3.connect(public_run / "discovery.sqlite3") as db:
+        scores = json.loads(db.execute("SELECT scores FROM photos").fetchone()[0])
+        scores["species"][0]["margin"] = float("nan")
+        db.execute("UPDATE photos SET scores=?", (json.dumps(scores),))
+    output = tmp_path / "legacy-invalid-score"
+    export_label_studio(public_run, "run", output)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    text = task["predictions"][0]["result"][0]["value"]["text"][0]
+    assert json.loads(text)["watchlist_comparisons"][0]["margin"] is None
+    private = json.loads((output / "private/provenance.json").read_text())
+    assert private["photos"][0]["scores"]["species"][0]["margin"] is None
+    assert "serialized as null" in private["nonfinite_result_policy"]
+    assert "annotations" not in task

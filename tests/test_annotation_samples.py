@@ -249,3 +249,56 @@ def test_late_png_metadata_is_rejected_after_full_decode(canonical_batch, tmp_pa
     with pytest.raises(ValueError, match="metadata-free"):
         export_samples(manifest, output)
     assert not output.exists()
+
+
+@pytest.mark.parametrize("score", [float("nan"), float("inf"), float("-inf")])
+@pytest.mark.parametrize("profile", ["frame", "regional"])
+def test_nonfinite_results_remain_unknown_and_serialize_as_null(
+    classified_batch, tmp_path, score, profile
+):
+    manifest, frame, proposals, regional, _ = classified_batch
+    source = frame if profile == "frame" else regional
+    document = json.loads(source.read_text())
+    row = document["predictions"][0]
+    topk = row["topk"] if profile == "frame" else row["regions"][0]["topk"]
+    topk[0]["score"] = score
+    if profile == "regional":
+        row["regions"][0]["views"]["masked"] = topk
+    source.write_text(json.dumps(document))
+    output = tmp_path / "invalid-score"
+    export_samples(
+        manifest,
+        output,
+        frame_results=frame,
+        proposals=proposals if profile == "regional" else None,
+        regional_results=regional if profile == "regional" else None,
+    )
+    task = json.loads((output / "tasks.json").read_text())[0]
+    prediction = task["predictions"][0]
+    text = next(
+        r for r in prediction["result"] if r["from_name"] in {"predicted_taxon", "region_taxon"}
+    )
+    assert text["value"]["text"] == ["Unknown"]
+    evidence = next(r for r in prediction["result"] if r["from_name"] == "model_evidence")
+    decoded = json.loads(evidence["value"]["text"][0])
+    invalid = decoded["topk"] if profile == "frame" else decoded["alternatives"][0]["topk"]
+    assert invalid[0]["score"] is None
+    private = json.loads((output / "private/provenance.json").read_text())
+    stored = (
+        private["samples"][0]["frame_result"]["topk"]
+        if profile == "frame"
+        else (private["additional_models"]["regional"]["predictions"][0]["regions"][0]["topk"])
+    )
+    assert stored[0]["score"] is None
+    assert "annotations" not in task
+
+
+def test_nonfinite_model_metadata_is_still_refused(canonical_batch, tmp_path):
+    manifest, frame, _ = canonical_batch
+    document = json.loads(frame.read_text())
+    document["model"]["invalid_pin"] = float("nan")
+    frame.write_text(json.dumps(document))
+    output = tmp_path / "invalid-pin"
+    with pytest.raises(ValueError, match="JSON compliant"):
+        export_samples(manifest, output, frame_results=frame)
+    assert not output.exists()

@@ -14,6 +14,7 @@ from weedz.annotation.auto_labels import frame_prediction, proposals_prediction
 from weedz.annotation.export import _output
 from weedz.annotation.label_studio import label_config
 from weedz.annotation.sample_variants import add_variants, load_variants
+from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Sample
 from weedz.manifest import read_manifest
 
@@ -159,6 +160,7 @@ def _write(
         )
         (output / "label-config.xml").write_text(label_config("assisted"))
         provenance = {
+            "nonfinite_result_policy": NONFINITE_POLICY,
             "schema_version": 1,
             "source_manifest_sha256": source_digest,
             "frame_model": frames["model"] if frames else None,
@@ -170,9 +172,7 @@ def _write(
                 "Editable predictions only; source class is context, never annotation truth"
             ),
         }
-        (output / "private/provenance.json").write_text(
-            json.dumps(provenance, ensure_ascii=False, allow_nan=False) + "\n"
-        )
+        (output / "private/provenance.json").write_text(result_json(provenance) + "\n")
         files = {
             str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(output.rglob("*"))
