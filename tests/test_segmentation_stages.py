@@ -141,3 +141,28 @@ def test_changed_image_bytes_are_not_hidden_by_a_completed_artifact(store):
     with pytest.raises(ValueError, match="provenance"):
         stages.segment("run")
     assert proposer.calls == 2
+
+
+def test_region_runtime_failure_keeps_masks_and_is_retryable_before_final_fallback(
+    store, monkeypatch
+):
+    proposer = Proposer()
+    proposer.fail_second = False
+    stages = runner(store, proposer)
+    stages.segment("run")
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+
+    def interrupted(*_args):
+        raise RuntimeError("Classifier interrupted")
+
+    monkeypatch.setattr("weedz.segmentation.stages.identify_views", interrupted)
+    with pytest.raises(RuntimeError, match="Classifier interrupted"):
+        stages.score_regions("run")
+    assert all("segmentation" not in photo["scores"] for photo in store.photos("run"))
+    result = runner(store, proposer, 3).score_regions("run")
+    assert result["failed"] == 2 and result["cache_hits"] == 0
+    assert all(
+        photo["scores"]["segmentation"]["regions"][0]["views"] == {}
+        for photo in store.photos("run")
+    )

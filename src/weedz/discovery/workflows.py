@@ -21,9 +21,10 @@ class DiscoveryWorkflow:
                 "score_region_views_v1",
                 "export_run",
             ]
+        last_result: dict = {}
         try:
             for name in names:
-                await workflow.execute_activity(
+                last_result = await workflow.execute_activity(
                     name,
                     payload,
                     start_to_close_timeout=timedelta(minutes=30),
@@ -39,4 +40,7 @@ class DiscoveryWorkflow:
                 retry_policy=retry,
             )
             raise
-        return {"run_id": payload["run_id"], "status": "completed"}
+        result = {"run_id": payload["run_id"], "status": "completed"}
+        if "segment_photos_v1" in names:
+            result["pipeline_outcome"] = last_result.get("pipeline_outcome", "unknown")
+        return result
