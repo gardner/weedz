@@ -66,8 +66,10 @@ uv run python tools/demo-video/mix_demo.py \
 
 This retains the native narration master separately, adds music at gain 0.055,
 and uses a 48 kHz stereo AAC 256 kbps delivery track. The voice gain stays at one;
-mix normalization is disabled. Captions are burned into the picture and included
-as an optional English subtitle track. Keep the native master when sharing
+mix normalization is disabled. Captions are burned into the picture; the separate
+English SRT is retained alongside it. The MP4 has only picture and audio streams,
+avoiding players rendering a second subtitle layer over the burned captions.
+Keep the native master when sharing
 audio so listeners can hear exactly what Breeze generated. Attach
 the instrumental's provenance, update final checksums, and verify the final
 container with ffprobe. Listen to the whole movie and inspect the beginning,
