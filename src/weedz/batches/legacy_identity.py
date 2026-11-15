@@ -38,7 +38,8 @@ def _reference(reference: dict) -> tuple[Path, str]:
     ):
         raise ValueError("Invalid legacy authorization reference")
     path = Path(raw_path)
-    if not path.is_absolute() or any((p / ".git").exists() for p in (path.parent, *path.parents)):
+    parent = path.parent.resolve()
+    if not path.is_absolute() or any((p / ".git").exists() for p in (parent, *parent.parents)):
         raise ValueError("Legacy authorization files must be absolute and outside Git")
     return path, expected
 

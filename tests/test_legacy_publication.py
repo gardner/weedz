@@ -229,3 +229,20 @@ def test_correct_present_dataset_needs_no_compatibility_receipt(legacy, tmp_path
         "source_dataset"
     ]
     assert "legacy_adoption" not in run(tmp_path, package, service)
+
+
+def test_allowlist_alias_cannot_hide_a_git_parent(legacy, tmp_path):
+    from pathlib import Path
+
+    package, service, document = legacy
+    repository = tmp_path / "repository"
+    (repository / ".git").mkdir(parents=True)
+    nested = repository / "nested"
+    nested.mkdir()
+    reference = authorize(nested, document)
+    alias = tmp_path / "alias"
+    alias.symlink_to(nested, target_is_directory=True)
+    reference["path"] = str(alias / Path(reference["path"]).name)
+    with pytest.raises(ValueError, match="outside Git"):
+        run(tmp_path, package, service, reference)
+    assert not service.requests
