@@ -32,7 +32,9 @@ copy with secure deletion and vacuuming; live decisions remain unchanged.
 Do not narrate its displayed counts as full-pilot performance. The run detail and
 `capture-provenance.json` explicitly disclose the subset and coordinate removal.
 The manifest lists every potentially visible photo's creator, licence, source URL
-and modification. Include those attributions in the video's credits/description
+and modification, with snapshot-relative image paths. Explicit `--run` selections
+must exist and be completed; an invalid selection fails without a successful manifest.
+Include those attributions in the video's credits/description
 or companion credit document. Never copy exact locations into production assets.
 
 The capture server binds loopback port 8312 and refuses every non-GET/HEAD request.

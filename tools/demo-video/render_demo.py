@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from demo_credits import portable_credits
 from demo_frames import Frames, caption, dissolve
 from demo_timeline import caption_cues, load_timeline, narration_master, srt
 
@@ -67,10 +68,12 @@ def render(args: argparse.Namespace) -> None:
             "license": "https://huggingface.co/BreezeBlue/Breeze-TTS-2/blob/main/LICENSE",
         },
         "music": "MiniMax Music3; see music provenance supplied with final mix",
-        "photo_sources": json.loads(
-            (args.captures / "review-snapshot/capture-provenance.json").read_text()
+        "photo_sources": portable_credits(
+            json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
         ),
-        "flutter_photo": json.loads((args.captures / "assets/attribution.json").read_text()),
+        "flutter_photo": portable_credits(
+            json.loads((args.captures / "assets/attribution.json").read_text())
+        ),
         "photo_modifications": "Metadata removed, orientation corrected, resized for composition. "
         "Search-window and report-field graphics explain the pipeline; no photo pan or zoom.",
         "credit_font": "Noto Sans CJK Japanese / SIL Open Font License 1.1",

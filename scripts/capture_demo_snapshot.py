@@ -18,12 +18,15 @@ ADMITTED = {"cc0", "cc-by"}
 
 def completed_run(copied: sqlite3.Connection, requested: str | None) -> str:
     if requested is not None:
-        return requested
-    row = copied.execute(
-        "SELECT id FROM runs WHERE status='completed' ORDER BY created_at DESC LIMIT 1"
-    ).fetchone()
+        row = copied.execute(
+            "SELECT id FROM runs WHERE id=? AND status='completed'", (requested,)
+        ).fetchone()
+    else:
+        row = copied.execute(
+            "SELECT id FROM runs WHERE status='completed' ORDER BY created_at DESC LIMIT 1"
+        ).fetchone()
     if row is None:
-        raise ValueError("The pilot has no completed run")
+        raise ValueError("No matching completed run exists in the pilot")
     return str(row["id"])
 
 
@@ -84,7 +87,7 @@ def snapshot(source: Path, output: Path, run_id: str | None = None) -> dict[str,
             credits.append(
                 {
                     "photo_id": row["id"],
-                    "file": str(target),
+                    "file": str(relative),
                     "creator_attribution": record["attribution"],
                     "license": record["photo_license"],
                     "license_url": "https://creativecommons.org/"

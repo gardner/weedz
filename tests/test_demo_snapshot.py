@@ -65,5 +65,19 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
     assert "12.3456789" not in json.dumps(result)
     assert b"12.3456789" not in (target / "discovery.sqlite3").read_bytes()
     assert "Private note" not in (target / "discovery.sqlite3").read_bytes().decode(errors="ignore")
+    assert result["photos"][0]["file"] == "images/1.png"
     with Image.open(target / "images/1.png") as image:
         assert not image.getexif()
+
+
+@pytest.mark.parametrize("requested", ["missing", "in-progress"])
+def test_explicit_run_must_exist_and_be_complete(requested: str) -> None:
+    with sqlite3.connect(":memory:") as db:
+        db.row_factory = sqlite3.Row
+        db.execute("CREATE TABLE runs(id TEXT, status TEXT, created_at TEXT)")
+        db.execute("INSERT INTO runs VALUES('in-progress','running','2026-01-02')")
+        db.execute("INSERT INTO runs VALUES('finished','completed','2026-01-01')")
+        with pytest.raises(ValueError, match="completed run"):
+            script.completed_run(db, requested)
+        assert script.completed_run(db, "finished") == "finished"
+        assert script.completed_run(db, None) == "finished"
