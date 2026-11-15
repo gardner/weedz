@@ -1,0 +1,194 @@
+"""Audition presets are distinct and output planning refuses accidental replacement."""
+
+import importlib.util
+import json
+from pathlib import Path
+
+import pytest
+
+spec = importlib.util.spec_from_file_location(
+    "music_batch", Path(__file__).parents[1] / "tools/demo-music/main.py"
+)
+assert spec and spec.loader
+music = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(music)
+PRESETS = Path(__file__).parents[1] / "tools/demo-music/auditions.json"
+
+
+def test_ten_original_presets_have_distinct_seeds_prompts_and_percussion_options() -> None:
+    presets = music.load_presets(PRESETS)
+    assert len(presets) == 10
+    assert len({item["seed"] for item in presets}) == 10
+    assert len({item["prompt"] for item in presets}) == 10
+    assert presets[6]["percussion"] and presets[9]["percussion"]
+
+
+@pytest.mark.parametrize(
+    "change", ["duplicate_seed", "duplicate_name", "invalid_name", "empty_prompt"]
+)
+def test_invalid_presets_fail_before_loading_a_model(tmp_path: Path, change: str) -> None:
+    presets = json.loads(PRESETS.read_text())
+    if change == "duplicate_seed":
+        presets[1]["seed"] = presets[0]["seed"]
+    elif change == "duplicate_name":
+        presets[1]["name"] = presets[0]["name"]
+    elif change == "invalid_name":
+        presets[0]["name"] = "../escape"
+    else:
+        presets[0]["prompt"] = ""
+    path = tmp_path / "presets.json"
+    path.write_text(json.dumps(presets))
+    with pytest.raises(ValueError):
+        music.load_presets(path)
+
+
+def test_empty_cache_can_fetch_only_the_pinned_snapshot_before_local_loading(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sys
+    from types import SimpleNamespace
+
+    calls = []
+    pipeline = SimpleNamespace(
+        load_components=lambda **kwargs: calls.append(("components", kwargs)),
+        to=lambda device: calls.append(("device", device)),
+    )
+
+    def snapshot(model, **kwargs):
+        calls.append(("snapshot", model, kwargs))
+        if kwargs.get("local_files_only"):
+            raise RuntimeError("Pinned snapshot is not in this clean cache")
+        return str(tmp_path)
+
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "0")
+    monkeypatch.setitem(
+        sys.modules,
+        "torch",
+        SimpleNamespace(
+            bfloat16="bfloat16",
+            cuda=SimpleNamespace(
+                is_available=lambda: True, mem_get_info=lambda: (30 * 1024**3, 32 * 1024**3)
+            ),
+        ),
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", SimpleNamespace(snapshot_download=snapshot))
+    monkeypatch.setitem(
+        sys.modules,
+        "diffusers",
+        SimpleNamespace(
+            ModularPipeline=SimpleNamespace(
+                from_pretrained=lambda path, **kwargs: (
+                    calls.append(("from", path, kwargs)) or pipeline
+                ),
+            )
+        ),
+    )
+    loaded, folder = music.load_pipeline()
+    assert loaded is pipeline and folder == tmp_path
+    assert calls[0][0:2] == ("snapshot", music.MODEL)
+    assert calls[0][2]["revision"] == music.REVISION
+    assert calls[0][2].get("local_files_only", False) is False
+    assert calls[1] == ("from", str(tmp_path), {"local_files_only": True})
+    assert calls[2] == ("components", {"dtype": "bfloat16", "local_files_only": True})
+
+
+@pytest.mark.parametrize("existing_folder", [False, True])
+def test_model_load_failure_does_not_publish_a_partial_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing_folder: bool
+) -> None:
+    folder = tmp_path / "auditions"
+    if existing_folder:
+        folder.mkdir()
+
+    def unavailable_model():
+        raise RuntimeError("Checkpoint is unavailable")
+
+    monkeypatch.setattr(music, "load_pipeline", unavailable_model)
+    with pytest.raises(RuntimeError, match="Checkpoint"):
+        music.generate_batch(180, folder, PRESETS)
+    assert folder.exists() == existing_folder
+    if existing_folder:
+        assert not list(folder.iterdir())
+
+
+@pytest.mark.parametrize("seconds", [60, 60.5, 180])
+def test_batch_catalogue_and_track_receipts_share_requested_duration(
+    tmp_path, monkeypatch, seconds
+):
+    snapshot = tmp_path / "model"
+    snapshot.mkdir()
+    (snapshot / "LICENSE").write_text("Test fixture licence")
+    folder = tmp_path / "auditions"
+    monkeypatch.setattr(music, "load_pipeline", lambda: (object(), snapshot))
+    catalogues = []
+    original = music.write_catalog
+
+    def catalog(*args, **kwargs):
+        original(*args, **kwargs)
+        catalogues.append(json.loads((folder / "index.json").read_text()))
+
+    def render(_pipeline, requested, seed, output, prompt, extra):
+        assert requested == seconds
+        return {
+            **extra,
+            "output": output.name,
+            "prompt": prompt,
+            "seed": seed,
+            "requested_seconds": requested,
+            "actual_seconds": requested / 2,
+        }
+
+    monkeypatch.setattr(music, "write_catalog", catalog)
+    monkeypatch.setattr(music, "render_take", render)
+    music.generate_batch(seconds, folder, PRESETS)
+    assert catalogues[0]["completed"] == 0 and catalogues[-1]["completed"] == 10
+    for entry in catalogues:
+        assert entry["requested_seconds"] == seconds
+        assert entry["duration_policy"].startswith(f"{seconds:g}-second upper bounds;")
+        assert all(track["requested_seconds"] == seconds for track in entry["tracks"])
+
+
+def test_preset_changes_during_model_load_and_between_takes_cannot_change_provenance(
+    tmp_path, monkeypatch
+):
+    import hashlib
+
+    original_bytes = PRESETS.read_bytes()
+    original = json.loads(original_bytes)
+    source = tmp_path / "presets.json"
+    source.write_bytes(original_bytes)
+    snapshot = tmp_path / "model"
+    snapshot.mkdir()
+    (snapshot / "LICENSE").write_text("Test fixture licence")
+    changed = [dict(item) for item in original]
+    changed[0]["prompt"] = "Different later preset"
+
+    def load():
+        source.write_text(json.dumps(changed))
+        return object(), snapshot
+
+    digest = hashlib.sha256(original_bytes).hexdigest()
+    prompts = []
+
+    def render(_pipeline, seconds, seed, output, prompt, extra):
+        assert extra["preset_file_sha256"] == digest
+        prompts.append(prompt)
+        changed[0]["prompt"] = f"Changed again between takes {seed}"
+        source.write_text(json.dumps(changed))
+        return {
+            **extra,
+            "output": output.name,
+            "prompt": prompt,
+            "seed": seed,
+            "requested_seconds": seconds,
+            "actual_seconds": seconds / 2,
+        }
+
+    monkeypatch.setattr(music, "load_pipeline", load)
+    monkeypatch.setattr(music, "render_take", render)
+    folder = tmp_path / "auditions"
+    music.generate_batch(60, folder, source)
+    assert prompts == [item["prompt"] for item in original]
+    assert (folder / "presets.json").read_bytes() == original_bytes
+    index = json.loads((folder / "index.json").read_text())
+    assert all(track["preset_file_sha256"] == digest for track in index["tracks"])

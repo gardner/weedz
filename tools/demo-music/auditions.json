@@ -1,0 +1,82 @@
+[
+  {
+    "name": "01-felt-piano-path",
+    "title": "Felt piano path",
+    "seed": 11201,
+    "percussion": false,
+    "variation": "72 BPM, D major. Felt piano leads a simple original motif; soft sustained strings, sparse guitar harmonics, warm bass. No percussion. Intimate and quietly hopeful.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 72 BPM, D major. Felt piano leads a simple original motif; soft sustained strings, sparse guitar harmonics, warm bass. No percussion. Intimate and quietly hopeful. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "02-guitar-light",
+    "title": "Guitar light",
+    "seed": 11202,
+    "percussion": false,
+    "variation": "72 BPM, D major. Delicate fingerpicked acoustic guitar leads; felt piano answers, soft sustained strings and warm bass. No percussion. Slightly more open and sunlit.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 72 BPM, D major. Delicate fingerpicked acoustic guitar leads; felt piano answers, soft sustained strings and warm bass. No percussion. Slightly more open and sunlit. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "03-piano-and-cello",
+    "title": "Piano and cello",
+    "seed": 11203,
+    "percussion": false,
+    "variation": "70 BPM, D major. Felt piano with a mellow solo cello counterline, sparse guitar harmonics and airy room texture. No percussion. Reflective, patient, gentle.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 70 BPM, D major. Felt piano with a mellow solo cello counterline, sparse guitar harmonics and airy room texture. No percussion. Reflective, patient, gentle. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "04-open-canopy",
+    "title": "Open canopy",
+    "seed": 11204,
+    "percussion": false,
+    "variation": "74 BPM, G major. Felt piano, warm acoustic guitar harmonics and very soft high strings. No percussion. Airy spacious pauses and a curious hopeful mood.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 74 BPM, G major. Felt piano, warm acoustic guitar harmonics and very soft high strings. No percussion. Airy spacious pauses and a curious hopeful mood. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "05-evening-field",
+    "title": "Evening field",
+    "seed": 11205,
+    "percussion": false,
+    "variation": "71 BPM, D major with a little B minor shading. Felt piano motif and low soft strings, sparse fingerpicked guitar. No percussion. Thoughtful without sadness, very restrained.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 71 BPM, D major with a little B minor shading. Felt piano motif and low soft strings, sparse fingerpicked guitar. No percussion. Thoughtful without sadness, very restrained. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "06-quiet-water",
+    "title": "Quiet water",
+    "seed": 11206,
+    "percussion": false,
+    "variation": "72 BPM, G major. Soft felt piano arpeggios, long cello notes and occasional acoustic guitar harmonics. No percussion. Flowing, transparent and calm, no large swells.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 72 BPM, G major. Soft felt piano arpeggios, long cello notes and occasional acoustic guitar harmonics. No percussion. Flowing, transparent and calm, no large swells. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "07-brushed-shaker",
+    "title": "Brushed shaker",
+    "seed": 11207,
+    "percussion": true,
+    "variation": "73 BPM, D major. Felt piano motif and fingerpicked guitar, soft strings, with a very quiet brushed shaker and light wooden pulse. Gentle percussion, no heavy drums or sharp accents.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 73 BPM, D major. Felt piano motif and fingerpicked guitar, soft strings, with a very quiet brushed shaker and light wooden pulse. Gentle percussion, no heavy drums or sharp accents. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "08-small-discoveries",
+    "title": "Small discoveries",
+    "seed": 11208,
+    "percussion": false,
+    "variation": "74 BPM, D major. A sparse original felt piano motif answered by softly plucked guitar and warm chamber strings. No percussion. A little playful curiosity, still quiet and natural.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 74 BPM, D major. A sparse original felt piano motif answered by softly plucked guitar and warm chamber strings. No percussion. A little playful curiosity, still quiet and natural. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "09-warm-horizon",
+    "title": "Warm horizon",
+    "seed": 11209,
+    "percussion": false,
+    "variation": "70 BPM, G major. Warm fingerpicked guitar, felt piano and softly sustained string trio. No percussion. A little broader harmony, patient melodic development, softly hopeful return.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 70 BPM, G major. Warm fingerpicked guitar, felt piano and softly sustained string trio. No percussion. A little broader harmony, patient melodic development, softly hopeful return. Clear intimate natural production, no harsh highs, no abrupt edits."
+  },
+  {
+    "name": "10-soft-wood-pulse",
+    "title": "Soft wood pulse",
+    "seed": 11210,
+    "percussion": true,
+    "variation": "72 BPM, D major. Felt piano and acoustic guitar harmonics over warm strings, with restrained soft woodblock taps and brushed low percussion. No heavy drums; subtle steady movement and gentle resolution.",
+    "prompt": "Global Metadata: Original quiet conservation documentary instrumental, approximately three minutes, gentle evolving acoustic chamber ambient music, generous space beneath spoken narration, restrained dynamics and a softly resolved ending. No artist imitation. Vocal Details: Prefer instrumental, no singer, no lyrics, no spoken words. Arrangement: 72 BPM, D major. Felt piano and acoustic guitar harmonics over warm strings, with restrained soft woodblock taps and brushed low percussion. No heavy drums; subtle steady movement and gentle resolution. Clear intimate natural production, no harsh highs, no abrupt edits."
+  }
+]

@@ -24,7 +24,8 @@ UV_PROJECT_ENVIRONMENT="$HOME/.cache/weedz-demo/tools/music3-venv" \
   --output /path/outside/the/repository/music3-score.wav
 ```
 
-The pinned snapshot is loaded locally before component loading, avoiding mutable
+The exact pinned snapshot is downloaded when absent, then loaded locally before
+component loading, avoiding mutable
 component revisions embedded in the upstream model index. Generation uses
 bfloat16, 30 flow-matching steps and a seeded CUDA generator. The tested RTX 5090
 has 32 GiB VRAM; the runner requires 26 GiB free before loading. GPU 1 is untouched.
@@ -83,3 +84,27 @@ and the assembled bed. The screen resampled only an in-memory mono copy to 16 kH
 no raw audio changed. This is a heuristic check for intelligible speech, not a
 listening guarantee that every voice-like texture is absent. Each `.asr.json`
 records that limitation beside its result.
+
+## Ten-track auditions
+
+`auditions.json` contains ten distinct original quiet documentary prompts/seeds.
+Tracks 7 and 10 request restrained percussion; the others vary felt-piano, guitar,
+cello/string emphasis, harmony and tempo subtly. No named artist or textual lyrics
+are requested. Prefer instrumental; model control cannot rule out voice-like texture.
+
+```sh
+CUDA_VISIBLE_DEVICES=0 \
+UV_PROJECT_ENVIRONMENT="$HOME/.cache/weedz-demo/tools/music3-venv" \
+  uv run --locked --project tools/demo-music python tools/demo-music/main.py \
+  --seconds 180 --batch-output /path/outside/git/auditions-v1
+```
+
+The model loads once. Each request has its own seeded generator, raw output and
+provenance, then releases output tensors/allocator cache before the next request.
+Diffusers also resets stateful component caches between calls. The model itself
+stays loaded. Requested seconds remain an upper bound: do not pad or loop a take
+to claim a longer composition. Actual WAV frames/durations/checksums are recorded.
+The batch writes an incremental HTML listening index, M3U playlist and JSON catalog,
+plus all prompts and the full pinned model license outside Git. Existing outputs
+are refused before model loading. A failed generation leaves its started request
+for diagnosis; it is never silently replaced or represented as completed.

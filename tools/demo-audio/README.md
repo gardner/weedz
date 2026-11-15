@@ -30,7 +30,8 @@ uv run --project tools/demo-audio python tools/demo-audio/main.py \
   --output /path/to/artifacts/narration-v1.wav
 ```
 
-The runner uses GPU 0, an eager-compatible path, a fixed seed and a documented
+The runner uses GPU 0 by default (`--gpu 1` selects the second GPU), an
+eager-compatible path, a fixed seed and a documented
 female voice instruction. It records text, model/source revisions, settings and
 package versions beside each WAV. Existing outputs or metadata sidecars are never
 overwritten, and resolved output paths inside Git are refused.

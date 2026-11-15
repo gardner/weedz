@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "recipe": "Recorded SAM2.1 tiny eight-point proposals plus BioCLIP2 saved frame/tile comparisons; not a new model verification",
+  "baseline": {
+    "model": "imageomics/bioclip-2",
+    "model_key": "bioclip-2",
+    "revision": "2957b322090f9cb17ae72c71981c7218a28d81e0",
+    "weights_sha256": "b7b2bf6fbc95799e42630e394cf95803892ab447c1a8ab629dbc82fbeaf7dfef",
+    "ranking_revision": 4,
+    "prompts": [
+      "a photograph of Clematis vitalba, Old man's beard",
+      "a photograph of Cortaderia selloana, Pampas grass",
+      "a photograph of Ulex europaeus, Gorse",
+      "a photograph of Austroderia toetoe, New Zealand native toetoe grass",
+      "a photograph of Clematis paniculata, New Zealand native clematis vine",
+      "a photograph of Leptospermum scoparium, manuka shrub",
+      "a photograph of Cytisus scoparius, broom shrub",
+      "a photograph of mixed grass and native forest vegetation",
+      "a photograph of a bird",
+      "a photograph of a butterfly",
+      "a photograph of an insect",
+      "a photograph of a landscape with no visible plants",
+      "a photograph of open sky",
+      "a photograph of sea or open water",
+      "a photograph of sand, mud or a rocky shore",
+      "a photograph of bare rock"
+    ],
+    "subject_prompt": "a photograph of <original taxon>, <common name>",
+    "target_count": 3,
+    "regions": "letterboxed whole image and overlapping square tiles covering every pixel, except photos needing more than 32 tiles, whose long axis is thinned; each result's coverage_complete says which",
+    "ranking": "maximum target minus best comparison-label cosine similarity per window; comparisons include the photo's original subject; featureless tiles (greyscale std < 8) cannot be the winning window",
+    "calibrated": false,
+    "segmentation": false,
+    "embedding_cache": {
+      "key": "sha256(image bytes, weights, preprocessing, window boxes, window revision)",
+      "window_revision": 2,
+      "preprocessing_sha256": "508d7e3fbb09ef4b576f15c68e19c7ccf380674fb55386b15a2a477d2269b894"
+    }
+  },
+  "segmentation": {
+    "model": "SAM2.1 Hiera tiny",
+    "code_revision": "2b90b9f5ceec907a1c18123530e92e794ad901a4",
+    "checkpoint_sha256": "7402e0d864fa82708a20fbd15bc84245c2f26dff0eb43a4b5b93452deb34be69",
+    "config": {
+      "max_side": 768,
+      "points_per_side": 8,
+      "points_per_batch": 8,
+      "max_proposals": 12,
+      "min_area": 16,
+      "context_fraction": 0.25
+    },
+    "mask_filter": {
+      "predicted_iou_threshold": 0.8,
+      "stability_threshold": 0.95,
+      "box_nms_threshold": 0.7,
+      "mask_threshold": 0
+    },
+    "transforms_revision": 1,
+    "proposal_config": {
+      "max_side": 768,
+      "points_per_side": 8,
+      "points_per_batch": 8,
+      "max_proposals": 12,
+      "min_area": 16,
+      "context_fraction": 0.25
+    },
+    "class_agnostic": true,
+    "crop_layers": 0,
+    "postprocessing": false
+  }
+}
