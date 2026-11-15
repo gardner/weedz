@@ -19,8 +19,10 @@ with pytest.MonkeyPatch.context() as import_path:
     SPEC.loader.exec_module(script)
 
 
+@pytest.mark.parametrize("journal_mode", ["DELETE", "WAL"])
 def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
     tmp_path: Path,
+    journal_mode: str,
 ) -> None:
     source, target = tmp_path / "live", tmp_path / "capture"
     (source / "images").mkdir(parents=True)
@@ -39,6 +41,7 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
     scores = {"margin": 0.123, "box": [0, 0, 10, 10]}
     database = source / "discovery.sqlite3"
     with sqlite3.connect(database) as db:
+        db.execute(f"PRAGMA journal_mode={journal_mode}")
         db.executescript("""
             CREATE TABLE runs(id TEXT,status TEXT,created_at TEXT,detail TEXT);
             CREATE TABLE photos(id TEXT,run_id TEXT,record TEXT,scores TEXT,
@@ -65,6 +68,7 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
     assert "12.3456789" not in json.dumps(result)
     assert b"12.3456789" not in (target / "discovery.sqlite3").read_bytes()
     assert "Private note" not in (target / "discovery.sqlite3").read_bytes().decode(errors="ignore")
+    assert not list(target.glob("discovery.sqlite3-*"))
     assert result["photos"][0]["file"] == "images/1.png"
     with Image.open(target / "images/1.png") as image:
         assert not image.getexif()

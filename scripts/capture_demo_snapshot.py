@@ -9,6 +9,7 @@ import json
 import shutil
 import sqlite3
 import tempfile
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -57,13 +58,14 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
     output.mkdir(parents=True, exist_ok=False)
     destination = output / "discovery.sqlite3"
     with (
-        sqlite3.connect(f"file:{source / 'discovery.sqlite3'}?mode=ro", uri=True) as live,
-        sqlite3.connect(destination) as copied,
+        closing(sqlite3.connect(f"file:{source / 'discovery.sqlite3'}?mode=ro", uri=True)) as live,
+        closing(sqlite3.connect(destination)) as copied,
     ):
         live.backup(copied)
     credits = []
-    with sqlite3.connect(destination) as copied:
+    with closing(sqlite3.connect(destination)) as copied:
         copied.row_factory = sqlite3.Row
+        copied.execute("PRAGMA journal_mode=DELETE")
         copied.execute("PRAGMA secure_delete=ON")
         run_id = completed_run(copied, run_id)
         # Remove human decisions/notes from the capture copy, never from the source.
@@ -128,6 +130,8 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
         )
         copied.commit()
         copied.execute("VACUUM")
+    if any(output.glob("discovery.sqlite3-*")):
+        raise ValueError("Sanitized snapshot must be a standalone database without journal files")
     manifest = {
         "run": run_id,
         "disclosure": "Curated CC0/CC BY subset of a completed public pilot. Original screening "
