@@ -128,7 +128,7 @@ class Processor(Protocol):
     def set_text_prompt(self, *, state: dict, prompt: str) -> dict: ...
 
 
-def restore_concept_region(image: Image.Image, record: dict, config: Sam3Config) -> Region:
+def _restore_geometry(image: Image.Image, record: dict, config: Sam3Config) -> Region:
     """Recreate checked crop pixels without inventing SAM2 IoU or classifier labels."""
     encoded = record["mask_png"]
     if len(encoded) > 4_000_000:
@@ -151,6 +151,37 @@ def restore_concept_region(image: Image.Image, record: dict, config: Sam3Config)
     return region_from_mask(
         image, mask, {}, max_side=config.max_side, context_fraction=config.context_fraction
     )
+
+
+def _decoded_image(encoded: bytes) -> Image.Image:
+    if len(encoded) > MAX_SOURCE_BYTES:
+        raise ValueError("Source exceeds the 20 MB SAM3 profile cap")
+    try:
+        with Image.open(io.BytesIO(encoded)) as original:
+            if original.width * original.height > MAX_SOURCE_PIXELS:
+                raise ValueError("Source exceeds the 40 megapixel SAM3 profile cap")
+            return ImageOps.exif_transpose(original).convert("RGB")
+    except Image.DecompressionBombError as error:
+        raise ValueError("Source exceeds the SAM3 pixel cap") from error
+
+
+def restore_concept_regions(
+    encoded: bytes, records: list[dict], config: Sam3Config, *, expected_sha256: str
+) -> list[Region]:
+    """Verify the envelope's exact source, decode once, then restore real crop pixels."""
+    if len(encoded) > MAX_SOURCE_BYTES or hashlib.sha256(encoded).hexdigest() != expected_sha256:
+        raise ValueError("SAM3 source checksum or byte cap mismatch")
+    if len(records) > config.max_regions * len(config.prompts):
+        raise ValueError("SAM3 record count exceeds the declared prompt/profile budget")
+    image = _decoded_image(encoded)
+    return [_restore_geometry(image, record, config) for record in records]
+
+
+def restore_concept_region(
+    encoded: bytes, record: dict, config: Sam3Config, *, expected_sha256: str
+) -> Region:
+    """Single-region convenience wrapper; use plural restoration to decode once/photo."""
+    return restore_concept_regions(encoded, [record], config, expected_sha256=expected_sha256)[0]
 
 
 class Sam3Image:
@@ -238,17 +269,12 @@ class Sam3Image:
     def screen(self, path: Path) -> dict:
         with Path(path).open("rb") as stream:
             encoded = stream.read(MAX_SOURCE_BYTES + 1)
-        if len(encoded) > MAX_SOURCE_BYTES:
-            raise ValueError("Source exceeds the 20 MB SAM3 profile cap")
         source_sha = hashlib.sha256(encoded).hexdigest()
-        with Image.open(io.BytesIO(encoded)) as original:
-            if original.width * original.height > MAX_SOURCE_PIXELS:
-                raise ValueError("Source exceeds the 40 megapixel SAM3 profile cap")
-            image = ImageOps.exif_transpose(original).convert("RGB")
+        image = _decoded_image(encoded)
         prepared = image.copy()
         prepared.thumbnail((self.config.max_side, self.config.max_side), Image.Resampling.LANCZOS)
         artifacts = StageArtifacts(self.cache, f"sam3-{self.identity[:20]}")
-        results, hits, state = [], 0, None
+        results, hits, state, embedding_failure = [], 0, None, None
         with self.context_factory():
             for prompt in self.config.prompts:
                 inputs = {
@@ -262,9 +288,13 @@ class Sam3Image:
                     results.append(cached)
                     hits += 1
                     continue
-                if state is None:
-                    state = self.processor.set_image(prepared)
-                result = self._prompt(image, state, prompt)
+                if state is None and embedding_failure is None:
+                    state, embedding_failure = self._embed(prepared)
+                result = (
+                    self._prompt(image, state, prompt)
+                    if state is not None
+                    else {"prompt": prompt, **(embedding_failure or {})}
+                )
                 results.append(artifacts.write("proposals", key, inputs, result))
         failed = sum(result["status"] == "failed" for result in results)
         regions = [region for result in results for region in result["regions"]]
@@ -290,6 +320,17 @@ class Sam3Image:
             "failed_prompts": failed,
             "baseline_retained": False,
         }
+
+    def _embed(self, prepared: Image.Image) -> tuple[dict | None, dict | None]:
+        try:
+            return self.processor.set_image(prepared), None
+        except (ValueError, RuntimeError, OSError, MemoryError) as error:
+            return None, {
+                "status": "failed",
+                "regions": [],
+                "failure_type": type(error).__name__,
+                "failure_phase": "image_embedding",
+            }
 
     def _prompt(self, image: Image.Image, state: dict, prompt: str) -> dict:
         import time
