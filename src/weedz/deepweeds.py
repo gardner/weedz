@@ -178,7 +178,13 @@ def materialize(
         verify(source, pins.archive_sha256, MAX_ARCHIVE_BYTES)
         verify(metadata, pins.labels_sha256, 2_000_000)
         with zipfile.ZipFile(source) as zipped:
-            rows = inventory(zipped, metadata.read(), pins)[:limit]
+            label_bytes = metadata.read(2_000_001)
+            if (
+                len(label_bytes) > 2_000_000
+                or hashlib.sha256(label_bytes).hexdigest() != pins.labels_sha256
+            ):
+                raise ValueError("Source label checksum mismatch")
+            rows = inventory(zipped, label_bytes, pins)[:limit]
             checksums = _selected_checksums(zipped, rows)
             verify(source, pins.archive_sha256, MAX_ARCHIVE_BYTES)
             identity = {

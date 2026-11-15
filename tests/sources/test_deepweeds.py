@@ -229,3 +229,22 @@ def test_official_camera_four_filenames_are_admitted(tmp_path):
     archive, labels, pins = fixture(tmp_path, ["20170906-091113-4.jpg"])
     result = materialize(archive, labels, tmp_path / "out", limit=1, pins=pins)
     assert result["count"] == 1
+
+
+def test_labels_parsed_bytes_must_match_the_pin_even_after_initial_verification(
+    tmp_path, monkeypatch
+):
+    from weedz import deepweeds
+
+    archive, labels, pins = fixture(tmp_path)
+    original = deepweeds.verify
+
+    def replace_after_verify(stream, expected, maximum):
+        original(stream, expected, maximum)
+        if expected == pins.labels_sha256:
+            labels.write_bytes(labels.read_bytes().replace(b",0,Chinee apple", b",1,Lantana"))
+
+    monkeypatch.setattr(deepweeds, "verify", replace_after_verify)
+    with pytest.raises(ValueError, match="checksum"):
+        materialize(archive, labels, tmp_path / "out", limit=1, pins=pins)
+    assert not (tmp_path / "out").exists()
