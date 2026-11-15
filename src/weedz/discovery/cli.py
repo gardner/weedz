@@ -20,6 +20,8 @@ from temporalio.worker import Worker
 from weedz.discovery.access import Access
 from weedz.discovery.activities import Activities, export
 from weedz.discovery.api import create_app
+from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
+from weedz.discovery.device_reports import IntakeMismatch, sync
 from weedz.discovery.occurrences import fetch_snapshot
 from weedz.discovery.outcome_report import to_markdown
 from weedz.discovery.outcomes import outcomes
@@ -38,6 +40,7 @@ from weedz.discovery.study_store import (
 )
 from weedz.discovery.suitability_report import to_markdown as suitability_markdown
 from weedz.discovery.workflows import DiscoveryWorkflow
+from weedz.intake.store import ReportStore
 from weedz.reference import collection
 from weedz.reference_report import to_markdown as reference_markdown
 
@@ -124,7 +127,7 @@ async def dev(args: argparse.Namespace) -> None:
         )
         server = uvicorn.Server(
             uvicorn.Config(
-                create_app(root, address, args.access),
+                create_app(root, address, args.access, args.intake_dir),
                 # Only the review app talks to the API, so it never leaves this computer.
                 host="127.0.0.1",
                 port=args.api_port,
@@ -173,9 +176,23 @@ def run_store(args: argparse.Namespace) -> Store:
     if not (args.pilot_dir / "discovery.sqlite3").is_file():
         raise SystemExit(f"No pilot store in {args.pilot_dir}")
     store = Store(args.pilot_dir)
+    if args.run == DEVICE_RUN:
+        sync_device_run(store, args.intake_dir)
     if not any(run["id"] == args.run for run in store.runs()):
         raise SystemExit(f"No run {args.run!r} in {args.pilot_dir}")
     return store
+
+
+def sync_device_run(store: Store, intake_dir: Path | None) -> None:
+    """Device reports change as people withdraw them, so apply withdrawals first (#58)."""
+    if intake_dir is None:
+        raise SystemExit(
+            f"{DEVICE_RUN} holds device reports: pass --intake-dir so withdrawals apply first"
+        )
+    try:
+        sync(store, ReportStore(intake_dir))
+    except IntakeMismatch as error:
+        raise SystemExit(f"Not read: {error}. Check --intake-dir.") from error
 
 
 def package(args: argparse.Namespace) -> None:
@@ -205,12 +222,21 @@ def _print(args: argparse.Namespace, result: dict, markdown: str) -> None:
         args.json.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
 
 
+def sampled_only(args: argparse.Namespace) -> None:
+    """Outcomes and suitability measure a sampled run's incidental photos. Device reports
+    are not a sample, so an empty report would mislead."""
+    if args.run == DEVICE_RUN:
+        raise SystemExit(f"{args.command} is for sampled iNaturalist runs, not {DEVICE_RUN}")
+
+
 def report(args: argparse.Namespace) -> None:
+    sampled_only(args)
     result = outcomes(export(run_store(args), args.run))
     _print(args, result, to_markdown(result))
 
 
 def suitability(args: argparse.Namespace) -> None:
+    sampled_only(args)
     result = export(run_store(args), args.run)["source_suitability"]
     _print(args, result, suitability_markdown(result))
 
@@ -219,6 +245,11 @@ def reference(args: argparse.Namespace) -> None:
     """The run's reviewed examples as a reference collection, with the watchlist's gaps."""
     from weedz.adapters import pilot_samples  # imports PIL, needed by this command only
 
+    if args.run == DEVICE_RUN:
+        raise SystemExit(
+            "Device reports are not reference examples: their consent and licence are "
+            "per report, and the reference collection does not carry them"
+        )
     result = collection(args.run, pilot_samples(run_store(args), args.run), SPECIES)
     _print(args, result, reference_markdown(result))
 
@@ -287,6 +318,11 @@ def parse(argv: list[str]) -> argparse.Namespace:
     )
     local.add_argument(
         "--web-host", default="127.0.0.1", help="Review app address (non-loopback needs tokens)"
+    )
+    local.add_argument(
+        "--intake-dir",
+        type=Path,
+        help="Review approved device reports received here (uv run main.py intake serve)",
     )
     run = commands.add_parser("discover", help="Queue a bounded historical regional run")
     run.add_argument(
@@ -358,6 +394,10 @@ def parse(argv: list[str]) -> argparse.Namespace:
     bundle.add_argument("--run", required=True, help="Run id, e.g. nelson-tasman-3e62ad801459")
     bundle.add_argument("--pilot-dir", type=Path, default=Path("data/pilot"))
     bundle.add_argument("--out", type=Path, required=True, help="New or empty folder to write")
+    for command in (define, bundle):
+        command.add_argument(
+            "--intake-dir", type=Path, help=f"Report intake folder, needed for --run {DEVICE_RUN}"
+        )
     return parser.parse_args(argv)
 
 

@@ -14,6 +14,8 @@ from weedz.discovery.access import Access, require_reviewer, session
 from weedz.discovery.activities import export, review_history
 from weedz.discovery.agreed_limits import study_budget
 from weedz.discovery.audit import audit_sample, summarize_audit
+from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
+from weedz.discovery.device_reports import IntakeMismatch, sync
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.image_type import image_media_type
@@ -26,7 +28,7 @@ from weedz.discovery.package_output import archive, package_contents
 from weedz.discovery.records import SPECIES, TASK_QUEUE, Audit, Finding, Review, RunSpec
 from weedz.discovery.referrals import Referral, ReferralEvent, uncitable
 from weedz.discovery.score_meaning import score_meaning
-from weedz.discovery.sharing import image_use, shareable_export, with_location
+from weedz.discovery.sharing import image_use, shareable_export, with_location, withdrawn
 from weedz.discovery.store import Store, now
 from weedz.discovery.study import NewStudy, StudyDefinition, StudyEdit, StudyLink, terms
 from weedz.discovery.study_store import (
@@ -40,6 +42,10 @@ from weedz.discovery.study_store import (
     versions,
 )
 from weedz.discovery.workflows import DiscoveryWorkflow
+from weedz.intake.store import ReportStore
+
+# Cohorts whose photos were taken by people out looking, so they can lead to follow-up.
+LEAD_COHORTS = {"incidental", "device"}
 
 
 def audit_state(photo_id: str, sample: set[str], *audits: dict[str, dict[str, str]]) -> dict:
@@ -79,25 +85,50 @@ def check_target(photo: dict, finding_id: int | None, verb: str = "judge") -> No
 
 
 def check_lead(photo: dict, record: LeadEvent) -> None:
-    """Only the suggestion or a recorded plant on an incidental photo can be a lead."""
-    if photo["cohort"] != "incidental":
-        raise HTTPException(409, "Only incidental photos can be leads")
+    """Only the suggestion or a recorded plant on an incidental photo or a device report
+    can be a lead."""
+    if photo["cohort"] not in LEAD_COHORTS:
+        raise HTTPException(409, "Only incidental photos and device reports can be leads")
     check_target(photo, record.finding_id, "select")
 
 
 class ReviewAPI:
-    def __init__(self, root: Path, temporal_address: str) -> None:
+    def __init__(self, root: Path, temporal_address: str, intake_dir: Path | None = None) -> None:
         self.store = Store(root)
         self.temporal_address = temporal_address
+        self.reports = ReportStore(intake_dir) if intake_dir else None
+
+    def sync_reports(self) -> None:
+        """Bring device reports up to date, so a withdrawal applies to this request (#58).
+        Against the wrong intake, withdrawals cannot be checked, so the run is refused."""
+        if self.reports:
+            try:
+                sync(self.store, self.reports)
+            except IntakeMismatch as error:
+                raise HTTPException(503, f"Device reports unavailable: {error}") from error
+
+    def served(self) -> list[dict]:
+        """The runs, after syncing device reports. Without a usable intake, withdrawals
+        cannot be checked, so a device run kept from an earlier session is not served."""
+        try:
+            self.sync_reports()
+            usable = self.reports is not None
+        except HTTPException:
+            usable = False
+        runs = self.store.runs()
+        return runs if usable else [run for run in runs if run["id"] != DEVICE_RUN]
 
     def run(self, run_id: str) -> dict:
-        result = next((item for item in self.store.runs() if item["id"] == run_id), None)
+        if run_id == DEVICE_RUN:
+            self.sync_reports()
+        runs = self.store.runs() if run_id != DEVICE_RUN or self.reports else []
+        result = next((item for item in runs if item["id"] == run_id), None)
         if result is None:
             raise HTTPException(404, "Run not found")
         return result
 
     def runs(self) -> list[dict]:
-        return self.store.runs()
+        return self.served()
 
     async def start(self, spec: RunSpec) -> dict:
         run_id = f"nelson-tasman-{uuid.uuid4().hex[:12]}"
@@ -118,7 +149,10 @@ class ReviewAPI:
 
     def detail(self, run_id: str) -> dict:
         run = self.run(run_id)
-        references, photos = with_references(self.store.root, self.store.photos(run_id))
+        listed = self.store.photos(run_id)
+        # Withdrawn device reports leave the queue; their history stays in the export.
+        current = [photo for photo in listed if not withdrawn(photo)]
+        references, photos = with_references(self.store.root, current)
         history = review_history(self.store, run_id, photos)
         effort = summarize_effort(photos, history)
         study = run_study(self.store, run_id)
@@ -153,6 +187,7 @@ class ReviewAPI:
             "references": references,
             "study": study,
             "score_meaning": score_meaning(run["model"]),
+            "withdrawn_reports": len(listed) - len(current),
         }
 
     def download(self, run_id: str) -> JSONResponse:
@@ -166,13 +201,20 @@ class ReviewAPI:
             },
         )
 
-    def outcomes(self, run_id: str) -> dict:
+    def sampled_only(self, run_id: str) -> None:
+        """Outcomes and suitability measure a sampled run's incidental photos; device
+        reports are not a sample, so an empty summary would mislead (#123)."""
         self.run(run_id)
+        if run_id == DEVICE_RUN:
+            raise HTTPException(409, "Only sampled iNaturalist runs have this measure")
+
+    def outcomes(self, run_id: str) -> dict:
+        self.sampled_only(run_id)
         return outcomes(export(self.store, run_id))
 
     def suitability(self, run_id: str) -> dict:
         """What the run's photos can and cannot support, before review (PRD P02, P14)."""
-        self.run(run_id)
+        self.sampled_only(run_id)
         return export(self.store, run_id)["source_suitability"]
 
     def studies(self) -> list[dict]:
@@ -263,6 +305,7 @@ class ReviewAPI:
         return FileResponse(path, media_type=media_type)
 
     def review(self, run_id: str, photo_id: str, decision: Review) -> dict:
+        self.photo(run_id, photo_id)
         try:
             self.store.review(
                 run_id,
@@ -277,9 +320,8 @@ class ReviewAPI:
         return {"saved": True}
 
     def audit(self, run_id: str, photo_id: str, answer: Audit) -> dict:
-        photos = self.store.photos(self.run(run_id)["id"])
-        if not any(photo["id"] == photo_id for photo in photos):
-            raise HTTPException(404, "Photo not found")
+        self.photo(run_id, photo_id)
+        photos = self.store.photos(run_id)
         if photo_id not in audit_sample(run_id, photos):
             raise HTTPException(409, "Only audit-sample photos can be audited")
         self.store.audit(
@@ -288,9 +330,11 @@ class ReviewAPI:
         return {"saved": True}
 
     def photo(self, run_id: str, photo_id: str) -> dict:
+        """The photo every photo route reads or acts on. A withdrawn device report is
+        used for nothing further, so to every route it is not there (#58, #119)."""
         photos = self.store.photos(self.run(run_id)["id"])
         photo = next((item for item in photos if item["id"] == photo_id), None)
-        if photo is None:
+        if photo is None or withdrawn(photo):
             raise HTTPException(404, "Photo not found")
         return photo
 
@@ -343,6 +387,7 @@ class ReviewAPI:
         self, run_id: str, photo_id: str, referral_id: int, event: ReferralEvent
     ) -> dict:
         """Answer or withdraw an open referral; a closed one stays closed."""
+        self.photo(run_id, photo_id)
         referral = next(
             (item for item in self.referrals(run_id, photo_id) if item["id"] == referral_id),
             None,
@@ -364,9 +409,11 @@ def create_app(
     root: Path,
     temporal_address: str = "localhost:7234",
     access: Literal["local", "tokens"] = "local",
+    intake_dir: Path | None = None,
 ) -> FastAPI:
     """In "local" mode names are self-declared; in "tokens" mode every request needs a
-    reviewer's invite token and records carry that reviewer's name (issue #31)."""
+    reviewer's invite token and records carry that reviewer's name (issue #31). With an
+    ``intake_dir``, approved device reports are reviewed in their own run (issue #58)."""
     locked = access == "tokens"
     app = FastAPI(
         title="Weedz regional review",
@@ -376,7 +423,7 @@ def create_app(
         openapi_url=None if locked else "/openapi.json",
     )
     app.get("/session")(session)
-    api = ReviewAPI(root, temporal_address)
+    api = ReviewAPI(root, temporal_address, intake_dir)
     app.get("/runs")(api.runs)
     app.post("/runs", status_code=202)(api.start)
     app.get("/runs/{run_id}")(api.detail)
