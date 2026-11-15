@@ -116,7 +116,7 @@ try {
   captureEvidence = {
     selection: { run_id: runId, photo_id: photo.id, source_photo_id: photo.photo_id },
     description:
-      "Actual production review UI replaying saved outputs from a completed real SAM2.1 + BioCLIP2 inference run. No model inference happens during this UI recording.",
+      "Actual production review UI replaying saved outputs from a completed real model run. No model inference happens during this UI recording.",
     source: {
       creator: photo.attribution,
       licence: photo.photo_license,

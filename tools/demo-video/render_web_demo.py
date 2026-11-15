@@ -10,7 +10,9 @@ from pathlib import Path
 from demo_evidence import photo_record, verified_photo_bytes
 from demo_frames import configure_fonts
 from demo_integrity import checked_files
+from demo_pipeline_profile import PROFILE_SHA256, validate_recorded_profile
 from demo_timeline import caption_cues, load_timeline, narration_master, portable_timeline, srt
+from demo_transcript import flatten_transcript
 from render_demo import encode_picture, validate_credit_font
 from web_demo_frames import WebsiteFrames
 
@@ -98,6 +100,7 @@ def validate_pipeline_capture(pipeline: Path) -> dict:
         raise ValueError("Pipeline source image differs from its capture receipt")
     pipeline_source_credit(source)
     validate_pipeline_evidence(pipeline, proof)
+    validate_recorded_profile(proof)
     return proof
 
 
@@ -134,14 +137,11 @@ def _render(
 ) -> None:
     scenes = load_timeline(args.script, args.audio)
     measured = json.loads(args.transcript.read_text())
-    flattened = [
-        {
-            "scene": scene["scene"],
-            "file": scene["file"],
-            "words": [w for segment in scene["segments"] for w in segment["words"]],
-        }
-        for scene in measured["scenes"]
-    ]
+    flattened = flatten_transcript(measured)
+    if len(flattened) != len(scenes):
+        raise ValueError(
+            "Transcript requires one scene/file record for each selected narration take"
+        )
     with tempfile.TemporaryDirectory(prefix="weedz-caption-") as private:
         aligned = Path(private) / "words.json"
         aligned.write_text(json.dumps(flattened))
@@ -181,6 +181,7 @@ def _render(
     encode_picture(command, frames, scenes, cues, 24, output)
     credits = {
         "project": "https://github.com/gardner/weedz",
+        "recorded_recipe_profile_sha256": PROFILE_SHA256,
         "photography": [r for r in sources["photos"] if r["file"] == "images/460347209.png"],
         "pipeline_photo": pipeline_source_credit(pipeline["source"]),
         "pipeline_models": {

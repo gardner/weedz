@@ -35,8 +35,12 @@ def completed_pipeline(tmp_path):
     for name in renderer.PIPELINE_MEDIA:
         (tmp_path / name).write_bytes(name.encode())
     source_hash = hashlib.sha256((tmp_path / "source-reference.png").read_bytes()).hexdigest()
-    model = {"model": "fixture classifier", "revision": "fixture revision"}
-    segmentation = {"model": "fixture proposer", "revision": "fixture revision"}
+    from copy import deepcopy
+
+    profile = importlib.import_module("demo_pipeline_profile").FILM_PROFILE
+    model = deepcopy(profile["baseline"])
+    segmentation = deepcopy(profile["segmentation"])
+    model["proposal_experiment"] = deepcopy(segmentation)
     photo = {
         "id": "expected-gorse",
         "photo_id": 447484684,
@@ -178,7 +182,7 @@ def test_published_v3_timeline_sanitizes_absolute_audio_overrides(tmp_path, monk
     monkeypatch.setattr(renderer, "WebsiteFrames", lambda *_: None)
     monkeypatch.setattr(renderer, "encode_picture", lambda *_: None)
     transcript = tmp_path / "transcript.json"
-    transcript.write_text('{"scenes": []}')
+    transcript.write_text('{"scenes": [{"scene": 1, "file": "resolved-take.wav", "segments": []}]}')
     font = tmp_path / "font.ttf"
     font.write_bytes(b"serializer-only fixture; no font rendering")
     args = Namespace(
@@ -194,3 +198,48 @@ def test_published_v3_timeline_sanitizes_absolute_audio_overrides(tmp_path, monk
     assert published[0]["audio_file"] == "alternate-take.wav"
     assert published[0]["audio"] == "resolved-take.wav"
     assert scenes[0]["audio_file"] == override
+
+
+@pytest.mark.parametrize("change", ["baseline", "checkpoint", "configuration"])
+def test_consistent_but_different_models_cannot_inherit_fixed_film_labels(tmp_path, change):
+    import hashlib
+    from copy import deepcopy
+
+    renderer = importlib.import_module("render_web_demo")
+    proof = completed_pipeline(tmp_path)
+    if change == "baseline":
+        proof["baseline"]["weights_sha256"] = "f" * 64
+    elif change == "checkpoint":
+        proof["segmentation"]["checkpoint_sha256"] = "e" * 64
+    else:
+        proof["segmentation"]["config"]["max_side"] = 1024
+    proof["baseline"]["proposal_experiment"] = deepcopy(proof["segmentation"])
+    saved = json.loads((tmp_path / "model-evidence.json").read_text())
+    saved["model"] = proof["baseline"]
+    saved["photo"]["scores"]["segmentation"]["provenance"] = proof["segmentation"]
+    (tmp_path / "model-evidence.json").write_text(json.dumps(saved))
+    proof["media_sha256"]["model-evidence.json"] = hashlib.sha256(
+        (tmp_path / "model-evidence.json").read_bytes()
+    ).hexdigest()
+    (tmp_path / "capture-manifest.json").write_text(json.dumps(proof))
+    with pytest.raises(ValueError, match="recorded.*recipe"):
+        renderer.validate_pipeline_capture(tmp_path)
+
+
+def test_recorded_profile_does_not_pin_machine_or_new_runtime_fields(tmp_path):
+    import hashlib
+
+    renderer = importlib.import_module("render_web_demo")
+    proof = completed_pipeline(tmp_path)
+    proof["baseline"]["device"] = "different machine"
+    proof["segmentation"]["torch"] = "a different runtime version"
+    proof["segmentation"]["device"] = "cuda:1"
+    saved = json.loads((tmp_path / "model-evidence.json").read_text())
+    saved["model"] = proof["baseline"]
+    saved["photo"]["scores"]["segmentation"]["provenance"] = proof["segmentation"]
+    (tmp_path / "model-evidence.json").write_text(json.dumps(saved))
+    proof["media_sha256"]["model-evidence.json"] = hashlib.sha256(
+        (tmp_path / "model-evidence.json").read_bytes()
+    ).hexdigest()
+    (tmp_path / "capture-manifest.json").write_text(json.dumps(proof))
+    assert renderer.validate_pipeline_capture(tmp_path) == proof

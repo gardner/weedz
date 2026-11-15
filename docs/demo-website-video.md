@@ -14,9 +14,21 @@ native mono PCM16 / 24 kHz audio untouched. The script includes its filenames an
 scene lengths; the renderer rejects speech that does not fit.
 
 Transcribe those exact WAVs with word timestamps. The transcript JSON has a
-`scenes` array; each scene contains `segments`, each with `words` carrying `word`,
-`start` and `end`. ASR provides timing anchors; captions use the canonical script.
-Inspect pronunciation, timing and spelling rather than treating ASR as proof.
+`scenes` array. Every entry requires `scene` (a unique one-based integer, not the
+script ID string), `file` (the actual selected narration filename), and `segments`,
+each containing timestamped `words` with `word`, `start` and `end`. For example,
+this abbreviated schema example represents the first scene, not a full transcript:
+
+```json
+{"scenes":[{"scene":1,"file":"scene-01.wav","segments":[{"words":[{"word":"Help","start":0.1,"end":0.4}]}]}]}
+```
+
+Provide one entry per script scene in script order. A custom `audio_file` override
+must use that selected take's filename in `file`; identities are checked against
+the actual narration and are never inferred from list position. Missing, invalid
+or duplicate identity fields fail before output creation. ASR provides timing
+anchors; captions use the canonical script. Inspect pronunciation, timing and
+spelling rather than treating ASR as proof.
 
 ```sh
 uv run python tools/demo-video/render_web_demo.py \
@@ -64,3 +76,13 @@ unchanged; a fresh render requires new complete receipts and snapshot rights.
 Optional `--ui-font` and `--ui-bold-font` select existing regular/bold UI fonts.
 These and `--credit-font` are loaded before output creation. No OS installation
 or historical media regeneration is part of this source-tooling update.
+
+
+The fixed film accepts only the semantic recipe in
+`tools/demo-video/pipeline-profile.json`: the recorded SAM2.1 Hiera tiny code,
+checkpoint, proposal/filter/transform policy and BioCLIP2 model, weights,
+preprocessing and ranking policy. The source/evidence must match those pins even
+if a different experiment reuses the run/photo IDs. Machine names, device IDs and
+runtime versions are retained as evidence but are not additional film claims.
+This contract describes the originally recorded recipe; it does not replace
+historical stamps with today's settings or newly attest old model weights.
