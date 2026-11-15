@@ -3,6 +3,7 @@
 import importlib.util
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -121,3 +122,33 @@ def test_actual_tools_reject_sidecars_before_inference_or_encoding(
     assert "already exists" in result.stderr
     assert previous.read_text() == "preserve previous artifact"
     assert not output.exists()
+
+
+def test_existing_web_capture_is_preserved_before_servers_start(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sys
+
+    root = Path(__file__).parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "capture_review_demo", root / "scripts/capture_review_demo.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    monkeypatch.syspath_prepend(str(root / "scripts"))
+    spec.loader.exec_module(module)
+    output = tmp_path / "finished-capture"
+    output.mkdir()
+    log = output / "api.log"
+    log.write_text("original capture log")
+    monkeypatch.setattr(
+        sys, "argv", ["capture", "--snapshot", str(tmp_path / "missing"), "--output", str(output)]
+    )
+
+    def unexpected_process(*_args: object, **_kwargs: object) -> None:
+        pytest.fail("An existing capture must be rejected before starting servers")
+
+    monkeypatch.setattr(module, "subprocess", SimpleNamespace(Popen=unexpected_process, STDOUT=-2))
+    with pytest.raises(ValueError, match="already exists"):
+        module.main()
+    assert log.read_text() == "original capture log"

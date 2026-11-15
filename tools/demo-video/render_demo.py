@@ -15,10 +15,35 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import outside_git  # noqa: E402
 
 
+def validate_captures(args: argparse.Namespace) -> None:
+    required = [
+        args.captures / name
+        for name in (
+            "review-snapshot/images/460347209.png",
+            "review-snapshot/capture-provenance.json",
+            "assets/gorse-reference.jpg",
+            "assets/attribution.json",
+            "web-final/web-review-interactions.webm",
+            "web-final/web-reference-comparison.png",
+            "web-final/web-candidate-window.png",
+        )
+    ] + [
+        args.mobile_captures / "live-flutter-settings.webm",
+        args.mobile_captures / "live-settings-deleted.png",
+        args.credit_font,
+    ]
+    missing = [str(path) for path in required if not path.is_file()]
+    if missing:
+        raise ValueError(
+            "Required captures are missing; use the documented pilot run: " + ", ".join(missing)
+        )
+
+
 def render(args: argparse.Namespace) -> None:
     output = outside_git(args.output)
     if output.exists():
         raise ValueError("Choose a new output directory; renders are never overwritten")
+    validate_captures(args)
     scenes = load_timeline(args.script, args.audio)
     cues = caption_cues(scenes, args.transcript)
     output.mkdir(parents=True)

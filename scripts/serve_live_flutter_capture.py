@@ -5,61 +5,23 @@ are private to this process and are removed after capture. Never uses live intak
 """
 
 import argparse
-import base64
 import json
 import os
-import sqlite3
 import subprocess
 from pathlib import Path
-from typing import Any
 
 import uvicorn
+from demo_public_report import source_report
 from starlette.staticfiles import StaticFiles
 
 from weedz.intake.api import create_intake_app
 from weedz.intake.submitters import Submitters
 
 
-def source_report(pilot: Path, image: Path) -> dict[str, Any]:
-    with sqlite3.connect(f"file:{pilot / 'discovery.sqlite3'}?mode=ro", uri=True) as source:
-        row = source.execute(
-            "SELECT record,scores FROM photos WHERE run_id=? AND id=?",
-            ("nelson-tasman-3e62ad801459", "inat-250240131-447484684"),
-        ).fetchone()
-        record, scores = json.loads(row[0]), json.loads(row[1])
-        stamp = json.loads(
-            source.execute(
-                "SELECT model FROM runs WHERE id=?", ("nelson-tasman-3e62ad801459",)
-            ).fetchone()[0]
-        )
-    if record["photo_license"] != "cc-by":
-        raise ValueError("Only the attributed public CC BY source is allowed")
-    return {
-        "schema_version": 1,
-        "app_version": "0.1.0+capture",
-        "candidate": {"taxon": scores["best_species"], "score": scores["margin"]},
-        "model": {
-            "model_key": "bioclip",
-            "revision": stamp["revision"],
-            "ranking_revision": stamp["ranking_revision"],
-        },
-        "consent": {
-            "wording_version": "2026-11",
-            "image": True,
-            "location": False,
-            "licence": "cc-by",
-            "credit": "Saryu Mae 前 朝琉",
-            "uses": ["review"],
-        },
-        "image": base64.b64encode(image.read_bytes()).decode(),
-    }
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--web-build", type=Path, required=True)
     parser.add_argument("--source-pilot", type=Path, required=True)
-    parser.add_argument("--public-image", type=Path, required=True)
     parser.add_argument("--private-state", type=Path, required=True)
     args = parser.parse_args()
     state = args.private_state.resolve()
@@ -96,7 +58,7 @@ def main() -> None:
         json.dumps(
             {
                 "token": credential.token,
-                "report": source_report(args.source_pilot, args.public_image),
+                "report": source_report(args.source_pilot),
             }
         )
     )

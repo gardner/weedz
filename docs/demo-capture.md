@@ -10,6 +10,7 @@ system packages or alter the live pilot.
 ```sh
 uv run python scripts/capture_demo_snapshot.py \
   --source-pilot "$HOME/src/weedz/data/pilot" \
+  --run nelson-tasman-3e62ad801459 \
   --output "$HOME/src/weedz-demo-artifacts/captures/review-snapshot"
 pnpm --dir web install --frozen-lockfile
 pnpm --dir web build
@@ -32,6 +33,8 @@ Only coordinates are withheld. Human notes and review events are erased from the
 copy with secure deletion and vacuuming; live decisions remain unchanged.
 
 **The resulting 18-photo subset is for visual demonstration, not a pilot result.**
+The film uses this explicit run because it contains the fixed source photographs;
+do not substitute the most recently completed run from an evolving pilot store.
 Do not narrate its displayed counts as full-pilot performance. The run detail and
 `capture-provenance.json` explicitly disclose the subset and coordinate removal.
 The manifest lists every potentially visible photo's creator, licence, source URL
@@ -59,14 +62,16 @@ cd ..
 uv run python scripts/capture_live_flutter.py \
   --output "$HOME/src/weedz-demo-artifacts/captures/live-flutter" \
   --source-pilot "$HOME/src/weedz/data/pilot" \
-  --public-image "$HOME/src/weedz-demo-artifacts/captures/assets/gorse-reference.jpg" \
   --ffmpeg /absolute/path/to/full/ffmpeg
 ```
 
 The helper runs the release-compiled app with its actual secure-storage web plugin
 and real HTTPS intake in a private temporary directory. A self-signed loopback
 certificate is accepted only by the local capture browser. A read-only public pilot
-record supplies its original model score/revision and attributed CC BY gorse crop;
+record supplies its original model score/revision and attributed CC BY gorse crop.
+The helper resolves the row's image only within the public cache, checks its stored
+SHA-256, then re-encodes metadata-free pixels and derives credit from that same row.
+There is no arbitrary image-file override that could inherit unrelated attribution;
 no location or private image is included. The helper submits that report through
 the real API, securely enrolls the actual app, then starts recording only after
 the token form is gone. The app performs DELETE /submitter; receipt retry,

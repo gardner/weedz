@@ -19,7 +19,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-pilot", type=Path, required=True)
-    parser.add_argument("--public-image", type=Path, required=True)
     parser.add_argument("--ffmpeg", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -36,8 +35,6 @@ def main() -> None:
             str(root / "mobile/build/web"),
             "--source-pilot",
             str(args.source_pilot),
-            "--public-image",
-            str(args.public_image),
             "--private-state",
             str(state),
         ]

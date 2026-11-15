@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from urllib.request import urlopen
 
-from demo_paths import outside_git
+from demo_paths import new_output
 
 
 def ready(url: str) -> None:
@@ -29,8 +29,8 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    output = outside_git(args.output)
-    output.mkdir(parents=True, exist_ok=True)
+    output = new_output(args.output)
+    output.mkdir(parents=True, exist_ok=False)
     environment = os.environ | {
         "WEEDZ_API_URL": "http://127.0.0.1:8312",
         "WEEDZ_WEB_URL": "http://127.0.0.1:3012",
