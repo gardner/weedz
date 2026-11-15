@@ -66,3 +66,25 @@ A bounded proof must record the original proposal artifact/selected row hashes, 
 source samples and any media-path relocation, Temporal history, CPU inference receipts,
 package SHA, and before/after protected-state comparisons. Choosing a few development
 images does not establish accuracy, training-set exclusion or calibrated confidence.
+
+## Executed bounded proof
+
+The isolated `weedz-aotearoa-153/aotearoa-frame3-v1` workflow completed on15 November2026.
+It reused the first three previously published DeepWeeds SAM2 rows, with source image
+hashes, masks, model versions and rights unchanged. Only materialized media paths were
+relocated; the external subset-lineage record binds original/derived sample and row hashes.
+Three actual ONNX CPU frame predictions exactly matched their counterparts in the133-image
+baseline. Segmentation was recorded as `external-compute`, classification as
+`temporal-activity`; no SAM inference ran.
+
+Package SHA256 `a19ee2a9097beb710a5b9904af54119e478fc3307d6f17eb6156ee8a7c3742e1`
+was published during the authorized sole-writer handoff: exactly three new machine
+predictions on existing tasks34–36, zero new tasks and zero human annotation writes.
+Global task-data/meta and human-annotation hashes stayed identical; all prior prediction
+rows on those three tasks were unchanged. Existing SAM versions were reused. Every proof
+worker exited before the shared import lock was checked free and the handoff returned.
+
+The private operational receipt, immutable source subset lineage, exact compute-source
+snapshot, stage artifacts and Temporal history are outside Git under
+`/home/gardner/src/weedz-demo-artifacts/aotearoa-153/temporal-proof3-v1/`.
+This is execution/recovery evidence, not a species-accuracy or independent holdout result.

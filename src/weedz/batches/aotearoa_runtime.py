@@ -61,6 +61,13 @@ def registry_from_aotearoa_config(config: dict) -> BatchRegistry:
     if config.get("classifier_kind") != KIND or config.get("device", "cpu") != "cpu":
         raise ValueError("Unknown Aotearoa classifier kind or device")
     metadata = config["metadata"]
+    proposer = metadata["proposals"]
+    if (
+        config.get("proposer_kind") != "sam2"
+        or not isinstance(proposer, dict)
+        or proposer.get("profile") not in {None, "sam2.1-tiny-v1"}
+    ):
+        raise ValueError("Aotearoa frame workers require cached SAM2 proposal metadata")
     aotearoa_identity(metadata["frame"], "frame")
 
     @cache

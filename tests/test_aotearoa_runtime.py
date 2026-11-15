@@ -34,6 +34,7 @@ def nz_metadata():
 def config():
     return {
         "classifier_kind": "aotearoa-onnx-cpu-v1",
+        "proposer_kind": "sam2",
         "metadata": {"frame": nz_metadata(), "proposals": metadata()[1]},
         "segmentation_profile": "sam2.1-tiny-v1",
         "classifier_profile": "aotearoa-nz-frame-v1",
@@ -164,3 +165,14 @@ def test_a_cache_only_flag_cannot_accidentally_enable_nz_inference():
 
     with pytest.raises(ValueError, match="cache-only"):
         registry_from_config({**config(), "cache_only": True})
+
+
+@pytest.mark.parametrize("mismatch", ["kind", "profile"])
+def test_runtime_configuration_cannot_restore_another_proposer_as_sam2(mismatch):
+    worker = config()
+    if mismatch == "kind":
+        worker["proposer_kind"] = "sam3"
+    else:
+        worker["metadata"]["proposals"]["profile"] = "sam3-image-concept-v1"
+    with pytest.raises(ValueError, match="cached SAM2"):
+        registry_from_aotearoa_config(worker)
