@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--threshold", type=float, default=0.5)
     parser.add_argument("--max-regions", type=int, default=128)
     parser.add_argument("--max-side", type=int, default=1024)
+    parser.add_argument("--max-prompt-bytes", type=int, default=8_000_000)
     args = parser.parse_args(argv)
     output, cache = _outside_git(args.output), _outside_git(args.cache)
     if output.exists() or output.is_symlink():
@@ -32,6 +33,7 @@ def main(argv: list[str] | None = None) -> None:
         prompts=tuple(args.prompt),
         concept_threshold=args.threshold,
         max_regions=args.max_regions,
+        max_prompt_bytes=args.max_prompt_bytes,
         max_side=args.max_side,
     )
     result = Sam3Image.load(args.checkpoint, config, cache).screen(args.image)

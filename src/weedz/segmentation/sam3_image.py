@@ -28,6 +28,7 @@ class Sam3Config:
     prompts: tuple[str, ...] = ("plant", "flower")
     max_side: int = 1024
     max_regions: int = 128
+    max_prompt_bytes: int = 8_000_000
     min_area: int = 4
     concept_threshold: float = 0.5
     context_fraction: float = 0.25
@@ -40,6 +41,8 @@ class Sam3Config:
             raise ValueError("Prompts must contain one to eighty characters")
         if not 64 <= self.max_side <= 1024 or not 1 <= self.max_regions <= 256:
             raise ValueError("SAM3 image/proposal cap exceeded")
+        if not 1 <= self.max_prompt_bytes <= 8_000_000:
+            raise ValueError("Serialized prompt retention budget exceeded")
         if not math.isfinite(self.concept_threshold) or not 0 <= self.concept_threshold <= 1:
             raise ValueError("Invalid concept threshold")
         if not 0 <= self.context_fraction <= 1 or self.min_area < 1:
@@ -85,7 +88,7 @@ def _validated_output(
 def concept_regions(image: Image.Image, prompt: str, raw: dict, config: Sam3Config) -> dict:
     masks, scores, boxes = _validated_output(image, raw, config)
     height, width = masks.shape[1:]
-    regions, seen, capped = [], set(), 0
+    regions, seen, capped, byte_capped, retained_bytes = [], set(), 0, 0, 0
     for index in np.argsort(-scores, kind="stable"):
         mask = masks[index]
         if scores[index] <= config.concept_threshold or int(mask.sum()) < config.min_area:
@@ -111,14 +114,24 @@ def concept_regions(image: Image.Image, prompt: str, raw: dict, config: Sam3Conf
             ).tolist(),
             views={},
         )
+        size = len(json.dumps(region, allow_nan=False).encode()) + 2
+        if retained_bytes + size > config.max_prompt_bytes:
+            capped += 1
+            byte_capped += 1
+            continue
+        retained_bytes += size
         regions.append(region)
+    exhausted = bool(byte_capped and not regions)
     return {
         "prompt": prompt,
-        "status": "ok" if regions else "empty",
+        "status": "failed" if exhausted else "ok" if regions else "empty",
         "regions": regions,
         "raw_count": len(masks),
         "truncated": capped > 0,
         "capped_count": capped,
+        "byte_capped_count": byte_capped,
+        "retained_region_bytes": retained_bytes,
+        **({"failure_type": "OutputBudgetExceeded"} if exhausted else {}),
     }
 
 

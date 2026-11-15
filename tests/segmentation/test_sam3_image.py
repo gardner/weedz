@@ -277,3 +277,39 @@ def test_checkpoint_startup_failure_does_not_become_a_negative_result(tmp_path):
     with pytest.raises(ValueError, match="checkpoint checksum"):
         Sam3Image.load(checkpoint, Sam3Config(), tmp_path / "cache")
     assert not (tmp_path / "cache").exists()
+
+
+@pytest.mark.parametrize("budget,retained,status", [(1000, 1, "ok"), (100, 0, "failed")])
+def test_serialized_retention_budget_fits_artifact_and_reports_truncation(
+    tmp_path, monkeypatch, budget, retained, status
+):
+    from weedz.segmentation import artifacts
+    from weedz.segmentation.sam3_image import Sam3Image
+
+    monkeypatch.setattr(artifacts, "MAX_ARTIFACT_BYTES", 2100)
+
+    class Processor:
+        def set_image(self, image):
+            return {}
+
+        def reset_all_prompts(self, state):
+            pass
+
+        def set_text_prompt(self, *, state, prompt):
+            masks = np.zeros((2, 1, 8, 8), bool)
+            masks[0, :, :4] = True
+            masks[1, :, 4:] = True
+            return {
+                "masks": masks,
+                "scores": np.array([0.9, 0.8]),
+                "boxes": np.array([[0, 0, 8, 8], [0, 0, 8, 8]]),
+            }
+
+    path = tmp_path / "plant.png"
+    Image.new("RGB", (8, 8)).save(path)
+    config = Sam3Config(prompts=("plant",), max_regions=256, max_prompt_bytes=budget)
+    runner = Sam3Image(Processor(), config, {}, tmp_path / "cache")
+    result = runner.screen(path)
+    prompt = result["prompts"][0]
+    assert result["status"] == status and len(result["regions"]) == retained
+    assert prompt["truncated"] is True and prompt["byte_capped_count"] == 2 - retained
