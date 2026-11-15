@@ -52,7 +52,11 @@ The authoritative original Sample must match the source, source ID, sample ID an
 image SHA; the external ID is SHA256 of `sample.id + ':' + sample.media.sha256`.
 Its rights must derive the exact visible canonical credit. Normal image URL and
 credit checks remain mandatory. The task index retains full metadata for this
-comparison, without reading or writing annotations. Approved identities are
+comparison, without reading or writing annotations. Selected allowlisted tasks must
+still exist under their approved IDs; missing rows are refused rather than recreated.
+A selected grant also refuses changed state if someone subsequently adds the dataset
+field: remove or replace that authorization explicitly after an intentional migration.
+Approved identities are
 rechecked after image copying and before mutation requests.
 
 Only append-only machine prediction publication is permitted. The completion

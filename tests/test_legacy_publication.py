@@ -246,3 +246,18 @@ def test_allowlist_alias_cannot_hide_a_git_parent(legacy, tmp_path):
     with pytest.raises(ValueError, match="outside Git"):
         run(tmp_path, package, service, reference)
     assert not service.requests
+
+
+@pytest.mark.parametrize("change", ["missing_index", "newly_present_dataset"])
+def test_authorized_rows_cannot_be_recreated_or_bypass_frozen_state(legacy, tmp_path, change):
+    package, service, document = legacy
+    reference = authorize(tmp_path, document)
+    if change == "missing_index":
+        service.tasks.clear()  # Actual SQL index also omits a changed meta.external_id.
+    else:
+        next(iter(service.tasks.values()))["data"]["source_dataset"] = package.tasks[0]["data"][
+            "source_dataset"
+        ]
+    with pytest.raises(ValueError):
+        run(tmp_path, package, service, reference)
+    assert not any(method == "POST" for method, _ in service.requests)

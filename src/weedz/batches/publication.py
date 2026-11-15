@@ -59,7 +59,9 @@ def _canonical_data(
         raise ValueError("Existing task image differs from the canonical publication")
     if current.get("photo_credit") != expected["photo_credit"]:
         raise ValueError("Existing task photo_credit differs from the canonical publication")
-    if "source_dataset" not in current and legacy is not None:
+    if legacy is not None and (
+        "source_dataset" not in current or expected_task["meta"]["external_id"] in legacy.entries
+    ):
         adopted.add(legacy.approve(current_task, expected_task))
     elif current.get("source_dataset") != expected["source_dataset"]:
         raise ValueError("Existing task source_dataset differs from the canonical publication")
@@ -79,6 +81,8 @@ def _missing(
         heartbeat()
         key = task["meta"]["external_id"]
         if key not in index:
+            if legacy is not None and key in legacy.entries:
+                raise ValueError("Approved legacy task is missing from the current index")
             continue
         current = index[key]
         _canonical_data(current, task, legacy, adopted)
