@@ -35,7 +35,11 @@ Start `worker --config PATH --roles control` and a resident
 separate `worker --config PATH --roles segmentation` and
 `worker --config PATH --roles classification` processes in the appropriate
 isolated model runtime. These use distinct versioned task queues, separate from
-the hosted discovery workflow. Submit with `submit --request PATH --workflow-id
+the hosted discovery workflow. This version requires one configured artifact
+root/profile pool per namespace. Use `--namespace NAME` before the subcommand
+for independent pools (for example, legacy adoption versus a new classifier).
+Register that namespace through the normal Temporal API on the same persisted
+service; do not start another server merely to isolate these fixed queue names. Submit with `submit --request PATH --workflow-id
 UNIQUE_ID`. A request contains pinned `manifest` and `ready` references,
 `segmentation_profile`, `classifier_profile`, selected `variants`, and the
 explicit destination `project_id`. Normal submission rejects duplicate workflow
@@ -121,3 +125,14 @@ All owned smoke/publication workers were stopped and the shared lock released.
 The refusal history, snapshots and exact score/metadata/source diagnosis are
 retained alongside it as `proof-sam3-publication-refused.json` and
 `diagnostic-sam3-math-policy-conflict.json`.
+
+The corrected fresh execution `canonical-batch-148-sam3-fp32-20261115`, run
+`01a1ddf1-4694-7638-a353-4ebf89a823bf`, completed all seven activities with
+explicitly recorded IEEE FP32 policy and NumPy1.26.4. Three images produced two
+masks (two ok, one empty, zero partial/failed). It appended twelve predictions
+to three existing tasks, created no tasks and made no annotation writes. Exact
+protected task-data/meta and annotation snapshots were unchanged. All four owned
+workers stopped and the shared writer lock was released. This is the successful
+end-to-end SAM3 execution; it does not rewrite or erase the earlier failure.
+Evidence is `proof-sam3-fp32-final.json` and
+`history-sam3-fp32-completed.json` in the same outside-Git directory.

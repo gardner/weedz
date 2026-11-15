@@ -114,7 +114,9 @@ async def submit(args):
             else WorkflowIDReusePolicy.REJECT_DUPLICATE
         ),
     )
-    print(json.dumps({"workflow_id": handle.id}), flush=True)
+    print(
+        json.dumps({"workflow_id": handle.id, "run_id": handle.first_execution_run_id}), flush=True
+    )
 
 
 def main():

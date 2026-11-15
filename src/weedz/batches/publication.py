@@ -17,14 +17,18 @@ from weedz.batches.publication_state import Intents, writer_lock
 from weedz.batches.storage import read_artifact, read_owned_file
 from weedz.segmentation.artifacts import durable_mkdir, sync_directory
 
+REFUSAL_STATUSES = frozenset({400, 401, 403, 404, 405, 413, 415, 422, 429})
 Index = dict[str, dict[str, Any]]
+
+
+class RefusedRequest(RuntimeError):
+    """A definitive client-error response permits a reconciled later attempt."""
 
 
 def _require(response: httpx.Response) -> dict:
     if not response.is_success:
-        raise RuntimeError(
-            f"Label Studio {response.request.method} failed ({response.status_code})"
-        )
+        error = RefusedRequest if response.status_code in REFUSAL_STATUSES else RuntimeError
+        raise error(f"Label Studio {response.request.method} failed ({response.status_code})")
     return response.json()
 
 
@@ -103,7 +107,7 @@ def _copy_images(package: Package, destination: Path, heartbeat: Callable[[], No
 def _delivery(intents: Intents, keys: list[str]) -> Iterator[None]:
     try:
         yield
-    except (UndeliveredRequest, httpx.ConnectError, httpx.ConnectTimeout):
+    except (RefusedRequest, UndeliveredRequest, httpx.ConnectError, httpx.ConnectTimeout):
         for key in keys:
             intents.complete(key)
         raise

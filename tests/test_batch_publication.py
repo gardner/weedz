@@ -224,3 +224,103 @@ def test_definite_connection_failure_releases_only_its_new_intents(
     service.handle = original
     run(service, package, tmp_path)
     assert len(service.tasks) == 1
+
+
+@pytest.mark.parametrize("status", [400, 403, 404, 413, 422, 429])
+@pytest.mark.parametrize("existing_task", [False, True])
+def test_http_refusal_allows_retry_after_server_configuration_recovers(
+    canonical_batch, tmp_path, status, existing_task
+):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    if existing_task:
+        run(service, package, tmp_path)
+        service.predictions = {identifier: [] for identifier in service.predictions}
+    original = service.handle
+
+    def refuse(request):
+        return httpx.Response(status) if request.method == "POST" else original(request)
+
+    service.handle = refuse
+    with pytest.raises(RuntimeError, match=str(status)):
+        run(service, package, tmp_path)
+    service.handle = original
+    run(service, package, tmp_path)
+    assert len(service.tasks) == 1
+
+
+@pytest.mark.parametrize("status", [408, 503])
+def test_ambiguous_http_failure_does_not_allow_a_duplicate_post(canonical_batch, tmp_path, status):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    original, attempts = service.handle, []
+
+    def unavailable(request):
+        if request.method == "POST":
+            attempts.append(1)
+            return httpx.Response(status)
+        return original(request)
+
+    service.handle = unavailable
+    with pytest.raises(RuntimeError, match=str(status)):
+        run(service, package, tmp_path)
+    service.handle = original
+    with pytest.raises(RuntimeError, match="uncertain"):
+        run(service, package, tmp_path)
+    assert len(attempts) == 1 and not service.tasks
+
+
+@pytest.mark.parametrize("existing_task", [False, True])
+def test_partial_400_is_reconciled_before_resending_only_missing_rows(
+    canonical_batch, tmp_path, existing_task
+):
+    import json
+
+    from weedz.contract import Sample
+    from weedz.manifest import write_manifest
+
+    manifest, frame, _ = canonical_batch
+    first = Sample.model_validate_json(manifest.read_text())
+    second = first.model_copy(update={"id": "deepweeds:second.jpg", "source_id": "second.jpg"})
+    digest = write_manifest(manifest, [first, second])
+    document = json.loads(frame.read_text())
+    row = document["predictions"][0]
+    document["predictions"].append(
+        {
+            **row,
+            "source_id": second.id,
+            "external_id": hashlib.sha256(
+                f"{second.id}:{second.media.sha256}".encode()
+            ).hexdigest(),
+        }
+    )
+    document["manifest_sha256"] = digest
+    frame.write_text(json.dumps(document))
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    if existing_task:
+        run(service, package, tmp_path)
+        service.predictions = {identifier: [] for identifier in service.predictions}
+    original = service.handle
+
+    def partially_accept(request):
+        if request.method != "POST":
+            return original(request)
+        rows = json.loads(request.content)
+        assert len(rows) == 2
+        original(httpx.Request("POST", request.url, content=json.dumps(rows[:1])))
+        return httpx.Response(400)
+
+    service.handle = partially_accept
+    with pytest.raises(RuntimeError, match="400"):
+        run(service, package, tmp_path)
+    service.handle = original
+    run(service, package, tmp_path)
+    assert len(service.tasks) == 2 and len(service.imported) == 2
+    assert all(len(predictions) == 1 for predictions in service.predictions.values())
