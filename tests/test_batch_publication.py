@@ -19,6 +19,7 @@ class Service:
         self.imported = []
         self.timeout_import = False
         self.accept_import = True
+        self.timeout_prediction = False
         self.annotations = {"human": [{"value": "untouched"}]}
 
     def index(self):
@@ -39,10 +40,26 @@ class Service:
             if self.timeout_import:
                 raise httpx.ReadTimeout("Ambiguous response", request=request)
             return httpx.Response(201, json={"task_ids": [v["id"] for v in self.tasks.values()]})
+        if request.method == "POST" and request.url.path.endswith("/import/predictions"):
+            return self.append_predictions(request)
         if request.method == "GET" and request.url.path.startswith("/api/tasks/"):
             task_id = int(request.url.path.strip("/").split("/")[-1])
             return httpx.Response(200, json={"predictions": self.predictions[task_id]})
         pytest.fail(f"Unexpected request: {request.method} {request.url.path}")
+
+    def append_predictions(self, request):
+        import json
+
+        for row in json.loads(request.content):
+            self.predictions[row["task"]].append(
+                {
+                    "model_version": row["model_version"],
+                    "result": row["result"],
+                }
+            )
+        if self.timeout_prediction:
+            raise httpx.ReadTimeout("Ambiguous prediction response", request=request)
+        return httpx.Response(201, json={"created": 1})
 
 
 def run(service, package, tmp_path):
@@ -106,3 +123,32 @@ def test_mutated_in_memory_task_cannot_write_annotations(canonical_batch, tmp_pa
     service = Service()
     run(service, package, tmp_path)
     assert all("annotations" not in task for task in service.imported)
+
+
+def test_missing_prediction_uses_bulk_endpoint_and_reconciles_timeout(canonical_batch, tmp_path):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    run(service, package, tmp_path)
+    service.predictions[1] = []
+    service.timeout_prediction = True
+    run(service, package, tmp_path)
+    run(service, package, tmp_path)
+    assert service.requests.count(("POST", "/api/projects/1/import/predictions")) == 1
+    assert len(service.tasks) == 1 and len(service.predictions[1]) == 1
+    assert service.annotations == {"human": [{"value": "untouched"}]}
+
+
+def test_same_version_conflict_never_changes_existing_results(canonical_batch, tmp_path):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    run(service, package, tmp_path)
+    service.predictions[1][0]["result"] = [{"type": "human-independent-old-result"}]
+    before = len(service.requests)
+    with pytest.raises(ValueError, match="conflicting"):
+        run(service, package, tmp_path)
+    assert all(method == "GET" for method, _ in service.requests[before:])
+    assert service.predictions[1][0]["result"] == [{"type": "human-independent-old-result"}]
