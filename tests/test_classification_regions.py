@@ -1,0 +1,90 @@
+import json
+
+import numpy as np
+import pytest
+from PIL import Image
+from test_classification_batch import Classifier, corpus
+
+from weedz.classification.regions import classify_region_batch
+from weedz.contract import Sample
+from weedz.segmentation.sam3_image import Sam3Config, concept_regions
+
+
+def inputs(tmp_path, *, empty=False):
+    manifest, image = corpus(tmp_path)
+    sample = Sample.model_validate_json(manifest.read_text())
+    config = Sam3Config(prompts=("plant",))
+    mask = np.zeros((1, 32, 32), bool)
+    mask[:, 5:20, 7:22] = True
+    records = concept_regions(
+        Image.open(image),
+        "plant",
+        {"masks": mask, "scores": np.array([0.8]), "boxes": np.array([[7, 5, 22, 20]])},
+        config,
+    )["regions"]
+    from dataclasses import asdict
+
+    row = {
+        "sample_id": sample.id,
+        "image_sha256": sample.media.sha256,
+        "segmentation": {
+            "status": "empty" if empty else "ok",
+            "provenance": {"model": "SAM3 test", "config": asdict(config)},
+            "regions": [] if empty else records,
+        },
+    }
+    proposal = tmp_path / "proposals.jsonl"
+    proposal.write_text(json.dumps(row) + "\n")
+    return manifest, proposal, row
+
+
+def test_species_are_classified_from_real_masked_pixels_and_resume(tmp_path):
+    manifest, proposal, row = inputs(tmp_path)
+
+    class Inspect(Classifier):
+        def predict(self, images, top_k=5):
+            assert images[0].size == (15, 15)
+            assert images[0].getpixel((0, 0)) == (0, 128, 0)
+            return super().predict(images, top_k)
+
+    model = Inspect()
+    out = tmp_path / "regions.json"
+    result = classify_region_batch(manifest, tmp_path, proposal, out, model, "sam3")
+    assert classify_region_batch(manifest, tmp_path, proposal, out, model, "sam3") == result
+    classified = result["predictions"][0]["regions"][0]
+    assert classified["id"] == row["segmentation"]["regions"][0]["id"]
+    assert classified["topk"] == classified["views"]["masked"]
+    assert "mask_quality" not in classified and "annotations" not in result
+    assert model.calls == 1
+
+
+def test_empty_segmentation_never_becomes_an_absence_label(tmp_path):
+    manifest, proposal, _ = inputs(tmp_path, empty=True)
+    model = Classifier()
+    result = classify_region_batch(manifest, tmp_path, proposal, tmp_path / "out", model, "sam3")
+    assert result["predictions"][0]["regions"] == []
+    assert model.calls == 0
+
+
+def test_mask_or_source_changes_cannot_reuse_completed_scores(tmp_path):
+    manifest, proposal, row = inputs(tmp_path)
+    out = tmp_path / "out"
+    classify_region_batch(manifest, tmp_path, proposal, out, Classifier(), "sam3")
+    row["segmentation"]["regions"][0]["box"] = [0, 0, 1, 1]
+    proposal.write_text(json.dumps(row) + "\n")
+    with pytest.raises(ValueError, match="provenance"):
+        classify_region_batch(manifest, tmp_path, proposal, out, Classifier(), "sam3")
+    out.unlink()
+    with pytest.raises(ValueError, match="provenance"):
+        classify_region_batch(manifest, tmp_path, proposal, out, Classifier(), "sam3")
+
+
+def test_missing_and_failed_segmentation_rows_are_rejected(tmp_path):
+    manifest, proposal, row = inputs(tmp_path)
+    proposal.write_text("")
+    with pytest.raises(ValueError, match="Incomplete"):
+        classify_region_batch(manifest, tmp_path, proposal, tmp_path / "out", Classifier(), "sam3")
+    row["segmentation"]["status"] = "failed"
+    proposal.write_text(json.dumps(row) + "\n")
+    with pytest.raises(ValueError, match="completed"):
+        classify_region_batch(manifest, tmp_path, proposal, tmp_path / "out", Classifier(), "sam3")
