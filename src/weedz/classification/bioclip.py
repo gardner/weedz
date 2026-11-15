@@ -4,6 +4,7 @@ import io
 import json
 import math
 import tempfile
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
@@ -131,6 +132,8 @@ def identity(metadata: dict, kind: str) -> dict:
         "ranking_revision": RANKING_REVISION,
         "subject_policy": "None for every canonical sample; source taxonomy never supplied",
         "score_kind": "watchlist_cosine_margin_uncalibrated",
+        "assignment_policy": POLICY,
+        "subject_prompt": None,
         "prompts": [prompt(label) for label in LABELS],
         "math_policy": {"cuda_matmul_tf32": False, "cudnn_tf32": False, "autocast": False},
     }
@@ -151,24 +154,43 @@ def identity(metadata: dict, kind: str) -> dict:
         sam_identity(metadata["proposer"])
         if metadata.get("views") != ["tight", "masked", "context"]:
             raise ValueError("Incomplete BioCLIP crop-view policy")
+    _encoder_versions(metadata)
     return json.loads(json.dumps(metadata, allow_nan=False))
+
+
+def _encoder_versions(metadata: dict) -> None:
+    versions = metadata.get("encoder_runtime")
+    if not isinstance(versions, dict) or set(versions) != {
+        "torch",
+        "torchvision",
+        "pillow",
+        "open_clip_torch",
+    }:
+        raise ValueError("Incomplete BioCLIP encoder runtime identity")
+    if any(not isinstance(value, str) or not value.strip() for value in versions.values()):
+        raise ValueError("Invalid BioCLIP encoder runtime version")
 
 
 def runtime(metadata: dict) -> dict:
     identity(metadata, metadata["scope"])
     return {
-        key: metadata[key]
-        for key in (
-            "backend_profile",
-            "device",
-            "scoring_device",
-            "precision",
-            "math_policy",
-            "cuda",
-            "cudnn",
-            "gpu",
-            "numpy",
-        )
+        "status": "recorded",
+        "framework": "OpenCLIP",
+        **{
+            key: metadata[key]
+            for key in (
+                "backend_profile",
+                "device",
+                "scoring_device",
+                "precision",
+                "math_policy",
+                "cuda",
+                "cudnn",
+                "gpu",
+                "numpy",
+                "encoder_runtime",
+            )
+        },
     }
 
 
@@ -182,6 +204,11 @@ class BioClipClassifier:
             "subject_policy": "None for every canonical sample; source taxonomy never supplied",
             "score_kind": "watchlist_cosine_margin_uncalibrated",
             "assignment_policy": POLICY,
+            "subject_prompt": None,
+            "encoder_runtime": {
+                name: version(name)
+                for name in ("torch", "torchvision", "pillow", "open_clip_torch")
+            },
             "frame_policy": (
                 "Existing letterboxed whole-frame and overlapping tiles; "
                 "featureless tiles cannot win"
