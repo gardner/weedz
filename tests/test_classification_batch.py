@@ -79,6 +79,30 @@ def test_tiled_predictions_keep_regions_without_claiming_masks(tmp_path):
     assert row["topk"][0]["score_kind"] == "maximum_closed_set_softmax_across_views_uncalibrated"
 
 
+def test_tiled_panorama_is_refused_before_view_allocation_or_model_calls(tmp_path, monkeypatch):
+    manifest, image = corpus(tmp_path)
+    Image.new("RGB", (100_000, 1)).save(image)
+    record = Sample.model_validate_json(manifest.read_text())
+    media = record.media.model_copy(
+        update={
+            "width": 100_000,
+            "height": 1,
+            "sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+        }
+    )
+    write_manifest(manifest, [record.model_copy(update={"media": media})])
+    model = Classifier()
+
+    def unexpected_crop(*args, **kwargs):
+        pytest.fail("Oversized padding must be rejected before crop allocation")
+
+    monkeypatch.setattr(Image.Image, "crop", unexpected_crop)
+    with pytest.raises(ValueError, match="Square view exceeds the pixel cap"):
+        classify_batch(manifest, tmp_path, tmp_path / "tiles.json", model, "tiles")
+    assert model.calls == 0
+    assert not (tmp_path / "tiles.json").exists()
+
+
 def test_path_replacement_cannot_change_pixels_after_the_checksum_check(tmp_path, monkeypatch):
     manifest, image = corpus(tmp_path)
     original_open = Image.open
