@@ -171,6 +171,26 @@ shape is:
 5. **Candidates.** A photo becomes a report candidate when it passes the same
    ranking rule as the server (revision 4). The crop is the window that won.
 
+What exists so far, in `mobile/lib/scan/`:
+
+- `PhotoLibrary`, `Screener` and `ScanGovernor` are interfaces, with
+  `photo_manager` behind the first. Tests use fakes, and the model itself
+  waits for #51.
+- The scan walks the library newest first with a **keyset cursor** (capture
+  time, then id). It is not an offset, so photos taken mid-scan do not shift
+  it. Capture times have one-second resolution, so a page always holds whole
+  groups of photos taken in the same second.
+- `DriftScanIndex` keeps each photo as *seen*, *screened* (model revision and
+  margins per weed) or *skipped* with a reason: cloud-only, unsupported, too
+  small or unreadable. It moves the cursor in the same transaction. Each pass
+  over the library is numbered, and a completed pass forgets photos it did not
+  see (deleted, or no longer shared). Cloud-only and unreadable photos are
+  tried again on the next pass.
+- `ScanCoverage.describe()` gives the plain-language summary, for example
+  "Scanned 1,204 of 5,000 photos. 37 skipped: 30 are stored only in the cloud,
+  7 are too small to check." It adds a note when access is limited.
+- A test fails if anything under `lib/scan/` imports networking code.
+
 ## Location and time
 
 Location and time are detailed in [#54](https://github.com/gardner/weedz/issues/54)
