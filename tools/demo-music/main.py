@@ -143,7 +143,7 @@ def generate(seconds: float, seed: int, output: Path) -> None:
             "rms": float(np.sqrt(np.mean(samples**2))),
             "samples_at_full_scale_fraction": float(np.mean(np.abs(samples) >= 1)),
             "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
-            "output": str(output.resolve()),
+            "output": output.name,
             "subtype": "PCM_16",
             "postprocessing": "none",
             "peak_gpu_bytes": torch.cuda.max_memory_allocated(),

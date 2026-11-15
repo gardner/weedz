@@ -87,11 +87,11 @@ def assemble(args: argparse.Namespace) -> None:
         pieces.append(audio)
         sources.append(
             {
-                "file": str(source.resolve()),
+                "file": source.name,
                 "sha256": digest,
                 "frames": len(audio),
                 "seconds": len(audio) / rate,
-                "generation_provenance": str(source.with_suffix(".json").resolve()),
+                "generation_provenance": source.with_suffix(".json").name,
             }
         )
     assert rate is not None
@@ -115,7 +115,7 @@ def assemble(args: argparse.Namespace) -> None:
         "narration_modified": False,
         "peak": float(np.max(np.abs(result))),
         "rms": float(np.sqrt(np.mean(result**2))),
-        "output": str(output),
+        "output": output.name,
         "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
     }
     manifest.write_text(json.dumps(record, indent=2) + "\n")

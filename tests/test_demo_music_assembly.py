@@ -121,3 +121,6 @@ def test_assembly_decodes_the_same_encoded_bytes_it_verified(
         json.loads(output.with_suffix(".assembly.json").read_text())["sources"][0]["sha256"]
         == digest
     )
+    manifest = output.with_suffix(".assembly.json").read_text()
+    assert str(tmp_path) not in manifest
+    assert json.loads(manifest)["output"] == "bed.wav"

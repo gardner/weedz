@@ -69,17 +69,23 @@ def main() -> None:
     ]
     output.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(command, check=True)
+    portable_command = command.copy()
+    portable_command[0] = args.ffmpeg.name
+    for index, argument in enumerate(command[:-1]):
+        if argument == "-i":
+            portable_command[index + 1] = Path(command[index + 1]).name
+    portable_command[-1] = output.name
     metadata = {
-        "music": str(args.music.resolve()),
+        "music": args.music.name,
         "music_sha256": hashlib.sha256(args.music.read_bytes()).hexdigest(),
         "music_gain": music_gain,
         "voice_gain": 1.0,
         "voice_processing": "No EQ, normalization, compression or speed changes. "
         "24 kHz native master retained; 48 kHz stereo delivery mix, AAC 256k.",
         "music_processing": "Gain only, three-second fade in and six-second fade out.",
-        "ffmpeg_command": command,
+        "ffmpeg_command": portable_command,
         "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
-        "credits": str((args.render / "credits.json").resolve()),
+        "credits": "credits.json",
     }
     output.with_suffix(".mix.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(output)
