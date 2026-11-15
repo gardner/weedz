@@ -98,7 +98,6 @@ class PipelineStages:
                 )
             except (ValueError, *RETRYABLE) as error:
                 result.update(status="failed", failure_type=type(error).__name__)
-                result = artifacts.write("proposals", photo["id"], inputs, result)
             result["elapsed_seconds"] = time.monotonic() - start
             result = artifacts.write("proposals", photo["id"], inputs, result)
             count["failed" if result["status"] == "failed" else "completed"] += 1
