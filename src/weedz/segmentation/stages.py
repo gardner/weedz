@@ -236,8 +236,10 @@ class PipelineStages:
         return result
 
 
-def restored_regions(image: Image.Image, records: list[dict]) -> list:
-    if len(records) > CONFIG.max_proposals:
+def restored_regions(
+    image: Image.Image, records: list[dict], config: ProposalConfig = CONFIG
+) -> list:
+    if len(records) > config.max_proposals:
         raise ValueError("Proposal count exceeds profile cap")
     raw = []
     for record in records:
@@ -245,12 +247,12 @@ def restored_regions(image: Image.Image, records: list[dict]) -> list:
         if len(encoded) > 1_000_000:
             raise ValueError("Mask exceeds profile cap")
         with Image.open(io.BytesIO(base64.b64decode(encoded, validate=True))) as mask:
-            if max(mask.size) > CONFIG.max_side or mask.mode != "RGBA":
+            if max(mask.size) > config.max_side or mask.mode != "RGBA":
                 raise ValueError("Invalid proposal mask geometry")
             raw.append(
                 {"segmentation": np.asarray(mask.getchannel("A")) > 0, **record["mask_quality"]}
             )
-    result = proposals(image, raw, CONFIG)
+    result = proposals(image, raw, config)
     if [region.record() for region in result] != records:
         raise ValueError("Proposal transforms or mask provenance changed")
     return result
