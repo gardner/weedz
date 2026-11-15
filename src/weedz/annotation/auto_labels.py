@@ -77,6 +77,14 @@ def frame_prediction(
     scope: str = "whole frame, not mask regions",
     alternatives: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    if metadata.get("pipeline_name") == "Aotearoa NZ":
+        if scope != "whole frame, not mask regions" or alternatives is not None:
+            raise ValueError("Aotearoa supports only released frame predictions")
+        from weedz.annotation.aotearoa import frame_prediction as nz_frame
+
+        return nz_frame(topk, metadata)
+    if metadata.get("pipeline_name") not in {None, "PlantCLEF"}:
+        raise ValueError("Unknown frame classifier kind")
     policy = (
         PLANTCLEF_POLICY
         if scope == "whole frame, not mask regions"

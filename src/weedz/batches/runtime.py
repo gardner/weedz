@@ -66,7 +66,22 @@ def prepare_config(
     }
 
 
+def _custom_registry(config: dict) -> BatchRegistry | None:
+    kind = config.get("classifier_kind", "plantclef")
+    if kind == "aotearoa-onnx-cpu-v1":
+        if config.get("cache_only") is True:
+            raise ValueError("Aotearoa frame inference is not a cache-only adoption registry")
+        from weedz.batches.aotearoa_runtime import registry_from_aotearoa_config
+
+        return registry_from_aotearoa_config(config)
+    if kind != "plantclef":
+        raise ValueError("Unknown configured classifier kind")
+    return None
+
+
 def registry_from_config(config: dict) -> BatchRegistry:
+    if (custom := _custom_registry(config)) is not None:
+        return custom
     if config.get("cache_only") is True:
         from weedz.batches.adoption import adoption_registry
 
