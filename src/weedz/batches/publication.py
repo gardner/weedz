@@ -48,6 +48,14 @@ def _image_address(address: str) -> tuple:
     return url.scheme, url.netloc, url.path, parse_qs(url.query), url.fragment
 
 
+def _canonical_data(current: dict, expected: dict) -> None:
+    if _image_address(current["image"]) != _image_address(expected["image"]):
+        raise ValueError("Existing task image differs from the canonical publication")
+    for name in ("source_dataset", "photo_credit"):
+        if current.get(name) != expected[name]:
+            raise ValueError(f"Existing task {name} differs from the canonical publication")
+
+
 def _missing(
     client: httpx.Client,
     tasks: tuple[dict, ...],
@@ -62,8 +70,7 @@ def _missing(
         if key not in index:
             continue
         current = index[key]
-        if _image_address(current["data"]["image"]) != _image_address(task["data"]["image"]):
-            raise ValueError("Existing task image differs from the canonical publication")
+        _canonical_data(current["data"], task["data"])
         existing = _predictions(client, current["id"])
         intents.complete(f"task:{key}")
         for prediction in task.get("predictions", []):

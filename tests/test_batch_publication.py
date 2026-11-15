@@ -324,3 +324,43 @@ def test_partial_400_is_reconciled_before_resending_only_missing_rows(
     run(service, package, tmp_path)
     assert len(service.tasks) == 2 and len(service.imported) == 2
     assert all(len(predictions) == 1 for predictions in service.predictions.values())
+
+
+@pytest.mark.parametrize("change", ["missing credit", "stale credit", "wrong source"])
+def test_existing_task_canonical_rights_must_match_before_any_rest_request(
+    canonical_batch, tmp_path, change
+):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    run(service, package, tmp_path)
+    current = next(iter(service.tasks.values()))
+    if change == "missing credit":
+        current["data"].pop("photo_credit")
+    elif change == "stale credit":
+        current["data"]["photo_credit"] = "Different author or licence"
+    else:
+        current["data"]["source_dataset"] = "different source"
+    service.predictions[current["id"]] = []
+    service.requests.clear()
+    with pytest.raises(ValueError, match="canonical"):
+        run(service, package, tmp_path)
+    assert service.requests == []
+    assert service.predictions[current["id"]] == []
+    assert service.annotations == {"human": [{"value": "untouched"}]}
+
+
+def test_pipeline_summary_and_extra_task_data_are_preserved_during_reuse(canonical_batch, tmp_path):
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    service = Service()
+    run(service, package, tmp_path)
+    current = next(iter(service.tasks.values()))
+    current["data"].update(pipeline_state="Original pipeline summary", owner_note="Keep this")
+    service.predictions[current["id"]] = []
+    run(service, package, tmp_path)
+    assert current["data"]["pipeline_state"] == "Original pipeline summary"
+    assert current["data"]["owner_note"] == "Keep this"
+    assert len(service.predictions[current["id"]]) == 1
