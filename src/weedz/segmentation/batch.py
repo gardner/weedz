@@ -14,7 +14,7 @@ from typing import Any
 from PIL import Image, ImageOps
 
 from weedz.contract import Sample, require_task
-from weedz.segmentation.artifacts import StageArtifacts, digest
+from weedz.segmentation.artifacts import StageArtifacts, digest, durable_mkdir, sync_directory
 from weedz.segmentation.pipeline import Proposer
 from weedz.segmentation.regions import (
     MAX_SOURCE_BYTES,
@@ -37,7 +37,7 @@ def _bytes(path: Path, limit: int) -> bytes:
 
 
 def _image_bytes(sample: Sample, media_root: Path) -> bytes:
-    path = Path(sample.media.uri).resolve(strict=True)
+    path = (media_root / sample.media.uri).resolve(strict=True)
     if not path.is_relative_to(media_root):
         raise ValueError("Sample image escapes media root")
     raw = _bytes(path, MAX_SOURCE_BYTES)
@@ -77,6 +77,7 @@ def _atomic(path: Path, raw: bytes) -> None:
             stream.flush()
             os.fsync(stream.fileno())
             os.replace(temporary, path)
+            sync_directory(path.parent)
         finally:
             temporary.unlink(missing_ok=True)
 
@@ -192,8 +193,18 @@ def propose_batch(
     if expected_manifest_sha256 is not None and expected_manifest_sha256 != manifest_sha:
         raise ValueError("Batch manifest checksum mismatch")
     root = media_root.resolve(strict=True)
+    destination = output.resolve()
+    sources = (root, manifest.resolve().parent)
+    if any(
+        destination.is_relative_to(source) or source.is_relative_to(destination)
+        for source in sources
+    ):
+        raise ValueError("Output must use an independent source/output namespace")
+    if any((parent / ".git").exists() for parent in (destination, *destination.parents)):
+        raise ValueError("Batch outputs must remain outside Git")
     samples = _samples(raw, root)
-    output.mkdir(parents=True, exist_ok=True)
+    durable_mkdir(destination)
+    output = destination
     with (output / ".batch.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         return _publish(samples, root, output, proposer, config, manifest_sha)

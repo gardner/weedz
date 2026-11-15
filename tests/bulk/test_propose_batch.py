@@ -21,7 +21,9 @@ class Proposer:
 
 
 def source(tmp_path):
-    image = tmp_path / "image.png"
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    image = source_root / "image.png"
     Image.new("RGB", (64, 64), "green").save(image)
     sample = {
         "id": "test:plant",
@@ -44,7 +46,7 @@ def source(tmp_path):
         "tasks": ["inference"],
         "annotations": [],
     }
-    manifest = tmp_path / "samples.jsonl"
+    manifest = source_root / "samples.jsonl"
     manifest.write_text(json.dumps(sample) + "\n")
     return manifest, image
 
@@ -53,8 +55,8 @@ def test_real_geometry_closed_hashes_and_completed_retry(tmp_path):
     manifest, _ = source(tmp_path)
     proposer = Proposer()
     output = tmp_path / "output"
-    first = propose_batch(manifest, tmp_path, output, proposer)
-    second = propose_batch(manifest, tmp_path, output, proposer)
+    first = propose_batch(manifest, manifest.parent, output, proposer)
+    second = propose_batch(manifest, manifest.parent, output, proposer)
     assert proposer.calls == 1
     assert first == second == json.loads((output / "ready.json").read_text())
     assert first["manifest_sha256"] == hashlib.sha256(manifest.read_bytes()).hexdigest()
@@ -72,10 +74,10 @@ def test_changed_manifest_or_pixels_cannot_inherit_completion(tmp_path):
     manifest, image = source(tmp_path)
     proposer = Proposer()
     output = tmp_path / "output"
-    propose_batch(manifest, tmp_path, output, proposer)
+    propose_batch(manifest, manifest.parent, output, proposer)
     image.write_bytes(b"replaced")
     with pytest.raises(ValueError, match="checksum"):
-        propose_batch(manifest, tmp_path, output, proposer)
+        propose_batch(manifest, manifest.parent, output, proposer)
     assert proposer.calls == 1
 
 
@@ -90,7 +92,7 @@ def test_manifest_pin_and_symlink_escape_fail_before_output(tmp_path):
     image.unlink()
     image.symlink_to(outside)
     with pytest.raises(ValueError, match="media root"):
-        propose_batch(manifest, tmp_path, tmp_path / "out", Proposer())
+        propose_batch(manifest, manifest.parent, tmp_path / "out", Proposer())
     assert not (tmp_path / "out").exists()
 
 
@@ -110,10 +112,10 @@ def test_interrupted_batch_resumes_only_uncommitted_samples(tmp_path):
     proposer = Interrupted()
     output = tmp_path / "output"
     with pytest.raises(KeyboardInterrupt):
-        propose_batch(manifest, tmp_path, output, proposer)
+        propose_batch(manifest, manifest.parent, output, proposer)
     assert not (output / "ready.json").exists()
     resumed = Proposer()
-    summary = propose_batch(manifest, tmp_path, output, resumed)
+    summary = propose_batch(manifest, manifest.parent, output, resumed)
     assert resumed.calls == 1 and summary["count"] == 2
 
 
@@ -125,11 +127,30 @@ def test_failed_photos_retry_and_changed_model_refuses_closed_namespace(tmp_path
             raise RuntimeError("Real processing interrupted")
 
     output = tmp_path / "output"
-    failed = propose_batch(manifest, tmp_path, output, Failed())
+    failed = propose_batch(manifest, manifest.parent, output, Failed())
     assert failed["counts"] == {"ok": 0, "empty": 0, "failed": 1}
     model = Proposer()
-    completed = propose_batch(manifest, tmp_path, output, model)
+    completed = propose_batch(manifest, manifest.parent, output, model)
     assert model.calls == 1 and completed["counts"]["ok"] == 1
     model.metadata = {"checkpoint": "different-pin"}
     with pytest.raises(ValueError, match="provenance"):
-        propose_batch(manifest, tmp_path, output, model)
+        propose_batch(manifest, manifest.parent, output, model)
+
+
+def test_source_destination_overlap_is_rejected_without_replacing_ready(tmp_path):
+    manifest, _ = source(tmp_path)
+    ready = manifest.parent / "ready.json"
+    ready.write_text('{"source_batch":true}')
+    with pytest.raises(ValueError, match="independent"):
+        propose_batch(manifest, manifest.parent, manifest.parent, Proposer())
+    assert ready.read_text() == '{"source_batch":true}'
+
+
+def test_relative_media_uri_is_resolved_from_media_root(tmp_path):
+    manifest, _ = source(tmp_path)
+    sample = json.loads(manifest.read_text())
+    sample["media"]["uri"] = "image.png"
+    manifest.write_text(json.dumps(sample) + "\n")
+    assert (
+        propose_batch(manifest, manifest.parent, tmp_path / "out", Proposer())["counts"]["ok"] == 1
+    )
