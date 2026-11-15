@@ -28,11 +28,24 @@ def _directory(path: Path, root: Path) -> None:
         _sync(path.parent)
 
 
+def seal_file(root: Path, path: Path) -> None:
+    root, path = root.resolve(), path.resolve()
+    if not path.is_relative_to(root):
+        raise ValueError("Durable artifact escapes owned storage")
+    with path.open("rb") as stream:
+        os.fsync(stream.fileno())
+    directory = path.parent
+    while True:
+        _sync(directory)
+        if directory == root:
+            break
+        directory = directory.parent
+
+
 def _publish(path: Path, encoded: bytes) -> None:
     if path.exists():
         if path.is_symlink() or path.read_bytes() != encoded:
             raise ValueError("Existing completion receipt has conflicting content")
-        _sync(path.parent)
         return
     with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as stream:
         temporary = Path(stream.name)
@@ -44,7 +57,6 @@ def _publish(path: Path, encoded: bytes) -> None:
             os.link(temporary, path)
         finally:
             temporary.unlink(missing_ok=True)
-    _sync(path.parent)
 
 
 def write_receipt(root: Path, relative: str, document: dict[str, Any]) -> dict[str, str]:
@@ -63,4 +75,5 @@ def write_receipt(root: Path, relative: str, document: dict[str, Any]) -> dict[s
     with os.fdopen(descriptor, "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         _publish(path, encoded)
+        seal_file(root, path)
     return reference

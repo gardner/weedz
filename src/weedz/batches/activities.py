@@ -14,7 +14,7 @@ from weedz.batches.package import Package, validate_package
 from weedz.batches.package_build import build_package
 from weedz.batches.profiles import ModelProfile
 from weedz.batches.proposal_compute import segment
-from weedz.batches.receipts import write_receipt
+from weedz.batches.receipts import seal_file, write_receipt
 from weedz.batches.regional_compute import regions
 from weedz.batches.storage import ClosedBatch, read_artifact, read_owned_file, validate_closed_batch
 from weedz.discovery.activities import while_heartbeating
@@ -91,6 +91,8 @@ class BatchActivities:
             if previous.get("identity") != context.identity or previous.get("stage") != stage:
                 raise ValueError("Existing activity receipt has conflicting provenance")
             read_artifact(self.root, previous["artifact"], 128_000_000)
+            seal_file(self.root, self.root / previous["artifact"]["path"])
+            seal_file(self.root, target)
             if stage == "batch_package_v1":
                 validate_package(
                     (self.root / previous["artifact"]["path"]).parent,
@@ -98,6 +100,8 @@ class BatchActivities:
                 )
             return {"path": path, "sha256": hashlib.sha256(encoded).hexdigest()}
         result = self._dispatch(stage, context)
+        read_artifact(self.root, result.artifact, 128_000_000)
+        seal_file(self.root, self.root / result.artifact["path"])
         return write_receipt(
             self.root,
             path,
