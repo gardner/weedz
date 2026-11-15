@@ -121,8 +121,11 @@ final class PhotoManagerLibrary implements PhotoLibrary {
             )
           : ThumbnailOption(size: size, quality: 90),
     );
+    // Null says only that the platform made no image this time (out of
+    // memory, an IO error, the app backgrounded), not that the format is
+    // unreadable, so the photo is retried next pass.
     return bytes == null
-        ? const ImageSkipped(SkipReason.unsupported)
+        ? const ImageSkipped(SkipReason.unreadable)
         : ImageLoaded(ScanImage(bytes));
   }
 }
