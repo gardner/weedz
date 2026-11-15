@@ -31,7 +31,7 @@ def adoption_registry(config: dict) -> BatchRegistry:
         },
         {
             classifier: {
-                name: ModelProfile(f"{classifier}-{name}", cast(Kind, name), value, _no_inference)
+                name: ModelProfile(classifier, cast(Kind, name), value, _no_inference)
                 for name, value in metadata.items()
                 if name != "proposals"
             }

@@ -132,7 +132,7 @@ def registry_from_config(config: dict) -> BatchRegistry:
         {
             config["classifier_profile"]: {
                 kind: ModelProfile(
-                    f"{config['classifier_profile']}-{kind}",
+                    config["classifier_profile"],
                     kind,
                     metadata[kind],
                     lambda kind=kind: view(kind),

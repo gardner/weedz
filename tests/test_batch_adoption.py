@@ -97,3 +97,46 @@ def test_regional_adoption_validates_proposal_join_without_rewriting(batch):
     request["cached"]["regions"] = reference(path, root)
     with pytest.raises(ValueError, match="source provenance"):
         prepare_adoption(root, request)
+
+
+def test_maximum_length_registered_classifier_profile_can_be_adopted(batch):
+    from weedz.batches.adoption import prepare_adoption
+    from weedz.batches.contract import batch_request
+    from weedz.batches.runtime import registry_from_config
+
+    root, request = inputs(batch)
+    request["classifier_profile"] = "c" * 80
+    assert batch_request(request)["classifier_profile"] == request["classifier_profile"]
+    config = prepare_adoption(root, request)
+    registry = registry_from_config(config)
+    assert (
+        registry.classifiers[request["classifier_profile"]]["frame"].name
+        == request["classifier_profile"]
+    )
+
+
+def test_maximum_length_profile_can_register_all_resident_classifier_kinds():
+    from weedz.batches.runtime import registry_from_config
+    from weedz.classification.batch import classifier_metadata
+    from weedz.classification.regions import regional_metadata
+
+    model, sam = Model(), Proposer()
+    name = "c" * 80
+    config = {
+        "device": "cpu",
+        "segmentation_profile": "sam-v1",
+        "classifier_profile": name,
+        "metadata": {
+            "proposals": sam.metadata,
+            "frame": classifier_metadata(model, "frame"),
+            "tiles": classifier_metadata(model, "tiles"),
+            "regions": regional_metadata(model, sam.metadata, "sam2"),
+        },
+    }
+    registry = registry_from_config(config)
+    assert {profile.name for profile in registry.classifiers[name].values()} == {name}
+    assert {profile.kind for profile in registry.classifiers[name].values()} == {
+        "frame",
+        "tiles",
+        "regions",
+    }

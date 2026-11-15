@@ -64,3 +64,25 @@ def test_retry_syncs_existing_directory_after_its_creation_barrier_failed(monkey
     synced.clear()
     write_receipt(tmp_path, "nested/stage.json", {"count": 1})
     assert tmp_path in synced
+
+
+def test_planted_receipt_lock_symlink_is_refused_without_touching_its_target(tmp_path):
+    root = tmp_path / "artifacts"
+    root.mkdir()
+    target = tmp_path / "sentinel.txt"
+    target.write_bytes(b"unchanged outside target")
+    (root / "result.lock").symlink_to(target)
+    with pytest.raises(OSError):
+        write_receipt(root, "result.json", {"completed": True})
+    assert target.read_bytes() == b"unchanged outside target"
+    assert not (root / "result.json").exists()
+
+
+def test_receipt_parent_symlink_cannot_create_files_outside_owned_storage(tmp_path):
+    root, outside = tmp_path / "artifacts", tmp_path / "unrelated"
+    root.mkdir()
+    outside.mkdir()
+    (root / "alias").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError):
+        write_receipt(root, "alias/result.json", {"completed": True})
+    assert not list(outside.iterdir())
