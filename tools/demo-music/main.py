@@ -7,6 +7,7 @@ import json
 import math
 import os
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,6 +15,9 @@ from pathlib import Path
 MODEL = "MiniMaxAI/MiniMax-Music3"
 REVISION = "1b525ccb685ae809f33027c51c351eeb5833cf72"
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+from demo_paths import outside_git  # noqa: E402
+
 FOLDERS = (
     "condition_encoder",
     "language_model",
@@ -48,8 +52,9 @@ def validate_request(seconds: float, seed: int, output: Path) -> None:
     if output.suffix.lower() != ".wav" or output.resolve().is_relative_to(ROOT):
         raise ValueError("Write a WAV outside the repository")
     for path in (output, output.with_suffix(".json"), output.with_suffix(".started.json")):
-        if path.exists():
+        if path.exists() or path.is_symlink():
             raise FileExistsError(f"Refusing to overwrite {path}")
+        outside_git(path)
 
 
 def provenance(seconds: float, seed: int) -> dict[str, object]:

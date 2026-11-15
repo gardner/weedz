@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import math
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -11,6 +12,8 @@ from numpy.typing import NDArray
 
 Audio = NDArray[np.float32]
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+from demo_paths import new_output  # noqa: E402
 
 
 def frames(rate: int, seconds: float) -> int:
@@ -62,10 +65,8 @@ def trim_and_fade(
 def assemble(args: argparse.Namespace) -> None:
     import soundfile as sf
 
-    output = args.output.resolve()
+    output = new_output(args.output, sidecars=(".assembly.json",))
     manifest = output.with_suffix(".assembly.json")
-    if output.is_relative_to(ROOT) or output.exists() or manifest.exists():
-        raise ValueError("Use a new output outside the repository; existing files are preserved")
     pieces, sources, rate = [], [], None
     for source in args.inputs:
         provenance = json.loads(source.with_suffix(".json").read_text())

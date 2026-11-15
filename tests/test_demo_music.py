@@ -1,6 +1,7 @@
 """Generation must not overwrite media or accidentally target another GPU."""
 
 import importlib.util
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -31,3 +32,12 @@ def test_existing_audio_or_provenance_is_never_overwritten(tmp_path: Path) -> No
 def test_lyrics_contain_only_instrumental_structure_tags() -> None:
     assert all(line.startswith("[") and line.endswith("]") for line in music.LYRICS.splitlines())
     assert "vocal" not in music.LYRICS.lower()
+
+
+def test_music_cannot_target_another_git_checkout(tmp_path: Path) -> None:
+    checkout = tmp_path / "other-checkout"
+    subprocess.run(["git", "init", "--quiet", str(checkout)], check=True)
+    alias = tmp_path / "alias"
+    alias.symlink_to(checkout, target_is_directory=True)
+    with pytest.raises(ValueError, match="outside every git worktree"):
+        music.validate_request(180, 112, alias / "score.wav")
