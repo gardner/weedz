@@ -45,12 +45,13 @@ def corpus(tmp_path):
     return manifest, image
 
 
-def test_matching_completed_batch_resumes_without_new_model_calls(tmp_path):
+@pytest.mark.parametrize("profile", ["frame", "tiles"])
+def test_matching_completed_batch_resumes_without_new_model_calls(tmp_path, profile):
     manifest, _ = corpus(tmp_path)
     model = Classifier()
     out = tmp_path / "predictions.json"
-    first = classify_batch(manifest, tmp_path, out, model)
-    second = classify_batch(manifest, tmp_path, out, model)
+    first = classify_batch(manifest, tmp_path, out, model, profile)
+    second = classify_batch(manifest, tmp_path, out, model, profile)
     assert first == second
     assert model.calls == 1
     assert first["predictions"][0]["source_id"] == "test:1"

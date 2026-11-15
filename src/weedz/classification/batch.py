@@ -206,7 +206,7 @@ def _view_predictions(
         part = work[start : start + 32]
         result = model.predict([item[2] for item in part])
         for (row, box, _), topk in zip(part, result, strict=True):
-            row["views"].append({"box": box, "topk": topk})
+            row["views"].append({"box": list(box), "topk": topk})
     for row in rows:
         row["topk"] = _aggregate_views(row["views"])
 
