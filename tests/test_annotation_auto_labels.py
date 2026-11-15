@@ -88,3 +88,30 @@ def test_proposals_without_classifier_stay_unknown_not_invented_species():
     assert next(r for r in prediction["result"] if r["type"] == "brushlabels")["value"][
         "brushlabels"
     ] == ["Unknown"]
+
+
+def test_historical_prediction_results_remain_exactly_the_published_shape():
+    import json
+    from pathlib import Path
+
+    from test_annotation_versions import metadata
+
+    from weedz.annotation.semantic import shared_regional_version
+
+    # Frozen from d155e81 before optional runtime-pin evidence was introduced.
+    expected = json.loads(
+        (Path(__file__).parent / "fixtures/annotation-legacy-predictions.json").read_text()
+    )
+    topk = [{"taxon": "Ulex europaeus L.", "score": 0.8}]
+    assert frame_prediction(topk, {"revision": "pinned"}) == expected["frame"]
+    classifier, proposer = metadata()
+    model = {"classifier": classifier, "proposer": proposer}
+    assert (
+        regional_prediction(
+            [(region(), topk)],
+            model,
+            (6, 4),
+            version_name_override=shared_regional_version(model)["model_version"],
+        )
+        == expected["regional"]
+    )

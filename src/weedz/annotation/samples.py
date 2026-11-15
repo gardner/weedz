@@ -14,6 +14,7 @@ from weedz.annotation.auto_labels import frame_prediction, proposals_prediction
 from weedz.annotation.export import _output
 from weedz.annotation.label_studio import label_config
 from weedz.annotation.sample_variants import add_variants, load_variants
+from weedz.annotation.semantic import classifier_runtime
 from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Sample
 from weedz.manifest import read_manifest
@@ -24,6 +25,12 @@ PUBLIC = {"cc0", "cc0-1.0", "cc-by", "cc-by-3.0", "cc-by-4.0"}
 def _inputs(manifest: Path, frame_results: Path | None, proposals: Path | None) -> tuple:
     source_digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
     frames = json.loads(frame_results.read_text()) if frame_results else None
+    if frame_results is not None and (
+        not isinstance(frames, dict)
+        or not isinstance(frames.get("model"), dict)
+        or not isinstance(frames.get("predictions"), list)
+    ):
+        raise ValueError("Invalid classifier result document")
     if frames and frames.get("manifest_sha256") != source_digest:
         raise ValueError("Classifier input manifest checksum mismatch")
     frame_rows = {row["external_id"]: row for row in frames["predictions"]} if frames else {}
@@ -161,6 +168,14 @@ def _write(
         (output / "label-config.xml").write_text(label_config("assisted"))
         provenance = {
             "nonfinite_result_policy": NONFINITE_POLICY,
+            "classifier_runtime": {
+                "frame": classifier_runtime(frames["model"]) if frames else None,
+                **{
+                    name: classifier_runtime(variant.document["model"])
+                    for name, variant in variants.items()
+                    if variant is not None
+                },
+            },
             "schema_version": 1,
             "source_manifest_sha256": source_digest,
             "frame_model": frames["model"] if frames else None,

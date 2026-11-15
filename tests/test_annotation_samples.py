@@ -302,3 +302,27 @@ def test_nonfinite_model_metadata_is_still_refused(canonical_batch, tmp_path):
     with pytest.raises(ValueError, match="JSON compliant"):
         export_samples(manifest, output, frame_results=frame)
     assert not output.exists()
+
+
+def test_historical_runtime_note_is_private_and_existing_prediction_shape_is_preserved(
+    canonical_batch, tmp_path
+):
+    manifest, frame, _ = canonical_batch
+    output = tmp_path / "legacy-runtime"
+    export_samples(manifest, output, frame_results=frame)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    evidence = task["predictions"][0]["result"][-1]["value"]["text"][0]
+    assert "classifier_runtime" not in json.loads(evidence)
+    assert set(json.loads(evidence)) == {"interpretation", "scope", "topk", "limitations"}
+    private = json.loads((output / "private/provenance.json").read_text())
+    assert private["classifier_runtime"]["frame"]["status"] == "historical_unrecorded"
+
+
+@pytest.mark.parametrize("invalid", [{}, [], None, False, 0, ""])
+def test_explicit_frame_results_cannot_silently_disappear(canonical_batch, tmp_path, invalid):
+    manifest, frame, _ = canonical_batch
+    frame.write_text(json.dumps(invalid))
+    output = tmp_path / "invalid-frame-document"
+    with pytest.raises(ValueError, match="classifier result document"):
+        export_samples(manifest, output, frame_results=frame)
+    assert not output.exists()

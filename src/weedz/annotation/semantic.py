@@ -42,6 +42,22 @@ CONFIG_FIELDS = {
 }
 
 
+def classifier_runtime(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Absent historical pins stay unknown; new declarations must be a complete pair."""
+    classifier = metadata.get("classifier", metadata)
+    if not isinstance(classifier, dict):
+        raise ValueError("Invalid classifier runtime metadata")
+    fields = ("pillow", "torchvision")
+    present = [key in classifier for key in fields]
+    if not any(present):
+        return {"status": "historical_unrecorded", "pillow": None, "torchvision": None}
+    if not all(present) or any(
+        not isinstance(classifier[key], str) or not classifier[key].strip() for key in fields
+    ):
+        raise ValueError("Classifier runtime requires nonblank Pillow and torchvision versions")
+    return {"status": "recorded", **{key: classifier[key] for key in fields}}
+
+
 def _fields(metadata: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
     if any(key not in metadata or metadata[key] is None for key in fields):
         raise ValueError("Incomplete semantic pipeline metadata")
@@ -60,8 +76,14 @@ def shared_regional_version(metadata: dict[str, Any]) -> dict[str, Any]:
     config = proposer.get("proposal_config", proposer.get("config"))
     if not isinstance(config, dict) or not CONFIG_FIELDS.issubset(config):
         raise ValueError("Incomplete semantic proposal configuration")
+    runtime = classifier_runtime(metadata)
+    optional = (
+        {key: runtime[key] for key in ("pillow", "torchvision")}
+        if runtime["status"] == "recorded"
+        else {}
+    )
     semantic = {
-        "classifier": _fields(classifier, CLASSIFIER_FIELDS),
+        "classifier": {**_fields(classifier, CLASSIFIER_FIELDS), **optional},
         "proposer": {**_fields(proposer, PROPOSER_FIELDS), "proposal_config": config},
         "assignment": {
             "primary_view": "masked",

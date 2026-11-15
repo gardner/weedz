@@ -83,3 +83,37 @@ def test_incomplete_semantics_cannot_receive_a_shared_version():
 def test_invalid_classifier_metadata_is_a_validation_error():
     with pytest.raises(ValueError, match="semantic"):
         shared_regional_version({"classifier": "not metadata"})
+
+
+def test_recorded_transform_runtime_versions_change_shared_identity():
+    classifier, proposer = metadata()
+    legacy = {"classifier": classifier, "proposer": proposer}
+    recorded = deepcopy(legacy)
+    recorded["classifier"].update(pillow="13.0", torchvision="0.30")
+    changed = deepcopy(recorded)
+    changed["classifier"]["pillow"] = "14.0"
+    assert shared_regional_version(recorded)["sha256"] != shared_regional_version(legacy)["sha256"]
+    assert shared_regional_version(recorded)["sha256"] != shared_regional_version(changed)["sha256"]
+
+
+@pytest.mark.parametrize("pins", [{"pillow": "13"}, {"pillow": "", "torchvision": "0.30"}])
+def test_partial_or_blank_runtime_declarations_are_refused(pins):
+    classifier, proposer = metadata()
+    classifier.update(pins)
+    with pytest.raises(ValueError, match="runtime"):
+        shared_regional_version({"classifier": classifier, "proposer": proposer})
+
+
+def test_historical_missing_runtime_keeps_its_existing_semantic_hash():
+    from weedz.annotation.semantic import classifier_runtime
+
+    classifier, proposer = metadata()
+    legacy = {"classifier": classifier, "proposer": proposer}
+    assert shared_regional_version(legacy)["sha256"] == (
+        "6eec69ef7c79d25862354b2c44687fa300ef42382e540a0aa1d1c31fd37e87c8"
+    )
+    assert classifier_runtime(legacy) == {
+        "status": "historical_unrecorded",
+        "pillow": None,
+        "torchvision": None,
+    }
