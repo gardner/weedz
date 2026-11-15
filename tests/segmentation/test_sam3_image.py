@@ -118,3 +118,67 @@ def test_classagnostic_restore_has_real_pixels_without_synthetic_mask_quality():
     record["box"] = [0, 0, 1, 1]
     with pytest.raises(ValueError, match="provenance"):
         restore_concept_region(image, record, config)
+
+
+def test_empty_retention_preserves_raw_scores_and_exif_upright_frame(tmp_path):
+    from weedz.segmentation.sam3_image import Sam3Image
+
+    class Processor:
+        def set_image(self, image):
+            assert image.size == (3, 2)
+            return {}
+
+        def reset_all_prompts(self, state):
+            pass
+
+        def set_text_prompt(self, *, state, prompt):
+            return {
+                "masks": np.ones((1, 2, 3), bool),
+                "scores": np.array([0.2]),
+                "boxes": np.array([[0, 0, 3, 2]]),
+            }
+
+    path = tmp_path / "oriented.jpg"
+    exif = Image.Exif()
+    exif[274] = 6
+    Image.new("RGB", (2, 3)).save(path, exif=exif)
+    runner = Sam3Image(Processor(), Sam3Config(prompts=("flower",)), {}, tmp_path / "cache")
+    result = runner.screen(path)
+    assert result["status"] == "empty" and result["regions"] == []
+    assert result["prompts"][0]["raw_top_concept_scores_before_retention"] == [0.2]
+    assert runner.screen(path)["cache_hits"] == 1
+
+
+def test_failed_prompt_is_explicit_and_retried_without_repeating_success(tmp_path):
+    from weedz.segmentation.sam3_image import Sam3Image
+
+    class Processor:
+        calls = []
+        fail = True
+
+        def set_image(self, image):
+            return {}
+
+        def reset_all_prompts(self, state):
+            pass
+
+        def set_text_prompt(self, *, state, prompt):
+            self.calls.append(prompt)
+            if prompt == "flower" and self.fail:
+                raise RuntimeError("Interrupted GPU work")
+            return {
+                "masks": np.ones((1, 8, 8), bool),
+                "scores": np.array([0.8]),
+                "boxes": np.array([[0, 0, 8, 8]]),
+            }
+
+    path = tmp_path / "plant.png"
+    Image.new("RGB", (8, 8)).save(path)
+    processor = Processor()
+    runner = Sam3Image(processor, Sam3Config(), {}, tmp_path / "cache")
+    partial = runner.screen(path)
+    assert partial["status"] == "partial" and partial["failed_prompts"] == 1
+    processor.fail = False
+    success = runner.screen(path)
+    assert success["status"] == "ok" and success["cache_hits"] == 1
+    assert processor.calls == ["plant", "flower", "flower"]
