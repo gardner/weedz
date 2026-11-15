@@ -19,12 +19,14 @@ const clamp = (value: number, max: number) => Math.min(Math.max(Math.round(value
 export default function PhotoStage({
   photo,
   runId,
+  declaredComparison = false,
   windowVisible,
   drawing,
   draft,
   onDraw,
 }: {
   photo: Photo;
+  declaredComparison?: boolean;
   runId: string;
   windowVisible: boolean;
   drawing: boolean;
@@ -127,7 +129,12 @@ export default function PhotoStage({
         <span className="image-caption">{caption}</span>
       </div>
       {scores.segmentation && (
-        <SegmentationControls evidence={scores.segmentation} selected={mask} onSelect={setMask} />
+        <SegmentationControls
+          declaredComparison={declaredComparison}
+          evidence={scores.segmentation}
+          selected={mask}
+          onSelect={setMask}
+        />
       )}
     </>
   );

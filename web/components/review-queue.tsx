@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { photoHint, sourceSubject } from "../lib/photo-labels";
 import { auditedBy, VIEWS, type View } from "../lib/queue";
 import { needsSpecialist } from "../lib/referrals";
 import { names, type Photo, siteVisitNote } from "../lib/types";
@@ -6,6 +7,7 @@ import { Thumbnail } from "./photo-stage";
 
 type Props = {
   photos: Photo[];
+  declaredComparison?: boolean;
   activeId?: string;
   runId: string;
   cohort: View;
@@ -22,6 +24,7 @@ type Props = {
 };
 export default function ReviewQueue({
   photos: filtered,
+  declaredComparison = false,
   activeId,
   runId,
   cohort,
@@ -128,12 +131,12 @@ export default function ReviewQueue({
               <span className="row-index">
                 {String(index + 1).padStart(2, "0")} / {photo.region}
               </span>
-              <strong>
+              <strong>{auditing ? "Blind audit photo" : sourceSubject(photo)}</strong>
+              <span className="model-hint">
                 {auditing
-                  ? "Blind audit photo"
-                  : (names[photo.scores.best_species ?? ""] ?? "Awaiting screening")}
-              </strong>
-              <span>{photo.original_common_name || photo.original_taxon}</span>
+                  ? photo.original_common_name || photo.original_taxon
+                  : photoHint(photo, declaredComparison, names)}
+              </span>
               <small>
                 {photo.observed_on ?? "Date unknown"} ·{" "}
                 {auditing

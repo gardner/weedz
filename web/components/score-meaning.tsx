@@ -80,7 +80,7 @@ export function ScorePanel({ photo, meaning }: { photo: Photo; meaning?: ScoreMe
             <li key={row.name}>
               <span>
                 {names[row.name] ?? row.name}
-                {row.name === photo.scores.best_species && " (top suggestion)"}
+                {row.name === photo.scores.best_species && " (top watchlist comparison)"}
               </span>
               <b>{marginWords(row.margin)}</b>
             </li>
