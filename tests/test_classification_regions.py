@@ -48,6 +48,7 @@ def test_species_are_classified_from_real_masked_pixels_and_resume(tmp_path):
             return super().predict(images, top_k)
 
     model = Inspect()
+    model.metadata = {**model.metadata, "preprocessing": {"input_size": (3, 518, 518)}}
     out = tmp_path / "regions.json"
     result = classify_region_batch(manifest, tmp_path, proposal, out, model, "sam3")
     assert classify_region_batch(manifest, tmp_path, proposal, out, model, "sam3") == result

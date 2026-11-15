@@ -136,6 +136,7 @@ def classify_region_batch(
         "primary_view": "masked",
         "crop_geometry_revision": 1,
     }
+    metadata = json.loads(json.dumps(metadata, allow_nan=False))
     version = f"{proposer.upper()} + PlantCLEF masked · {digest(metadata)[:12]}"
     header = {
         "schema": 1,

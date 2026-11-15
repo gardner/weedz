@@ -49,6 +49,7 @@ def corpus(tmp_path):
 def test_matching_completed_batch_resumes_without_new_model_calls(tmp_path, profile):
     manifest, _ = corpus(tmp_path)
     model = Classifier()
+    model.metadata = {**model.metadata, "preprocessing": {"input_size": (3, 518, 518)}}
     out = tmp_path / "predictions.json"
     first = classify_batch(manifest, tmp_path, out, model, profile)
     second = classify_batch(manifest, tmp_path, out, model, profile)

@@ -258,7 +258,7 @@ def classify_batch(
     # Verify bytes even when a result already exists: a cached score cannot hide changed media.
     for sample in samples:
         _snapshot(sample, media_root)
-    metadata = _metadata(model, profile)
+    metadata = json.loads(json.dumps(_metadata(model, profile), allow_nan=False))
     stamp = hashlib.sha256(
         json.dumps(metadata, sort_keys=True, allow_nan=False).encode()
     ).hexdigest()
