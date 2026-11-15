@@ -29,6 +29,7 @@ def publisher_from_config(config: dict):
                 Path(config["state"]),
                 Path(config["lock"]),
                 heartbeat=lambda: activity.heartbeat("publishing verified machine predictions"),
+                legacy_allowlist=config.get("legacy_identity_allowlist"),
             )
 
     return publish_package

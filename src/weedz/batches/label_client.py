@@ -23,10 +23,11 @@ def task_index(database: Path, project: int, keys: list[str]) -> dict[str, dict[
         rows = db.execute(query, [project, *keys]).fetchall()
     result = {}
     for identifier, raw_meta, raw_data in rows:
-        key = json.loads(raw_meta)["external_id"]
+        meta = json.loads(raw_meta)
+        key = meta["external_id"]
         if key in result:
             raise ValueError("Duplicate external task identity")
-        result[key] = {"id": identifier, "data": json.loads(raw_data)}
+        result[key] = {"id": identifier, "data": json.loads(raw_data), "meta": meta}
     return result
 
 
