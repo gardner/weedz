@@ -35,6 +35,20 @@ try {
         "Every cohort tab must fit the queue",
       );
     }
+    await page.locator("img").evaluateAll(async (images) => {
+      const visible = images.filter((image) => {
+        const box = image.getBoundingClientRect();
+        return (
+          box.width > 0 &&
+          box.height > 0 &&
+          box.top < innerHeight &&
+          box.bottom > 0 &&
+          box.left < innerWidth &&
+          box.right > 0
+        );
+      });
+      await Promise.all(visible.map((image) => image.decode()));
+    });
     await page.screenshot({ path: `${evidence}/${width}-review.png` });
   }
   assert.deepEqual(errors, []);
