@@ -62,6 +62,10 @@ CONFIG_FIELDS = {
 
 def classifier_runtime(metadata: dict[str, Any]) -> dict[str, Any]:
     """Absent historical pins stay unknown; new declarations must be a complete pair."""
+    if metadata.get("classifier_kind") == "bioclip-margin-cuda-v1":
+        from weedz.classification.bioclip import runtime
+
+        return runtime(metadata)
     if metadata.get("pipeline_name") == "WeedScan488":
         from weedz.annotation.weedscan import runtime
 
