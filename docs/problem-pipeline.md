@@ -41,7 +41,7 @@ On the desktop, the steps run end to end, but nothing has been shown to work yet
 What we've measured, on small samples of source-labelled photos:
 
 - **The pilot run:** 30 photos screened, 0 expert-confirmed discoveries ([screening](../benchmarks/nelson-tasman-screening.json)). Nobody has reviewed them yet; this isn't a failure count.
-- **Lookalikes:** toetoe passed as pampas in 1 of 6 photos, and native clematis as old man's beard in 2 of 15 (#33, [model comparison](../benchmarks/model-comparison.json)).
+- **Lookalikes:** toetoe photos scored a positive margin for pampas in 1 of 6, and native clematis for old man's beard in 2 of 15. A positive margin isn't a detection, because no threshold has been chosen, but it shows how close natives come to the weeds (#33, [model comparison](../benchmarks/model-comparison.json)).
 - **Whole photo vs tiles:** the harness exists, but it has no verdict because there are no independent labels for background plants ([whole vs region](../benchmarks/whole-vs-region.json), #12).
 - **Cost:** BioCLIP 2 is a 1.7 GB checkpoint and takes about 3 s per photo on a desktop CPU (about 7 windows per photo). That's far too slow and heavy for scanning a phone's whole library (#51).
 
