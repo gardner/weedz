@@ -63,6 +63,9 @@ try {
     const review_effort = { total_minutes: 12.5, measured_decisions: 3, unmeasured_decisions: 1 };
     await route.fulfill({ json: { run, photos: [photo, second], review_effort } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.getByLabel("Your name").fill("Ana");
   await page.getByText("12.5 min measured review time · 1 decision not timed").waitFor();

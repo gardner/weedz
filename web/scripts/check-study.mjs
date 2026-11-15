@@ -69,6 +69,9 @@ try {
     if (path === "/api/studies/terms") return route.fulfill({ json: terms });
     await route.fulfill({ json: { run, photos: [], study } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   const panel = page.locator(".study-panel");
   await panel.locator("summary").click();

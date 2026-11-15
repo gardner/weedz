@@ -1,6 +1,6 @@
 // A new run sends its sampling period, so the corpus is not one recent week.
 import assert from "node:assert/strict";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 
 const browser = await chromium.launch({
   headless: true,
@@ -25,6 +25,9 @@ try {
   });
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.locator(".run-settings summary").click();
+  await expect(page.locator(".run-settings")).toContainText(
+    "Hosted collections use CC0 or CC BY photos and metadata",
+  );
   await page.getByLabel("Photographed on or after").fill("2015-01-01");
   const start = page.getByRole("button", { name: /Start bounded run/ });
   const before = page.getByLabel("Photographed on or before");

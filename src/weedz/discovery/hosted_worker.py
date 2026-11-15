@@ -79,6 +79,10 @@ async def serve_worker(
                     graceful_shutdown_timeout=timedelta(seconds=30),
                     on_fatal_error=fatal,
                 ):
-                    await heartbeat(client, connection, health_file, identity, stop)
+                    try:
+                        await heartbeat(client, connection, health_file, identity, stop)
+                    finally:
+                        # Revoke acceptance before Worker.__aexit__ begins graceful draining.
+                        clear_worker_health(health_file, identity)
     finally:
         clear_worker_health(health_file, identity)
