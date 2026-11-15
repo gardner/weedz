@@ -8,6 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from temporalio.client import Client
+from temporalio.service import RPCError
 from temporalio.worker import Worker
 
 from weedz.discovery.activities import Activities
@@ -17,6 +18,7 @@ from weedz.discovery.workflow_health import clear_worker_health, publish_worker_
 from weedz.discovery.workflows import DiscoveryWorkflow
 
 HOSTED_LICENCES = frozenset({"cc0", "cc-by"})
+MAX_HEALTH_FAILURES = 3
 
 
 def preflight_models(activities: Activities) -> None:
@@ -36,14 +38,29 @@ async def heartbeat(
     identity: str,
     stop: asyncio.Event,
 ) -> None:
-    while not stop.is_set():
-        if not await client.service_client.check_health(timeout=timedelta(seconds=2)):
-            raise RuntimeError("Temporal service became unavailable")
-        publish_worker_health(health_file, connection, identity)
-        try:
-            await asyncio.wait_for(stop.wait(), timeout=5)
-        except TimeoutError:
-            continue
+    failures = 0
+    try:
+        while not stop.is_set():
+            try:
+                healthy = await client.service_client.check_health(timeout=timedelta(seconds=2))
+            except (RPCError, TimeoutError):
+                healthy = False
+            if stop.is_set():
+                break
+            if healthy:
+                failures = 0
+                publish_worker_health(health_file, connection, identity)
+            else:
+                clear_worker_health(health_file, identity)
+                failures += 1
+                if failures >= MAX_HEALTH_FAILURES:
+                    raise RuntimeError(f"Temporal health failed {failures} consecutive checks")
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=5)
+            except TimeoutError:
+                continue
+    finally:
+        clear_worker_health(health_file, identity)
 
 
 async def serve_worker(
