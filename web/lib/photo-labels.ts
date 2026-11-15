@@ -16,7 +16,7 @@ export function watchlistHint(
   labels: Record<string, string> = {},
 ): string {
   if (!scores.best_species) return "Awaiting screening";
-  if (!labels[scores.best_species]) return "Unrecognized watchlist comparison";
+  if (!Object.hasOwn(labels, scores.best_species)) return "Unrecognized watchlist comparison";
   if (!declared) return "Screening result has no declared interpretation";
   if (typeof scores.margin !== "number" || !Number.isFinite(scores.margin))
     return "Screening comparison unavailable";

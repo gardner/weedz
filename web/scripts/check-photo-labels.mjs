@@ -37,3 +37,7 @@ assert.equal(
   watchlistHint({ best_species: "Unknown species", margin: 0.99 }, true, names),
   "Unrecognized watchlist comparison",
 );
+assert.equal(
+  watchlistHint({ best_species: "toString", margin: 0.99 }, true, names),
+  "Unrecognized watchlist comparison",
+);
