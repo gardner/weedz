@@ -146,3 +146,49 @@ def test_batch_catalogue_and_track_receipts_share_requested_duration(
         assert entry["requested_seconds"] == seconds
         assert entry["duration_policy"].startswith(f"{seconds:g}-second upper bounds;")
         assert all(track["requested_seconds"] == seconds for track in entry["tracks"])
+
+
+def test_preset_changes_during_model_load_and_between_takes_cannot_change_provenance(
+    tmp_path, monkeypatch
+):
+    import hashlib
+
+    original_bytes = PRESETS.read_bytes()
+    original = json.loads(original_bytes)
+    source = tmp_path / "presets.json"
+    source.write_bytes(original_bytes)
+    snapshot = tmp_path / "model"
+    snapshot.mkdir()
+    (snapshot / "LICENSE").write_text("Test fixture licence")
+    changed = [dict(item) for item in original]
+    changed[0]["prompt"] = "Different later preset"
+
+    def load():
+        source.write_text(json.dumps(changed))
+        return object(), snapshot
+
+    digest = hashlib.sha256(original_bytes).hexdigest()
+    prompts = []
+
+    def render(_pipeline, seconds, seed, output, prompt, extra):
+        assert extra["preset_file_sha256"] == digest
+        prompts.append(prompt)
+        changed[0]["prompt"] = f"Changed again between takes {seed}"
+        source.write_text(json.dumps(changed))
+        return {
+            **extra,
+            "output": output.name,
+            "prompt": prompt,
+            "seed": seed,
+            "requested_seconds": seconds,
+            "actual_seconds": seconds / 2,
+        }
+
+    monkeypatch.setattr(music, "load_pipeline", load)
+    monkeypatch.setattr(music, "render_take", render)
+    folder = tmp_path / "auditions"
+    music.generate_batch(60, folder, source)
+    assert prompts == [item["prompt"] for item in original]
+    assert (folder / "presets.json").read_bytes() == original_bytes
+    index = json.loads((folder / "index.json").read_text())
+    assert all(track["preset_file_sha256"] == digest for track in index["tracks"])

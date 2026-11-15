@@ -182,7 +182,11 @@ def generate(seconds: float, seed: int, output: Path) -> None:
 
 
 def load_presets(path: Path) -> list[dict[str, Any]]:
-    items = json.loads(path.read_text())
+    return load_presets_bytes(path.read_bytes())
+
+
+def load_presets_bytes(raw: bytes) -> list[dict[str, Any]]:
+    items = json.loads(raw.decode("utf-8"))
     if not isinstance(items, list) or len(items) != 10:
         raise ValueError("Provide exactly ten audition presets")
     names, seeds, prompts = set(), set(), set()
@@ -278,7 +282,9 @@ def write_catalog(
 
 
 def generate_batch(seconds: float, folder: Path, preset_file: Path) -> None:
-    presets = load_presets(preset_file)
+    preset_bytes = preset_file.read_bytes()
+    preset_sha256 = hashlib.sha256(preset_bytes).hexdigest()
+    presets = load_presets_bytes(preset_bytes)
     outputs = [folder / f"{item['name']}.wav" for item in presets]
     for item, output in zip(presets, outputs, strict=True):
         validate_request(seconds, item["seed"], output)
@@ -289,7 +295,7 @@ def generate_batch(seconds: float, folder: Path, preset_file: Path) -> None:
             raise FileExistsError(f"Refusing to overwrite {path}")
     pipeline, snapshot = load_pipeline()
     folder.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(preset_file, folder / "presets.json")
+    (folder / "presets.json").write_bytes(preset_bytes)
     records: list[dict[str, Any]] = []
     write_catalog(folder, records, presets, seconds)
     shutil.copyfile(snapshot / "LICENSE", folder / "LICENSE.txt")
@@ -305,7 +311,7 @@ def generate_batch(seconds: float, folder: Path, preset_file: Path) -> None:
                 "title": item["title"],
                 "percussion_requested": item["percussion"],
                 "variation": item["variation"],
-                "preset_file_sha256": hashlib.sha256(preset_file.read_bytes()).hexdigest(),
+                "preset_file_sha256": preset_sha256,
                 "batch_position": len(records) + 1,
                 "batch_total": len(presets),
             },
