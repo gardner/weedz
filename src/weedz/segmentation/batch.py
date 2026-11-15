@@ -67,10 +67,14 @@ def _samples(raw: bytes, media_root: Path) -> list[Sample]:
 
 def _image(sample: Sample, media_root: Path) -> Image.Image:
     # Hash and decode the SAME bytes: a concurrent replacement cannot inherit attribution.
-    with Image.open(io.BytesIO(_image_bytes(sample, media_root))) as image:
-        if image.width * image.height > MAX_SOURCE_PIXELS:
-            raise ValueError("Sample image exceeds pixel cap")
-        upright = ImageOps.exif_transpose(image).convert("RGB")
+    raw = _image_bytes(sample, media_root)
+    try:
+        with Image.open(io.BytesIO(raw)) as image:
+            if image.width * image.height > MAX_SOURCE_PIXELS:
+                raise ValueError("Sample image exceeds pixel cap")
+            upright = ImageOps.exif_transpose(image).convert("RGB")
+    except SyntaxError as error:
+        raise ValueError("Sample image cannot be decoded") from error
     if (sample.media.width, sample.media.height) != upright.size:
         raise ValueError("Sample dimensions differ from upright pixels")
     return upright
@@ -193,7 +197,7 @@ def _publish(
     config: ProposalConfig,
     manifest_sha: str,
 ) -> dict[str, Any]:
-    version = "sam2.1-tiny-proposals-batch-v1:" + digest(
+    version = "canonical-proposals-batch-v1:" + digest(
         {
             "provenance": proposer.metadata,
             "configuration": asdict(config),

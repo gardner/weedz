@@ -294,3 +294,25 @@ def test_sparse_unrepresentable_mask_is_one_failed_photo_not_a_stalled_batch(tmp
 
     result = propose_batch(manifest, manifest.parent, tmp_path / "out", Sparse())
     assert result["counts"] == {"ok": 1, "empty": 0, "failed": 1}
+
+
+def test_generic_proposer_identity_does_not_claim_sam2(tmp_path):
+    manifest, _ = source(tmp_path)
+    proposer = Proposer()
+    proposer.metadata = {"model": "different-real-proposer", "checkpoint": "another-pin"}
+    summary = propose_batch(manifest, manifest.parent, tmp_path / "out", proposer)
+    assert summary["model_version"].startswith("canonical-proposals-batch-v1:")
+    assert "sam2" not in summary["model_version"]
+
+
+def test_malformed_exif_is_failed_without_stopping_later_photo(tmp_path):
+    manifest, image = source(tmp_path)
+    healthy = json.loads(manifest.read_text())
+    damaged = image.with_name("malformed.png")
+    Image.new("RGB", (64, 64), "green").save(damaged, exif=b"not a TIFF header")
+    bad = json.loads(manifest.read_text())
+    bad.update(id="test:bad", source_id="bad")
+    bad["media"].update(uri=str(damaged), sha256=hashlib.sha256(damaged.read_bytes()).hexdigest())
+    manifest.write_text(json.dumps(bad) + "\n" + json.dumps(healthy) + "\n")
+    summary = propose_batch(manifest, manifest.parent, tmp_path / "out", Proposer())
+    assert summary["counts"] == {"ok": 1, "empty": 0, "failed": 1}
