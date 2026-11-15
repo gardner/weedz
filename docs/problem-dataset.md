@@ -3,7 +3,7 @@
 Written 15 November 2026. Weedz has three problems to solve, in order:
 
 1. **Dataset** (this document): no dataset shows where weeds appear in real NZ photos.
-2. **Detection:** we can't yet find weeds reliably in photos that weren't taken of weeds.
+2. **[Pipeline](problem-pipeline.md):** we can't yet turn a pile of photos into a short, trustworthy list of weed finds.
 3. **Reach:** weeds that are found don't reach the people who deal with them.
 
 The dataset comes first. Without it we can't train a model for problem 2, and we can't measure whether one works.

@@ -28,6 +28,8 @@ discovery workflow, pilot scope, and product success criteria.
 
 The [dataset problem statement](docs/problem-dataset.md) explains the first of
 the project's three problems: no dataset shows where weeds appear in real NZ photos.
+The [pipeline problem statement](docs/problem-pipeline.md) covers the second: turning
+a pile of photos into a short, trustworthy list of weed finds.
 
 See [Datasets, curation, and detection methods](docs/datasets.md) for the source
 shortlist, the implemented pipeline, and proposed processing paths for each
