@@ -76,6 +76,26 @@ def classifier_runtime(metadata: dict[str, Any]) -> dict[str, Any]:
     return {"status": "recorded", **{key: classifier[key] for key in fields}}
 
 
+def classifier_numerics(classifier: dict[str, Any]) -> dict[str, Any]:
+    """Bind recorded numeric policies without inventing absent historical declarations."""
+    result = {}
+    if "numpy" in classifier:
+        value = classifier["numpy"]
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("Classifier NumPy version must be nonblank")
+        result["numpy"] = value
+    if "math_policy" in classifier:
+        policy = classifier["math_policy"]
+        if (
+            not isinstance(policy, dict)
+            or set(policy) != {"cuda_matmul_tf32", "cudnn_tf32", "autocast"}
+            or any(type(value) is not bool for value in policy.values())
+        ):
+            raise ValueError("Invalid classifier math policy")
+        result["math_policy"] = policy
+    return result
+
+
 def _fields(metadata: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
     if any(key not in metadata or metadata[key] is None for key in fields):
         raise ValueError("Incomplete semantic pipeline metadata")
@@ -121,6 +141,7 @@ def shared_regional_version(metadata: dict[str, Any]) -> dict[str, Any]:
         if runtime["status"] == "recorded"
         else {}
     )
+    optional.update(classifier_numerics(classifier))
     semantic = {
         "classifier": {**_fields(classifier, CLASSIFIER_FIELDS), **optional},
         "proposer": normalized_proposer,

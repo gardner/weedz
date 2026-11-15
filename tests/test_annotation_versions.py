@@ -97,6 +97,28 @@ def test_recorded_transform_runtime_versions_change_shared_identity():
     assert shared_regional_version(recorded)["sha256"] != shared_regional_version(changed)["sha256"]
 
 
+def test_recorded_numerics_change_identity_without_rewriting_historical_semantics():
+    classifier, proposer = metadata()
+    historical = {"classifier": classifier, "proposer": proposer}
+    old = shared_regional_version(historical)
+    recorded = deepcopy(historical)
+    recorded["classifier"].update(
+        numpy="2.5.4",
+        math_policy={"cuda_matmul_tf32": False, "cudnn_tf32": False, "autocast": False},
+    )
+    new = shared_regional_version(recorded)
+    assert new["sha256"] != old["sha256"]
+    changed = deepcopy(recorded)
+    changed["classifier"]["numpy"] = "1.26.4"
+    assert shared_regional_version(changed)["sha256"] != new["sha256"]
+    changed = deepcopy(recorded)
+    changed["classifier"]["math_policy"]["cuda_matmul_tf32"] = True
+    assert shared_regional_version(changed)["sha256"] != new["sha256"]
+    assert "math_policy" not in old["semantic"]["classifier"]
+    assert "numpy" not in old["semantic"]["classifier"]
+    assert shared_regional_version(historical) == old
+
+
 @pytest.mark.parametrize("pins", [{"pillow": "13"}, {"pillow": "", "torchvision": "0.30"}])
 def test_partial_or_blank_runtime_declarations_are_refused(pins):
     classifier, proposer = metadata()
