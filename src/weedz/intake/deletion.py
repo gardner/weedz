@@ -44,12 +44,12 @@ class DeletionReceipt:
 
 
 class Deletions:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, sqlite_busy_seconds: float = 5) -> None:
         # Imported here because ReportStore also uses the schema and barrier above.
         from weedz.intake.store import ReportStore
 
-        self.store = ReportStore(root)
-        self.submitters = Submitters(root)
+        self.store = ReportStore(root, sqlite_busy_seconds)
+        self.submitters = Submitters(root, sqlite_busy_seconds)
 
     def started(self, submitter: int) -> bool:
         with self.store._transaction() as db:
@@ -86,6 +86,9 @@ class Deletions:
                 (row["requested_at"], submitter),
             )
             db.execute("DELETE FROM usage WHERE submitter=?", (submitter,))
+            db.execute("DELETE FROM image_attempts WHERE submitter=?", (submitter,))
+            db.execute("DELETE FROM admissions WHERE submitter=?", (submitter,))
+            db.execute("DELETE FROM pending_report_erasures WHERE submitter=?", (submitter,))
             # Crashed uploads can leave crops without any committed owner row. Sweep
             # them under the same writer lock before claiming that erasure completed.
             self.store._sweep(db)

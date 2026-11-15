@@ -48,12 +48,12 @@ def bearer(request: Request) -> str:
     return token.strip() if scheme.lower() == "bearer" else ""
 
 
-def connect_private(path: Path, schema: str) -> sqlite3.Connection:
+def connect_private(path: Path, schema: str, timeout_seconds: float = 5) -> sqlite3.Connection:
     """A database only its owner can read, created that way from the start."""
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
         os.close(os.open(path, os.O_CREAT | os.O_WRONLY, 0o600))
-    db = sqlite3.connect(path)
+    db = sqlite3.connect(path, timeout=timeout_seconds)
     db.row_factory = sqlite3.Row
     db.executescript(schema)
     return db
