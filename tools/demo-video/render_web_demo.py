@@ -10,7 +10,7 @@ from pathlib import Path
 from demo_evidence import photo_record, verified_photo_bytes
 from demo_frames import configure_fonts
 from demo_integrity import checked_files
-from demo_timeline import caption_cues, load_timeline, narration_master, srt
+from demo_timeline import caption_cues, load_timeline, narration_master, portable_timeline, srt
 from render_demo import encode_picture, validate_credit_font
 from web_demo_frames import WebsiteFrames
 
@@ -203,7 +203,7 @@ def _render(
         "real model mask overlays, captions and editorial composition. No pan or zoom.",
     }
     (output / "credits.json").write_text(json.dumps(credits, ensure_ascii=False, indent=2) + "\n")
-    portable_scenes = [{**s, "audio": Path(s["audio"]).name} for s in scenes]
+    portable_scenes = portable_timeline(scenes)
     (output / "timeline.json").write_text(json.dumps(portable_scenes, indent=2) + "\n")
     hashes = {
         p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in output.iterdir() if p.is_file()

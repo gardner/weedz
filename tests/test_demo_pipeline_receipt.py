@@ -158,3 +158,39 @@ def test_same_hash_files_do_not_authorize_different_source_or_model(tmp_path, fi
     (tmp_path / "capture-manifest.json").write_text(json.dumps(proof))
     with pytest.raises(ValueError, match="saved evidence"):
         renderer.validate_pipeline_capture(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "override", ["/home/private/alternate-take.wav", r"C:\Users\private\alternate-take.wav"]
+)
+def test_published_v3_timeline_sanitizes_absolute_audio_overrides(tmp_path, monkeypatch, override):
+    from argparse import Namespace
+
+    renderer = importlib.import_module("render_web_demo")
+    pipeline_dir = tmp_path / "pipeline"
+    pipeline_dir.mkdir()
+    proof = completed_pipeline(pipeline_dir)
+    proof["description"] = "Technical serializer test fixture"
+    scenes = [{"audio": "/home/private/resolved-take.wav", "audio_file": override}]
+    monkeypatch.setattr(renderer, "load_timeline", lambda *_: scenes)
+    monkeypatch.setattr(renderer, "caption_cues", lambda *_: [])
+    monkeypatch.setattr(renderer, "narration_master", lambda *_: None)
+    monkeypatch.setattr(renderer, "WebsiteFrames", lambda *_: None)
+    monkeypatch.setattr(renderer, "encode_picture", lambda *_: None)
+    transcript = tmp_path / "transcript.json"
+    transcript.write_text('{"scenes": []}')
+    font = tmp_path / "font.ttf"
+    font.write_bytes(b"serializer-only fixture; no font rendering")
+    args = Namespace(
+        script=Path("unused"),
+        audio=Path("unused"),
+        transcript=transcript,
+        credit_font=font,
+        ffmpeg=Path("unused"),
+    )
+    output = tmp_path / "published"
+    renderer._render(args, output, proof, pipeline_dir, Path("unused"), {"photos": []})
+    published = json.loads((output / "timeline.json").read_text())
+    assert published[0]["audio_file"] == "alternate-take.wav"
+    assert published[0]["audio"] == "resolved-take.wav"
+    assert scenes[0]["audio_file"] == override
