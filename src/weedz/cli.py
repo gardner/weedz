@@ -8,6 +8,8 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+from weedz.provenance import fetch_dataset, verify_dataset
+
 logger = logging.getLogger("weedz")
 
 
@@ -54,7 +56,6 @@ def main() -> None:
     if run_tool(sys.argv[1:]):
         return
     from weedz.pipeline import run_pipeline
-    from weedz.provenance import fetch_dataset, verify_dataset
 
     parser = argparse.ArgumentParser(description="Leafy Spurge baseline and offline review map")
     parser.add_argument("command", nargs="?", choices=("fetch", "run"), default="run")
