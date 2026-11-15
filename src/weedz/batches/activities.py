@@ -1,5 +1,6 @@
 """Versioned model and publication activities over exact canonical sample artifacts."""
 
+import fcntl
 import hashlib
 import json
 from collections.abc import Callable
@@ -186,8 +187,28 @@ class BatchActivities:
             reference["sha256"],
             heartbeat=lambda: activity.heartbeat("verifying publication"),
         )
-        result = self.publisher(package, context.request["project_id"])
-        receipt = write_receipt(self.root, f"{context.namespace}/publication.json", result)
+        relative = f"{context.namespace}/publication.json"
+        target = self.root / relative
+        with (target.parent / ".publication.lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            if target.exists():
+                result = json.loads(read_owned_file(target, self.root, 1024 * 1024))
+                if (
+                    result.get("schema") != 1
+                    or result.get("project_id") != context.request["project_id"]
+                    or result.get("package_sha256") != package.sha256
+                    or type(result.get("human_annotation_writes")) is not int
+                    or result["human_annotation_writes"] != 0
+                    or any(
+                        type(result.get(key)) is not int or result[key] < 0
+                        for key in ("tasks", "new_tasks", "new_predictions")
+                    )
+                    or result["tasks"] != len(package.tasks)
+                ):
+                    raise ValueError("Existing publication receipt has conflicting provenance")
+            else:
+                result = self.publisher(package, context.request["project_id"])
+            receipt = write_receipt(self.root, relative, result)
         return Computed(receipt, "temporal-activity")
 
     @activity.defn
