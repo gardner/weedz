@@ -51,3 +51,24 @@ def test_segmentation_specific_source_cap_does_not_discard_readable_baseline(tmp
     assert result["margin"] == 0.12
     assert result["segmentation"]["status"] == "failed"
     assert result["segmentation"]["failure_type"] == "ValueError"
+
+
+def test_prepared_upright_pixels_do_not_reapply_compressed_source_limit(tmp_path, monkeypatch):
+    import numpy as np
+
+    from weedz.segmentation import regions
+
+    original, derived = tmp_path / "original.jpg", tmp_path / "derived.png"
+    Image.fromarray(np.random.default_rng(1).integers(0, 256, (32, 32, 3), dtype=np.uint8)).save(
+        original, quality=10
+    )
+    pixels = regions.upright(original)
+    pixels.info.clear()
+    pixels.save(derived)
+    limit = (original.stat().st_size + derived.stat().st_size) // 2
+    monkeypatch.setattr(regions, "MAX_SOURCE_BYTES", limit)
+    assert original.stat().st_size < limit < derived.stat().st_size
+    pixels = regions.upright(original)
+    screen = SegmentedScreen(Baseline(), Proposer(), ProposalConfig())
+    assert screen.screen(derived)["segmentation"]["status"] == "failed"
+    assert screen.screen_prepared(derived, pixels)["segmentation"]["status"] == "empty"

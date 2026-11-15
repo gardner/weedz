@@ -92,7 +92,7 @@ def main() -> None:
         store.save_photos(run_id, [photo])
         proposer.torch.cuda.reset_peak_memory_stats() if args.device.startswith("cuda") else None
         start = time.monotonic()
-        scores = screener.screen(destination, subject_label(photo.model_dump()))
+        scores = screener.screen_prepared(destination, pixels, subject_label(photo.model_dump()))
         store.score(run_id, photo.id, scores)
         measurements.append(
             {

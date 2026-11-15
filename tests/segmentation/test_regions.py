@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from PIL import Image
 
 from weedz.segmentation.regions import ProposalConfig, proposals, upright
@@ -63,8 +64,6 @@ def test_retained_views_are_bounded_and_transform_provenance_is_explicit():
 
 
 def test_nonfinite_quality_and_zero_sized_masks_are_refused():
-    import pytest
-
     for mask, quality in [(np.ones((8, 8), bool), float("nan")), (np.zeros((0, 8), bool), 0.9)]:
         with pytest.raises(ValueError):
             proposals(
@@ -72,3 +71,28 @@ def test_nonfinite_quality_and_zero_sized_masks_are_refused():
                 [{"segmentation": mask, "predicted_iou": quality, "stability_score": 0.95}],
                 ProposalConfig(),
             )
+
+
+def test_real_thumbnail_rounding_keeps_valid_panorama_masks():
+    image = Image.new("RGB", (6000, 700))
+    thumbnail = image.copy()
+    thumbnail.thumbnail((768, 768))
+    assert thumbnail.size == (768, 90)
+    mask = np.ones((90, 768), dtype=bool)
+    regions = proposals(
+        image,
+        [{"segmentation": mask, "predicted_iou": 0.9, "stability_score": 0.95}],
+        ProposalConfig(),
+    )
+    assert len(regions) == 1
+    assert regions[0].box == (0, 0, 6000, 700)
+
+
+def test_portrait_thumbnail_rounding_is_valid_but_distorted_masks_are_not():
+    raw = [
+        {"segmentation": np.ones((768, 90), bool), "predicted_iou": 0.9, "stability_score": 0.95}
+    ]
+    assert len(proposals(Image.new("RGB", (700, 6000)), raw, ProposalConfig())) == 1
+    raw[0]["segmentation"] = np.ones((64, 64), bool)
+    with pytest.raises(ValueError, match="aspect ratios"):
+        proposals(Image.new("RGB", (700, 6000)), raw, ProposalConfig())

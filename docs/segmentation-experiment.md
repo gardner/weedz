@@ -30,7 +30,10 @@ the proposal image to at most 768 pixels per side; uses an 8×8 point grid, batc
 no extra crop layers and no optional CUDA connected-component postprocessing.
 Retain at most 12 masks of at least 16 thumbnail pixels, sorted by predicted mask
 IoU. Exact duplicates are removed; overlapping/nested regions remain available.
-Source files are limited to 20 MB / 40 MP. Retained BioCLIP views are also capped at 768
+Compressed source files are limited to 20 MB / 40 MP. The CLI reuses the exact
+upright RGB pixels it saved as lossless PNG, so expansion of that derivative does
+not incorrectly reapply the compressed-file cap. Prepared pixels retain the 40 MP
+bound; direct file callers still have the 20 MB cap. Retained BioCLIP views are also capped at 768
 pixels per side. These are experiment caps, not evidence of adequate small-plant
 recall. Masks are lossless translucent PNGs aligned to the whole upright image.
 

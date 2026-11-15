@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image, ImageOps
 
 REVISION = 1
+MAX_SOURCE_BYTES = 20_000_000
 MAX_SOURCE_PIXELS = 40_000_000
 
 
@@ -38,7 +39,7 @@ def cache_key(image: bytes, checkpoint: str, config: ProposalConfig) -> str:
 
 
 def upright(path: Path) -> Image.Image:
-    if path.stat().st_size > 20_000_000:
+    if path.stat().st_size > MAX_SOURCE_BYTES:
         raise ValueError("Source exceeds 20 MB experiment limit")
     with Image.open(path) as source:
         if source.width * source.height > MAX_SOURCE_PIXELS:
@@ -118,7 +119,7 @@ def proposals(image: Image.Image, raw: list[dict], config: ProposalConfig) -> li
             raise ValueError("Nonfinite mask quality")
         if mask.ndim != 2 or min(mask.shape) < 1 or max(mask.shape) > config.max_side:
             raise ValueError("Mask exceeds configured geometry")
-        if abs(mask.shape[1] / mask.shape[0] - image.width / image.height) > 2 / min(mask.shape):
+        if abs(mask.shape[0] * image.width - mask.shape[1] * image.height) > max(image.size):
             raise ValueError("Mask and upright original have different aspect ratios")
         signature = hashlib.sha256(mask.tobytes()).digest()
         if int(mask.sum()) < config.min_area or signature in seen:
