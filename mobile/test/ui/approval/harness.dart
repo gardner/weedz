@@ -22,7 +22,11 @@ Report previewReport() => fullReport().copyWith(
 /// What the scan found: the fixture's crop and exact location.
 Findings fullFindings() {
   final report = previewReport();
-  return Findings(crop: report.image, location: report.location);
+  return Findings(
+    crop: report.image,
+    location: report.location,
+    credit: report.consent.credit,
+  );
 }
 
 /// A freshly found report: the photo's location, and no photo consent yet.

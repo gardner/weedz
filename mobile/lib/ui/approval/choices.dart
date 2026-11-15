@@ -21,10 +21,14 @@ const licenceLabels = {
 /// location with a known accuracy (#54).
 @immutable
 final class Findings {
-  const new({this.crop, this.location});
+  const new({this.crop, this.location, this.credit});
 
   final Crop? crop;
   final Location? location;
+
+  /// Locally retained attribution supplied by the person.
+  /// Sent only with a crop.
+  final String? credit;
 }
 
 /// The visible sharing choices. Null is accepted for older absent findings.
@@ -72,7 +76,6 @@ final class Choices {
     final place = (shareLocation ?? false) ? found.location : null;
     final licence_ = licence;
     final crop = (sendPhoto ?? false) && licence_ != null ? found.crop : null;
-    final consent = report.consent;
     // Each part goes with its consent (#60, #91); the domain refuses either
     // without the other.
     return Report(
@@ -91,7 +94,7 @@ final class Choices {
         // none is given (docs/report-consent.md).
         uses: crop == null ? const {} : const {'review'},
         licence: crop == null ? null : licence_,
-        credit: crop == null ? null : consent.credit,
+        credit: crop == null ? null : found.credit,
       ),
     );
   }

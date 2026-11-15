@@ -52,6 +52,9 @@ class SuggestionSection extends StatelessWidget {
         ExpansionTile(
           title: const Text('About this score'),
           children: [
+            Text('Model: ${report.model.modelKey}'),
+            Text('Model revision: ${report.model.revision}'),
+            Text('Ranking revision: ${report.model.rankingRevision}'),
             Text('Score meaning: $meaning'),
             for (final point in explanation.points)
               Padding(

@@ -89,9 +89,13 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
 
   /// What the person may choose from: the scan's findings, or failing that
   /// what the report already holds, so nothing shown is silently dropped.
-  Findings _merged() => Findings(
+  Findings _merged({Findings? previous}) => Findings(
     crop: widget.findings.crop ?? _case.report.image,
     location: widget.findings.location ?? _case.report.location,
+    credit:
+        widget.findings.credit ??
+        _case.report.consent.credit ??
+        previous?.credit,
   );
 
   MemoryImage? get _photo {
@@ -114,7 +118,7 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
     super.didUpdateWidget(oldWidget);
     final newCase = oldWidget.reportCase.id != widget.reportCase.id;
     if (newCase || !identical(oldWidget.findings, widget.findings)) {
-      _found = _merged();
+      _found = _merged(previous: newCase ? null : _found);
     }
     // Sending and settlement may coalesce into a single parent rebuild.
     // A new immutable settled case acknowledges work even at the same status.

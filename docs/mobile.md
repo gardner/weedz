@@ -275,7 +275,9 @@ found ─► pending ──approve──► approved ──send──► sending
   obvious removal control. Callers construct a fresh draft with no image and
   any available recorded location; pending is an approval status, not evidence
   that sharing choices are untouched. Reopening a pending draft preserves its
-  recorded location opt-out and chosen photo/licence. An optional photo requires
+  recorded location opt-out and chosen photo/licence. Persist original `Findings`
+  separately, including any supplied credit name: no-photo payloads omit that name,
+  but later attachment may restore it. Retained private choices never cross case IDs. An optional photo requires
   a successfully decoded preview and an explicitly chosen licence. A decoder failure removes the crop
   and undoes any approval; a no-photo report remains available. Frozen retries
   retain their original payload and consent version. The current wording is
