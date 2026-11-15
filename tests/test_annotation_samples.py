@@ -166,3 +166,28 @@ def test_regional_results_must_bind_the_exact_proposals(classified_batch, tmp_pa
             manifest, output, frame_results=frame, proposals=proposals, regional_results=regional
         )
     assert not output.exists()
+
+
+def test_frame_results_require_closed_manifest_binding(canonical_batch, tmp_path):
+    manifest, frame, _ = canonical_batch
+    document = json.loads(frame.read_text())
+    del document["manifest_sha256"]
+    frame.write_text(json.dumps(document))
+    output = tmp_path / "unbound"
+    with pytest.raises(ValueError, match="manifest checksum"):
+        export_samples(manifest, output, frame_results=frame)
+    assert not output.exists()
+
+
+def test_truncated_canonical_png_is_not_published(canonical_batch, tmp_path):
+    manifest, _, _ = canonical_batch
+    document = json.loads(manifest.read_text())
+    image = Path(document["media"]["uri"])
+    truncated = image.read_bytes()[:55]
+    image.write_bytes(truncated)
+    document["media"]["sha256"] = hashlib.sha256(truncated).hexdigest()
+    manifest.write_text(json.dumps(document) + "\n")
+    output = tmp_path / "truncated"
+    with pytest.raises(OSError):
+        export_samples(manifest, output)
+    assert not output.exists()

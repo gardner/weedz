@@ -22,7 +22,7 @@ PUBLIC = {"cc0", "cc0-1.0", "cc-by", "cc-by-3.0", "cc-by-4.0"}
 def _inputs(manifest: Path, frame_results: Path | None, proposals: Path | None) -> tuple:
     source_digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
     frames = json.loads(frame_results.read_text()) if frame_results else None
-    if frames and frames.get("manifest_sha256", source_digest) != source_digest:
+    if frames and frames.get("manifest_sha256") != source_digest:
         raise ValueError("Classifier input manifest checksum mismatch")
     frame_rows = {row["external_id"]: row for row in frames["predictions"]} if frames else {}
     if frames and len(frame_rows) != len(frames["predictions"]):
