@@ -15,11 +15,11 @@ def inputs(tmp_path, *, empty=False):
     sample = Sample.model_validate_json(manifest.read_text())
     config = Sam3Config(prompts=("plant",))
     mask = np.zeros((1, 32, 32), bool)
-    mask[:, 5:20, 7:22] = True
+    mask[:, 5:11, 7:25] = True
     records = concept_regions(
         Image.open(image),
         "plant",
-        {"masks": mask, "scores": np.array([0.8]), "boxes": np.array([[7, 5, 22, 20]])},
+        {"masks": mask, "scores": np.array([0.8]), "boxes": np.array([[7, 5, 25, 11]])},
         config,
     )["regions"]
     from dataclasses import asdict
@@ -43,11 +43,14 @@ def test_species_are_classified_from_real_masked_pixels_and_resume(tmp_path):
 
     class Inspect(Classifier):
         def predict(self, images, top_k=5):
-            assert images[0].size == (15, 15)
-            assert images[0].getpixel((0, 0)) == (0, 128, 0)
+            assert images[0].size == (18, 18)
+            assert images[0].getpixel((0, 0)) == (124, 116, 104)
+            assert images[0].getpixel((0, 9)) == (0, 128, 0)
+            assert images[0].getpixel((17, 9)) == (0, 128, 0)
             return super().predict(images, top_k)
 
     model = Inspect()
+    model.metadata = {**model.metadata, "preprocessing": {"input_size": (3, 518, 518)}}
     out = tmp_path / "regions.json"
     result = classify_region_batch(manifest, tmp_path, proposal, out, model, "sam3")
     assert classify_region_batch(manifest, tmp_path, proposal, out, model, "sam3") == result
@@ -56,6 +59,8 @@ def test_species_are_classified_from_real_masked_pixels_and_resume(tmp_path):
     assert classified["topk"] == classified["views"]["masked"]
     assert "mask_quality" not in classified and "annotations" not in result
     assert model.calls == 1
+    assert result["model"]["crop_geometry_revision"] == 2
+    assert result["model"]["masked_view_policy"]["padding"] == "centred square"
 
 
 def test_empty_segmentation_never_becomes_an_absence_label(tmp_path):
@@ -88,3 +93,31 @@ def test_missing_and_failed_segmentation_rows_are_rejected(tmp_path):
     proposal.write_text(json.dumps(row) + "\n")
     with pytest.raises(ValueError, match="completed"):
         classify_region_batch(manifest, tmp_path, proposal, tmp_path / "out", Classifier(), "sam3")
+
+
+@pytest.mark.parametrize("damage", ["wrong_box", "duplicate_id"])
+def test_explicit_legacy_cache_adoption_still_validates_source_masks(tmp_path, damage):
+    import hashlib
+
+    manifest, proposal, row = inputs(tmp_path)
+    out = tmp_path / "out"
+    cached = classify_region_batch(manifest, tmp_path, proposal, out, Classifier(), "sam3")
+    cached.pop("result_sha256")
+    if damage == "wrong_box":
+        row["segmentation"]["regions"][0]["box"] = [0, 0, 1, 1]
+    else:
+        row["segmentation"]["regions"].append(row["segmentation"]["regions"][0])
+        cached["predictions"][0]["regions"].append(cached["predictions"][0]["regions"][0])
+    proposal.write_text(json.dumps(row) + "\n")
+    cached["proposals_sha256"] = hashlib.sha256(proposal.read_bytes()).hexdigest()
+    out.write_text(json.dumps(cached))
+    with pytest.raises(ValueError, match="provenance|identities"):
+        classify_region_batch(
+            manifest,
+            tmp_path,
+            proposal,
+            out,
+            Classifier(),
+            "sam3",
+            verified_existing_sha256=hashlib.sha256(out.read_bytes()).hexdigest(),
+        )

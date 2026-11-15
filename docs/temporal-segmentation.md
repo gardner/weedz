@@ -142,6 +142,10 @@ contains `sample_id`, `image_sha256`, and `segmentation` with completed `status`
 `config`. The function reconstructs and validates masks and crop transforms, uses
 the masked crop as the fixed primary view, and preserves every source and region
 identity. It never broadcasts the frame prediction across different masks.
+The revision 2 regional policy centres the complete masked crop on a neutral square
+before the classifier transform, preserving the ends of elongated leaves and stems.
+The padding colour, policy and revision are part of the pipeline identity. Earlier
+unsquared operational comparisons remain historical results under their own versions.
 
 The output binds the manifest, exact proposal bytes, proposer settings, classifier
 pins, and crop policy. Empty segmentation remains an empty region list, rather than
@@ -149,6 +153,8 @@ an absence label. Incomplete or failed segmentation is rejected. A completed res
 is immutable and reusable across overlapping retries. Legacy operational outputs
 with a different header or policy require a separate, explicit audited adoption;
 a verified file SHA alone does not turn them into this new pipeline version.
+Cached regional adoption also restores the source-bound masks and validates their
+geometry and unique identities before accepting any scores.
 
 The SAM3 experiment classified 2,099 actual masked crops from the first 133 images
 using separately versioned plant, flower, yellow-flower, and leaf prompt profiles.
