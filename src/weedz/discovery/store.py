@@ -162,7 +162,11 @@ class Store:
 
     def status(self, run_id: str, status: str, detail: str = "") -> None:
         with self.connect() as db:
-            db.execute("UPDATE runs SET status=?, detail=? WHERE id=?", (status, detail, run_id))
+            db.execute(
+                "UPDATE runs SET status=?, detail=? WHERE id=? "
+                "AND status NOT IN ('completed', 'failed')",
+                (status, detail, run_id),
+            )
 
     def model(self, run_id: str, metadata: dict) -> None:
         with self.connect() as db:
@@ -233,8 +237,11 @@ class Store:
     def score(self, run_id: str, photo_id: str, scores: dict) -> None:
         with self.connect() as db:
             db.execute(
-                "UPDATE photos SET scores=?, screened_at=? WHERE run_id=? AND id=?",
-                (json.dumps(scores), now(), run_id, photo_id),
+                "UPDATE photos SET scores=CASE "
+                "WHEN json_type(scores, '$.segmentation') IS NOT NULL "
+                "THEN json_set(?, '$.segmentation', json_extract(scores, '$.segmentation')) "
+                "ELSE ? END, screened_at=? WHERE run_id=? AND id=?",
+                (json.dumps(scores), json.dumps(scores), now(), run_id, photo_id),
             )
 
     def review(

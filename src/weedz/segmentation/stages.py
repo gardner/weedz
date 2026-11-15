@@ -31,11 +31,26 @@ class PipelineStages:
         proposer: Callable[[], Proposer],
         screener: Callable[[str], Any],
         heartbeat: Callable[[str], None],
-        attempt: Callable[[], int],
         work: Callable[[Callable[[], Any], str], Any] = lambda action, _detail: action(),
     ) -> None:
         self.store, self.proposer, self.screener = store, proposer, screener
-        self.heartbeat, self.attempt, self.work = heartbeat, attempt, work
+        self.heartbeat, self.work = heartbeat, work
+
+    def _retry_photo(self, action: Callable[[], Any], detail: str) -> Any:
+        for attempt in range(3):
+            try:
+                return action()
+            except RETRYABLE:
+                if attempt == 2:
+                    raise
+                self.heartbeat(f"Retrying {detail}: attempt {attempt + 2} of 3")
+                time.sleep(0.1 * (attempt + 1))
+
+    def _generate(self, path: Path, proposer: Proposer) -> list:
+        image = upright(path)
+        return proposals(
+            image, self.work(lambda: proposer.generate(image), "SAM generation"), CONFIG
+        )
 
     def _photos(self, run_id: str) -> list[dict]:
         run = next(item for item in self.store.runs() if item["id"] == run_id)
@@ -74,11 +89,8 @@ class PipelineStages:
             start = time.monotonic()
             result: dict[str, Any] = {"regions": []}
             try:
-                image = upright(path)
-                regions = proposals(
-                    image,
-                    self.work(lambda image=image: proposer.generate(image), "SAM generation"),
-                    CONFIG,
+                regions = self._retry_photo(
+                    lambda path=path: self._generate(path, proposer), f"SAM photo {photo['id']}"
                 )
                 result.update(
                     status="ok" if regions else "empty",
@@ -87,12 +99,6 @@ class PipelineStages:
             except (ValueError, *RETRYABLE) as error:
                 result.update(status="failed", failure_type=type(error).__name__)
                 result = artifacts.write("proposals", photo["id"], inputs, result)
-                if (
-                    result["status"] == "failed"
-                    and isinstance(error, RETRYABLE)
-                    and self.attempt() < 3
-                ):
-                    raise
             result["elapsed_seconds"] = time.monotonic() - start
             result = artifacts.write("proposals", photo["id"], inputs, result)
             count["failed" if result["status"] == "failed" else "completed"] += 1
@@ -161,19 +167,10 @@ class PipelineStages:
         )
         if result["status"] == "ok":
             try:
-                regions = restored_regions(upright(path), result["regions"])
-                evidence["regions"] = [
-                    {
-                        **region.record(),
-                        "views": self.work(
-                            lambda region=region: identify_views(
-                                model, region.views, subject_label(photo)
-                            ),
-                            "BioCLIP region scoring",
-                        ),
-                    }
-                    for region in regions
-                ]
+                evidence["regions"] = self._retry_photo(
+                    lambda: self._classified_regions(path, result, model, photo),
+                    f"region classification {photo['id']}",
+                )
                 evidence["view_status"] = "ok"
             except (ValueError, *RETRYABLE) as error:
                 evidence["regions"] = [{**row, "views": {}} for row in result["regions"]]
@@ -181,24 +178,27 @@ class PipelineStages:
                     status="failed", view_status="failed", failure_type=type(error).__name__
                 )
                 evidence = artifacts.write("views", photo["id"], inputs, evidence)
-                if (
-                    evidence["status"] == "failed"
-                    and isinstance(error, RETRYABLE)
-                    and self.attempt() < 3
-                ):
-                    raise
         return artifacts.write("views", photo["id"], inputs, evidence)
+
+    def _classified_regions(self, path: Path, result: dict, model: Any, photo: dict) -> list:
+        regions = restored_regions(upright(path), result["regions"])
+        return [
+            {
+                **region.record(),
+                "views": self.work(
+                    lambda region=region: identify_views(model, region.views, subject_label(photo)),
+                    "BioCLIP region scoring",
+                ),
+            }
+            for region in regions
+        ]
 
     def _attach(self, run_id: str, photo_id: str, evidence: dict) -> None:
         with self.store.connect() as db:
-            row = db.execute(
-                "SELECT scores FROM photos WHERE run_id=? AND id=?", (run_id, photo_id)
-            ).fetchone()
-            scores = json.loads(row["scores"])
-            scores["segmentation"] = evidence
             db.execute(
-                "UPDATE photos SET scores=? WHERE run_id=? AND id=?",
-                (json.dumps(scores), run_id, photo_id),
+                "UPDATE photos SET scores=json_set(scores, '$.segmentation', json(?)) "
+                "WHERE run_id=? AND id=?",
+                (json.dumps(evidence), run_id, photo_id),
             )
 
     def summary(self, run_id: str) -> dict:
