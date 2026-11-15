@@ -8,6 +8,7 @@ from typing import Any
 
 from weedz.annotation.auto_labels import frame_prediction, regional_prediction
 from weedz.annotation.semantic import shared_regional_version
+from weedz.classification.regions import validate_region_scores
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,9 @@ def _regional(
         raise ValueError("Regional classifier and proposal identities disagree")
     pairs = [(regions[r["id"]], _masked_topk(r)) for r in classified]
     metadata = variant.document["model"]
+    if metadata.get("pipeline_name") == "WeedScan488":
+        for region in classified:
+            validate_region_scores(region, metadata)
     shared = shared_regional_version(metadata)
     return regional_prediction(
         pairs,

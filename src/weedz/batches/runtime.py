@@ -68,6 +68,10 @@ def prepare_config(
 
 def _custom_registry(config: dict) -> BatchRegistry | None:
     kind = config.get("classifier_kind", "plantclef")
+    if kind == "weedscan-ort-cpu-v1":
+        from weedz.batches.weedscan_runtime import registry_from_weedscan_config
+
+        return registry_from_weedscan_config(config)
     if kind == "aotearoa-onnx-cpu-v1":
         if config.get("cache_only") is True:
             raise ValueError("Aotearoa frame inference is not a cache-only adoption registry")
