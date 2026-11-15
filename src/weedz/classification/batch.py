@@ -266,10 +266,13 @@ def classify_batch(
     profile: Profile = "frame",
     *,
     verified_existing_sha256: str | None = None,
+    expected_manifest_sha256: str | None = None,
 ) -> dict:
     if profile not in {"frame", "tiles"}:
         raise ValueError("Unknown classification profile")
     manifest_sha = file_sha256(manifest)
+    if expected_manifest_sha256 is not None and manifest_sha != expected_manifest_sha256:
+        raise ValueError("Classification manifest checksum differs from its pinned input")
     samples = read_manifest(manifest, manifest_sha)
     if not 1 <= len(samples) <= 1000:
         raise ValueError("Use a nonempty batch of at most 1000 samples")

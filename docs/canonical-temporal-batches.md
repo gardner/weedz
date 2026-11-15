@@ -28,7 +28,12 @@ Run `prepare --root PATH --sam-checkpoint PATH --classifier-checkpoint PATH
 --labels PATH --device cuda:0`. Add `--proposer sam3 --prompts plant flower
 --concept-threshold 0.5` for SAM3. Preparation loads and records actual model,
 code, preprocessing and runtime metadata. Store its returned configuration
-reference with the source manifest. Choose the physical GPU through
+reference with the source manifest. Worker shutdown grants active activities sixty seconds to drain before SDK
+cancellation. Give a supervising unit a longer stop timeout. For a strict writer
+handoff, let the active publication finish and verify its lock is released; do
+not assume an arbitrarily long batch fits that grace window.
+
+Choose the physical GPU through
 `CUDA_VISIBLE_DEVICES`; SAM3 uses logical `cuda:0`.
 
 Start `worker --config PATH --roles control` and a resident
@@ -59,8 +64,7 @@ claims. Source JPEG context and canonical PNG identity are distinct.
 Use `adopt --root PATH --request PATH --proposer sam2` to prepare a cache-only
 configuration from an explicitly pinned request. Every selected cache is required
 and fully validated before configuration publication; a missing cache can never
-load a model. Start its workers with the returned configuration. Operator-wide
-corpus queueing and additional classifier registrations remain separate follow-ups;
+load a model. Start its workers with the returned configuration. Additional classifier registrations remain separate follow-ups;
 existing supervised bulk jobs are not retroactively Temporal executions.
 
 ## Publication boundary
@@ -136,3 +140,24 @@ workers stopped and the shared writer lock was released. This is the successful
 end-to-end SAM3 execution; it does not rewrite or erase the earlier failure.
 Evidence is `proof-sam3-fp32-final.json` and
 `history-sam3-fp32-completed.json` in the same outside-Git directory.
+
+## Historical corpus adoption evidence
+
+The 176 closed historical batches (17,509 unique canonical task identities) were
+validated and submitted as separate executions in namespace
+`weedz-bulk-adoption-144`. Every execution completed the six validation, adoption
+and packaging activities. All 704 model-stage receipts explicitly record
+`external-compute`; the four cache-only worker processes loaded neither libtorch
+nor CUDA libraries. This establishes actual Temporal adoption and packaging, not
+retroactive inference execution.
+
+Before publication, a read-only comparison checked all 70,036 expected existing
+model-version/result payloads: every payload matched, with no missing versions
+or conflicts. Publication was then enabled through one serialized worker. The
+pre-server-upgrade pause snapshot recorded 51 completed executions and 125 still
+waiting for publication, with no failed workflows. Exact workflow/run IDs and
+histories are retained under
+`/home/gardner/src/weedz-bulk-artifacts/20261115/temporal-adoption-148`, including
+`executions.json`, `proof-compute-package.json`, `publication-preflight.json` and
+`pre-server-cutover-status.json`. These counts describe that recorded pause; they
+are not a claim that the remaining publication activities have completed.

@@ -273,4 +273,63 @@ def test_actual_artifact_cap_rejection_becomes_an_explicit_failed_photo(tmp_path
     assert result["counts"] == {"ok": 0, "empty": 0, "failed": 1}
     row = json.loads((output / "proposals.jsonl").read_text())
     assert row["segmentation"]["failure_type"] == "ArtifactTooLarge"
+    assert row["segmentation"]["elapsed_seconds"] >= 0
     assert row["segmentation"]["regions"] == []
+
+
+def test_sparse_unrepresentable_mask_is_one_failed_photo_not_a_stalled_batch(tmp_path):
+    manifest, _ = source(tmp_path)
+    first = json.loads(manifest.read_text())
+    second = {**first, "id": "test:second", "source_id": "second"}
+    manifest.write_text(json.dumps(first) + "\n" + json.dumps(second) + "\n")
+
+    class Sparse(Proposer):
+        def generate(self, image):
+            if self.calls == 0:
+                self.calls += 1
+                mask = np.zeros((768, 768), bool)
+                mask[:4, :4] = True
+                return [{"segmentation": mask, "predicted_iou": 0.9, "stability_score": 0.9}]
+            return super().generate(image)
+
+    result = propose_batch(manifest, manifest.parent, tmp_path / "out", Sparse())
+    assert result["counts"] == {"ok": 1, "empty": 0, "failed": 1}
+
+
+def test_generic_proposer_identity_does_not_claim_sam2(tmp_path):
+    manifest, _ = source(tmp_path)
+    proposer = Proposer()
+    proposer.metadata = {"model": "different-real-proposer", "checkpoint": "another-pin"}
+    summary = propose_batch(manifest, manifest.parent, tmp_path / "out", proposer)
+    assert summary["model_version"].startswith("canonical-proposals-batch-v1:")
+    assert "sam2" not in summary["model_version"]
+
+
+def test_malformed_exif_is_failed_without_stopping_later_photo(tmp_path):
+    manifest, image = source(tmp_path)
+    healthy = json.loads(manifest.read_text())
+    damaged = image.with_name("malformed.png")
+    Image.new("RGB", (64, 64), "green").save(damaged, exif=b"not a TIFF header")
+    bad = json.loads(manifest.read_text())
+    bad.update(id="test:bad", source_id="bad")
+    bad["media"].update(uri=str(damaged), sha256=hashlib.sha256(damaged.read_bytes()).hexdigest())
+    manifest.write_text(json.dumps(bad) + "\n" + json.dumps(healthy) + "\n")
+    summary = propose_batch(manifest, manifest.parent, tmp_path / "out", Proposer())
+    assert summary["counts"] == {"ok": 1, "empty": 0, "failed": 1}
+
+
+def test_lazy_metadata_mutation_cannot_publish_unbound_provenance(tmp_path):
+    manifest, _ = source(tmp_path)
+
+    class Lazy(Proposer):
+        metadata = {"model": {"checkpoint": "before-preflight"}}
+
+        def generate(self, image):
+            self.metadata["model"]["checkpoint"] = "different-model"
+            return super().generate(image)
+
+    output = tmp_path / "out"
+    with pytest.raises(ValueError, match="metadata changed"):
+        propose_batch(manifest, manifest.parent, output, Lazy())
+    assert not (output / "ready.json").exists()
+    assert not list(output.rglob("*.proposals.json"))

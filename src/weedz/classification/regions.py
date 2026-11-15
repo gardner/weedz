@@ -140,6 +140,20 @@ def regional_metadata(model: Classifier, provenance: dict, proposer: Proposer) -
     return json.loads(json.dumps(metadata, allow_nan=False))
 
 
+def _check_expected_inputs(
+    manifest_sha: str,
+    proposals_sha: str,
+    expected_manifest: str | None,
+    expected_proposals: str | None,
+) -> None:
+    for name, actual, expected in (
+        ("manifest", manifest_sha, expected_manifest),
+        ("proposal", proposals_sha, expected_proposals),
+    ):
+        if expected is not None and actual != expected:
+            raise ValueError(f"Regional {name} checksum differs from its pinned input")
+
+
 def classify_region_batch(
     manifest: Path,
     media_root: Path,
@@ -149,6 +163,8 @@ def classify_region_batch(
     proposer: Proposer = "sam2",
     *,
     verified_existing_sha256: str | None = None,
+    expected_manifest_sha256: str | None = None,
+    expected_proposals_sha256: str | None = None,
 ) -> dict:
     """Classify closed JSONL proposals, preserving source and mask identities on retries."""
     if proposer not in {"sam2", "sam3"}:
@@ -159,6 +175,9 @@ def classify_region_batch(
     if len(encoded) > 128_000_000:
         raise ValueError("Proposal batch exceeds the resource cap")
     source_sha, manifest_sha = hashlib.sha256(encoded).hexdigest(), file_sha256(manifest)
+    _check_expected_inputs(
+        manifest_sha, source_sha, expected_manifest_sha256, expected_proposals_sha256
+    )
     samples, rows = _inputs(manifest, manifest_sha, encoded, media_root)
     if file_sha256(proposals) != source_sha or file_sha256(manifest) != manifest_sha:
         raise ValueError("Input provenance changed while reading")

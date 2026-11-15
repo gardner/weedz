@@ -8,6 +8,7 @@ import os
 import tempfile
 import time
 from collections.abc import Iterator
+from copy import deepcopy
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -67,10 +68,14 @@ def _samples(raw: bytes, media_root: Path) -> list[Sample]:
 
 def _image(sample: Sample, media_root: Path) -> Image.Image:
     # Hash and decode the SAME bytes: a concurrent replacement cannot inherit attribution.
-    with Image.open(io.BytesIO(_image_bytes(sample, media_root))) as image:
-        if image.width * image.height > MAX_SOURCE_PIXELS:
-            raise ValueError("Sample image exceeds pixel cap")
-        upright = ImageOps.exif_transpose(image).convert("RGB")
+    raw = _image_bytes(sample, media_root)
+    try:
+        with Image.open(io.BytesIO(raw)) as image:
+            if image.width * image.height > MAX_SOURCE_PIXELS:
+                raise ValueError("Sample image exceeds pixel cap")
+            upright = ImageOps.exif_transpose(image).convert("RGB")
+    except SyntaxError as error:
+        raise ValueError("Sample image cannot be decoded") from error
     if (sample.media.width, sample.media.height) != upright.size:
         raise ValueError("Sample dimensions differ from upright pixels")
     return upright
@@ -112,7 +117,12 @@ def _publish_sample(artifacts: StageArtifacts, sample_id: str, inputs: dict, res
             "proposals",
             sample_id,
             inputs,
-            {"status": "failed", "failure_type": "ArtifactTooLarge", "regions": []},
+            {
+                "status": "failed",
+                "failure_type": "ArtifactTooLarge",
+                "regions": [],
+                "elapsed_seconds": result["elapsed_seconds"],
+            },
         )
 
 
@@ -123,6 +133,7 @@ def _rows(
     proposer: Proposer,
     config: ProposalConfig,
     version: str,
+    metadata: dict,
 ) -> Iterator[dict]:
     artifacts = StageArtifacts(output, "real-sam-proposals")
     for sample in samples:
@@ -133,9 +144,10 @@ def _rows(
         }
         result = artifacts.read("proposals", sample.id, inputs)
         if result is None or result["status"] == "failed":
-            result = _publish_sample(
-                artifacts, sample.id, inputs, _result(sample, root, proposer, config)
-            )
+            computed = _result(sample, root, proposer, config)
+            if proposer.metadata != metadata:
+                raise ValueError("Proposer metadata changed; complete preflight before the batch")
+            result = _publish_sample(artifacts, sample.id, inputs, computed)
         yield {
             "schema": 1,
             "sample_id": sample.id,
@@ -147,7 +159,7 @@ def _rows(
                 "baseline_retained": False,
                 "proposal_status": result["status"],
                 "view_status": "not_requested",
-                "provenance": proposer.metadata,
+                "provenance": metadata,
                 **result,
             },
         }
@@ -197,9 +209,10 @@ def _publish(
     config: ProposalConfig,
     manifest_sha: str,
 ) -> dict[str, Any]:
-    version = "sam2.1-tiny-proposals-batch-v1:" + digest(
+    metadata = deepcopy(proposer.metadata)
+    version = "canonical-proposals-batch-v1:" + digest(
         {
-            "provenance": proposer.metadata,
+            "provenance": metadata,
             "configuration": asdict(config),
             "schema": 1,
         }
@@ -212,7 +225,7 @@ def _publish(
             raise ValueError("Closed batch provenance changed; use a new output namespace")
     checksum, counts = _stream_rows(
         output / "proposals.jsonl",
-        _rows(samples, root, output, proposer, config, version),
+        _rows(samples, root, output, proposer, config, version, metadata),
         ready=ready,
     )
     summary = {

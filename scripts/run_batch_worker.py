@@ -8,6 +8,7 @@ import signal
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import AsyncExitStack
+from datetime import timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -94,6 +95,7 @@ async def worker(args, config):
                         activities=[getattr(activities, name) for name in names],
                         activity_executor=executor,
                         max_concurrent_activities=1,
+                        graceful_shutdown_timeout=timedelta(seconds=60),
                     )
                 )
             print(json.dumps({"status": "polling", "roles": selected}), flush=True)

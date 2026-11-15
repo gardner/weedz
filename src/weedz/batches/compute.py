@@ -102,6 +102,7 @@ def classify(
         output,
         model,
         cast(Literal["frame", "tiles"], profile.kind),
+        expected_manifest_sha256=batch.sha256,
     )
     if not profile.matches(result["model"]):
         raise ValueError("Computed classifier method differs from its registered profile")
