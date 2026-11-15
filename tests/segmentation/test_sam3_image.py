@@ -339,3 +339,36 @@ def test_restoration_enforces_prompt_membership_and_each_prompt_cap(unknown_prom
         restore_concept_regions(
             encoded, records, config, expected_sha256=hashlib.sha256(encoded).hexdigest()
         )
+
+
+def test_restoration_enforces_combined_serialized_bytes_for_each_prompt():
+    import hashlib
+    import io
+
+    from weedz.segmentation.sam3_image import restore_concept_regions
+
+    image = Image.new("RGB", (8, 8))
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = buffer.getvalue()
+    masks = np.zeros((2, 1, 8, 8), bool)
+    masks[0, :, :4] = True
+    masks[1, :, 4:] = True
+    records = concept_regions(
+        image,
+        "plant",
+        {
+            "masks": masks,
+            "scores": np.array([0.9, 0.8]),
+            "boxes": np.array([[0, 0, 8, 8], [0, 0, 8, 8]]),
+        },
+        Sam3Config(),
+    )["regions"]
+    assert len(records) == 2
+    with pytest.raises(ValueError, match="byte"):
+        restore_concept_regions(
+            encoded,
+            records,
+            Sam3Config(max_regions=2, max_prompt_bytes=1000),
+            expected_sha256=hashlib.sha256(encoded).hexdigest(),
+        )

@@ -86,6 +86,10 @@ def _validated_output(
     return masks, scores, boxes
 
 
+def _region_bytes(record: dict) -> int:
+    return len(json.dumps(record, allow_nan=False).encode()) + 2
+
+
 def concept_regions(image: Image.Image, prompt: str, raw: dict, config: Sam3Config) -> dict:
     masks, scores, boxes = _validated_output(image, raw, config)
     height, width = masks.shape[1:]
@@ -115,7 +119,7 @@ def concept_regions(image: Image.Image, prompt: str, raw: dict, config: Sam3Conf
             ).tolist(),
             views={},
         )
-        size = len(json.dumps(region, allow_nan=False).encode()) + 2
+        size = _region_bytes(region)
         if retained_bytes + size > config.max_prompt_bytes:
             capped += 1
             byte_capped += 1
@@ -179,12 +183,7 @@ def _decoded_image(encoded: bytes) -> Image.Image:
         raise ValueError("Source exceeds the SAM3 pixel cap") from error
 
 
-def restore_concept_regions(
-    encoded: bytes, records: list[dict], config: Sam3Config, *, expected_sha256: str
-) -> list[Region]:
-    """Verify the envelope's exact source, decode once, then restore real crop pixels."""
-    if len(encoded) > MAX_SOURCE_BYTES or hashlib.sha256(encoded).hexdigest() != expected_sha256:
-        raise ValueError("SAM3 source checksum or byte cap mismatch")
+def _validate_records(records: list[dict], config: Sam3Config) -> None:
     if len(records) > config.max_regions * len(config.prompts):
         raise ValueError("SAM3 record count exceeds the declared prompt/profile budget")
     prompts = [record.get("prompt") for record in records]
@@ -192,6 +191,20 @@ def restore_concept_regions(
         raise ValueError("SAM3 record prompt is outside the declared profile")
     if max(Counter(prompts).values(), default=0) > config.max_regions:
         raise ValueError("SAM3 record count exceeds its per-prompt budget")
+    sizes = Counter()
+    for record in records:
+        sizes[record["prompt"]] += _region_bytes(record)
+    if any(size > config.max_prompt_bytes for size in sizes.values()):
+        raise ValueError("SAM3 records exceed the declared per-prompt byte budget")
+
+
+def restore_concept_regions(
+    encoded: bytes, records: list[dict], config: Sam3Config, *, expected_sha256: str
+) -> list[Region]:
+    """Verify the envelope's exact source, decode once, then restore real crop pixels."""
+    if len(encoded) > MAX_SOURCE_BYTES or hashlib.sha256(encoded).hexdigest() != expected_sha256:
+        raise ValueError("SAM3 source checksum or byte cap mismatch")
+    _validate_records(records, config)
     image = _decoded_image(encoded)
     return [_restore_geometry(image, record, config) for record in records]
 
