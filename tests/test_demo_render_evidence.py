@@ -92,6 +92,17 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
             }
         )
     )
+    (mobile / "live-capture.json").write_text(
+        json.dumps(
+            {
+                "captureSuccess": True,
+                "browser_errors": [],
+                "report_created_via_real_api": 201,
+                "stable_deletion_status": 200,
+                "upload_after_deletion": 401,
+            }
+        )
+    )
     renderer.validate_captures(
         Namespace(captures=produced_captures, mobile_captures=mobile, credit_font=credit_font)
     )
@@ -130,3 +141,32 @@ def test_failed_browser_capture_is_not_renderable(tmp_path, proof):
         (tmp_path / "web-capture.json").write_text(json.dumps(proof))
     with pytest.raises(ValueError, match="browser"):
         renderer.validate_browser_capture(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"captureSuccess": False},
+        {"browser_errors": ["Uncaught app failure"]},
+        {"browser_errors": None},
+        {"report_created_via_real_api": 200},
+        {"stable_deletion_status": 500},
+        {"upload_after_deletion": 201},
+    ],
+)
+def test_mobile_capture_requires_closed_error_free_real_api_evidence(tmp_path, change):
+    proof = {
+        "captureSuccess": True,
+        "browser_errors": [],
+        "report_created_via_real_api": 201,
+        "stable_deletion_status": 200,
+        "upload_after_deletion": 401,
+    }
+    (tmp_path / "live-capture.json").write_text(json.dumps(proof | change))
+    with pytest.raises(ValueError, match="Mobile browser capture"):
+        renderer.validate_mobile_capture(tmp_path)
+
+
+def test_missing_mobile_capture_receipt_is_not_renderable(tmp_path):
+    with pytest.raises(ValueError, match="Mobile browser capture"):
+        renderer.validate_mobile_capture(tmp_path)

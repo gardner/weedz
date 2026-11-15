@@ -5,6 +5,7 @@ import json
 import os
 import signal
 import socket
+import ssl
 import subprocess
 import time
 import uuid
@@ -20,13 +21,19 @@ def available_port() -> int:
         return int(listener.getsockname()[1])
 
 
-def ready(url: str, child: subprocess.Popen[bytes], instance: str) -> None:
+def ready(
+    url: str,
+    child: subprocess.Popen[bytes],
+    instance: str,
+    *,
+    context: ssl.SSLContext | None = None,
+) -> None:
     deadline = time.monotonic() + 40
     while time.monotonic() < deadline:
         if child.poll() is not None:
             raise RuntimeError(f"Owned capture server exited before readiness: {url}")
         try:
-            with urlopen(url, timeout=2) as response:
+            with urlopen(url, timeout=2, context=context) as response:
                 if response.status == 200:
                     if json.loads(response.read()) != {"capture_instance": instance}:
                         raise ValueError(f"Listener belongs to another capture instance: {url}")

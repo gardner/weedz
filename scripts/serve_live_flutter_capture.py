@@ -12,10 +12,26 @@ from pathlib import Path
 
 import uvicorn
 from demo_public_report import source_report
+from fastapi import FastAPI
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 
 from weedz.intake.api import create_intake_app
 from weedz.intake.submitters import Submitters
+
+
+def capture_app(intake: Path, web_build: Path, instance: str) -> FastAPI:
+    if not instance:
+        raise ValueError("Capture instance identity is required")
+    app = create_intake_app(intake)
+
+    async def identity(_request: Request) -> JSONResponse:
+        return JSONResponse({"capture_instance": instance})
+
+    app.add_route("/capture_identity", identity, methods=["GET"])
+    app.mount("/", StaticFiles(directory=web_build.resolve(), html=True))
+    return app
 
 
 def main() -> None:
@@ -23,6 +39,7 @@ def main() -> None:
     parser.add_argument("--web-build", type=Path, required=True)
     parser.add_argument("--source-pilot", type=Path, required=True)
     parser.add_argument("--private-state", type=Path, required=True)
+    parser.add_argument("--instance", required=True)
     args = parser.parse_args()
     state = args.private_state.resolve()
     state.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -63,8 +80,7 @@ def main() -> None:
         )
     )
     os.chmod(credential_file, 0o600)
-    app = create_intake_app(intake)
-    app.mount("/", StaticFiles(directory=args.web_build.resolve(), html=True))
+    app = capture_app(intake, args.web_build, args.instance)
     uvicorn.run(app, host="127.0.0.1", port=8443, ssl_keyfile=str(key), ssl_certfile=str(cert))
 
 
