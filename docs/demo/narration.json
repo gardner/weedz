@@ -5,55 +5,58 @@
     {
       "id": "scene-01",
       "start": 0,
-      "end": 12,
+      "end": 13,
       "visual": "A source-eligible ordinary photo; gently reveal background vegetation",
       "narration": "What else did this photograph capture? A bird, a walk, a day by the coast—and perhaps a plant worth a second look."
     },
     {
       "id": "scene-02",
-      "start": 12,
-      "end": 40,
+      "start": 13,
+      "end": 42,
       "visual": "Photo → overlapping windows → shortlist animation",
       "narration": "Weedz explores whether overlooked plants in everyday photographs can help people investigate invasive weeds. The screen examines the whole frame and overlapping smaller views, comparing them with a watchlist and lookalikes. Here, the targets include old man's beard, pampas and gorse. The result is a shortlist for a person—not an identification."
     },
     {
       "id": "scene-03",
-      "start": 40,
-      "end": 66,
+      "start": 42,
+      "end": 70,
       "visual": "Real review desk, image and candidate window; include a lookalike/false alarm",
       "narration": "Here is the real review desk. A specialist can examine the original photograph and the suggested region together. Native plants can resemble weeds, and a photograph may not show enough to decide. Reviewers record what the evidence supports. A model score orders the work; it is not a confidence percentage."
     },
     {
       "id": "scene-04",
-      "start": 66,
-      "end": 93,
-      "visual": "Running mobile app: review a real photo and its report controls",
-      "narration": "On the phone, keep control of what you share. Library access and individual report approval are separate choices. Inspect the photograph and the candidate before deciding. Then approve one report, with the information you choose to include. A suggestion is a starting point for your judgment."
+      "start": 70,
+      "end": 90,
+      "visual": "Explain the minimal report fields; keep the photograph on the device",
+      "audio_file": "scene-04-raw-v5.wav",
+      "narration": "Your photographs should stay on your phone. A sighting report can carry the suggested plant, the recorded location and its model score, without uploading a photo. Photo sharing is optional, with a licence chosen only when an image is attached."
     },
     {
       "id": "scene-05",
-      "start": 93,
-      "end": 116,
-      "visual": "Interact with actual approval controls; remove photo/location",
-      "narration": "Before approving, see what would be sent. Choose whether to attach a cropped photo, which licence applies, and whether to remove its exact location. The report shows uncertainty and credit. Finding a possible weed should not require sharing the rest of your photographs."
+      "start": 90,
+      "end": 111,
+      "visual": "Running app: real Settings deletion request and successful server response",
+      "audio_file": "scene-05-raw-v4.wav",
+      "narration": "Control continues after sharing. In Settings, request deletion from the connected intake. Here the running app calls the server, removes the device's reports and revokes its access. A late upload cannot restore the deleted data."
     },
     {
       "id": "scene-06",
-      "start": 116,
-      "end": 139,
+      "audio_file": "scene-06-raw-v4.wav",
+      "start": 111,
+      "end": 135,
       "visual": "Device → intake → specialist animation; connect to real review footage",
       "narration": "Approved reports follow a separate server intake, recording their source, model and consent. The intended workflow connects contributions with specialist review. Withdrawal matters too: the server removes report content and remembers that a late upload or retry must not bring it back."
     },
     {
       "id": "scene-07",
-      "start": 139,
-      "end": 161,
+      "start": 135,
+      "end": 157,
       "visual": "Current measured pilot facts and remaining work",
       "narration": "The pilot compared thirty photographs and thirty-nine source-labelled lookalike examples. These small samples revealed failures as well as promising suggestions. They do not establish a detection rate for everyone's library. The next proof is useful findings, checked by people, at a manageable review cost."
     },
     {
       "id": "scene-08",
-      "start": 161,
+      "start": 157,
       "end": 180,
       "visual": "Source/photo/audio credits and project URL",
       "narration": "Can an overlooked background become a reason to investigate? Weedz is open-source work for conservation. Help test the question, review the evidence, and build a careful path from an ordinary photograph to a useful lead."

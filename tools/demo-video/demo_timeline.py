@@ -13,8 +13,7 @@ def load_timeline(script: Path, audio: Path) -> list[dict[str, Any]]:
     previous_end = 0
     for index, scene in enumerate(scenes):
         filename = "breeze-intro-v1.wav" if index == 0 else f"scene-{index + 1:02}-raw-v3.wav"
-        if index == 5 and (audio / "scene-06-raw-v4.wav").exists():
-            filename = "scene-06-raw-v4.wav"
+        filename = scene.get("audio_file", filename)
         scene["audio"] = str(audio / filename)
         with wave.open(scene["audio"]) as source:
             if (source.getnchannels(), source.getsampwidth(), source.getframerate()) != (

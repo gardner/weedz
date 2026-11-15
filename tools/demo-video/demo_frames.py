@@ -36,13 +36,18 @@ def text(
 
 
 class Frames:
-    def __init__(self, captures: Path, ffmpeg: Path, fps: int, credit_font: Path) -> None:
+    def __init__(
+        self, captures: Path, ffmpeg: Path, fps: int, credit_font: Path, mobile_captures: Path
+    ) -> None:
         self.captures = captures
         self.ffmpeg = ffmpeg
         self.fps = fps
         self.credit_font = credit_font
+        self.mobile_captures = mobile_captures
         self.decoder: subprocess.Popen[bytes] | None = None
         self.last_web: Image.Image | None = None
+        self.mobile_decoder: subprocess.Popen[bytes] | None = None
+        self.last_mobile: Image.Image | None = None
         self.images: dict[str, Image.Image] = {}
 
     def image(self, relative: str) -> Image.Image:
@@ -130,20 +135,61 @@ class Frames:
             self.photo(canvas, "web-final/" + name, (192, 82, 1536, 864))
         return canvas
 
-    def phone(self, elapsed: float, approval: bool) -> Image.Image:
-        if approval:
-            states = ("photo", "choices", "approved")
-            filename = "flutter-approval-" + states[min(int(elapsed / 9), 2)] + ".png"
-            title = "Your library.\nYour decision."
-            details = "Library access\n\nIndividual report approval\n\nSeparate choices"
+    def report_summary(self, elapsed: float) -> Image.Image:
+        canvas = self.base("SHARE A SIGHTING")
+        text(canvas, (90, 145), "Report the sighting.\nKeep the photo.", 72, bold=True, width=32)
+        draw = ImageDraw.Draw(canvas)
+        for index, label in enumerate(("Suggested plant", "Recorded location", "Model score")):
+            y = 400 + index * 145
+            draw.rounded_rectangle((100, y, 1200, y + 106), radius=18, fill="#244f3e")
+            text(canvas, (135, y + 27), label, 35, ACCENT)
+        self.photo(canvas, "assets/gorse-reference.jpg", (1370, 180, 400, 650))
+        text(canvas, (1365, 860), "Photo stays local", 27, MUTED, width=25)
+        return canvas
+
+    def settings(self, elapsed: float) -> Image.Image:
+        canvas = self.base("CONTROL AFTER SHARING")
+        text(canvas, (90, 180), "Your data.\nYour choice.", 78, bold=True, width=22)
+        text(
+            canvas,
+            (100, 490),
+            "Delete shared reports\n\nRevoke access\n\nKeep your original photos",
+            32,
+            MUTED,
+        )
+        if elapsed < 10:
+            if self.mobile_decoder is None:
+                self.mobile_decoder = subprocess.Popen(
+                    [
+                        str(self.ffmpeg),
+                        "-v",
+                        "error",
+                        "-i",
+                        str(self.mobile_captures / "live-flutter-settings.webm"),
+                        "-t",
+                        "10",
+                        "-vf",
+                        f"fps={self.fps},scale=390:846",
+                        "-f",
+                        "rawvideo",
+                        "-pix_fmt",
+                        "rgb24",
+                        "-",
+                    ],
+                    stdout=subprocess.PIPE,
+                )
+            assert self.mobile_decoder.stdout is not None
+            data = self.mobile_decoder.stdout.read(390 * 846 * 3)
+            if len(data) == 390 * 846 * 3:
+                self.last_mobile = Image.frombytes("RGB", (390, 846), data)
+            if self.last_mobile is not None:
+                canvas.paste(self.last_mobile, (1240, 90))
         else:
-            filename = "flutter-approval-choices.png"
-            title = "See what\nwould be sent."
-            details = "Photo attachment\n\nPhoto licence\n\nLocation choice"
-        canvas = self.base("YOUR PHOTOS  /  YOUR CHOICE")
-        text(canvas, (100, 190), title, 74, bold=True, width=22)
-        text(canvas, (110, 460), details, 32, MUTED)
-        self.photo(canvas, "flutter/" + filename, (1230, 92, 420, 840))
+            with Image.open(self.mobile_captures / "live-settings-deleted.png") as original:
+                screenshot = ImageOps.contain(
+                    original.convert("RGB"), (390, 846), Image.Resampling.LANCZOS
+                )
+            canvas.paste(screenshot, (1240, 90))
         return canvas
 
     def flow(self, elapsed: float) -> Image.Image:
@@ -252,8 +298,8 @@ class Frames:
             self.intro,
             self.screening,
             self.web_frame,
-            lambda t: self.phone(t, True),
-            lambda t: self.phone(t, False),
+            self.report_summary,
+            self.settings,
             self.flow,
             self.pilot,
             self.credits,
@@ -261,12 +307,13 @@ class Frames:
         return methods[scene](elapsed)
 
     def close(self) -> None:
-        if self.decoder is not None:
-            if self.decoder.stdout is not None:
-                self.decoder.stdout.close()
-            if self.decoder.poll() is None:
-                self.decoder.terminate()
-            self.decoder.wait(timeout=10)
+        for decoder in (self.decoder, self.mobile_decoder):
+            if decoder is not None:
+                if decoder.stdout is not None:
+                    decoder.stdout.close()
+                if decoder.poll() is None:
+                    decoder.terminate()
+                decoder.wait(timeout=10)
 
 
 def caption(canvas: Image.Image, value: str) -> None:

@@ -19,11 +19,11 @@ def render(args: argparse.Namespace) -> None:
     if output.exists():
         raise ValueError("Choose a new output directory; renders are never overwritten")
     scenes = load_timeline(args.script, args.audio)
-    cues = caption_cues(scenes, args.audio / "raw-v3-transcripts.json")
+    cues = caption_cues(scenes, args.transcript)
     output.mkdir(parents=True)
     narration_master(scenes, output / "narration-native-24k.wav")
     (output / "weedz-demo.srt").write_text(srt(cues))
-    frames = Frames(args.captures, args.ffmpeg, args.fps, args.credit_font)
+    frames = Frames(args.captures, args.ffmpeg, args.fps, args.credit_font, args.mobile_captures)
     command = [
         str(args.ffmpeg),
         "-hide_banner",
@@ -55,7 +55,8 @@ def render(args: argparse.Namespace) -> None:
     encode_picture(command, frames, scenes, cues, args.fps, output)
     credits = {
         "project": "https://github.com/gardner/weedz",
-        "disclosure": "Research demonstration. Actual review UI; phone widgets are prototypes. "
+        "disclosure": "Research demonstration. Actual review UI and release-compiled Flutter web "
+        "Settings against an isolated HTTPS intake. No native camera-roll inference is shown. "
         "AI-generated generic voice and original instrumental. No personal library "
         "photos or live report submissions.",
         "narration": {
@@ -71,7 +72,7 @@ def render(args: argparse.Namespace) -> None:
         ),
         "flutter_photo": json.loads((args.captures / "assets/attribution.json").read_text()),
         "photo_modifications": "Metadata removed, orientation corrected, resized for composition. "
-        "Intro gently crops/zooms. Search-window graphic is schematic.",
+        "Search-window and report-field graphics explain the pipeline; no photo pan or zoom.",
         "credit_font": "Noto Sans CJK Japanese / SIL Open Font License 1.1",
         "font_source": "https://github.com/notofonts/noto-cjk",
     }
@@ -123,6 +124,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--captures", type=Path, required=True)
     parser.add_argument("--audio", type=Path, required=True)
+    parser.add_argument("--transcript", type=Path, required=True)
+    parser.add_argument("--mobile-captures", type=Path, required=True)
     parser.add_argument("--script", type=Path, default=Path("docs/demo/narration.json"))
     parser.add_argument("--ffmpeg", type=Path, required=True)
     parser.add_argument("--credit-font", type=Path, required=True)
