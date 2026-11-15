@@ -72,3 +72,15 @@ def test_prepared_upright_pixels_do_not_reapply_compressed_source_limit(tmp_path
     screen = SegmentedScreen(Baseline(), Proposer(), ProposalConfig())
     assert screen.screen(derived)["segmentation"]["status"] == "failed"
     assert screen.screen_prepared(derived, pixels)["segmentation"]["status"] == "empty"
+
+
+def test_region_method_describes_one_view_without_claiming_overlapping_tiles():
+    from test_discovery_inference import fake_screener
+
+    from weedz.segmentation.pipeline import identify_views
+
+    result = identify_views(fake_screener(), {"masked": Image.new("RGB", (8, 8))}, None)
+    assert (
+        result["masked"]["method"]
+        == "BioCLIP cosine similarity; one letterboxed masked proposal view"
+    )
