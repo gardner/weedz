@@ -14,6 +14,7 @@ from test_study_surface import body
 from weedz.discovery import cli, device_reports
 from weedz.discovery.api import create_app
 from weedz.discovery.device_reports import RUN_ID
+from weedz.discovery.records import Finding
 from weedz.discovery.store import Store
 from weedz.intake.api import IntakeAPI
 from weedz.intake.limits import Limits
@@ -307,3 +308,18 @@ def test_sampled_run_measures_refuse_the_device_run(tmp_path: Path, command: str
     argv = [command, "--run", RUN_ID, "--pilot-dir", str(pilot)]
     with pytest.raises(SystemExit, match="sampled iNaturalist runs"):
         cli.main(argv)
+
+
+def test_text_written_after_the_erase_is_erased_by_the_next_sync(tmp_path: Path) -> None:
+    """A request that passed its check before the withdrawal can still write afterwards;
+    every sync erases such late text on a withdrawn report."""
+    intake, pilot = tmp_path / "intake", tmp_path / "pilot"
+    report_id = send(intake, with_image(jpeg()))
+    [photo] = synced(tmp_path, intake)
+    ReportStore(intake).withdraw(1, report_id)
+    synced(tmp_path, intake)
+    late = {"kind": "addition", "species": "Ulex europaeus", "note": "Gorse", "reviewer": "Ana"}
+    Store(pilot).finding(RUN_ID, photo["id"], Finding.model_validate(late))
+    synced(tmp_path, intake)
+    raw = b"".join(file.read_bytes() for file in sorted(pilot.glob("discovery.sqlite3*")))
+    assert b"Ulex europaeus" not in raw and b"Gorse" not in raw

@@ -264,22 +264,39 @@ def _withdraw(store: Store, identifier: str, record: dict) -> None:
 
 # What reviewers wrote about a report can name its species, so a withdrawal erases it
 # too. The records stay, with their ids, boxes and decisions, so history still counts them.
+# Each statement touches only rows that still hold text, so repeating it changes nothing.
 REVIEWER_TEXT = [
-    "UPDATE findings SET species=NULL, other_taxon=NULL, note='' WHERE {photo}",
-    "UPDATE reviews SET note='' WHERE {photo}",
-    "UPDATE audits SET note='' WHERE {photo}",
-    "UPDATE judgements SET note='' WHERE {photo}",
-    "UPDATE lead_selections SET reason='' WHERE {photo}",
-    "UPDATE referral_events SET note='' WHERE referral_id IN "
+    "UPDATE findings SET species=NULL, other_taxon=NULL, note='' WHERE {photo} "
+    "AND (species IS NOT NULL OR other_taxon IS NOT NULL OR note<>'')",
+    "UPDATE reviews SET note='' WHERE {photo} AND note<>''",
+    "UPDATE audits SET note='' WHERE {photo} AND note<>''",
+    "UPDATE judgements SET note='' WHERE {photo} AND note<>''",
+    "UPDATE lead_selections SET reason='' WHERE {photo} AND reason<>''",
+    "UPDATE referral_events SET note='' WHERE note<>'' AND referral_id IN "
     "(SELECT id FROM referrals WHERE {photo})",
-    "UPDATE referrals SET note='', expertise='' WHERE {photo}",
-    "UPDATE photos SET review_note='' WHERE run_id=? AND id=?",
+    "UPDATE referrals SET note='', expertise='' WHERE {photo} AND (note<>'' OR expertise<>'')",
+    "UPDATE photos SET review_note='' WHERE run_id=? AND id=? AND review_note<>''",
 ]
 
 
-def _erase_what_reviewers_wrote(db: sqlite3.Connection, identifier: str) -> None:
+def _erase_what_reviewers_wrote(db: sqlite3.Connection, identifier: str) -> int:
+    """Erase reviewers' text on a withdrawn report; the number of rows it changed."""
+    changed = 0
     for statement in REVIEWER_TEXT:
-        db.execute(statement.format(photo="run_id=? AND photo_id=?"), (RUN_ID, identifier))
+        sql = statement.format(photo="run_id=? AND photo_id=?")
+        changed += db.execute(sql, (RUN_ID, identifier)).rowcount
+    return changed
+
+
+def _erase_late_text(store: Store, identifier: str) -> None:
+    """Erase text a request wrote after the withdrawal: it passed its check before the
+    erase and wrote after it. Nothing is rewritten when there is none."""
+    with store.connect() as db:
+        db.execute("PRAGMA secure_delete=ON")
+        changed = _erase_what_reviewers_wrote(db, identifier)
+    if changed:
+        with store.connect() as db:
+            db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
 
 def _sweep(store: Store) -> None:
@@ -350,6 +367,7 @@ def _sync(store: Store, reports: ReportStore) -> None:
     gone = 0
     for identifier, record in known.items():
         if withdrawn(record):
+            _erase_late_text(store, identifier)
             gone += 1
         elif identifier not in active and _withdrawn(reports, record):
             _withdraw(store, identifier, record)
