@@ -53,11 +53,12 @@ def _media(sample: Sample, root: Path) -> tuple[bytes, str, tuple[int, int]]:
     if digest != sample.media.sha256:
         raise ValueError("Source image checksum mismatch")
     with Image.open(io.BytesIO(encoded)) as image:
-        if image.format != "PNG" or image.mode != "RGB" or image.info or image.getexif():
-            raise ValueError("Canonical media must be upright metadata-free RGB PNG")
         size = image.size
         if size != (sample.media.width, sample.media.height) or size[0] * size[1] > 40_000_000:
             raise ValueError("Canonical image geometry mismatch")
+        image.load()
+        if image.format != "PNG" or image.mode != "RGB" or image.info or image.getexif():
+            raise ValueError("Canonical media must be upright metadata-free RGB PNG")
     return encoded, digest, size
 
 

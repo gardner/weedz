@@ -227,3 +227,19 @@ def test_existing_output_and_source_directory_are_preserved(public_run, tmp_path
     with pytest.raises(ValueError, match="independent"):
         export_label_studio(public_run, "run", public_run / "nested-output")
     assert not (public_run / "nested-output").exists()
+
+
+def test_completed_run_rejects_late_png_metadata(public_run: Path, tmp_path: Path):
+    from test_annotation_samples import late_metadata_png
+
+    image = public_run / "images/source.png"
+    encoded = late_metadata_png(image.read_bytes())
+    image.write_bytes(encoded)
+    with sqlite3.connect(public_run / "discovery.sqlite3") as db:
+        record = json.loads(db.execute("SELECT record FROM photos").fetchone()[0])
+        record["sha256"] = hashlib.sha256(encoded).hexdigest()
+        db.execute("UPDATE photos SET record=?", (json.dumps(record),))
+    output = tmp_path / "late-metadata-run"
+    with pytest.raises(ValueError, match="metadata-free"):
+        export_label_studio(public_run, "run", output)
+    assert not output.exists()

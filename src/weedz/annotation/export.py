@@ -61,11 +61,12 @@ def _photo(source: Path, raw: str, scores: dict[str, Any]) -> tuple[Photo, bytes
     if hashlib.sha256(encoded).hexdigest() != photo.sha256:
         raise ValueError("Source image checksum mismatch")
     with Image.open(io.BytesIO(encoded)) as image:
+        if image.width * image.height > 40_000_000:
+            raise ValueError("Source image exceeds experiment geometry limits")
+        image.load()
         if image.format != "PNG" or image.mode != "RGB" or image.info or image.getexif():
             raise ValueError("Export requires the experiment's metadata-free upright RGB PNG")
         size = image.size
-        if image.width * image.height > 40_000_000:
-            raise ValueError("Source image exceeds experiment geometry limits")
     if (scores.get("width"), scores.get("height")) != size:
         raise ValueError("Model geometry does not match the source image")
     return (

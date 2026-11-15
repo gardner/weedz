@@ -226,3 +226,26 @@ def test_storage_prefix_rejects_windows_drive_and_stream_syntax(canonical_batch,
     with pytest.raises(ValueError, match="image prefix"):
         export_samples(manifest, output, image_prefix=prefix)
     assert not output.exists()
+
+
+def late_metadata_png(encoded):
+    import struct
+    import zlib
+
+    payload = b"tEXtprivate-coordinate\x00secret"
+    chunk = struct.pack(">I", len(payload) - 4) + payload + struct.pack(">I", zlib.crc32(payload))
+    return encoded[:-12] + chunk + encoded[-12:]
+
+
+def test_late_png_metadata_is_rejected_after_full_decode(canonical_batch, tmp_path):
+    manifest, _, _ = canonical_batch
+    document = json.loads(manifest.read_text())
+    image = Path(document["media"]["uri"])
+    encoded = late_metadata_png(image.read_bytes())
+    image.write_bytes(encoded)
+    document["media"]["sha256"] = hashlib.sha256(encoded).hexdigest()
+    manifest.write_text(json.dumps(document) + "\n")
+    output = tmp_path / "late-metadata"
+    with pytest.raises(ValueError, match="metadata-free"):
+        export_samples(manifest, output)
+    assert not output.exists()
