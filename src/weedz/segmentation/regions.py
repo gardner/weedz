@@ -92,7 +92,8 @@ def region_from_mask(
 ) -> Region:
     full = Image.fromarray(mask).resize(image.size, Image.Resampling.NEAREST)
     box = full.getbbox()
-    assert box is not None
+    if box is None:
+        raise ValueError("Mask is empty after source-grid resampling")
     x1, y1, x2, y2 = box
     pad = round(max(x2 - x1, y2 - y1) * context_fraction)
     context = (
