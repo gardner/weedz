@@ -94,6 +94,8 @@ def regions(
         output,
         model,
         kind,
+        expected_manifest_sha256=batch.sha256,
+        expected_proposals_sha256=proposals["sha256"],
     )
     if not profile.matches(result["model"]):
         raise ValueError("Computed regional method differs from its registered profile")
