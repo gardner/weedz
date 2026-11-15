@@ -50,17 +50,21 @@ Each sample follows the [common sample contract](datasets.md#a-common-sample-and
 
 ## How we'll make it
 
-Most of the plumbing exists. What's missing:
+Most of the plumbing exists. Known gaps (this list may not be complete):
 
-- human-checked labels;
-- the schema change for explicit negatives described above;
-- an importer that brings finished Label Studio work back as contract annotations. Today the Label Studio package carries only machine predictions out, and nothing reads people's completed labels back in.
+- **Human-checked labels**, the main missing piece.
+- **Explicit negatives:** the schema change described above.
+- **A Label Studio importer.** Today the Label Studio package carries only machine predictions out. Nothing reads people's completed labels back in as contract annotations.
+- **CC BY-NC photos in the batch and Label Studio tools.** The admission policy accepts CC BY-NC, iNaturalist's default licence. The canonical batches and the Label Studio package still accept only CC0 and CC BY, for both the image and its metadata. Until that changes, CC BY-NC photos can only be checked in the review app.
+- **Location groups in samples.** The pilot adapter records only an observation group. The encounter grouping the review app computes (same observer, same day, nearby) isn't copied into contract samples yet, and a release can't split on a group the samples don't carry.
+
+The steps:
 
 1. **Collect.** Bounded, licensed NZ collections: iNaturalist photos where the subject is an animal or a landscape, plus labelled reference photos of each target weed and its lookalikes. Trail-camera frames come later.
 2. **Propose.** BioCLIP screening (whole photo and tiles) and the optional segmentation step suggest where a weed might be in each photo. Proposals are only starting points.
 3. **Check.** People confirm, correct or reject each proposal, in the review app and the [Label Studio package](label-studio.md). They also mark photos with no target weed as negatives. Completed Label Studio work is then imported back as contract annotations (still to build), keeping who checked it and when.
 4. **Measure without bias.** A random sample, including photos the model didn't flag, is checked blind in a separate project. This is the only way to count misses as well as false alarms.
-5. **Release.** Confirmed samples move from silver to a frozen, versioned gold release ([`release.py`](datasets.md#what-a-release-implements)), split by location group with a spatial buffer. Each release records its licences and how it was checked.
+5. **Release.** Confirmed samples move from silver to a frozen, versioned gold release ([`release.py`](datasets.md#what-a-release-implements)), split by location or encounter group (once samples carry it) with a spatial buffer. Each release records its licences and how it was checked.
 
 ## First release scope
 
