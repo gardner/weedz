@@ -107,6 +107,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
             const SizedBox(height: 16),
             const ExpansionTile(
               tilePadding: EdgeInsets.zero,
+              key: ValueKey('retention'),
               title: Text('What deletion removes'),
               children: [
                 Padding(
@@ -117,6 +118,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
             ),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
+              key: const ValueKey('help'),
               title: const Text('Help'),
               children: [
                 if (widget.deployment.publicDeletionRoute case final route?)
@@ -192,6 +194,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
       if (controller.server case final server?)
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
+          key: const ValueKey('connection'),
           title: const Text('Connection details'),
           children: [
             Text('Intake: $server'),
@@ -220,6 +223,7 @@ class _DeviceSettingsState extends State<DeviceSettings> {
         if (controller.phase == DeletionPhase.deleted)
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
+            key: const ValueKey('reenrollment'),
             title: const Text('Set up another enrollment'),
             children: [
               DeviceEnrollmentForm(

@@ -40,6 +40,32 @@ void main() {
   );
 
   testWidgets(
+    'expanded connection does not expand reenrollment after deletion',
+    (tester) async {
+      final store = fixtures.MemoryStore();
+      final controller = DeviceDeletion(
+        store: store,
+        api: fixtures.FakeDeletion(store),
+      );
+      await controller.load();
+      await controller.enroll(fixtures.enrollment);
+      await tester.pumpWidget(
+        MaterialApp(home: DeviceSettings(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Connection details'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete my data'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete reports and revoke access'));
+      await tester.pumpAndSettle();
+      expect(find.text('Deletion confirmed'), findsOneWidget);
+      expect(find.text('Set up another enrollment'), findsOneWidget);
+      expect(find.text('Submitter token'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'material deletion disclosures are available and shown before confirmation',
     (tester) async {
       final store = fixtures.MemoryStore();
