@@ -69,3 +69,64 @@ This was an actual inference/activity smoke, not a collection run, durable-servi
 restart proof, independent accuracy evaluation or human annotation. The hosted Temporal
 service/worker lifecycle is handled separately in #133; end-to-end restart verification
 must use that real service and preserve its history.
+
+## Pretrained species-classifier comparisons
+
+Issue #142 adds a separate pretrained PlantCLEF classifier instead of treating the
+best of three watchlist comparisons as general species identification. The released
+model covers 7,806 southwestern European plant taxa, including all three watchlist
+species. Its closed-set softmax shares are uncalibrated and cannot reject non-plants
+or identify an unrepresented New Zealand native species reliably.
+
+The original weights and inference conventions are described in the
+[PlantCLEF release](https://zenodo.org/records/10848263). The pinned
+[creator's safetensors conversion](https://huggingface.co/vincent-espitalier/dino-v2-reg4-with-plantclef2024-weights)
+is CC BY-NC 4.0. Record that licence separately from the code and source-photo licences.
+Checkpoints, class mappings, photographs and generated predictions stay outside Git.
+
+Download the safetensors checkpoint and class mapping using the requested parallel
+download settings, then let the loader verify both pinned SHA-256 values:
+
+```sh
+WEEDZ_CLASSIFIER_CACHE=/absolute/cache/plantclef
+aria2c -x4 -s4 -j4 --dir "$WEEDZ_CLASSIFIER_CACHE" \
+  --out plantclef2024.safetensors \
+  https://huggingface.co/vincent-espitalier/dino-v2-reg4-with-plantclef2024-weights/resolve/24656bb424790575adcbd7954ceefb1d87ec8b24/vit_base_patch14_reg4_dinov2_lvd142m_pc24_onlyclassifier_then_all.safetensors
+aria2c -x4 -s4 -j4 --dir "$WEEDZ_CLASSIFIER_CACHE" \
+  https://huggingface.co/vincent-espitalier/dino-v2-reg4-with-plantclef2024-weights/resolve/24656bb424790575adcbd7954ceefb1d87ec8b24/species_id_mapping.txt
+```
+
+`classify_sample_batches.py` retains one loaded classifier across closed canonical
+batches. Each `batch-NNNN` directory contains `samples.jsonl`, verified metadata-free
+RGB PNG media and a producer's `ready.json`. Use the CPU project environment normally;
+for a GPU, use an isolated CUDA environment with the declared inference dependencies.
+The already provisioned SAM CUDA runtime on beast is suitable:
+
+```sh
+PYTHONPATH="$PWD/src" uv run --project "$WEEDZ_CUDA_RUNTIME" --no-sync python \
+  scripts/classify_sample_batches.py --root /absolute/materialized-batches \
+  --checkpoint "$WEEDZ_CLASSIFIER_CACHE/plantclef2024.safetensors" \
+  --labels "$WEEDZ_CLASSIFIER_CACHE/species_id_mapping.txt" \
+  --profile frame --device cuda:1 --batches 176 --wait
+```
+
+`--profile tiles` is a separately versioned comparison: it letterboxes the full image
+and overlapping square windows, retains per-view alternatives, and ranks each taxon
+by its maximum softmax share. The resulting values are ranking scores, not a combined
+probability, and the windows are not segmentation masks. Actual SAM mask classifications
+remain separate and must join by exact image SHA and region identity before publication.
+
+The batch runner checks and decodes the same bounded image bytes, records checkpoint,
+mapping, preprocessing, precision and library versions, and binds each completed result
+to its input manifest and all asset identities. A result checksum and completion lock
+prevent a changed or overlapping result from silently replacing completed evidence.
+Adopting a legacy external result requires an explicit verified file SHA as well as
+the same full metadata and row validation; a header alone is insufficient.
+
+Label Studio imports these outputs as editable **predictions**. Human verification is
+a separate annotation, never a generated completion. Use the same logical pipeline
+version across datasets only when its semantic model and transform pins agree (#140).
+
+The initial real run classified 33 existing review images and their 85 SAM regions;
+the bulk run processed 17,509 distinct DeepWeeds images. These are auto-labeling runs,
+not an independent accuracy evaluation or evidence of New Zealand weed coverage.
