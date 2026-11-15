@@ -86,11 +86,15 @@ class PipelineStages:
                 )
             except (ValueError, *RETRYABLE) as error:
                 result.update(status="failed", failure_type=type(error).__name__)
-                artifacts.write("proposals", photo["id"], inputs, result)
-                if isinstance(error, RETRYABLE) and self.attempt() < 3:
+                result = artifacts.write("proposals", photo["id"], inputs, result)
+                if (
+                    result["status"] == "failed"
+                    and isinstance(error, RETRYABLE)
+                    and self.attempt() < 3
+                ):
                     raise
             result["elapsed_seconds"] = time.monotonic() - start
-            artifacts.write("proposals", photo["id"], inputs, result)
+            result = artifacts.write("proposals", photo["id"], inputs, result)
             count["failed" if result["status"] == "failed" else "completed"] += 1
             self.store.status(
                 run_id,
@@ -176,11 +180,14 @@ class PipelineStages:
                 evidence.update(
                     status="failed", view_status="failed", failure_type=type(error).__name__
                 )
-                artifacts.write("views", photo["id"], inputs, evidence)
-                if isinstance(error, RETRYABLE) and self.attempt() < 3:
+                evidence = artifacts.write("views", photo["id"], inputs, evidence)
+                if (
+                    evidence["status"] == "failed"
+                    and isinstance(error, RETRYABLE)
+                    and self.attempt() < 3
+                ):
                     raise
-        artifacts.write("views", photo["id"], inputs, evidence)
-        return evidence
+        return artifacts.write("views", photo["id"], inputs, evidence)
 
     def _attach(self, run_id: str, photo_id: str, evidence: dict) -> None:
         with self.store.connect() as db:

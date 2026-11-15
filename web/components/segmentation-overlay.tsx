@@ -14,6 +14,8 @@ export type RegionEvidence = {
 
 export type SegmentationEvidence = {
   status: "ok" | "empty" | "failed";
+  proposal_status?: "ok" | "empty" | "failed";
+  view_status?: "ok" | "empty" | "failed" | "skipped_proposal_failure";
   baseline_retained: boolean;
   regions: RegionEvidence[];
 };
@@ -58,6 +60,12 @@ export function SegmentationControls({
       <p>
         Class-agnostic regions may miss plants or include other objects. Original ranking retained.
       </p>
+      {evidence.view_status === "failed" && (
+        <p role="status">
+          Region classification failed. These masks are SAM proposals, not species identifications.
+          {evidence.baseline_retained && " Original baseline scores are retained."}
+        </p>
+      )}
       {evidence.regions.length ? (
         <label>
           Mask overlay
