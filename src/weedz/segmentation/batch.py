@@ -226,6 +226,8 @@ def propose_batch(
     # Existing directories can be remnants of an interrupted creation/sync attempt.
     for directory in (destination, *destination.parents):
         sync_directory(directory)
+        if not os.access(directory.parent, os.W_OK):
+            break
     output = destination
     with (output / ".batch.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
