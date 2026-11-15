@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:weedz/device/deletion.dart';
 import 'package:weedz/device/device_record.dart';
 
-/// Pilot enrollment uses a credential issued by the operator for this phone.
+/// Enrollment uses a credential issued by the operator for this phone.
 class DeviceEnrollmentForm extends StatefulWidget {
   const new({
     required this.controller,
@@ -51,11 +51,10 @@ class _DeviceEnrollmentFormState extends State<DeviceEnrollmentForm> {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text('Pilot enrollment', style: TextStyle(fontSize: 20)),
+      const Text('Set up this phone', style: TextStyle(fontSize: 20)),
       const Text(
-        'Use the address and token your Weedz operator issued for this '
-        'phone. Saving them does not upload a photo or verify access. Never '
-        'send this token by email or through the public request form.',
+        'Use the address and token supplied by your Weedz operator. '
+        'Saving them does not upload a photo or verify access.',
       ),
       const SizedBox(height: 16),
       TextField(
@@ -74,6 +73,10 @@ class _DeviceEnrollmentFormState extends State<DeviceEnrollmentForm> {
         enableSuggestions: false,
         enableIMEPersonalizedLearning: false,
         enabled: !widget.controller.busy,
+      ),
+      const Text(
+        'Keep this token private. Never send it by email or through a '
+        'public request form.',
       ),
       if (_error case final error?) Text(error, semanticsLabel: error),
       const SizedBox(height: 16),
