@@ -2,11 +2,12 @@
 
 import json
 import math
-import subprocess
+import sys
 import textwrap
 from functools import lru_cache
 from pathlib import Path
 
+from demo_decoder import CaptureDecoder
 from demo_evidence import verified_photo
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
@@ -48,9 +49,9 @@ class Frames:
         self.fps = fps
         self.credit_font = credit_font
         self.mobile_captures = mobile_captures
-        self.decoder: subprocess.Popen[bytes] | None = None
+        self.decoder: CaptureDecoder | None = None
         self.last_web: Image.Image | None = None
-        self.mobile_decoder: subprocess.Popen[bytes] | None = None
+        self.mobile_decoder: CaptureDecoder | None = None
         self.last_mobile: Image.Image | None = None
         self.images: dict[str, Image.Image] = {}
 
@@ -106,7 +107,7 @@ class Frames:
         canvas = self.base("REVIEW THE EVIDENCE")
         if elapsed < 13.0:
             if self.decoder is None:
-                self.decoder = subprocess.Popen(
+                self.decoder = CaptureDecoder(
                     [
                         str(self.ffmpeg),
                         "-v",
@@ -123,14 +124,12 @@ class Frames:
                         "rgb24",
                         "-",
                     ],
-                    stdout=subprocess.PIPE,
+                    (1536, 864),
+                    13 * self.fps,
+                    "Review web",
                 )
-            assert self.decoder.stdout is not None
-            data = self.decoder.stdout.read(1536 * 864 * 3)
-            if len(data) == 1536 * 864 * 3:
-                self.last_web = Image.frombytes("RGB", (1536, 864), data)
-            if self.last_web is not None:
-                canvas.paste(self.last_web, (192, 82))
+            self.last_web = self.decoder.frame()
+            canvas.paste(self.last_web, (192, 82))
         else:
             name = "web-reference-comparison.png" if elapsed < 18 else "web-candidate-window.png"
             self.photo(canvas, "web-final/" + name, (192, 82, 1536, 864))
@@ -160,7 +159,7 @@ class Frames:
         )
         if elapsed < 10:
             if self.mobile_decoder is None:
-                self.mobile_decoder = subprocess.Popen(
+                self.mobile_decoder = CaptureDecoder(
                     [
                         str(self.ffmpeg),
                         "-v",
@@ -177,14 +176,12 @@ class Frames:
                         "rgb24",
                         "-",
                     ],
-                    stdout=subprocess.PIPE,
+                    (390, 846),
+                    10 * self.fps,
+                    "Mobile settings",
                 )
-            assert self.mobile_decoder.stdout is not None
-            data = self.mobile_decoder.stdout.read(390 * 846 * 3)
-            if len(data) == 390 * 846 * 3:
-                self.last_mobile = Image.frombytes("RGB", (390, 846), data)
-            if self.last_mobile is not None:
-                canvas.paste(self.last_mobile, (1240, 90))
+            self.last_mobile = self.mobile_decoder.frame()
+            canvas.paste(self.last_mobile, (1240, 90))
         else:
             with Image.open(self.mobile_captures / "live-settings-deleted.png") as original:
                 screenshot = ImageOps.contain(
@@ -306,13 +303,15 @@ class Frames:
         return methods[scene](elapsed)
 
     def close(self) -> None:
+        failures = []
         for decoder in (self.decoder, self.mobile_decoder):
             if decoder is not None:
-                if decoder.stdout is not None:
-                    decoder.stdout.close()
-                if decoder.poll() is None:
-                    decoder.terminate()
-                decoder.wait(timeout=10)
+                try:
+                    decoder.close(check=sys.exc_info()[0] is None)
+                except RuntimeError as error:
+                    failures.append(error)
+        if failures:
+            raise failures[0]
 
 
 def caption(canvas: Image.Image, value: str) -> None:

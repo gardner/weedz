@@ -81,8 +81,92 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
         "web-candidate-window.png",
     ]:
         (web / name).touch()
+    (web / "web-capture.json").write_text(json.dumps({"browserErrors": [], "captureSuccess": True}))
     credit_font = tmp_path / "font.otf"
     credit_font.touch()
+    (mobile / "erasure-verification.json").write_text(
+        json.dumps(
+            {
+                "active_report_bodies_after_real_app_deletion": 0,
+                "remaining_crop_files": 0,
+            }
+        )
+    )
+    (mobile / "live-capture.json").write_text(
+        json.dumps(
+            {
+                "captureSuccess": True,
+                "browser_errors": [],
+                "report_created_via_real_api": 201,
+                "stable_deletion_status": 200,
+                "upload_after_deletion": 401,
+            }
+        )
+    )
     renderer.validate_captures(
         Namespace(captures=produced_captures, mobile_captures=mobile, credit_font=credit_font)
     )
+    (mobile / "erasure-verification.json").unlink()
+    with pytest.raises(ValueError, match="erasure"):
+        renderer.validate_captures(
+            Namespace(captures=produced_captures, mobile_captures=mobile, credit_font=credit_font)
+        )
+
+
+@pytest.mark.parametrize(
+    "proof",
+    [
+        None,
+        {},
+        [],
+        {"active_report_bodies_after_real_app_deletion": False, "remaining_crop_files": 0},
+        {"active_report_bodies_after_real_app_deletion": 1, "remaining_crop_files": 0},
+        {"active_report_bodies_after_real_app_deletion": 0, "remaining_crop_files": 1},
+    ],
+)
+def test_failed_or_unverified_mobile_erasure_is_not_renderable(produced_captures, tmp_path, proof):
+    mobile = tmp_path / "mobile"
+    mobile.mkdir()
+    if proof is not None:
+        (mobile / "erasure-verification.json").write_text(json.dumps(proof))
+    with pytest.raises(ValueError, match="erasure"):
+        renderer.validate_erasure(mobile)
+
+
+@pytest.mark.parametrize(
+    "proof", [None, {}, [], {"browserErrors": ["Script failed"]}, {"browserErrors": ""}]
+)
+def test_failed_browser_capture_is_not_renderable(tmp_path, proof):
+    if proof is not None:
+        (tmp_path / "web-capture.json").write_text(json.dumps(proof))
+    with pytest.raises(ValueError, match="browser"):
+        renderer.validate_browser_capture(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"captureSuccess": False},
+        {"browser_errors": ["Uncaught app failure"]},
+        {"browser_errors": None},
+        {"report_created_via_real_api": 200},
+        {"stable_deletion_status": 500},
+        {"upload_after_deletion": 201},
+    ],
+)
+def test_mobile_capture_requires_closed_error_free_real_api_evidence(tmp_path, change):
+    proof = {
+        "captureSuccess": True,
+        "browser_errors": [],
+        "report_created_via_real_api": 201,
+        "stable_deletion_status": 200,
+        "upload_after_deletion": 401,
+    }
+    (tmp_path / "live-capture.json").write_text(json.dumps(proof | change))
+    with pytest.raises(ValueError, match="Mobile browser capture"):
+        renderer.validate_mobile_capture(tmp_path)
+
+
+def test_missing_mobile_capture_receipt_is_not_renderable(tmp_path):
+    with pytest.raises(ValueError, match="Mobile browser capture"):
+        renderer.validate_mobile_capture(tmp_path)

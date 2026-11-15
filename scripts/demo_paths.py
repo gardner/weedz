@@ -1,5 +1,6 @@
 """Resolve generated-demo paths and keep every artifact outside Git worktrees."""
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -10,11 +11,16 @@ def outside_git(path: Path) -> Path:
     parent = resolved if resolved.is_dir() else resolved.parent
     while not parent.exists():
         parent = parent.parent
+    # Discover the destination's real repository, independent of a caller's Git
+    # context (including ceilings), and keep the diagnostic language stable.
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    environment.update(LC_ALL="C", LANGUAGE="C")
     found = subprocess.run(
         ["git", "-C", str(parent), "rev-parse", "--is-inside-work-tree"],
         capture_output=True,
         text=True,
         check=False,
+        env=environment,
     )
     if found.returncode == 0:
         raise ValueError("Demo artifacts must be outside every git worktree")

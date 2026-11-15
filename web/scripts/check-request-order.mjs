@@ -43,6 +43,9 @@ try {
     if (id === "old") await held;
     await route.fulfill({ json: { run: runs.find((run) => run.id === id), photos: [photo(id)] } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.locator(".run-settings summary").click();
   await page.locator(".settings-grid select").selectOption("current");

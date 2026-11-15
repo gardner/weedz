@@ -4,7 +4,7 @@ import json
 import re
 import wave
 from difflib import SequenceMatcher
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 
@@ -30,6 +30,17 @@ def load_timeline(script: Path, audio: Path) -> list[dict[str, Any]]:
             raise ValueError(f"Speech does not fit {scene['id']}; extend the scene")
         previous_end = scene["end"]
     return scenes
+
+
+def portable_timeline(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep local input paths for reading; publish only stable narration basenames."""
+    delivered = []
+    for scene in scenes:
+        entry = dict(scene, audio=PureWindowsPath(scene["audio"]).name)
+        if "audio_file" in entry:
+            entry["audio_file"] = PureWindowsPath(entry["audio_file"]).name
+        delivered.append(entry)
+    return delivered
 
 
 def narration_master(scenes: list[dict[str, Any]], output: Path) -> None:

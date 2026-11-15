@@ -10,10 +10,59 @@ from pathlib import Path
 from demo_credits import portable_credits
 from demo_evidence import photo_record, verified_photo_bytes
 from demo_frames import Frames, caption, dissolve
-from demo_timeline import caption_cues, load_timeline, narration_master, srt
+from demo_timeline import caption_cues, load_timeline, narration_master, portable_timeline, srt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import outside_git  # noqa: E402
+
+
+def validate_erasure(mobile: Path) -> None:
+    try:
+        proof = json.loads((mobile / "erasure-verification.json").read_text())
+    except (OSError, ValueError) as error:
+        raise ValueError("Mobile erasure verification is missing or malformed") from error
+    keys = ("active_report_bodies_after_real_app_deletion", "remaining_crop_files")
+    if not isinstance(proof, dict) or any(
+        type(proof.get(key)) is not int or proof[key] != 0 for key in keys
+    ):
+        raise ValueError("Mobile erasure verification must confirm zero retained bodies and crops")
+
+
+def validate_browser_capture(web: Path) -> None:
+    try:
+        proof = json.loads((web / "web-capture.json").read_text())
+    except (OSError, ValueError) as error:
+        raise ValueError("Review browser capture verification is missing or malformed") from error
+    if (
+        not isinstance(proof, dict)
+        or proof.get("captureSuccess") is not True
+        or proof.get("browserErrors") != []
+    ):
+        raise ValueError("Review browser capture must have completed without browser errors")
+
+
+def validate_mobile_capture(mobile: Path) -> None:
+    try:
+        proof = json.loads((mobile / "live-capture.json").read_text())
+    except (OSError, ValueError) as error:
+        raise ValueError("Mobile browser capture verification is missing or malformed") from error
+    statuses = {
+        "report_created_via_real_api": 201,
+        "stable_deletion_status": 200,
+        "upload_after_deletion": 401,
+    }
+    if (
+        not isinstance(proof, dict)
+        or proof.get("captureSuccess") is not True
+        or proof.get("browser_errors") != []
+        or any(
+            type(proof.get(key)) is not int or proof[key] != status
+            for key, status in statuses.items()
+        )
+    ):
+        raise ValueError(
+            "Mobile browser capture must finish without errors and verify real API outcomes"
+        )
 
 
 def validate_captures(args: argparse.Namespace) -> None:
@@ -38,6 +87,9 @@ def validate_captures(args: argparse.Namespace) -> None:
             "Required captures are missing; use the documented pilot run: " + ", ".join(missing)
         )
 
+    validate_erasure(args.mobile_captures)
+    validate_mobile_capture(args.mobile_captures)
+    validate_browser_capture(args.captures / "web-final")
     manifest = json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
     for relative in ("images/460347209.png", "images/447484684.png"):
         verified_photo_bytes(args.captures, relative, manifest)
@@ -105,7 +157,7 @@ def render(args: argparse.Namespace) -> None:
         "font_source": "https://github.com/notofonts/noto-cjk",
     }
     (output / "credits.json").write_text(json.dumps(credits, ensure_ascii=False, indent=2) + "\n")
-    (output / "timeline.json").write_text(json.dumps(scenes, indent=2) + "\n")
+    (output / "timeline.json").write_text(json.dumps(portable_timeline(scenes), indent=2) + "\n")
     manifest = {
         path.name: hashlib.sha256(path.read_bytes()).hexdigest()
         for path in output.iterdir()

@@ -36,7 +36,7 @@ uv run python tools/demo-video/render_demo.py \
   --captures /absolute/path/to/artifacts/captures \
   --audio /absolute/path/to/artifacts/audio \
   --transcript /absolute/path/to/artifacts/audio/raw-final-transcripts.json \
-  --mobile-captures /absolute/path/to/artifacts/captures/live-flutter-final \
+  --mobile-captures /absolute/path/to/artifacts/captures/live-flutter \
   --ffmpeg /absolute/path/to/ffmpeg \
   --credit-font /absolute/path/to/NotoSansCJKjp-Regular.otf \
   --output /absolute/path/to/artifacts/video/weedz-demo-v1
@@ -75,3 +75,22 @@ the instrumental's provenance, update final checksums, and verify the final
 container with ffprobe. Listen to the whole movie and inspect the beginning,
 scene changes, captions and credits. Include `credits.json` when sharing it.
 Do not commit any generated media or checkpoint to the repository.
+
+The mixer requires the selected score's adjacent `.assembly.json` and verifies
+its encoded WAV SHA-256 before encoding. It gives FFmpeg a private checked copy
+so replacing the original during mixing cannot inherit the Music3 attribution.
+The delivered timeline contains narration basenames only; full paths are retained
+only in memory for reading the local source audio.
+
+Capture evidence must describe a completed, error-free recording. The live Flutter helper
+checks its owned HTTPS child and per-invocation identity before using the local intake.
+It writes `live-capture.json` with `captureSuccess: true` only after browser shutdown and
+successful video encoding, with empty browser errors and verified 201/200/401 API outcomes.
+The renderer requires that receipt as well as the separate zero-body/zero-crop erasure proof.
+Older receipts without the success/status fields are not silently upgraded; reproduce a
+new capture with the documented helper if making a new render. Existing delivered films
+remain historical artifacts and are not modified by these source checks.
+
+Both web and mobile source-video segments must decode their full requested frame counts
+and exit successfully. Missing/truncated frames or decoder failures abort the render;
+they are never replaced with frozen or blank footage.

@@ -2,9 +2,11 @@
 
 import argparse
 import hashlib
+import io
 import json
 import subprocess
 import sys
+import tempfile
 import wave
 from pathlib import Path
 
@@ -12,10 +14,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import new_output  # noqa: E402
 
 
-def check_music(path: Path) -> None:
-    with wave.open(str(path)) as source:
+def check_music(path: Path) -> bytes:
+    encoded = path.read_bytes()
+    with wave.open(io.BytesIO(encoded)) as source:
         if source.getnframes() < 180 * source.getframerate():
             raise ValueError("Provide at least 180 seconds of original music before mixing")
+    manifest = json.loads(path.with_suffix(".assembly.json").read_text())
+    if not isinstance(manifest, dict) or hashlib.sha256(encoded).hexdigest() != manifest.get(
+        "sha256"
+    ):
+        raise ValueError("Selected music differs from its assembly provenance")
+    return encoded
 
 
 def main() -> None:
@@ -25,8 +34,15 @@ def main() -> None:
     parser.add_argument("--ffmpeg", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    check_music(args.music)
+    encoded = check_music(args.music)
     output = new_output(args.output, sidecars=(".mix.json",))
+    with tempfile.TemporaryDirectory(prefix="weedz-checked-music-") as temporary:
+        checked = Path(temporary) / args.music.name
+        checked.write_bytes(encoded)
+        encode_mix(args, output, checked, hashlib.sha256(encoded).hexdigest())
+
+
+def encode_mix(args: argparse.Namespace, output: Path, music: Path, music_sha256: str) -> None:
     music_gain = 0.055
     filters = (
         "[1:a]aresample=48000,pan=stereo|c0=c0|c1=c0[voice];"
@@ -45,7 +61,7 @@ def main() -> None:
         "-i",
         str(args.render / "narration-native-24k.wav"),
         "-i",
-        str(args.music),
+        str(music),
         "-filter_complex",
         filters,
         "-map",
@@ -77,7 +93,8 @@ def main() -> None:
     portable_command[-1] = output.name
     metadata = {
         "music": args.music.name,
-        "music_sha256": hashlib.sha256(args.music.read_bytes()).hexdigest(),
+        "music_sha256": music_sha256,
+        "music_assembly_provenance": args.music.with_suffix(".assembly.json").name,
         "music_gain": music_gain,
         "voice_gain": 1.0,
         "voice_processing": "No EQ, normalization, compression or speed changes. "

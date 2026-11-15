@@ -55,6 +55,33 @@ def test_the_whole_frame_reaches_the_model_as_a_letterboxed_square() -> None:
     assert view.getpixel((20, 1)) == LETTERBOX
 
 
+def test_panorama_padding_is_bounded_before_crop_or_canvas_allocation(monkeypatch) -> None:
+    image = Image.new("RGB", (1, 100_000))
+
+    def unexpected_allocation(*args, **kwargs):
+        pytest.fail("Oversized square must be rejected before allocating any view")
+
+    monkeypatch.setattr(Image.Image, "crop", unexpected_allocation)
+    monkeypatch.setattr(Image, "new", unexpected_allocation)
+    with pytest.raises(ValueError, match="Square view exceeds the pixel cap"):
+        square_view(image, (0, 0, 1, 100_000))
+
+
+@pytest.mark.parametrize("size", [(9000, 1000), (12000, 300)])
+def test_published_panorama_geometries_still_reach_the_letterbox(size, monkeypatch) -> None:
+    from unittest.mock import Mock
+
+    # Intercept allocations so this compatibility test need not materialize 144M pixels.
+    image, crop, canvas = Mock(), Mock(), Mock()
+    image.crop.return_value = crop
+    crop.size, crop.width, crop.height = size, *size
+    allocate = Mock(return_value=canvas)
+    monkeypatch.setattr(Image, "new", allocate)
+    assert square_view(image, (0, 0, *size)) is canvas
+    allocate.assert_called_once_with("RGB", (size[0], size[0]), LETTERBOX)
+    canvas.paste.assert_called_once_with(crop, (0, (size[0] - size[1]) // 2))
+
+
 def test_summary_preserves_raw_similarity_and_best_region() -> None:
     boxes = [(0, 0, 100, 100), (0, 0, 60, 60)]
     scores = np.array([[0.2, 0.3, 0.25, 0.4], [0.35, 0.2, 0.1, 0.3]])

@@ -5,7 +5,7 @@ import json
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 from urllib.parse import urlparse
 
 import httpx
@@ -20,6 +20,13 @@ LICENSES = set(ADMITTED)
 HEADERS = {"User-Agent": "Weedz/0.1 (open-source non-commercial conservation research)"}
 
 
+def admitted_licences(allowed: frozenset[str] | None) -> frozenset[str]:
+    policy = frozenset(LICENSES) if allowed is None else allowed
+    if not policy or not policy.issubset(LICENSES):
+        raise ValueError("Source licence policy must be a nonempty admitted subset")
+    return policy
+
+
 def photo_from_observation(
     raw: dict,
     region: str,
@@ -27,10 +34,13 @@ def photo_from_observation(
     reference_species: str | None = None,
     lookalike_taxon: str | None = None,
     lookalike_of: str | None = None,
+    *,
+    allowed_licences: frozenset[str] | None = None,
 ) -> Photo | None:
-    if raw.get("license_code") not in LICENSES:
+    licences = admitted_licences(allowed_licences)
+    if raw.get("license_code") not in licences:
         return None
-    eligible = [photo for photo in raw.get("photos", []) if photo.get("license_code") in LICENSES]
+    eligible = [photo for photo in raw.get("photos", []) if photo.get("license_code") in licences]
     if not eligible:
         return None
     photo = eligible[0]
@@ -73,7 +83,8 @@ def _coordinates(value: str | None) -> tuple[float | None, float | None]:
 
 
 class Inaturalist:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, allowed_photo_licences: frozenset[str] | None = None) -> None:
+        self.licences = admitted_licences(allowed_photo_licences)
         self.root = root
         self.client = httpx.Client(headers=HEADERS, timeout=60, follow_redirects=True)
         self.last_request = 0.0
@@ -99,6 +110,11 @@ class Inaturalist:
         return {"params": params, "response": data}
 
     def image(self, photo: Photo) -> Photo:
+        if (
+            photo.photo_license not in self.licences
+            or photo.observation_license not in self.licences
+        ):
+            raise ValueError("Photo violates the trusted source licence policy")
         parsed = urlparse(photo.image_url)
         if parsed.scheme != "https" or parsed.hostname not in {
             "inaturalist-open-data.s3.amazonaws.com",
@@ -130,8 +146,8 @@ class Inaturalist:
                 "place_id": place,
                 "photos": "true",
                 "quality_grade": "research",
-                "license": ",".join(sorted(LICENSES)),
-                "photo_license": ",".join(sorted(LICENSES)),
+                "license": ",".join(sorted(self.licences)),
+                "photo_license": ",".join(sorted(self.licences)),
                 "d2": spec.before.isoformat(),
                 "order_by": "observed_on",
                 "order": "desc",
@@ -181,6 +197,7 @@ class Inaturalist:
                     "lookalike",
                     lookalike_taxon=entry["name"],
                     lookalike_of=entry["confusable_with"],
+                    allowed_licences=self.licences,
                 )
                 if photo is None or photo.photo_id in photos:
                     continue
@@ -208,7 +225,12 @@ class Inaturalist:
             strata[label] = [
                 photo
                 for raw in result["response"]["results"]
-                if (photo := photo_from_observation(raw, region, "incidental")) is not None
+                if (
+                    photo := photo_from_observation(
+                        raw, region, "incidental", allowed_licences=self.licences
+                    )
+                )
+                is not None
                 and photo.photo_id not in photos
             ]
         # An outing that crosses the council boundary still counts as one observer-day.
@@ -229,7 +251,13 @@ class Inaturalist:
     ) -> None:
         count = 0
         for raw in observations:
-            photo = photo_from_observation(raw, region, cohort, species)  # type: ignore[arg-type]
+            photo = photo_from_observation(
+                raw,
+                region,
+                cast(Literal["incidental", "reference", "lookalike"], cohort),
+                species,
+                allowed_licences=self.licences,
+            )
             if photo is None or photo.photo_id in photos:
                 continue
             progress(f"Fetching {region}: {photo.id}")

@@ -8,11 +8,22 @@ import sqlite3
 import ssl
 import subprocess
 import tempfile
-import time
+import uuid
 from pathlib import Path
-from urllib.request import urlopen
 
+from capture_review_demo import ready
 from demo_paths import outside_git
+
+
+def verify_erasure(state: Path) -> tuple[int, int]:
+    with sqlite3.connect(state / "intake/reports/reports.sqlite3") as db:
+        active = db.execute("SELECT COUNT(*) FROM reports WHERE body IS NOT NULL").fetchone()[0]
+    crops = sum(path.is_file() for path in (state / "intake/reports/images").rglob("*"))
+    if active or crops:
+        raise RuntimeError(
+            f"Erasure verification failed: {active} report bodies and {crops} crop files remain"
+        )
+    return active, crops
 
 
 def main() -> None:
@@ -23,6 +34,10 @@ def main() -> None:
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     output = outside_git(args.output)
+    source = args.source_pilot.resolve()
+    if output.is_relative_to(source) or source.is_relative_to(output):
+        raise ValueError("Capture output and source pilot must be independent directories")
+    instance = uuid.uuid4().hex
     output.mkdir(parents=True, exist_ok=False)
     with tempfile.TemporaryDirectory(prefix="weedz-live-capture-") as private:
         state = Path(private)
@@ -37,27 +52,23 @@ def main() -> None:
             str(args.source_pilot),
             "--private-state",
             str(state),
+            "--instance",
+            instance,
         ]
         with (output / "server.log").open("w") as log:
             server = subprocess.Popen(
                 command, cwd=root, stdout=log, stderr=subprocess.STDOUT, start_new_session=True
             )
             try:
-                deadline = time.monotonic() + 30
-                while time.monotonic() < deadline:
-                    try:
-                        with urlopen(
-                            "https://127.0.0.1:8443",
-                            context=ssl._create_unverified_context(),
-                            timeout=2,
-                        ):
-                            break
-                    except OSError:
-                        time.sleep(0.2)
-                else:
-                    raise TimeoutError("Isolated HTTPS intake did not become ready")
+                ready(
+                    "https://127.0.0.1:8443/capture_identity",
+                    server,
+                    instance,
+                    context=ssl._create_unverified_context(),
+                )
                 environment = os.environ | {
                     "WEEDZ_PRIVATE_STATE": private,
+                    "WEEDZ_CAPTURE_INSTANCE": instance,
                     "WEEDZ_CAPTURE_DIR": str(output),
                     "WEEDZ_FFMPEG": str(args.ffmpeg),
                 }
@@ -67,17 +78,15 @@ def main() -> None:
                     env=environment,
                     check=True,
                 )
-                with sqlite3.connect(state / "intake/reports/reports.sqlite3") as db:
-                    active = db.execute(
-                        "SELECT COUNT(*) FROM reports WHERE body IS NOT NULL"
-                    ).fetchone()[0]
-                assert active == 0
-                assert not list((state / "intake/reports/images").glob("*.jpg"))
+                if server.poll() is not None:
+                    raise RuntimeError("Owned capture server exited during browser capture")
+                active, crops = verify_erasure(state)
                 (output / "erasure-verification.json").write_text(
                     json.dumps(
                         {
+                            "capture_instance": instance,
                             "active_report_bodies_after_real_app_deletion": active,
-                            "remaining_crop_files": 0,
+                            "remaining_crop_files": crops,
                             "private_runtime_state": (
                                 "Temporary certificate, credential and isolated intake "
                                 "removed after capture"

@@ -6,7 +6,7 @@ import path from "node:path";
 import { chromium } from "@playwright/test";
 
 const output = process.env.WEEDZ_CAPTURE_DIR;
-assert(output && process.env.WEEDZ_PRIVATE_STATE);
+assert(output && process.env.WEEDZ_PRIVATE_STATE && process.env.WEEDZ_CAPTURE_INSTANCE);
 await mkdir(output, { recursive: true });
 const enrollment = JSON.parse(
   await readFile(path.join(process.env.WEEDZ_PRIVATE_STATE, "enrollment.json"), "utf8"),
@@ -24,6 +24,7 @@ const frames = [];
 const frameWrites = [];
 let recordingStart;
 let recordingEnd;
+let evidence;
 const cdp = await context.newCDPSession(page);
 cdp.on("Page.screencastFrame", ({ data, sessionId, metadata }) => {
   frames.push({ data: Buffer.from(data, "base64"), time: metadata.timestamp });
@@ -31,6 +32,9 @@ cdp.on("Page.screencastFrame", ({ data, sessionId, metadata }) => {
 });
 page.on("pageerror", (error) => errors.push(error.message));
 try {
+  const identity = await page.request.get(`${origin}/capture_identity`);
+  assert.equal(identity.status(), 200);
+  assert.deepEqual(await identity.json(), { capture_instance: process.env.WEEDZ_CAPTURE_INSTANCE });
   const upload = await page.request.put(`${origin}/reports/11200000-0000-4000-8000-000000000001`, {
     headers: { Authorization: `Bearer ${enrollment.token}` },
     data: enrollment.report,
@@ -75,25 +79,20 @@ try {
     data: enrollment.report,
   });
   assert.equal(revoked.status(), 401);
-  await writeFile(
-    path.join(output, "live-capture.json"),
-    JSON.stringify(
-      {
-        runtime:
-          "Actual release-compiled Flutter web application in Chromium, real secure-storage web plugin",
-        backend:
-          "Real isolated HTTPS intake, not a mock; self-signed loopback development certificate",
-        report_created_via_real_api: upload.status(),
-        report_source:
-          "Public CC BY gorse photo with its original desktop pilot model revision, score and ranking revision",
-        stable_deletion_receipt: await stable.json(),
-        upload_after_deletion: revoked.status(),
-        browser_errors: errors,
-      },
-      null,
-      2,
-    ),
-  );
+  assert.deepEqual(errors, [], "Actual app capture reported browser errors");
+  evidence = {
+    capture_instance: process.env.WEEDZ_CAPTURE_INSTANCE,
+    runtime:
+      "Actual release-compiled Flutter web application in Chromium, real secure-storage web plugin",
+    backend: "Real isolated HTTPS intake, not a mock; self-signed loopback development certificate",
+    report_created_via_real_api: upload.status(),
+    report_source:
+      "Public CC BY gorse photo with its original desktop pilot model revision, score and ranking revision",
+    stable_deletion_status: stable.status(),
+    stable_deletion_receipt: await stable.json(),
+    upload_after_deletion: revoked.status(),
+    browser_errors: errors,
+  };
 } finally {
   await context.close();
   await browser.close();
@@ -139,3 +138,9 @@ for (let i = 0; i < Math.ceil((recordingEnd - recordingStart) * 25); i++) {
 }
 encoder.stdin.end();
 await finished;
+assert.deepEqual(errors, [], "Actual app capture reported browser errors");
+assert(evidence);
+await writeFile(
+  path.join(output, "live-capture.json"),
+  JSON.stringify({ ...evidence, captureSuccess: true }, null, 2),
+);

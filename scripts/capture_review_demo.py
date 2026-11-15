@@ -1,22 +1,44 @@
 """Run isolated snapshot servers, record the actual web UI, then stop only our children."""
 
 import argparse
+import json
 import os
 import signal
+import socket
+import ssl
 import subprocess
 import time
+import uuid
 from pathlib import Path
 from urllib.request import urlopen
 
 from demo_paths import new_output
 
 
-def ready(url: str) -> None:
+def available_port() -> int:
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        return int(listener.getsockname()[1])
+
+
+def ready(
+    url: str,
+    child: subprocess.Popen[bytes],
+    instance: str,
+    *,
+    context: ssl.SSLContext | None = None,
+) -> None:
     deadline = time.monotonic() + 40
     while time.monotonic() < deadline:
+        if child.poll() is not None:
+            raise RuntimeError(f"Owned capture server exited before readiness: {url}")
         try:
-            with urlopen(url, timeout=2) as response:
+            with urlopen(url, timeout=2, context=context) as response:
                 if response.status == 200:
+                    if json.loads(response.read()) != {"capture_instance": instance}:
+                        raise ValueError(f"Listener belongs to another capture instance: {url}")
+                    if child.poll() is not None:
+                        raise RuntimeError(f"Owned capture server exited during readiness: {url}")
                     return
         except OSError:
             time.sleep(0.2)
@@ -31,9 +53,15 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     output = new_output(args.output)
     output.mkdir(parents=True, exist_ok=False)
+    api_port, web_port = available_port(), available_port()
+    while web_port == api_port:
+        web_port = available_port()
+    instance = uuid.uuid4().hex
+    api_origin = f"http://127.0.0.1:{api_port}"
+    web_origin = f"http://127.0.0.1:{web_port}"
     environment = os.environ | {
-        "WEEDZ_API_URL": "http://127.0.0.1:8312",
-        "WEEDZ_WEB_URL": "http://127.0.0.1:3012",
+        "WEEDZ_API_URL": api_origin,
+        "WEEDZ_WEB_URL": web_origin,
         "WEEDZ_CAPTURE_DIR": str(output),
     }
     processes: list[subprocess.Popen[bytes]] = []
@@ -48,6 +76,10 @@ def main() -> None:
                         "scripts/serve_demo_snapshot.py",
                         "--snapshot",
                         str(args.snapshot),
+                        "--port",
+                        str(api_port),
+                        "--instance",
+                        instance,
                     ],
                     cwd=root,
                     env=environment,
@@ -56,7 +88,7 @@ def main() -> None:
                     start_new_session=True,
                 )
             )
-            ready("http://127.0.0.1:8312/runs")
+            ready(f"{api_origin}/runs/capture_identity", processes[-1], instance)
             processes.append(
                 subprocess.Popen(
                     [
@@ -69,7 +101,7 @@ def main() -> None:
                         "--hostname",
                         "127.0.0.1",
                         "--port",
-                        "3012",
+                        str(web_port),
                     ],
                     cwd=root,
                     env=environment,
@@ -78,7 +110,7 @@ def main() -> None:
                     start_new_session=True,
                 )
             )
-            ready("http://127.0.0.1:3012")
+            ready(f"{web_origin}/api/runs/capture_identity", processes[-1], instance)
             subprocess.run(
                 ["pnpm", "--dir", "web", "exec", "node", "scripts/capture-demo.mjs"],
                 cwd=root,

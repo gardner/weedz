@@ -1,5 +1,8 @@
 "use client";
 
+import { watchlistHint } from "../lib/photo-labels";
+import { names } from "../lib/types";
+
 export type RegionEvidence = {
   id: string;
   box: number[];
@@ -11,6 +14,8 @@ export type RegionEvidence = {
 
 export type SegmentationEvidence = {
   status: "ok" | "empty" | "failed";
+  proposal_status?: "ok" | "empty" | "failed";
+  view_status?: "ok" | "empty" | "failed" | "skipped_proposal_failure";
   baseline_retained: boolean;
   regions: RegionEvidence[];
 };
@@ -40,10 +45,12 @@ export function SegmentationMask({
 
 export function SegmentationControls({
   evidence,
+  declaredComparison = false,
   selected,
   onSelect,
 }: {
   evidence: SegmentationEvidence;
+  declaredComparison?: boolean;
   selected: number | null;
   onSelect: (index: number | null) => void;
 }) {
@@ -53,6 +60,12 @@ export function SegmentationControls({
       <p>
         Class-agnostic regions may miss plants or include other objects. Original ranking retained.
       </p>
+      {evidence.view_status === "failed" && (
+        <p role="status">
+          Region classification failed. These masks are SAM proposals, not species identifications.
+          {evidence.baseline_retained && " Original baseline scores are retained."}
+        </p>
+      )}
       {evidence.regions.length ? (
         <label>
           Mask overlay
@@ -90,7 +103,8 @@ export function SegmentationControls({
           <ul>
             {Object.entries(evidence.regions[selected].views).map(([view, score]) => (
               <li key={view}>
-                {view}: {score.best_species} · relative margin {score.margin.toFixed(3)}
+                {view}: {watchlistHint(score, declaredComparison, names)}; top watchlist comparison:{" "}
+                {score.best_species} · relative margin {score.margin.toFixed(3)}
               </li>
             ))}
           </ul>
