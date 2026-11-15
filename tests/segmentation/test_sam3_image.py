@@ -277,3 +277,98 @@ def test_checkpoint_startup_failure_does_not_become_a_negative_result(tmp_path):
     with pytest.raises(ValueError, match="checkpoint checksum"):
         Sam3Image.load(checkpoint, Sam3Config(), tmp_path / "cache")
     assert not (tmp_path / "cache").exists()
+
+
+@pytest.mark.parametrize("budget,retained,status", [(1000, 1, "ok"), (100, 0, "failed")])
+def test_serialized_retention_budget_fits_artifact_and_reports_truncation(
+    tmp_path, monkeypatch, budget, retained, status
+):
+    from weedz.segmentation import artifacts
+    from weedz.segmentation.sam3_image import Sam3Image
+
+    monkeypatch.setattr(artifacts, "MAX_ARTIFACT_BYTES", 2100)
+
+    class Processor:
+        def set_image(self, image):
+            return {}
+
+        def reset_all_prompts(self, state):
+            pass
+
+        def set_text_prompt(self, *, state, prompt):
+            masks = np.zeros((2, 1, 8, 8), bool)
+            masks[0, :, :4] = True
+            masks[1, :, 4:] = True
+            return {
+                "masks": masks,
+                "scores": np.array([0.9, 0.8]),
+                "boxes": np.array([[0, 0, 8, 8], [0, 0, 8, 8]]),
+            }
+
+    path = tmp_path / "plant.png"
+    Image.new("RGB", (8, 8)).save(path)
+    config = Sam3Config(prompts=("plant",), max_regions=256, max_prompt_bytes=budget)
+    runner = Sam3Image(Processor(), config, {}, tmp_path / "cache")
+    result = runner.screen(path)
+    prompt = result["prompts"][0]
+    assert result["status"] == status and len(result["regions"]) == retained
+    assert prompt["truncated"] is True and prompt["byte_capped_count"] == 2 - retained
+
+
+@pytest.mark.parametrize("unknown_prompt", [False, True])
+def test_restoration_enforces_prompt_membership_and_each_prompt_cap(unknown_prompt):
+    import hashlib
+    import io
+
+    from weedz.segmentation.sam3_image import restore_concept_regions
+
+    image = Image.new("RGB", (8, 8))
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = buffer.getvalue()
+    config = Sam3Config(prompts=("plant", "flower"), max_regions=1)
+    prompt = "gorse" if unknown_prompt else "plant"
+    raw = {
+        "masks": np.ones((1, 8, 8), bool),
+        "scores": np.array([0.8]),
+        "boxes": np.array([[0, 0, 8, 8]]),
+    }
+    record = concept_regions(image, prompt, raw, config)["regions"][0]
+    records = [record] if unknown_prompt else [record, record]
+    with pytest.raises(ValueError, match="prompt"):
+        restore_concept_regions(
+            encoded, records, config, expected_sha256=hashlib.sha256(encoded).hexdigest()
+        )
+
+
+def test_restoration_enforces_combined_serialized_bytes_for_each_prompt():
+    import hashlib
+    import io
+
+    from weedz.segmentation.sam3_image import restore_concept_regions
+
+    image = Image.new("RGB", (8, 8))
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = buffer.getvalue()
+    masks = np.zeros((2, 1, 8, 8), bool)
+    masks[0, :, :4] = True
+    masks[1, :, 4:] = True
+    records = concept_regions(
+        image,
+        "plant",
+        {
+            "masks": masks,
+            "scores": np.array([0.9, 0.8]),
+            "boxes": np.array([[0, 0, 8, 8], [0, 0, 8, 8]]),
+        },
+        Sam3Config(),
+    )["regions"]
+    assert len(records) == 2
+    with pytest.raises(ValueError, match="byte"):
+        restore_concept_regions(
+            encoded,
+            records,
+            Sam3Config(max_regions=2, max_prompt_bytes=1000),
+            expected_sha256=hashlib.sha256(encoded).hexdigest(),
+        )
