@@ -50,6 +50,41 @@ def test_a_wrong_or_empty_intake_folder_is_refused(tmp_path: Path) -> None:
     assert after["consent"]["withdrawn_at"]
 
 
+def test_a_run_of_withdrawn_reports_still_checks_its_intake(tmp_path: Path) -> None:
+    """Tombstones identify the intake too, so another intake is refused, not imported."""
+    intake = tmp_path / "intake"
+    report_id = send(intake, report())
+    synced(tmp_path, intake)
+    ReportStore(intake).withdraw(1, report_id)
+    synced(tmp_path, intake)
+    other = tmp_path / "other"
+    send(other, report())
+    with pytest.raises(device_reports.IntakeMismatch):
+        synced(tmp_path, other)
+    assert len(Store(tmp_path / "pilot").photos(RUN_ID)) == 1
+
+
+def test_a_known_report_withdrawn_during_a_sync_is_erased_by_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Intake is read again after the listing, so the sync a request triggers never
+    leaves that request a report withdrawn meanwhile."""
+    intake = tmp_path / "intake"
+    report_id = send(intake, with_image(jpeg()))
+    synced(tmp_path, intake)
+    listed = ReportStore.active
+
+    def then_withdrawn(self: ReportStore) -> list:
+        stored = listed(self)
+        ReportStore(intake).withdraw(1, report_id)
+        return stored
+
+    monkeypatch.setattr(ReportStore, "active", then_withdrawn)
+    [photo] = synced(tmp_path, intake)
+    assert photo["consent"]["withdrawn_at"] and photo["latitude"] is None
+    assert list((tmp_path / "pilot" / "images" / "device").iterdir()) == []
+
+
 def test_a_submitter_deletion_under_way_counts_as_withdrawal(tmp_path: Path) -> None:
     """Once a device's deletion has begun (its point of no return), its reports are gone
     from review even if the deletion was interrupted before marking each one."""

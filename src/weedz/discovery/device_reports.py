@@ -21,6 +21,7 @@ import os
 import sqlite3
 import time
 import uuid
+from contextlib import closing
 from io import BytesIO
 from pathlib import Path
 from typing import Literal
@@ -32,7 +33,6 @@ from weedz import consent
 from weedz.discovery.records import SPECIES
 from weedz.discovery.sharing import withdrawn
 from weedz.discovery.store import Store, now
-from weedz.intake.deletion import Deletions
 from weedz.intake.store import ReportStore, StoredReport
 
 RUN_ID = "device-reports"
@@ -98,8 +98,12 @@ class DeviceItem(BaseModel):
     consent: ContributorConsent
 
 
+def _item_id(submitter: int, report_id: str) -> str:
+    return f"device-{submitter}-{report_id}"
+
+
 def item_id(stored: StoredReport) -> str:
-    return f"device-{stored.submitter}-{stored.report_id}"
+    return _item_id(stored.submitter, stored.report_id)
 
 
 def item(stored: StoredReport) -> DeviceItem:
@@ -182,10 +186,9 @@ def _names(store: Store, identifier: str, image_path: str) -> bool:
     return row is not None and json.loads(row["record"])["image_path"] == image_path
 
 
-def _add(store: Store, reports: ReportStore, stored: StoredReport) -> None:
+def _add(store: Store, stored: StoredReport) -> None:
     """Add a report. Its row names the crop before the crop is written, so every copy on
-    disk is one a withdrawal can find and delete. Intake is asked again once it is in, so
-    a withdrawal that came after the listing is applied by this same sync."""
+    disk is one a withdrawal can find and delete."""
     record, found = item(stored), scores(stored)
     data = _crop(stored, record)
     if data:
@@ -200,9 +203,6 @@ def _add(store: Store, reports: ReportStore, stored: StoredReport) -> None:
         )
     if data and cursor.rowcount == 1:
         _store_crop(store, record.id, record.image_path, data)
-    added = record.model_dump(mode="json")
-    if _withdrawn(reports, added):
-        _withdraw(store, record.id, added)
 
 
 def _store_crop(store: Store, identifier: str, image_path: str, data: bytes) -> None:
@@ -214,16 +214,13 @@ def _store_crop(store: Store, identifier: str, image_path: str, data: bytes) -> 
         target.unlink(missing_ok=True)
 
 
-def _restore(store: Store, reports: ReportStore, stored: StoredReport, record: dict) -> None:
-    """Copy again a crop whose earlier copy did not complete (a full disk, a crash), then
-    ask intake again, as ``_add`` does, so a withdrawal meanwhile erases it at once."""
+def _restore(store: Store, stored: StoredReport, record: dict) -> None:
+    """Copy again a crop whose earlier copy did not complete (a full disk, a crash)."""
     if (store.root / record["image_path"]).exists():
         return
     data = _crop(stored, DeviceItem.model_validate(record))
     if data and hashlib.sha256(data).hexdigest() == record["sha256"]:
         _store_crop(store, record["id"], record["image_path"], data)
-    if _withdrawn(reports, record):
-        _withdraw(store, record["id"], record)
 
 
 def _erased(record: dict) -> dict:
@@ -333,19 +330,16 @@ class IntakeMismatch(Exception):
     cannot be checked. The device run is refused rather than served unchecked."""
 
 
-def _intake_state(reports: ReportStore, record: dict) -> str:
-    """ "withdrawn", "received", or "unknown" when intake has no record of the report.
+def _intake_index(reports: ReportStore) -> tuple[set[str], set[str]]:
+    """Every item id intake ever received, and those its people withdrew, in one read.
     Intake never forgets a report: a withdrawal or deletion leaves a tombstone. Once a
     device's deletion has begun (its point of no return) its reports count as withdrawn."""
-    device = record["device"]
-    if Deletions(reports.folder.parent).started(device["submitter"]):
-        return "withdrawn"
-    receipt = reports.receipt(device["submitter"], device["report_id"])
-    return receipt.status if receipt else "unknown"
-
-
-def _withdrawn(reports: ReportStore, record: dict) -> bool:
-    return _intake_state(reports, record) == "withdrawn"
+    with closing(reports._connect()) as db:
+        deleting = {row[0] for row in db.execute("SELECT submitter FROM submitter_deletions")}
+        rows = db.execute("SELECT submitter, report_id, withdrawn_at FROM reports").fetchall()
+    received = {_item_id(row[0], row[1]) for row in rows}
+    gone = {_item_id(row[0], row[1]) for row in rows if row[2] or row[0] in deleting}
+    return received, gone
 
 
 def _private(store: Store) -> None:
@@ -367,35 +361,39 @@ def sync(store: Store, reports: ReportStore) -> None:
         _sync(store, reports)
 
 
+def _known(store: Store) -> dict[str, dict]:
+    with store.connect() as db:
+        rows = db.execute("SELECT id, record FROM photos WHERE run_id=?", (RUN_ID,))
+        return {row["id"]: json.loads(row["record"]) for row in rows}
+
+
 def _sync(store: Store, reports: ReportStore) -> None:
     _create_run(store)
     _private(store)
     active = {item_id(stored): stored for stored in reports.active()}
-    with store.connect() as db:
-        rows = db.execute("SELECT id, record FROM photos WHERE run_id=?", (RUN_ID,))
-        known = {row["id"]: json.loads(row["record"]) for row in rows}
-    # Decided before anything changes: an intake that has never heard of a report is
-    # the wrong intake, and a sync against it would serve withdrawn reports (fail closed).
-    states = {
-        identifier: _intake_state(reports, record)
-        for identifier, record in known.items()
-        if identifier not in active and not withdrawn(record)
-    }
-    if "unknown" in states.values():
+    known = _known(store)
+    # Before anything changes: an intake that never received one of these reports, even
+    # a withdrawn one, is not their intake, and syncing against it would serve withdrawn
+    # reports or import strangers' (fail closed).
+    received, _ = _intake_index(reports)
+    if not known.keys() <= received:
         raise IntakeMismatch(f"{reports.folder.parent} is not the intake these reports came from")
     for identifier, stored in active.items():
         if identifier not in known:
-            _add(store, reports, stored)
+            _add(store, stored)
         elif known[identifier].get("image_path"):
-            _restore(store, reports, stored, known[identifier])
+            _restore(store, stored, known[identifier])
+    # Intake is read again after every copy, so whatever was withdrawn since the listing,
+    # crops already read included, is erased by this sync, before its request is served.
+    _, withdrawn_now = _intake_index(reports)
     gone = 0
-    for identifier, record in known.items():
+    for identifier, record in _known(store).items():
         if withdrawn(record):
             _erase_late_text(store, identifier)
             gone += 1
-        elif states.get(identifier) == "withdrawn":
+        elif identifier in withdrawn_now:
             _withdraw(store, identifier, record)
             gone += 1
     _sweep(store)
-    detail = f"{len(active)} reports in review · {gone} withdrawn"
+    detail = f"{len(_known(store)) - gone} reports in review · {gone} withdrawn"
     store.status(RUN_ID, "receiving", detail)
