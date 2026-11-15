@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 
 from weedz.bundles.parity_gate import validate_parity
 from weedz.bundles.signing import PAYLOAD_TYPE, BundleRejected, verify
-from weedz.bundles.text_table import table_parts
+from weedz.bundles.text_table import preprocessing_sha256, table_parts
 from weedz.bundles.windows import scoring, windows
 from weedz.discovery.inference import COMPARISONS, MODELS, RANKING_REVISION, file_sha256
 from weedz.discovery.lookalikes import LOOKALIKES
@@ -99,8 +99,10 @@ def check_artefact(path: Path, entry: Mapping[str, Any]) -> None:
         raise BundleRejected(f"{path.name}: SHA-256 differs from the manifest")
 
 
-def parity_record(benchmark: Mapping[str, Any], variant: str, model_key: str, sha256: str) -> str:
-    """The id of the passing parity record that admits these image-tower bytes."""
+def parity_record(
+    benchmark: Mapping[str, Any], variant: str, model_key: str, sha256: str, preprocessing_hash: str
+) -> str:
+    """The passing parity record admitting these image-tower bytes and transform."""
     record = benchmark.get("variants", {}).get(variant)
     if record is None:
         raise ParityRefused(f"There is no parity record for variant {variant!r}")
@@ -118,6 +120,11 @@ def parity_record(benchmark: Mapping[str, Any], variant: str, model_key: str, sh
     except ValueError as error:
         raise ParityRefused(f"{variant} did not pass parity with the reference: {error}") from error
     _measured_these_bytes(record, variant, sha256)
+    measured = record.get("preprocessing_sha256")
+    if not isinstance(measured, str) or re.fullmatch(r"[0-9a-f]{64}", measured) is None:
+        raise ParityRefused(f"{variant} records no valid preprocessing SHA-256; re-measure parity")
+    if measured != preprocessing_hash:
+        raise ParityRefused(f"{variant} measured other preprocessing; re-measure parity")
     return f"{variant}/thresholds-{version}"
 
 
@@ -155,9 +162,15 @@ def build_manifest(spec: BundleSpec) -> dict[str, Any]:
     tower = artefact(Path(spec.image_model.path))
     source = spec.image_model.parity
     benchmark = json.loads(Path(source.benchmark).read_text())
-    parity = parity_record(benchmark, source.variant, spec.model_key, tower["sha256"])
-    runtime = Runtime.model_validate(benchmark["variants"][source.variant]["runtime"])
     table, preprocessing = table_parts(Path(spec.text_table), spec.model_key)
+    parity = parity_record(
+        benchmark,
+        source.variant,
+        spec.model_key,
+        tower["sha256"],
+        preprocessing_sha256(preprocessing),
+    )
+    runtime = Runtime.model_validate(benchmark["variants"][source.variant]["runtime"])
     return {
         "schema": SCHEMA,
         "sequence": spec.sequence,

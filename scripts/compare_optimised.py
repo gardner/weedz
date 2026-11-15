@@ -27,6 +27,7 @@ from typing import Any, cast
 
 import numpy as np
 
+from weedz.bundles.text_table import preprocessing_sha256
 from weedz.discovery.inference import file_sha256
 from weedz.discovery.parity import THRESHOLDS, compare, encoding_cost
 
@@ -38,7 +39,7 @@ EXPORT: dict[str, Any] = {
     "int8": "onnxruntime quantize_dynamic, QInt8 weights",
     "fp16": "torch module.half()",
 }
-PROVENANCE = ["model", "model_key", "revision", "weights_sha256"]
+PROVENANCE = ["model", "model_key", "revision", "weights_sha256", "preprocessing_sha256"]
 REFERENCE = {"model": "bioclip-2", "artefact": "fp32"}
 # Artefact -> how it runs and its file name under --work/<model>/.
 ARTEFACTS = {
@@ -238,6 +239,7 @@ def artefact_folder(work: Path, metadata: Mapping[str, Any], versions: Mapping[s
         "model_key": metadata["model_key"],
         "revision": metadata["revision"],
         "weights_sha256": metadata["weights_sha256"],
+        "preprocessing_sha256": metadata["preprocessing_sha256"],
         "versions": dict(sorted(versions.items())),
         "export": EXPORT,
     }
@@ -301,6 +303,7 @@ def export_artefacts(visual: Any, folder: Path, needed: set[str]) -> None:
 def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]) -> dict[str, Any]:
     """One model's text embeddings, pre-processed windows and artefacts."""
     import onnxruntime
+    import open_clip
     import torch
 
     from weedz.discovery.inference import (
@@ -313,7 +316,12 @@ def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]
 
     screener = Screener.load(model=key)
     versions = library_versions() | {"onnxruntime": onnxruntime.__version__}
-    folder = artefact_folder(work, screener.metadata, versions)
+    metadata = screener.metadata | {
+        "preprocessing_sha256": preprocessing_sha256(
+            open_clip.get_model_preprocess_cfg(screener.model)
+        )
+    }
+    folder = artefact_folder(work, metadata, versions)
     pixels = folder / "pixels"
     pixels.mkdir(parents=True, exist_ok=True)
     texts = {}
@@ -327,7 +335,7 @@ def prepare(key: str, photos: list[dict[str, Any]], work: Path, needed: set[str]
             text = torch.cat([text, screener.encode_text([prompt(photo["subject"])])])
         texts[photo["id"]] = text.float().numpy()
     export_artefacts(cast(Any, screener.model).visual, folder, needed)
-    return {"metadata": screener.metadata, "texts": texts, "pixels": pixels, "folder": folder}
+    return {"metadata": metadata, "texts": texts, "pixels": pixels, "folder": folder}
 
 
 def _references_external_data(path: Path) -> bool:
@@ -402,6 +410,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "description": item["description"],
             # The exact bytes measured, so only they can pass the bundle parity gate (#59).
             "artefact_sha256": digest,
+            "preprocessing_sha256": model["preprocessing_sha256"],
             "runtime": RUNTIME[item["artefact"]],
             "cost": cost,
             "parity": compare(reference, candidate, photos),
