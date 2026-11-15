@@ -122,15 +122,23 @@ class Activities:
     def _screener(self, run_id: str) -> Any:
         from weedz.discovery.inference import Screener
 
-        self.store.status(run_id, "screening", "Loading pinned BioCLIP model on CPU")
         activity.heartbeat("loading model")
         run = next(item for item in self.store.runs() if item["id"] == run_id)
-        key = RunSpec.from_saved(run["spec"]).model
+        spec = RunSpec.from_saved(run["spec"])
+        model_key, backend = spec.model, spec.screening_backend
+        key = model_key if backend == "cpu" else f"{model_key}/{backend}"
+        self.store.status(run_id, "screening", f"Loading pinned BioCLIP model ({backend})")
         if key not in self.screeners:
             # Keep only the active model: two encoders (0.6 + 1.7 GB) could exhaust memory.
             self.screeners.clear()
             self.screeners[key] = while_heartbeating(
-                lambda: Screener.load(self.store.root / "embeddings", model=key),
+                lambda: (
+                    Screener.load(self.store.root / "embeddings", model=model_key)
+                    if backend == "cpu"
+                    else Screener.load(
+                        self.store.root / "embeddings", model=model_key, backend=backend
+                    )
+                ),
                 f"loading {key} model",
             )
         screener = self.screeners[key]
