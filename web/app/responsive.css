@@ -41,12 +41,7 @@
     padding: 24px 16px 0;
   }
   .photo-row {
-    padding: 12px 8px;
     gap: 8px;
-  }
-  .photo-row img {
-    width: 48px;
-    height: 62px;
   }
   .stats-grid {
     grid-template-columns: 1fr 1fr;
@@ -134,25 +129,6 @@
   }
   .workspace {
     gap: 18px;
-  }
-  .photo-list {
-    max-height: 265px;
-  }
-  .photo-row img {
-    width: 62px;
-    height: 62px;
-  }
-  .photo-row-body {
-    gap: 4px;
-  }
-  .queue-heading {
-    padding: 15px 16px 10px;
-  }
-  .queue-filters {
-    margin-bottom: 12px;
-  }
-  .cohort-tabs {
-    margin-bottom: 9px;
   }
   .run-settings summary > span,
   .study-panel summary > span,
