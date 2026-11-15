@@ -50,10 +50,12 @@ def _fields(metadata: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]
 
 def shared_regional_version(metadata: dict[str, Any]) -> dict[str, Any]:
     classifier = metadata.get("classifier", metadata)
+    if not isinstance(classifier, dict):
+        raise ValueError("Invalid semantic pipeline metadata")
     proposer = metadata.get(
         "proposer", classifier.get("proposer", metadata.get("proposal_experiment", {}))
     )
-    if not isinstance(classifier, dict) or not isinstance(proposer, dict):
+    if not isinstance(proposer, dict):
         raise ValueError("Invalid semantic pipeline metadata")
     config = proposer.get("proposal_config", proposer.get("config"))
     if not isinstance(config, dict) or not CONFIG_FIELDS.issubset(config):

@@ -78,3 +78,8 @@ def test_changed_model_or_dense_grid_is_a_different_pipeline():
 def test_incomplete_semantics_cannot_receive_a_shared_version():
     with pytest.raises(ValueError, match="semantic"):
         shared_regional_version({"revision": "not enough"})
+
+
+def test_invalid_classifier_metadata_is_a_validation_error():
+    with pytest.raises(ValueError, match="semantic"):
+        shared_regional_version({"classifier": "not metadata"})
