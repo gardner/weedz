@@ -97,7 +97,7 @@ def render(args: argparse.Namespace) -> None:
             "No EQ, gain, normalization or speed changes.",
             "license": "https://huggingface.co/BreezeBlue/Breeze-TTS-2/blob/main/LICENSE",
         },
-        "music": "Soundtrack choice pending the ten Music3 auditions; picture export is silent.",
+        "music": "MiniMax Music3; the final mix records its selected source and hash separately.",
         "font": "Noto Sans CJK Japanese / SIL Open Font License 1.1",
         "modifications": "Upright metadata-free source pixels, static resizing, "
         "real model mask overlays, captions and editorial composition. No pan or zoom.",
