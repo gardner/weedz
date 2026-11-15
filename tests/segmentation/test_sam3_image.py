@@ -112,12 +112,19 @@ def test_classagnostic_restore_has_real_pixels_without_synthetic_mask_quality():
         {"masks": masks, "scores": np.array([0.8]), "boxes": np.array([[2, 1, 5, 3]])},
         config,
     )["regions"][0]
-    restored = restore_concept_region(image, record, config)
+    import hashlib
+    import io
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = buffer.getvalue()
+    expected_sha = hashlib.sha256(encoded).hexdigest()
+    restored = restore_concept_region(encoded, record, config, expected_sha256=expected_sha)
     assert restored.quality == {} and restored.box == (20, 10, 50, 30)
     assert restored.views["tight"].getpixel((0, 0)) == (255, 255, 0)
     record["box"] = [0, 0, 1, 1]
     with pytest.raises(ValueError, match="provenance"):
-        restore_concept_region(image, record, config)
+        restore_concept_region(encoded, record, config, expected_sha256=expected_sha)
 
 
 def test_empty_retention_preserves_raw_scores_and_exif_upright_frame(tmp_path):
@@ -182,3 +189,91 @@ def test_failed_prompt_is_explicit_and_retried_without_repeating_success(tmp_pat
     success = runner.screen(path)
     assert success["status"] == "ok" and success["cache_hits"] == 1
     assert processor.calls == ["plant", "flower", "flower"]
+
+
+def test_restoration_rejects_wrong_same_sized_source_before_crops():
+    import hashlib
+    import io
+
+    from weedz.segmentation.sam3_image import restore_concept_regions
+
+    original, changed = io.BytesIO(), io.BytesIO()
+    Image.new("RGB", (8, 8), "green").save(original, format="PNG")
+    Image.new("RGB", (8, 8), "red").save(changed, format="PNG")
+    with pytest.raises(ValueError, match="checksum"):
+        restore_concept_regions(
+            changed.getvalue(),
+            [],
+            Sam3Config(),
+            expected_sha256=hashlib.sha256(original.getvalue()).hexdigest(),
+        )
+
+
+def test_image_embedding_failure_is_explicit_for_every_uncached_prompt(tmp_path):
+    from weedz.segmentation.sam3_image import Sam3Image
+
+    class Processor:
+        calls = 0
+
+        def set_image(self, image):
+            self.calls += 1
+            raise RuntimeError("Transient CUDA embedding failure")
+
+        def reset_all_prompts(self, state):
+            pytest.fail("No prompt inference without image embeddings")
+
+        def set_text_prompt(self, *, state, prompt):
+            pytest.fail("No prompt inference without image embeddings")
+
+    path = tmp_path / "plant.png"
+    Image.new("RGB", (8, 8)).save(path)
+    processor = Processor()
+    runner = Sam3Image(processor, Sam3Config(), {}, tmp_path / "cache")
+    result = runner.screen(path)
+    assert result["status"] == "failed" and result["failed_prompts"] == 2
+    assert processor.calls == 1
+    assert {r["failure_phase"] for r in result["prompts"]} == {"image_embedding"}
+    assert runner.screen(path)["status"] == "failed"
+    assert processor.calls == 2
+
+
+def test_plural_restoration_hashes_and_decodes_the_source_once(monkeypatch):
+    import hashlib
+    import io
+
+    from weedz.segmentation.sam3_image import restore_concept_regions
+
+    image = Image.new("RGB", (8, 8), "green")
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = buffer.getvalue()
+    config = Sam3Config()
+    raw = {
+        "masks": np.ones((1, 8, 8), bool),
+        "scores": np.array([0.8]),
+        "boxes": np.array([[0, 0, 8, 8]]),
+    }
+    records = [concept_regions(image, p, raw, config)["regions"][0] for p in config.prompts]
+    original_open = Image.open
+    source_decodes = []
+
+    def observed(stream, *args, **kwargs):
+        if isinstance(stream, io.BytesIO) and stream.getvalue() == encoded:
+            source_decodes.append(True)
+        return original_open(stream, *args, **kwargs)
+
+    monkeypatch.setattr(Image, "open", observed)
+    regions = restore_concept_regions(
+        encoded, records, config, expected_sha256=hashlib.sha256(encoded).hexdigest()
+    )
+    assert len(regions) == 2 and source_decodes == [True]
+
+
+def test_checkpoint_startup_failure_does_not_become_a_negative_result(tmp_path):
+    from weedz.segmentation.sam3_image import Sam3Image
+
+    checkpoint = tmp_path / "invalid.pt"
+    checkpoint.write_bytes(b"not the pinned checkpoint")
+    with pytest.raises(ValueError, match="checkpoint checksum"):
+        Sam3Image.load(checkpoint, Sam3Config(), tmp_path / "cache")
+    assert not (tmp_path / "cache").exists()
