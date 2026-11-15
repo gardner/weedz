@@ -6,11 +6,13 @@ Outputs must be outside git. This is a curated capture subset, not a pilot evalu
 import argparse
 import hashlib
 import json
+import shutil
 import sqlite3
+import tempfile
 from pathlib import Path
 from typing import Any
 
-from demo_paths import outside_git
+from demo_paths import new_output, outside_git
 from PIL import Image, ImageOps
 
 ADMITTED = {"cc0", "cc-by"}
@@ -31,10 +33,27 @@ def completed_run(copied: sqlite3.Connection, requested: str | None) -> str:
 
 
 def snapshot(source: Path, output: Path, run_id: str | None = None) -> dict[str, Any]:
-    """Backup a read-only SQLite connection, then sanitize only the independent copy."""
-    source, output = source.resolve(), outside_git(output)
+    """Publish only a completed sanitized copy; raw backups stay in private temporary storage."""
+    source, output = source.resolve(), new_output(output)
     if output.is_relative_to(source) or source.is_relative_to(output):
         raise ValueError("Source and demo destinations must be independent")
+    with tempfile.TemporaryDirectory(prefix="weedz-capture-private-") as private:
+        staged = Path(private) / "snapshot"
+        manifest = _build_snapshot(source, staged, run_id)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        # Creation must succeed before the cleanup handler owns this path.
+        output.mkdir(exist_ok=False)
+        try:
+            shutil.copytree(staged, output, dirs_exist_ok=True)
+        except BaseException:
+            shutil.rmtree(output)
+            raise
+    return manifest
+
+
+def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str, Any]:
+    """Sanitize a read-only backup inside the caller's private temporary directory."""
+    output = outside_git(output)
     output.mkdir(parents=True, exist_ok=False)
     destination = output / "discovery.sqlite3"
     with (

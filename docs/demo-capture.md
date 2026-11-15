@@ -20,7 +20,10 @@ uv run python scripts/capture_review_demo.py \
 
 The snapshot helper opens the original discovery database with SQLite `mode=ro`
 and uses the backup API, preserving a consistent view including committed WAL
-contents. It never initializes a Store on the source, reads intake databases,
+contents. Raw backups are built in a private temporary directory outside the
+deliverable tree. Only a fully sanitized, vacuumed copy and completed manifest are
+published; failed builds and interruptions leave no raw database in the artifact
+destination. It never initializes a Store on the source, reads intake databases,
 opens reviewer-token stores, or writes source images. All source operations are
 reads. The independent destination is then filtered to completed, scored CC0/
 CC BY photos. Decoded upright pixels are copied as metadata-free lossless PNGs;
