@@ -7,6 +7,7 @@ import json
 import os
 import tempfile
 import time
+from collections.abc import Iterator
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -91,7 +92,7 @@ def _result(sample: Sample, root: Path, proposer: Proposer, config: ProposalConf
             "status": "ok" if regions else "empty",
             "regions": [{**region.record(), "views": {}} for region in regions],
         }
-    except (ValueError, RuntimeError, OSError, MemoryError) as error:
+    except (ValueError, RuntimeError, OSError, MemoryError, Image.DecompressionBombError) as error:
         result = {"status": "failed", "failure_type": type(error).__name__, "regions": []}
     return {**result, "elapsed_seconds": time.monotonic() - start}
 
@@ -103,34 +104,56 @@ def _rows(
     proposer: Proposer,
     config: ProposalConfig,
     version: str,
-) -> list[dict]:
+) -> Iterator[dict]:
     artifacts = StageArtifacts(output, "real-sam-proposals")
-    rows = []
     for sample in samples:
-        inputs = {"image_sha256": sample.media.sha256, "model_version": version}
+        inputs = {
+            "image_sha256": sample.media.sha256,
+            "model_version": version,
+            "image_geometry": [sample.media.width, sample.media.height],
+        }
         result = artifacts.read("proposals", sample.id, inputs)
         if result is None or result["status"] == "failed":
             result = artifacts.write(
                 "proposals", sample.id, inputs, _result(sample, root, proposer, config)
             )
-        rows.append(
-            {
+        yield {
+            "schema": 1,
+            "sample_id": sample.id,
+            "image_sha256": sample.media.sha256,
+            "source_sample": sample.model_dump(mode="json"),
+            "model_version": version,
+            "segmentation": {
                 "schema": 1,
-                "sample_id": sample.id,
-                "image_sha256": sample.media.sha256,
-                "source_sample": sample.model_dump(mode="json"),
-                "model_version": version,
-                "segmentation": {
-                    "schema": 1,
-                    "baseline_retained": False,
-                    "proposal_status": result["status"],
-                    "view_status": "not_requested",
-                    "provenance": proposer.metadata,
-                    **result,
-                },
-            }
-        )
-    return rows
+                "baseline_retained": False,
+                "proposal_status": result["status"],
+                "view_status": "not_requested",
+                "provenance": proposer.metadata,
+                **result,
+            },
+        }
+
+
+def _stream_rows(path: Path, rows: Iterator[dict]) -> tuple[str, dict[str, int]]:
+    checksum = hashlib.sha256()
+    counts = {status: 0 for status in ("ok", "empty", "failed")}
+    with tempfile.NamedTemporaryFile(
+        dir=path.parent, prefix="proposals-", suffix=".tmp", delete=False
+    ) as stream:
+        temporary = Path(stream.name)
+        try:
+            for row in rows:
+                raw = (json.dumps(row, allow_nan=False) + "\n").encode()
+                stream.write(raw)
+                stream.flush()
+                checksum.update(raw)
+                counts[row["segmentation"]["status"]] += 1
+            os.fsync(stream.fileno())
+            os.replace(temporary, path)
+            sync_directory(path.parent)
+        finally:
+            temporary.unlink(missing_ok=True)
+    return checksum.hexdigest(), counts
 
 
 def _publish(
@@ -154,21 +177,17 @@ def _publish(
         previous = json.loads(ready.read_text())
         if any(previous.get(key) != value for key, value in identity.items()):
             raise ValueError("Closed batch provenance changed; use a new output namespace")
-    rows = _rows(samples, root, output, proposer, config, version)
-    raw = "".join(json.dumps(row, allow_nan=False) + "\n" for row in rows).encode()
-    counts = {
-        status: sum(row["segmentation"]["status"] == status for row in rows)
-        for status in ("ok", "empty", "failed")
-    }
+    checksum, counts = _stream_rows(
+        output / "proposals.jsonl", _rows(samples, root, output, proposer, config, version)
+    )
     summary = {
         "schema": 1,
         **identity,
-        "count": len(rows),
+        "count": sum(counts.values()),
         "counts": counts,
-        "proposals_sha256": hashlib.sha256(raw).hexdigest(),
+        "proposals_sha256": checksum,
         "human_annotations": 0,
     }
-    _atomic(output / "proposals.jsonl", raw)
     _atomic(ready, json.dumps(summary, allow_nan=False).encode())
     return summary
 
