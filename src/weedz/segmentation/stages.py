@@ -191,14 +191,10 @@ class PipelineStages:
 
     def _attach(self, run_id: str, photo_id: str, evidence: dict) -> None:
         with self.store.connect() as db:
-            row = db.execute(
-                "SELECT scores FROM photos WHERE run_id=? AND id=?", (run_id, photo_id)
-            ).fetchone()
-            scores = json.loads(row["scores"])
-            scores["segmentation"] = evidence
             db.execute(
-                "UPDATE photos SET scores=? WHERE run_id=? AND id=?",
-                (json.dumps(scores), run_id, photo_id),
+                "UPDATE photos SET scores=json_set(scores, '$.segmentation', json(?)) "
+                "WHERE run_id=? AND id=?",
+                (json.dumps(evidence), run_id, photo_id),
             )
 
     def summary(self, run_id: str) -> dict:
