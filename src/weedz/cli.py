@@ -39,6 +39,7 @@ TOOLS = {
     "bundles": ("weedz.bundles.cli", False),
     "intake": ("weedz.intake.cli", False),
     "release": ("weedz.release_cli", False),
+    "deepweeds-batches": ("weedz.deepweeds_cli", False),
     "sam3-image": ("weedz.segmentation.sam3_cli", False),
 }
 
