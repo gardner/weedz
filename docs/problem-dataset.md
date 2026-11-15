@@ -45,18 +45,21 @@ Each sample follows the [common sample contract](datasets.md#a-common-sample-and
 - **Explicit negatives:** "checked, no target weed in this photo", which is different from "not checked". Schema version 1 can't record this yet: a detection sample must contain at least one box. The contract needs an annotation-completeness field (for example "all targets marked") before negatives can enter a detection release.
 - **The lookalikes checked,** so lookalike photos can be measured as a separate group (`src/weedz/discovery/lookalikes.py`).
 - **Exact location and date,** with coordinate accuracy. Points that a source or contributor obscured stay obscured, and we never try to sharpen them.
-- **Review history:** who decided, when, on what evidence, and anything they changed. Model suggestions stay marked as suggestions, never as labels.
+- **Review history:** who decided, when, on what evidence, and anything they changed. Model suggestions stay marked as suggestions, never as labels. Contract v1 keeps only each annotation's current review state, so the full history needs a schema extension or a history file shipped with the release.
 - **Grouping,** by observation, place and observer, so splits keep photos of the same plant together and repeat photos can't inflate results.
 
 ## How we'll make it
 
-Most of the plumbing exists. Known gaps (this list may not be complete):
+Most of the plumbing exists, but nobody has run it end to end on reviewed data yet. The main missing piece is **human-checked labels**. Review has also found breaks in the tooling, tracked in #167:
 
-- **Human-checked labels**, the main missing piece.
-- **Explicit negatives:** the schema change described above.
-- **A Label Studio importer.** Today the Label Studio package carries only machine predictions out. Nothing reads people's completed labels back in as contract annotations.
-- **CC BY-NC photos in the batch and Label Studio tools.** The admission policy accepts CC BY-NC, iNaturalist's default licence. The canonical batches and the Label Studio package still accept only CC0 and CC BY, for both the image and its metadata. Until that changes, CC BY-NC photos can only be checked in the review app.
-- **Location groups in samples.** The pilot adapter records only an observation group. The encounter grouping the review app computes (same observer, same day, nearby) isn't copied into contract samples yet, and a release can't split on a group the samples don't carry.
+- explicit negatives can't be recorded yet;
+- reviewed samples aren't yet marked as detection samples;
+- completed Label Studio labels can't be imported back;
+- CC BY-NC photos can't pass through the batch and Label Studio tools;
+- samples don't carry location groups;
+- review history doesn't travel with a release.
+
+#167 plans a dry run that builds a tiny gold release from fixture samples, so the remaining breaks show up together rather than one at a time.
 
 The steps:
 
