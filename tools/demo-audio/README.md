@@ -12,7 +12,9 @@ The generic voice description does not clone a real person.
 
 Download the pinned checkpoint (including its bundled audio tokenizer) with
 Hugging Face Hub, clone/check out the source revision, and keep both outside Git.
-The runner records the expected checkpoint revision and its resolved local path.
+The runner records the expected checkpoint revision without local checkpoint paths.
+Optional reference audio is identified by its basename and SHA-256; runtime commands
+still resolve its actual local path.
 It verifies the inference-source Git revision, but does not verify that arbitrary
 checkpoint contents match the expected model revision. Preserve download provenance
 when supplying the checkpoint.

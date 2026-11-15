@@ -73,7 +73,6 @@ def main() -> None:
     metadata = {
         "model": "BreezeBlue/Breeze-TTS-2",
         "expected_model_revision": MODEL_REVISION,
-        "checkpoint_path": str(args.model.resolve()),
         "source_revision": revision,
         "wav_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "text": text,
@@ -82,7 +81,12 @@ def main() -> None:
         "cfg_scale": 4,
         "fast_all": False,
         "purpose": "Non-commercial Weedz project demonstration",
-        "reference_audio": str(args.reference_audio) if args.reference_audio else None,
+        "reference_audio": args.reference_audio.name if args.reference_audio else None,
+        "reference_audio_sha256": (
+            hashlib.sha256(args.reference_audio.read_bytes()).hexdigest()
+            if args.reference_audio
+            else None
+        ),
         "packages": {
             name: importlib.metadata.version(name)
             for name in ("torch", "torchaudio", "qwen-tts", "transformers", "soundfile")
