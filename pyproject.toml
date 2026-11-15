@@ -66,6 +66,7 @@ torchvision = { index = "pytorch-cpu" }
 
 [dependency-groups]
 dev = [
+    "label-studio-sdk>=2.1.5",
     "onnx>=1.23.2",
     "onnxruntime>=1.32.0",
     "pre-commit>=4.7.0",

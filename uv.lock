@@ -3239,6 +3239,7 @@ annotation = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "label-studio-sdk" },
     { name = "onnx" },
     { name = "onnxruntime" },
     { name = "pre-commit" },
@@ -3269,6 +3270,7 @@ provides-extras = ["annotation"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "label-studio-sdk", specifier = ">=2.1.5" },
     { name = "onnx", specifier = ">=1.23.2" },
     { name = "onnxruntime", specifier = ">=1.32.0" },
     { name = "pre-commit", specifier = ">=4.7.0" },

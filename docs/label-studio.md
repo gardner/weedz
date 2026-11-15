@@ -7,6 +7,8 @@ Use separate blind projects for validation: assisted verification is not an
 unbiased measurement of a model's accuracy.
 
 Install the optional maintained converter with `uv sync --extra annotation`.
+The default development group also includes it, so ordinary `uv run pytest` and
+commit hooks exercise mask conversion without requiring an extra setup command.
 The lock pins Label Studio SDK 2.1.5; its official RLE output was also decoded
 pixel-for-pixel using the hosted Label Studio 1.23.2 runtime's SDK 2.1.2.
 
