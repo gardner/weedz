@@ -167,9 +167,7 @@ class PhotoSection extends StatelessWidget {
           else if (!failed)
             ExpansionTile(
               title: const Text('Attach a photo (optional)'),
-              subtitle: const Text(
-                'No photo is sent unless you choose to attach it.',
-              ),
+              subtitle: Text(_choiceSummary()),
               initiallyExpanded: choices.sendPhoto ?? false,
               children: [
                 _YesNo(
@@ -203,6 +201,17 @@ class PhotoSection extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  String _choiceSummary() {
+    if (choices.sendPhoto != true) {
+      return 'No photo will be sent.';
+    }
+    final licence = choices.licence;
+    if (licence == null) {
+      return 'Photo selected. Choose a licence to attach it.';
+    }
+    return 'Photo attached under ${licenceLabels[licence]}.';
   }
 
   String _frozenSummary() {
