@@ -3238,6 +3238,9 @@ dependencies = [
 annotation = [
     { name = "label-studio-sdk" },
 ]
+aotearoa = [
+    { name = "onnxruntime" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -3259,6 +3262,7 @@ requires-dist = [
     { name = "huggingface-hub", specifier = ">=2.4.0" },
     { name = "label-studio-sdk", marker = "extra == 'annotation'", specifier = ">=2.1.5" },
     { name = "numpy", specifier = ">=2.5.4" },
+    { name = "onnxruntime", marker = "extra == 'aotearoa'", specifier = ">=1.32.0" },
     { name = "open-clip-torch", specifier = ">=4.2.2" },
     { name = "pillow", specifier = ">=13.0.0" },
     { name = "pydantic", specifier = ">=2.14.3" },
@@ -3270,7 +3274,7 @@ requires-dist = [
     { name = "torchvision", specifier = ">=0.29.2", index = "https://download.pytorch.org/whl/cpu" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
-provides-extras = ["annotation"]
+provides-extras = ["annotation", "aotearoa"]
 
 [package.metadata.requires-dev]
 dev = [

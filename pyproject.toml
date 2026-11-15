@@ -34,6 +34,9 @@ weedz = "weedz:main"
 annotation = [
     "label-studio-sdk>=2.1.5",
 ]
+aotearoa = [
+    "onnxruntime>=1.32.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.10,<0.13.0"]
