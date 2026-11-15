@@ -7,6 +7,7 @@ import json
 import shutil
 import sqlite3
 import tempfile
+from collections import Counter
 from contextlib import closing
 from pathlib import Path
 
@@ -14,6 +15,26 @@ from PIL import Image, ImageOps
 
 from weedz.discovery.records import Photo, RunSpec
 from weedz.discovery.store import Store
+
+HOSTED_LICENCES = {"cc0", "cc-by"}
+
+
+def _validate_hosting_licences(rows: list[sqlite3.Row]) -> None:
+    unsupported: Counter[str] = Counter()
+    for row in rows:
+        if json.loads(row["scores"]):
+            licence = Photo.model_validate_json(row["record"]).photo_license
+            if licence not in HOSTED_LICENCES:
+                unsupported[licence] += 1
+    if unsupported:
+        count = sum(unsupported.values())
+        details = ", ".join(
+            f"{licence}={amount}" for licence, amount in sorted(unsupported.items())
+        )
+        raise ValueError(
+            f"Hosted policy admits CC0/CC BY only; {count} scored photo records have unsupported "
+            f"licences: {details}. No photos were imported."
+        )
 
 
 def seed(source: Path, output: Path, run_id: str) -> int:
@@ -30,17 +51,20 @@ def seed(source: Path, output: Path, run_id: str) -> int:
         rows = db.execute(
             "SELECT record,scores,screened_at FROM photos WHERE run_id=? ORDER BY id", (run_id,)
         ).fetchall()
+    _validate_hosting_licences(rows)
     with tempfile.TemporaryDirectory(prefix="weedz-site-seed-") as temporary:
         staged = Path(temporary) / "data"
         staged.mkdir(mode=0o700)
         target = Store(staged)
         target.create_run(run_id, RunSpec.from_saved(json.loads(run["spec"])))
+        with closing(sqlite3.connect(target.database)) as copied, copied:
+            copied.execute("UPDATE runs SET created_at=? WHERE id=?", (run["created_at"], run_id))
         target.model(run_id, json.loads(run["model"]))
         count = 0
         for row in rows:
             photo = Photo.model_validate_json(row["record"])
             scores = json.loads(row["scores"])
-            if photo.photo_license not in {"cc0", "cc-by"} or not scores:
+            if not scores:
                 continue
             sanitized = _copy_photo(source, staged, photo)
             target.save_photos(run_id, [sanitized])

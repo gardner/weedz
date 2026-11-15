@@ -83,3 +83,36 @@ def test_seed_preserves_original_screening_timestamp(tmp_path, timestamp):
     script.seed(source.root, output, "source")
     with sqlite3.connect(output / "discovery.sqlite3") as db:
         assert db.execute("SELECT screened_at FROM photos").fetchone()[0] == timestamp
+
+
+def test_seed_preserves_source_run_creation_time(tmp_path):
+    source = source_store(tmp_path / "source")
+    timestamp = "2024-01-02T03:04:05+00:00"
+    with sqlite3.connect(source.database) as db:
+        db.execute("UPDATE runs SET created_at=?", (timestamp,))
+    output = tmp_path / "site"
+    script.seed(source.root, output, "source")
+    assert Store(output).runs()[0]["created_at"] == timestamp
+
+
+@pytest.mark.parametrize("mixed", [False, True])
+def test_hosting_policy_refuses_scored_noncommercial_photos_without_partial_output(tmp_path, mixed):
+    source = source_store(tmp_path / "source")
+    with sqlite3.connect(source.database) as db:
+        run_id, photo_id, raw, scores = db.execute(
+            "SELECT run_id,id,record,scores FROM photos"
+        ).fetchone()
+        record = json.loads(raw)
+        record["photo_license"] = "cc-by-nc"
+        if mixed:
+            record["id"] = "noncommercial-copy"
+            db.execute(
+                "INSERT INTO photos(run_id,id,record,scores) VALUES(?,?,?,?)",
+                (run_id, record["id"], json.dumps(record), scores),
+            )
+        else:
+            db.execute("UPDATE photos SET record=? WHERE id=?", (json.dumps(record), photo_id))
+    output = tmp_path / "site"
+    with pytest.raises(ValueError, match="1 scored photo.*cc-by-nc"):
+        script.seed(source.root, output, "source")
+    assert not output.exists()

@@ -83,7 +83,15 @@ uv run --locked python scripts/seed_review_site.py \
   --output /absolute/NEW-private-data
 ```
 
-This requires a new independent destination. It checks source checksums, decodes exactly
+The initial hosted admission policy is deliberately limited to **CC0 and CC BY**.
+The project's wider collection admission policy also supports CC BY-NC, but that is
+not an automatic authorization to expand this hosted dataset. Seeding refuses a run
+containing scored photos outside the hosted policy, naming the unsupported licences
+and counts, before publishing any output. It does not silently publish a partial cohort.
+Unscored photos are not screening evidence and are excluded explicitly by the tool.
+
+This requires a new independent destination. It preserves source run creation and
+screening timestamps, checks source checksums, decodes exactly
 the verified bytes, makes metadata-free upright PNGs, retains original score/model
 records, and starts with fresh review history. It never copies raw SQLite pages or
 `access.sqlite3`. Serve using `scripts/serve_review_site.py --data PATH --port 8058`;
