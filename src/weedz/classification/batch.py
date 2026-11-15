@@ -68,13 +68,15 @@ def _snapshot(sample: Sample, root: Path) -> bytes:
     if not sample.media.sha256 or hashlib.sha256(encoded).hexdigest() != sample.media.sha256:
         raise ValueError("Source media checksum mismatch")
     with Image.open(io.BytesIO(encoded)) as image:
-        if image.format != "PNG" or image.mode != "RGB" or image.info or image.getexif():
+        if image.format != "PNG" or image.mode != "RGB":
             raise ValueError("Use canonical upright metadata-free RGB PNG media")
         if image.size != (sample.media.width, sample.media.height):
             raise ValueError("Canonical image geometry disagrees with the manifest")
         if image.width * image.height > MAX_SOURCE_PIXELS:
             raise ValueError("Canonical image exceeds the pixel cap")
         image.load()
+        if image.info or image.getexif():
+            raise ValueError("Use canonical upright metadata-free RGB PNG media")
     return encoded
 
 

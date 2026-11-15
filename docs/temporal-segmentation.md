@@ -130,3 +130,24 @@ version across datasets only when its semantic model and transform pins agree (#
 The initial real run classified 33 existing review images and their 85 SAM regions;
 the bulk run processed 17,509 distinct DeepWeeds images. These are auto-labeling runs,
 not an independent accuracy evaluation or evidence of New Zealand weed coverage.
+
+`weedz.classification.regions.classify_region_batch` classifies actual SAM2 or SAM3
+regions. Pass a canonical sample manifest, media root, closed proposals JSONL,
+destination, loaded classifier, and `proposer="sam2"` or `"sam3"`. Each proposal row
+contains `sample_id`, `image_sha256`, and `segmentation` with completed `status`,
+`provenance`, and `regions`; SAM3 provenance includes the exact `Sam3Config` under
+`config`. The function reconstructs and validates masks and crop transforms, uses
+the masked crop as the fixed primary view, and preserves every source and region
+identity. It never broadcasts the frame prediction across different masks.
+
+The output binds the manifest, exact proposal bytes, proposer settings, classifier
+pins, and crop policy. Empty segmentation remains an empty region list, rather than
+an absence label. Incomplete or failed segmentation is rejected. A completed result
+is immutable and reusable across overlapping retries. Legacy operational outputs
+with a different header or policy require a separate, explicit audited adoption;
+a verified file SHA alone does not turn them into this new pipeline version.
+
+The SAM3 experiment classified 2,099 actual masked crops from the first 133 images
+using separately versioned plant, flower, yellow-flower, and leaf prompt profiles.
+Concept scores remain distinct from species softmax scores; neither is a calibrated
+confidence measure. See [SAM3 comparison setup](sam3-image-comparison.md).

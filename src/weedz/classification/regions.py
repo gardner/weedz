@@ -1,6 +1,7 @@
 """Species proposals on verified SAM masks; masked pixels are the fixed primary view."""
 
 import fcntl
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -25,13 +26,11 @@ from weedz.segmentation.stages import restored_regions
 Proposer = Literal["sam2", "sam3"]
 
 
-def _inputs(manifest: Path, source: Path, root: Path) -> tuple[list[Sample], list[dict]]:
-    samples = read_manifest(manifest, file_sha256(manifest))
+def _inputs(manifest: Path, manifest_sha: str, encoded: bytes, root: Path):
+    samples = read_manifest(manifest, manifest_sha)
     if not 1 <= len(samples) <= 1000:
         raise ValueError("Use a nonempty batch of at most 1000 samples")
-    if source.stat().st_size > 128_000_000:
-        raise ValueError("Proposal batch exceeds the resource cap")
-    rows = [json.loads(line) for line in source.read_text().splitlines() if line.strip()]
+    rows = [json.loads(line) for line in encoded.splitlines() if line.strip()]
     if len(rows) != len(samples):
         raise ValueError("Incomplete proposal rows")
     for sample, row in zip(samples, rows, strict=True):
@@ -117,9 +116,13 @@ def classify_region_batch(
     """Classify closed JSONL proposals, preserving source and mask identities on retries."""
     if proposer not in {"sam2", "sam3"}:
         raise ValueError("Unknown region proposer")
-    # Snapshot the closed input before parsing; reject concurrent replacement of that reference.
-    source_sha, manifest_sha = file_sha256(proposals), file_sha256(manifest)
-    samples, rows = _inputs(manifest, proposals, media_root)
+    # Hash and parse exactly the same bounded proposal bytes.
+    with proposals.open("rb") as stream:
+        encoded = stream.read(128_000_001)
+    if len(encoded) > 128_000_000:
+        raise ValueError("Proposal batch exceeds the resource cap")
+    source_sha, manifest_sha = hashlib.sha256(encoded).hexdigest(), file_sha256(manifest)
+    samples, rows = _inputs(manifest, manifest_sha, encoded, media_root)
     if file_sha256(proposals) != source_sha or file_sha256(manifest) != manifest_sha:
         raise ValueError("Input provenance changed while reading")
     provenance = rows[0]["segmentation"]["provenance"]
