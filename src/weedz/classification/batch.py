@@ -19,6 +19,7 @@ from weedz.segmentation.artifacts import digest
 from weedz.segmentation.regions import MAX_SOURCE_BYTES, MAX_SOURCE_PIXELS
 
 Profile = Literal["frame", "tiles"]
+MAX_RESULT_BYTES = 128_000_000
 
 
 class Classifier(Protocol):
@@ -125,8 +126,8 @@ def _check_topk(value: Any) -> None:
 
 def _verified_result(output: Path, verified_sha: str | None) -> dict:
     with output.open("rb") as stream:
-        encoded = stream.read(128_000_001)
-    if len(encoded) > 128_000_000:
+        encoded = stream.read(MAX_RESULT_BYTES + 1)
+    if len(encoded) > MAX_RESULT_BYTES:
         raise ValueError("Cached classifier output exceeds the resource cap")
     result = json.loads(encoded)
     if not isinstance(result, dict):
@@ -138,6 +139,13 @@ def _verified_result(output: Path, verified_sha: str | None) -> dict:
     elif verified_sha is None or hashlib.sha256(encoded).hexdigest() != verified_sha:
         raise ValueError("Cached result checksum mismatch or missing verified legacy reference")
     return result
+
+
+def _encoded_result(result: dict) -> bytes:
+    encoded = (json.dumps(result, indent=2, allow_nan=False) + "\n").encode()
+    if len(encoded) > MAX_RESULT_BYTES:
+        raise ValueError("Classifier output exceeds the resource cap; use a smaller batch")
+    return encoded
 
 
 def _cached(
@@ -174,7 +182,7 @@ def _commit_result(
         fcntl.flock(lock, fcntl.LOCK_EX)
         if output.exists():
             return _cached(output, header, samples, verified_sha, profile)
-        write_atomic(output, (json.dumps(result, indent=2, allow_nan=False) + "\n").encode())
+        write_atomic(output, _encoded_result(result))
     return result
 
 

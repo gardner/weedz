@@ -76,7 +76,8 @@ FEATURELESS_STD = 8.0
 # Bounds for degenerate panoramas: tiles per photo, and windows per encoder batch.
 MAX_TILES = 32
 ENCODE_BATCH = 16
-MAX_VIEW_PIXELS = 40_000_000  # padding can exceed the decoded source's pixel count
+# Preserve the published 9K panorama and existing 12K geometry while bounding padding.
+MAX_VIEW_PIXELS = 160_000_000
 
 
 def _positions(length: int, side: int) -> list[int]:
