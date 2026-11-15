@@ -4,6 +4,7 @@ import Image from "next/image";
 import { type PointerEvent, type ReactNode, useRef, useState } from "react";
 import { hasImage, noImageReason } from "../lib/device-reports";
 import { findingName } from "../lib/findings";
+import { sourceSubject } from "../lib/photo-labels";
 import { imageUrl, names, type Photo } from "../lib/types";
 
 import { SegmentationControls, SegmentationMask } from "./segmentation-overlay";
@@ -86,7 +87,7 @@ export default function PhotoStage({
             ref={svg}
             viewBox={`0 0 ${width} ${height}`}
             role="img"
-            aria-label={`Source photo of ${photo.original_common_name || photo.original_taxon}; highlighted search window`}
+            aria-label={`Source photo of ${sourceSubject(photo)}; highlighted search window`}
             className={drawing ? "drawing" : undefined}
             onPointerDown={(event) => {
               if (!drawing) return;
@@ -120,7 +121,7 @@ export default function PhotoStage({
         ) : (
           <Image
             src={imageUrl(runId, photo.id)}
-            alt={`Original observation of ${photo.original_taxon}`}
+            alt={`Source image: ${sourceSubject(photo)}`}
             width={1024}
             height={1024}
             unoptimized
@@ -174,7 +175,7 @@ export function Thumbnail({ photo, runId }: { photo: Photo; runId: string }) {
   return (
     <Image
       src={imageUrl(runId, photo.id)}
-      alt={photo.original_common_name || photo.original_taxon}
+      alt={sourceSubject(photo)}
       loading="lazy"
       width={68}
       height={74}

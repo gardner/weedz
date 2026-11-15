@@ -43,6 +43,9 @@ try {
     evidence: [],
     run_evidence: "Regression fixture",
   };
+  photos[3].original_taxon = "Ulex europaeus";
+  photos[3].scores.width = 64;
+  photos[3].scores.height = 48;
   photos[0].scores.segmentation = {
     status: "ok",
     baseline_retained: true,
@@ -103,6 +106,11 @@ try {
   assert.match(
     await page.locator(".evidence-heading").textContent(),
     /Screening result has no declared interpretation/,
+  );
+  assert.match(await page.locator(".image-stage svg").getAttribute("aria-label"), /Device report/);
+  assert.doesNotMatch(
+    await page.locator(".image-stage svg").getAttribute("aria-label"),
+    /Gorse|Ulex/,
   );
   console.log(
     "Original subject titles, negative/positive hints, explicit target review and blind/device boundaries verified.",
