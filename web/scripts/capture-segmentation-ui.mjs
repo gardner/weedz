@@ -26,10 +26,10 @@ cdp.on("Page.screencastFrame", ({ data, metadata, sessionId }) => {
 page.on("pageerror", (error) => errors.push(error.message));
 try {
   await page.goto(origin);
-  await page.getByLabel("Mask overlay", { exact: true }).waitFor();
   await page.getByRole("button", { name: "References", exact: true }).click();
   await page.locator("button.photo-row").filter({ hasText: "Gorse" }).click();
   const selector = page.getByLabel("Mask overlay", { exact: true });
+  await selector.waitFor();
   await selector.selectOption("");
   const window = page.getByLabel("Show search window", { exact: true });
   if (await window.isChecked()) await window.uncheck();
