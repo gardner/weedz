@@ -14,6 +14,8 @@ try {
   await page.route("**/api/**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    if (path === "/api/session")
+      return route.fulfill({ json: { mode: "local", can_start_runs: true } });
     if (path === "/api/runs" && request.method() === "POST") {
       posted.push(request.postDataJSON());
       return route.fulfill({ status: 202, json: { id: "new" } });
