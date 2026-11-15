@@ -68,6 +68,10 @@ def prepare_config(
 
 def _custom_registry(config: dict) -> BatchRegistry | None:
     kind = config.get("classifier_kind", "plantclef")
+    if kind == "bioclip-margin-cuda-v1":
+        from weedz.batches.bioclip_runtime import registry_from_bioclip_config
+
+        return registry_from_bioclip_config(config)
     if kind == "weedscan-ort-cpu-v1":
         from weedz.batches.weedscan_runtime import registry_from_weedscan_config
 
