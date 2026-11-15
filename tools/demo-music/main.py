@@ -86,7 +86,7 @@ def provenance(seconds: float, seed: int, prompt: str = PROMPT) -> dict[str, obj
 
 
 def load_pipeline() -> tuple[Any, Path]:
-    """Load the cached pinned model once on reserved physical GPU 0."""
+    """Fetch the exact pinned snapshot if needed, then load once on GPU 0."""
     if os.environ.get("CUDA_VISIBLE_DEVICES", "0") != "0":
         raise ValueError("This runner is restricted to physical GPU 0")
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -102,7 +102,6 @@ def load_pipeline() -> tuple[Any, Path]:
     snapshot = snapshot_download(
         MODEL,
         revision=REVISION,
-        local_files_only=True,
         allow_patterns=[f"{name}/*" for name in FOLDERS]
         + ["modular_model_index.json", "config.json", "LICENSE", "README.md"],
     )

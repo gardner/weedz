@@ -24,7 +24,8 @@ UV_PROJECT_ENVIRONMENT="$HOME/.cache/weedz-demo/tools/music3-venv" \
   --output /path/outside/the/repository/music3-score.wav
 ```
 
-The pinned snapshot is loaded locally before component loading, avoiding mutable
+The exact pinned snapshot is downloaded when absent, then loaded locally before
+component loading, avoiding mutable
 component revisions embedded in the upstream model index. Generation uses
 bfloat16, 30 flow-matching steps and a seeded CUDA generator. The tested RTX 5090
 has 32 GiB VRAM; the runner requires 26 GiB free before loading. GPU 1 is untouched.
