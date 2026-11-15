@@ -193,3 +193,41 @@ def test_metadata_after_pixel_chunks_is_not_accepted_as_canonical_media(tmp_path
     write_manifest(manifest, [record.model_copy(update={"media": media})])
     with pytest.raises(ValueError, match="canonical"):
         classify_batch(manifest, tmp_path, tmp_path / "out", Classifier())
+
+
+@pytest.mark.parametrize("damage", ["missing_views", "wrong_box", "wrong_aggregate"])
+def test_legacy_tile_adoption_requires_reproducible_per_view_evidence(tmp_path, damage):
+    manifest, _ = corpus(tmp_path)
+    output = tmp_path / "tiles.json"
+    result = classify_batch(manifest, tmp_path, output, Classifier(), "tiles")
+    result.pop("result_sha256")
+    row = result["predictions"][0]
+    if damage == "missing_views":
+        row.pop("views")
+    elif damage == "wrong_box":
+        row["views"][0]["box"] = [0, 0, 1, 1]
+    else:
+        row["topk"][0]["score"] = 0.9
+    output.write_text(json.dumps(result))
+    with pytest.raises(ValueError, match="[Tt]il|[Aa]ggregat"):
+        classify_batch(
+            manifest,
+            tmp_path,
+            output,
+            Classifier(),
+            "tiles",
+            verified_existing_sha256=hashlib.sha256(output.read_bytes()).hexdigest(),
+        )
+
+
+@pytest.mark.parametrize("setting,value", [("TILE_FRACTION", 0.5), ("LETTERBOX", (0, 0, 0))])
+def test_actual_tiling_policy_changes_create_a_new_pipeline_identity(
+    tmp_path, monkeypatch, setting, value
+):
+    from weedz.discovery import inference
+
+    manifest, _ = corpus(tmp_path)
+    first = classify_batch(manifest, tmp_path, tmp_path / "one", Classifier(), "tiles")
+    monkeypatch.setattr(inference, setting, value)
+    second = classify_batch(manifest, tmp_path, tmp_path / "two", Classifier(), "tiles")
+    assert first["model_version"] != second["model_version"]

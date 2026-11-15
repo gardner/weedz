@@ -12,6 +12,7 @@ from PIL import Image
 
 from weedz.consent import refusal
 from weedz.contract import Sample, require_task
+from weedz.discovery import inference
 from weedz.discovery.inference import file_sha256, region_boxes, square_view
 from weedz.manifest import read_manifest, write_atomic
 from weedz.segmentation.artifacts import digest
@@ -46,6 +47,13 @@ def _metadata(model: Classifier, profile: Profile) -> dict:
             "uncalibrated ranking, not probabilities"
         ),
         "ranking_revision": 1,
+        "tile_geometry": {
+            "tile_fraction": inference.TILE_FRACTION,
+            "max_stride": inference.MAX_STRIDE,
+            "max_tiles": inference.MAX_TILES,
+            "letterbox": list(inference.LETTERBOX),
+            "window_revision": inference.WINDOW_REVISION,
+        },
     }
 
 
@@ -94,10 +102,14 @@ def _check_topk(value: Any) -> None:
         raise ValueError("Incomplete cached classifier alternatives")
     names = []
     for row in value:
+        if not isinstance(row, dict):
+            raise ValueError("Invalid cached classifier alternative")
         taxon, score = row.get("taxon"), row.get("score")
         if not isinstance(taxon, str) or not taxon.strip():
             raise ValueError("Invalid cached classifier taxon")
-        if type(score) not in {int, float} or not math.isfinite(score) or not 0 <= score <= 1:
+        if not isinstance(score, (int, float)) or isinstance(score, bool):
+            raise ValueError("Invalid cached classifier score")
+        if not math.isfinite(score) or not 0 <= score <= 1:
             raise ValueError("Invalid cached classifier score")
         names.append(taxon)
     if len(set(names)) != len(names):
@@ -121,7 +133,9 @@ def _verified_result(output: Path, verified_sha: str | None) -> dict:
     return result
 
 
-def _cached(output: Path, header: dict, samples: list[Sample], verified_sha: str | None) -> dict:
+def _cached(
+    output: Path, header: dict, samples: list[Sample], verified_sha: str | None, profile: Profile
+) -> dict:
     result = _verified_result(output, verified_sha)
     if any(digest({key: result.get(key)}) != digest({key: value}) for key, value in header.items()):
         raise ValueError("Existing classifier batch has different provenance")
@@ -135,19 +149,54 @@ def _cached(output: Path, header: dict, samples: list[Sample], verified_sha: str
         if any(row.get(key) != value for key, value in expected.items()):
             raise ValueError("Cached prediction asset identity mismatch")
         _check_topk(row.get("topk"))
+        if profile == "tiles":
+            _check_tiles(sample, row)
     return result
 
 
 def _commit_result(
-    output: Path, result: dict, header: dict, samples: list[Sample], verified_sha: str | None
+    output: Path,
+    result: dict,
+    header: dict,
+    samples: list[Sample],
+    verified_sha: str | None,
+    profile: Profile,
 ) -> dict:
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.with_suffix(output.suffix + ".lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if output.exists():
-            return _cached(output, header, samples, verified_sha)
+            return _cached(output, header, samples, verified_sha, profile)
         write_atomic(output, (json.dumps(result, indent=2, allow_nan=False) + "\n").encode())
     return result
+
+
+def _aggregate_views(views: list[dict]) -> list[dict]:
+    candidates: dict[str, dict] = {}
+    for view in views:
+        for candidate in view["topk"]:
+            if candidate["score"] > candidates.get(candidate["taxon"], {}).get("score", -1):
+                candidates[candidate["taxon"]] = {
+                    **candidate,
+                    "score_kind": "maximum_closed_set_softmax_across_views_uncalibrated",
+                }
+    return sorted(candidates.values(), key=lambda item: (-item["score"], item["taxon"]))[:5]
+
+
+def _check_tiles(sample: Sample, row: dict) -> None:
+    views = row.get("views")
+    width, height = sample.media.width, sample.media.height
+    if width is None or height is None:
+        raise ValueError("Missing cached tile source geometry")
+    boxes = [list(box) for box in region_boxes(width, height)]
+    if not isinstance(views, list) or len(views) != len(boxes):
+        raise ValueError("Incomplete cached tiled views")
+    for view, box in zip(views, boxes, strict=True):
+        if not isinstance(view, dict) or view.get("box") != box:
+            raise ValueError("Cached tile geometry differs")
+        _check_topk(view.get("topk"))
+    if row["topk"] != _aggregate_views(views):
+        raise ValueError("Cached tile aggregation disagrees with its views")
 
 
 def _view_predictions(
@@ -159,17 +208,7 @@ def _view_predictions(
         for (row, box, _), topk in zip(part, result, strict=True):
             row["views"].append({"box": box, "topk": topk})
     for row in rows:
-        candidates: dict[str, dict] = {}
-        for view in row["views"]:
-            for candidate in view["topk"]:
-                if candidate["score"] > candidates.get(candidate["taxon"], {}).get("score", -1):
-                    candidates[candidate["taxon"]] = {
-                        **candidate,
-                        "score_kind": "maximum_closed_set_softmax_across_views_uncalibrated",
-                    }
-        row["topk"] = sorted(candidates.values(), key=lambda item: (-item["score"], item["taxon"]))[
-            :5
-        ]
+        row["topk"] = _aggregate_views(row["views"])
 
 
 def _predict(
@@ -231,8 +270,8 @@ def classify_batch(
         "manifest_sha256": manifest_sha,
     }
     if output.exists():
-        return _cached(output, header, samples, verified_existing_sha256)
+        return _cached(output, header, samples, verified_existing_sha256, profile)
     rows = _predict(samples, media_root, model, profile, version)
     body = {**header, "predictions": rows}
     result = {**body, "result_sha256": digest(body)}
-    return _commit_result(output, result, header, samples, verified_existing_sha256)
+    return _commit_result(output, result, header, samples, verified_existing_sha256, profile)

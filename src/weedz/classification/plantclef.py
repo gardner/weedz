@@ -75,6 +75,8 @@ class PlantClassifier:
                 "precision": "float32",
                 "timm": version("timm"),
                 "torch": version("torch"),
+                "torchvision": version("torchvision"),
+                "pillow": version("pillow"),
                 "score_kind": SCORE_KIND,
                 "limitations": [
                     "Southwestern European flora; New Zealand native alternatives may be absent",
