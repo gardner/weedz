@@ -84,6 +84,7 @@ def _copy_images(package: Package, destination: Path, heartbeat: Callable[[], No
             digest = hashlib.sha256(read_owned_file(target, destination, 160_000_000)).hexdigest()
             if digest != reference["sha256"]:
                 raise ValueError("Published image checksum mismatch")
+            sync_directory(target.parent)
             continue
         with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as stream:
             temporary = Path(stream.name)

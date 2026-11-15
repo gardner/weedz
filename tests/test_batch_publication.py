@@ -175,3 +175,25 @@ def test_publication_heartbeats_between_task_reads_and_reconciliation(canonical_
     assert len(observed) >= 3
     assert len(set(observed)) == len(observed)
     assert min(observed) >= 5  # Package files/tasks have already pulsed before REST reconciliation.
+
+
+def test_existing_image_is_resealed_before_any_rest_write(canonical_batch, tmp_path, monkeypatch):
+    import weedz.batches.publication as publication
+
+    package = validate_package(
+        exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
+    )
+    destination = tmp_path / "images"
+    for name, reference in package.images.items():
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((package.root / reference["path"]).read_bytes())
+    service = Service()
+
+    def interrupted_barrier(path):
+        raise OSError("Interrupted image directory barrier")
+
+    monkeypatch.setattr(publication, "sync_directory", interrupted_barrier)
+    with pytest.raises(OSError, match="directory barrier"):
+        run(service, package, tmp_path)
+    assert service.requests == []
