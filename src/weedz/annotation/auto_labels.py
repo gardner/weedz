@@ -6,6 +6,7 @@ import math
 from typing import Any
 
 from weedz.annotation.label_studio import evidence_result, mask_prediction
+from weedz.annotation.semantic import classifier_runtime
 from weedz.discovery.records import SPECIES
 
 SAM_POLICY = (
@@ -83,6 +84,7 @@ def frame_prediction(
                 {
                     "interpretation": PLANTCLEF_POLICY,
                     "scope": scope,
+                    "classifier_runtime": classifier_runtime(metadata),
                     "topk": topk,
                     "limitations": metadata.get("limitations", []),
                     **({"alternatives": alternatives} if alternatives is not None else {}),
@@ -159,6 +161,7 @@ def regional_prediction(
             {
                 "interpretation": PLANTCLEF_POLICY,
                 "primary_view": "masked (fixed before inspection)",
+                "classifier_runtime": classifier_runtime(metadata),
                 "alternatives": alternatives
                 if alternatives is not None
                 else [{"id": region["id"], "topk": topk} for region, topk in regions],

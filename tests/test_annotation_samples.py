@@ -302,3 +302,16 @@ def test_nonfinite_model_metadata_is_still_refused(canonical_batch, tmp_path):
     with pytest.raises(ValueError, match="JSON compliant"):
         export_samples(manifest, output, frame_results=frame)
     assert not output.exists()
+
+
+def test_historical_runtime_absence_is_explicit_in_evidence_and_private_provenance(
+    canonical_batch, tmp_path
+):
+    manifest, frame, _ = canonical_batch
+    output = tmp_path / "legacy-runtime"
+    export_samples(manifest, output, frame_results=frame)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    evidence = task["predictions"][0]["result"][-1]["value"]["text"][0]
+    assert json.loads(evidence)["classifier_runtime"]["status"] == "historical_unrecorded"
+    private = json.loads((output / "private/provenance.json").read_text())
+    assert private["classifier_runtime"]["frame"]["status"] == "historical_unrecorded"

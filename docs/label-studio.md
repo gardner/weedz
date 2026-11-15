@@ -86,6 +86,11 @@ precision/runtime, SAM checkpoint/configuration/filtering, mask expansion and
 assignment policy. Corpus notes do not change it; changed inference settings do.
 Full original metadata and semantic hashes remain in private provenance. No scores
 are presented as calibrated confidence and no model output becomes human truth.
+New classifiers declare both Pillow and torchvision versions; both enter shared
+regional identities. Historical records missing both retain their existing hashes
+and explicitly report unrecorded runtime pins in new evidence/private provenance.
+Partial or blank version pairs are refused. Old imported predictions are not rewritten
+and historical versions are never inferred from the current environment.
 Invalid legacy result numbers (NaN or infinities) produce Unknown taxon proposals
 and are represented as JSON null in evidence/provenance, never invented finite
 scores. Model metadata and version hashing remain strict and reject such numbers.
