@@ -86,15 +86,17 @@ export default function ReviewQueue({
         ))}
       </div>
       <div className="queue-filters">
-        <select
-          aria-label="Filter region"
-          value={region}
-          onChange={(event) => onRegionChange(event.target.value)}
-        >
-          <option value="all">Both regions</option>
-          <option>Nelson</option>
-          <option>Tasman</option>
-        </select>
+        {cohort !== "device" && (
+          <select
+            aria-label="Filter region"
+            value={region}
+            onChange={(event) => onRegionChange(event.target.value)}
+          >
+            <option value="all">Both regions</option>
+            <option>Nelson</option>
+            <option>Tasman</option>
+          </select>
+        )}
         {!auditing && !specialist && (
           <select
             aria-label="Filter review status"

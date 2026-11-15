@@ -65,6 +65,19 @@ try {
       );
     }
   }
+  await page.getByLabel("Filter region").selectOption("Nelson");
+  await page.getByRole("button", { name: "Device reports", exact: true }).click();
+  assert.equal(
+    await page.getByLabel("Filter region").count(),
+    0,
+    "Regional source filters do not apply to device reports",
+  );
+  await page.getByRole("button", { name: "Incidental photos", exact: true }).click();
+  assert.equal(
+    await page.getByLabel("Filter region").inputValue(),
+    "Nelson",
+    "Returning preserves the source region filter",
+  );
   console.log(
     "Queue above evidence; keyboard selection and viewport bounds verified at 1440/768/390.",
   );
