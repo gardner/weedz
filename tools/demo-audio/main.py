@@ -1,6 +1,7 @@
 """Generate non-commercial demo narration with the pinned Breeze inference source."""
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import os
@@ -10,9 +11,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import new_output  # noqa: E402
+from demo_voice import MODEL_REVISION, SOURCE_REVISION  # noqa: E402
 
-MODEL_REVISION = "3e28c5151381a722f1d8661b4118c298caa77aa4"
-SOURCE_REVISION = "daa6cb2efe5471f09369229f322d20bb956cb3c3"
 VOICE = (
     "A warm, articulate adult woman speaking clear natural English. "
     "Curious and engaging documentary narration, with a confident, "
@@ -75,6 +75,7 @@ def main() -> None:
         "expected_model_revision": MODEL_REVISION,
         "checkpoint_path": str(args.model.resolve()),
         "source_revision": revision,
+        "wav_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "text": text,
         "instruction": VOICE,
         "seed": args.seed,

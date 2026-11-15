@@ -61,3 +61,27 @@ def test_erasure_validation_survives_optimized_python(
     else:
         assert result.returncode == 0, result.stderr
         assert "(0, 0)" in result.stdout
+
+
+def test_review_capture_rejects_output_inside_snapshot_before_writing(tmp_path: Path) -> None:
+    source = tmp_path / "snapshot"
+    source.mkdir()
+    alias = tmp_path / "snapshot-alias"
+    alias.symlink_to(source, target_is_directory=True)
+    output = alias / "images/new-capture"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/capture_review_demo.py"),
+            "--snapshot",
+            str(source),
+            "--output",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "independent" in result.stderr
+    assert not output.exists()
+    assert list(source.iterdir()) == []

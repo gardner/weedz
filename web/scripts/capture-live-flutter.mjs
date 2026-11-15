@@ -67,6 +67,9 @@ try {
   await page.getByText("Deletion confirmed", { exact: true }).first().waitFor();
   await page.waitForTimeout(3200);
   await page.screenshot({ path: path.join(output, "live-settings-deleted.png") });
+  // Three UI pauses total 9.6s; retain the real success state until the full segment exists.
+  const remainingMs = Math.max(0, Math.ceil(10000 - (Date.now() / 1000 - recordingStart) * 1000));
+  await page.waitForTimeout(remainingMs);
   recordingEnd = Date.now() / 1000;
   await cdp.send("Page.stopScreencast");
   await Promise.all(frameWrites);
@@ -98,6 +101,8 @@ try {
   await browser.close();
 }
 assert(frames.length > 0 && recordingStart && recordingEnd);
+const outputFrames = Math.ceil((recordingEnd - recordingStart) * 25);
+assert(outputFrames >= 250, "The mobile capture must contain the full ten-second segment");
 const encoder = spawn(
   process.env.WEEDZ_FFMPEG,
   [
@@ -129,7 +134,7 @@ const finished = new Promise((resolve, reject) =>
   ),
 );
 let cursor = 0;
-for (let i = 0; i < Math.ceil((recordingEnd - recordingStart) * 25); i++) {
+for (let i = 0; i < outputFrames; i++) {
   const now = recordingStart + i / 25;
   while (cursor + 1 < frames.length && frames[cursor + 1].time <= now) cursor++;
   if (!encoder.stdin.write(frames[cursor].data)) {

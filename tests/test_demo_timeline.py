@@ -1,5 +1,6 @@
 """The film edit must preserve raw narration and never truncate a sentence."""
 
+import hashlib
 import importlib.util
 import json
 import wave
@@ -19,13 +20,26 @@ def raw_audio(path: Path) -> bytes:
     with wave.open(str(path), "wb") as output:
         output.setparams((1, 2, 24000, 0, "NONE", "not compressed"))
         output.writeframes(samples)
+    path.with_suffix(".json").write_text(
+        json.dumps(
+            {
+                "model": "BreezeBlue/Breeze-TTS-2",
+                "expected_model_revision": "3e28c5151381a722f1d8661b4118c298caa77aa4",
+                "source_revision": "daa6cb2efe5471f09369229f322d20bb956cb3c3",
+                "wav_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "text": "Hello",
+            }
+        )
+    )
     return samples
 
 
 def test_narration_edit_preserves_every_sample_and_adds_only_silence(tmp_path: Path) -> None:
     samples = raw_audio(tmp_path / "breeze-intro-v1.wav")
     script = tmp_path / "script.json"
-    script.write_text(json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 2}]}))
+    script.write_text(
+        json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 2, "narration": "Hello"}]})
+    )
     scenes = timeline.load_timeline(script, tmp_path)
     output = tmp_path / "master.wav"
     timeline.narration_master(scenes, output)
@@ -41,7 +55,9 @@ def test_narration_edit_preserves_every_sample_and_adds_only_silence(tmp_path: P
 def test_overlong_speech_is_refused_instead_of_cut_or_sped_up(tmp_path: Path) -> None:
     raw_audio(tmp_path / "breeze-intro-v1.wav")
     script = tmp_path / "script.json"
-    script.write_text(json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 0.65}]}))
+    script.write_text(
+        json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 0.65, "narration": "Hello"}]})
+    )
     with pytest.raises(ValueError, match="Speech does not fit"):
         timeline.load_timeline(script, tmp_path)
 
@@ -114,3 +130,53 @@ def test_delivered_timeline_is_portable_without_changing_runtime_audio_paths(
     assert delivered[0]["audio_file"] == "voice.wav"
     assert str(tmp_path) not in json.dumps(delivered)
     assert scenes[0]["audio"] == str(tmp_path / "voice.wav")
+
+
+def test_narration_without_generation_receipt_cannot_inherit_breeze_provenance(tmp_path):
+    raw_audio(tmp_path / "breeze-intro-v1.wav")
+    script = tmp_path / "script.json"
+    script.write_text(
+        json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 2, "narration": "Hello"}]})
+    )
+    (tmp_path / "breeze-intro-v1.json").unlink()
+    with pytest.raises(ValueError, match="Breeze provenance"):
+        timeline.load_timeline(script, tmp_path)
+
+
+@pytest.mark.parametrize(
+    "change", [{"model": "Other model"}, {"wav_sha256": "0" * 64}, {"text": "Other passage"}]
+)
+def test_narration_identity_mismatch_is_not_accepted(tmp_path, change):
+    path = tmp_path / "breeze-intro-v1.wav"
+    raw_audio(path)
+    sidecar = path.with_suffix(".json")
+    sidecar.write_text(json.dumps(json.loads(sidecar.read_text()) | change))
+    script = tmp_path / "script.json"
+    script.write_text(
+        json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 2, "narration": "Hello"}]})
+    )
+    with pytest.raises(ValueError, match="Breeze provenance"):
+        timeline.load_timeline(script, tmp_path)
+
+
+@pytest.mark.parametrize("update_receipt", [False, True])
+def test_replaced_native_wav_is_rechecked_before_pcm_assembly(tmp_path, update_receipt):
+    path = tmp_path / "breeze-intro-v1.wav"
+    samples = raw_audio(path)
+    script = tmp_path / "script.json"
+    script.write_text(
+        json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 2, "narration": "Hello"}]})
+    )
+    scenes = timeline.load_timeline(script, tmp_path)
+    with wave.open(str(path), "wb") as output:
+        output.setparams((1, 2, 24000, 0, "NONE", "not compressed"))
+        output.writeframes(bytes(len(samples)))
+    if update_receipt:
+        sidecar = path.with_suffix(".json")
+        proof = json.loads(sidecar.read_text())
+        sidecar.write_text(
+            json.dumps(proof | {"wav_sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+        )
+    with pytest.raises(ValueError, match="Breeze provenance"):
+        timeline.narration_master(scenes, tmp_path / "master.wav")
+    assert not (tmp_path / "master.wav").exists()
