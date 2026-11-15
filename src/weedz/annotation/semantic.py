@@ -62,6 +62,10 @@ CONFIG_FIELDS = {
 
 def classifier_runtime(metadata: dict[str, Any]) -> dict[str, Any]:
     """Absent historical pins stay unknown; new declarations must be a complete pair."""
+    if metadata.get("pipeline_name") == "WeedScan488":
+        from weedz.annotation.weedscan import runtime
+
+        return runtime(metadata)
     classifier = metadata.get("classifier", metadata)
     if not isinstance(classifier, dict):
         raise ValueError("Invalid classifier runtime metadata")
@@ -126,6 +130,10 @@ def proposer_semantic(proposer: dict[str, Any]) -> tuple[dict[str, Any], str]:
 
 
 def shared_regional_version(metadata: dict[str, Any]) -> dict[str, Any]:
+    if metadata.get("pipeline_name") == "WeedScan488":
+        from weedz.annotation.weedscan import regional_version
+
+        return regional_version(metadata)
     classifier = metadata.get("classifier", metadata)
     if not isinstance(classifier, dict):
         raise ValueError("Invalid semantic pipeline metadata")
