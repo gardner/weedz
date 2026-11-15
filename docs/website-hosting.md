@@ -48,7 +48,12 @@ credentials stay outside Git and are not needed by the running website.
 
 Runtime code is an immutable release under `~/.local/share/weedz/site/releases/<commit>/`,
 selected by `site/current`. The service uses a dedicated user-local Node 26 executable
-at `site/runtime/node`. It must not depend on a removable development worktree or an
+at `site/runtime/node`. Build with
+`NEXT_PUBLIC_WEEDZ_DEFAULT_RUN_ID=licensed-plants-sam21-20261115` to keep the curated
+plant collection as the initial view while other runs are added. The value is public
+build-time configuration, admitted only if that run actually exists and is completed;
+otherwise the newest completed run is selected. User-selected runs stay selected during
+refresh. Rebuild to change the preference. Runtime code must not depend on a removable development worktree or an
 expiring tool session. User lingering was already enabled on beast.
 
 The three templates in `deploy/systemd/` define only these new user units:

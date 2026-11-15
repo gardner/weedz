@@ -9,6 +9,7 @@ import { auditedBy, defaultView, heldForAudit, queuePhotos, VIEWS, type View } f
 import { type Closing, type NewReferral, needsSpecialist } from "../lib/referrals";
 import { useReviewTimer } from "../lib/review-timer";
 import { useReviewer } from "../lib/reviewer";
+import { initialRun } from "../lib/run-selection";
 import type { ScoreMeaning } from "../lib/score-meaning";
 import type { Study } from "../lib/study";
 import {
@@ -94,7 +95,7 @@ export default function ReviewDesk({
       const list = await request<Run[]>("runs");
       if (generation !== requestGeneration.current) return;
       setRuns(list);
-      const selected = runId || list.find((item) => item.status === "completed")?.id || list[0]?.id;
+      const selected = runId || initialRun(list, process.env.NEXT_PUBLIC_WEEDZ_DEFAULT_RUN_ID);
       if (selected) {
         if (!runId) {
           setRunId(selected);

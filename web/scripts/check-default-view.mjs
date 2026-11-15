@@ -23,7 +23,15 @@ try {
     if (path === "/api/session")
       return route.fulfill({ json: { mode: "local", can_start_runs: false } });
     if (path === "/api/runs")
-      return route.fulfill({ json: [{ ...run, id: "queued", status: "queued" }, run] });
+      return route.fulfill({
+        json: [
+          { ...run, id: "queued", status: "queued" },
+          ...(process.env.NEXT_PUBLIC_WEEDZ_DEFAULT_RUN_ID === "plants"
+            ? [{ ...run, id: "expanded" }]
+            : []),
+          run,
+        ],
+      });
     if (path.endsWith("/image")) return route.fulfill({ status: 404 });
     if (path === "/api/runs/plants") return route.fulfill({ json: { run, photos: [photo] } });
     return route.fulfill({ json: [] });
