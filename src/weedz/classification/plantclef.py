@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
+from weedz.classification.precision import MATH_POLICY, fp32_math
 from weedz.discovery.inference import file_sha256
 
 REPOSITORY = "vincent-espitalier/dino-v2-reg4-with-plantclef2024-weights"
@@ -54,7 +55,7 @@ class PlantClassifier:
             "vit_base_patch14_reg4_dinov2", pretrained=False, num_classes=7806
         )
         model.load_state_dict(safe.load_file(checkpoint), strict=True)
-        model.to(device).eval()
+        model.to(device).float().eval()
         config = timm.data.resolve_model_data_config(model)
         transform = timm.data.create_transform(**config, is_training=False)
         return cls(
@@ -77,6 +78,8 @@ class PlantClassifier:
                 "torch": version("torch"),
                 "torchvision": version("torchvision"),
                 "pillow": version("pillow"),
+                "numpy": version("numpy"),
+                "math_policy": dict(MATH_POLICY),
                 "score_kind": SCORE_KIND,
                 "limitations": [
                     "Southwestern European flora; New Zealand native alternatives may be absent",
@@ -92,7 +95,9 @@ class PlantClassifier:
         if len(images) > 32:
             raise ValueError("Classifier batch exceeds 32-image cap")
         device = self.metadata["device"]
-        with self.torch.inference_mode():
-            batch = self.torch.stack([self.transform(image) for image in images]).to(device)
+        with fp32_math(self.torch, device), self.torch.inference_mode():
+            batch = self.torch.stack([self.transform(image) for image in images]).to(
+                device, dtype=self.torch.float32
+            )
             logits = self.model(batch).float().cpu().numpy()
         return [ranked_species(row, self.labels, top_k) for row in logits]

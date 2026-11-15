@@ -1,0 +1,85 @@
+{
+  "frame": {
+    "model_version": "PlantCLEF frame auto-label \u00b7 27fd3e6f",
+    "result": [
+      {
+        "id": "image-taxon",
+        "from_name": "predicted_taxon",
+        "to_name": "image",
+        "type": "textarea",
+        "value": {
+          "text": [
+            "Ulex europaeus L."
+          ]
+        }
+      },
+      {
+        "id": "model-evidence",
+        "from_name": "model_evidence",
+        "to_name": "image",
+        "type": "textarea",
+        "readonly": true,
+        "value": {
+          "text": [
+            "{\"interpretation\": \"top1 closed-set plant taxon; no calibrated confidence or non-plant rejection\", \"scope\": \"whole frame, not mask regions\", \"topk\": [{\"taxon\": \"Ulex europaeus L.\", \"score\": 0.8}], \"limitations\": []}"
+          ]
+        }
+      }
+    ]
+  },
+  "regional": {
+    "model_version": "SAM2.1 + PlantCLEF masked v1 \u00b7 6eec69ef",
+    "result": [
+      {
+        "id": "actual-mask",
+        "from_name": "regions",
+        "to_name": "image",
+        "type": "brushlabels",
+        "original_width": 6,
+        "original_height": 4,
+        "image_rotation": 0,
+        "value": {
+          "format": "rle",
+          "rle": [
+            0,
+            0,
+            0,
+            96,
+            57,
+            27,
+            254,
+            95,
+            255,
+            0
+          ],
+          "brushlabels": [
+            "Ulex europaeus"
+          ]
+        }
+      },
+      {
+        "id": "actual-mask",
+        "from_name": "region_taxon",
+        "to_name": "image",
+        "type": "textarea",
+        "value": {
+          "text": [
+            "Ulex europaeus L."
+          ]
+        }
+      },
+      {
+        "id": "model-evidence",
+        "from_name": "model_evidence",
+        "to_name": "image",
+        "type": "textarea",
+        "readonly": true,
+        "value": {
+          "text": [
+            "{\"interpretation\": \"top1 closed-set plant taxon; no calibrated confidence or non-plant rejection\", \"primary_view\": \"masked (fixed before inspection)\", \"alternatives\": [{\"id\": \"actual-mask\", \"topk\": [{\"taxon\": \"Ulex europaeus L.\", \"score\": 0.8}]}], \"limitations\": []}"
+          ]
+        }
+      }
+    ]
+  }
+}
