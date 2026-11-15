@@ -41,11 +41,6 @@ class LabelStudioClient(httpx.Client):
         super().__init__(
             base_url=base_url, timeout=httpx.Timeout(30, connect=5, pool=5, write=10), **kwargs
         )
-        try:
-            self.refresh()
-        except BaseException:
-            self.close()
-            raise
 
     def refresh(self) -> None:
         info = self.token_file.stat()
@@ -57,7 +52,7 @@ class LabelStudioClient(httpx.Client):
             or info.st_size > 16_384
         ):
             raise ValueError("Use an owner-private Label Studio token file")
-        token = self.token_file.read_text().strip()
+        token = self.token_file.read_text(encoding="utf-8").strip()
         if not token:
             raise ValueError("Label Studio token file is empty")
         self.headers.pop("Authorization", None)
@@ -70,6 +65,8 @@ class LabelStudioClient(httpx.Client):
         self.headers["Authorization"] = f"Bearer {access}"
 
     def request(self, method: str, url: Any, *args: Any, **kwargs: Any) -> httpx.Response:
+        if "Authorization" not in self.headers:
+            self.refresh()
         response = super().request(method, url, *args, **kwargs)
         if response.status_code == 401:
             self.refresh()
