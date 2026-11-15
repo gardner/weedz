@@ -18,10 +18,27 @@ MUTED = "#b7cfc1"
 ACCENT = "#c5e79a"
 
 
+_FONT_PATHS = (
+    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+)
+
+
+def configure_fonts(regular: Path | None = None, bold: Path | None = None) -> None:
+    global _FONT_PATHS
+    paths = (regular or _FONT_PATHS[0], bold or _FONT_PATHS[1])
+    try:
+        for path in paths:
+            ImageFont.truetype(str(path.resolve()), 24)
+    except OSError as error:
+        raise ValueError("Cannot load UI fonts; supply --ui-font and --ui-bold-font") from error
+    _FONT_PATHS = tuple(path.resolve() for path in paths)
+    font.cache_clear()
+
+
 @lru_cache(maxsize=24)
 def font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    suffix = "-Bold" if bold else ""
-    return ImageFont.truetype(f"/usr/share/fonts/truetype/dejavu/DejaVuSans{suffix}.ttf", size)
+    return ImageFont.truetype(str(_FONT_PATHS[int(bold)]), size)
 
 
 def text(

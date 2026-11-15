@@ -94,3 +94,9 @@ remain historical artifacts and are not modified by these source checks.
 Both web and mobile source-video segments must decode their full requested frame counts
 and exit successfully. Missing/truncated frames or decoder failures abort the render;
 they are never replaced with frozen or blank footage.
+
+UI typography defaults to the producing machine's DejaVu Sans regular/bold files.
+On another system, pass `--ui-font /path/to/regular.ttf` and
+`--ui-bold-font /path/to/bold.ttf` using existing readable font files. Both fonts
+are loaded before creating the output or starting a render; no OS installation
+is required. `--credit-font` remains separate for source-credit character coverage.

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from demo_credits import portable_credits
 from demo_evidence import photo_record, verified_photo_bytes
-from demo_frames import Frames, caption, dissolve
+from demo_frames import Frames, caption, configure_fonts, dissolve
 from demo_timeline import caption_cues, load_timeline, narration_master, portable_timeline, srt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
@@ -99,6 +99,7 @@ def render(args: argparse.Namespace) -> None:
     output = outside_git(args.output)
     if output.exists():
         raise ValueError("Choose a new output directory; renders are never overwritten")
+    configure_fonts(getattr(args, "ui_font", None), getattr(args, "ui_bold_font", None))
     validate_captures(args)
     scenes = load_timeline(args.script, args.audio)
     cues = caption_cues(scenes, args.transcript)
@@ -208,6 +209,8 @@ def main() -> None:
     parser.add_argument("--mobile-captures", type=Path, required=True)
     parser.add_argument("--script", type=Path, default=Path("docs/demo/narration.json"))
     parser.add_argument("--ffmpeg", type=Path, required=True)
+    parser.add_argument("--ui-font", type=Path)
+    parser.add_argument("--ui-bold-font", type=Path)
     parser.add_argument("--credit-font", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--fps", type=int, choices=(24, 25, 30), default=24)
