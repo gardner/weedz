@@ -2,8 +2,11 @@
 
 import argparse
 import json
+import os
+import tempfile
 from pathlib import Path
 
+from weedz.segmentation.artifacts import durable_mkdir, sync_directory
 from weedz.segmentation.sam3_image import Sam3Config, Sam3Image
 
 
@@ -12,6 +15,21 @@ def _outside_git(path: Path) -> Path:
     if any((parent / ".git").exists() for parent in (resolved, *resolved.parents)):
         raise ValueError("SAM3 evidence/cache must remain outside Git")
     return resolved
+
+
+def _publish(output: Path, result: dict) -> None:
+    """Publish only complete durable bytes, without replacing concurrent evidence."""
+    durable_mkdir(output.parent)
+    with tempfile.NamedTemporaryFile(mode="w", dir=output.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        try:
+            json.dump(result, stream, allow_nan=False)
+            stream.flush()
+            os.fsync(stream.fileno())
+            os.link(temporary, output)
+            sync_directory(output.parent)
+        finally:
+            temporary.unlink(missing_ok=True)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -37,10 +55,7 @@ def main(argv: list[str] | None = None) -> None:
         max_side=args.max_side,
     )
     result = Sam3Image.load(args.checkpoint, config, cache).screen(args.image)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    # Exclusive creation also prevents replacing a file created while inference ran.
-    with output.open("x") as stream:
-        json.dump(result, stream, allow_nan=False)
+    _publish(output, result)
     print(
         json.dumps(
             {
