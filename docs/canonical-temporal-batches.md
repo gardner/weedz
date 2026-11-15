@@ -49,8 +49,11 @@ A missing cache runs the actual model activity. Historical outputs keep their
 original metadata and versions rather than acquiring today's preprocessing
 claims. Source JPEG context and canonical PNG identity are distinct.
 
-The current CLI prepares resident inference profiles. Operator-wide legacy
-corpus adoption and additional classifier registrations are separate follow-ups;
+Use `adopt --root PATH --request PATH --proposer sam2` to prepare a cache-only
+configuration from an explicitly pinned request. Every selected cache is required
+and fully validated before configuration publication; a missing cache can never
+load a model. Start its workers with the returned configuration. Operator-wide
+corpus queueing and additional classifier registrations remain separate follow-ups;
 existing supervised bulk jobs are not retroactively Temporal executions.
 
 ## Publication boundary
@@ -98,5 +101,13 @@ Outside-Git evidence is retained under
 `proof-cache-reuse.json`, `proof-publication.json`, and
 `history-completed.json`. These are operational evidence paths, not portable
 repository fixtures. Unit tests use small model doubles and do not replace the
-actual inference proof. A separate bounded SAM3 smoke is recorded independently;
-its publication role remains disabled.
+actual inference proof.
+
+A separate actual SAM3 execution, `canonical-batch-148-sam3-20261115`, run
+`01a1dddf-bb7b-77e8-b205-f218c697a13b`, completed six compute/package activities
+for three canonical images: two masks, two ok results, one empty result and no
+partial/failed results. History references and output SHA joins were verified.
+Its publication activity remains pending without a publication worker; this is
+compute/package proof, not a completed workflow or a SAM3 restart test. Evidence
+is `proof-sam3-package.json` and `history-sam3-package.json` in the same directory.
+Both owned smoke workers were stopped after verification.
