@@ -113,7 +113,14 @@ def variant(passed: bool) -> dict[str, Any]:
 
 
 def test_document_keeps_provenance_thresholds_and_caveats() -> None:
-    reference = {"model": "m", "model_key": "k", "revision": "r", "weights_sha256": "w", "x": 1}
+    reference = {
+        "model": "m",
+        "model_key": "k",
+        "revision": "r",
+        "weights_sha256": "w",
+        "preprocessing_sha256": "p",
+        "x": 1,
+    }
     found = script.document(
         {"onnx-int8": variant(True), "bioclip-vit-b16": variant(False)},
         reference,
@@ -157,7 +164,12 @@ def test_an_interrupted_artefact_write_leaves_nothing_to_reuse(tmp_path: Path) -
 
 
 def test_artefacts_are_cached_per_weights_libraries_and_export_settings(tmp_path: Path) -> None:
-    metadata = {"model_key": "bioclip-2", "revision": "r", "weights_sha256": "w" * 64}
+    metadata = {
+        "model_key": "bioclip-2",
+        "revision": "r",
+        "weights_sha256": "w" * 64,
+        "preprocessing_sha256": "a" * 64,
+    }
     versions = {"torch": "2.15.0", "onnxruntime": "1.32.0"}
     folder = script.artefact_folder(tmp_path, metadata, versions)
     assert folder.parent == tmp_path / "bioclip-2"

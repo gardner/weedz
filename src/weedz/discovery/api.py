@@ -18,6 +18,7 @@ from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
 from weedz.discovery.device_reports import IntakeMismatch, sync
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
+from weedz.discovery.image_type import image_media_type
 from weedz.discovery.judgements import Judgement, unsupported
 from weedz.discovery.leads import LeadEvent, lead_states, no_leads, record_lead, selections
 from weedz.discovery.limits import with_limits
@@ -297,7 +298,11 @@ class ReviewAPI:
         path = (self.store.root / photo["image_path"]).resolve()
         if not path.is_relative_to(self.store.root / "images") or not path.is_file():
             raise HTTPException(404, "Image not available")
-        return FileResponse(path, media_type="image/jpeg")
+        try:
+            media_type = image_media_type(path)
+        except ValueError:
+            raise HTTPException(404, "Image not available") from None
+        return FileResponse(path, media_type=media_type)
 
     def review(self, run_id: str, photo_id: str, decision: Review) -> dict:
         self.photo(run_id, photo_id)

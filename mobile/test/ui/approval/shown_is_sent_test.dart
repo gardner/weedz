@@ -25,15 +25,17 @@ ReportCase withAccuracy(double accuracyM) {
 
 void main() {
   group('every detail sent is shown, unrounded, before approval', () {
-    testWidgets('the credit name', (tester) async {
+    testWidgets('no credit name is sent by default', (tester) async {
       await pumpApproval(tester, foundCase());
-      expect(find.textContaining('A. Contributor'), findsOne);
+      expect(find.textContaining('A. Contributor'), findsNothing);
     });
 
-    testWidgets('the credit name, even without the photo', (tester) async {
+    testWidgets('removing the photo also removes the credit name', (
+      tester,
+    ) async {
       await pumpApproval(tester, approvedCase());
       await tapText(tester, "Don't send the photo");
-      expect(find.textContaining('A. Contributor'), findsOne);
+      expect(find.textContaining('A. Contributor'), findsNothing);
     });
 
     testWidgets('the full capture time', (tester) async {

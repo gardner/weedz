@@ -24,6 +24,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.textContaining('Keep this token private.'), findsOneWidget);
       final tokenField = find.widgetWithText(TextField, 'Submitter token');
       expect(tester.widget<TextField>(tokenField).obscureText, isTrue);
       await tester.enterText(tokenField, fixtures.enrollment.token);
@@ -127,6 +128,13 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Help'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Help'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.text('Request deletion without this phone'),

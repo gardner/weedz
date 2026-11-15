@@ -13,7 +13,7 @@ from typing import Literal, get_args
 Permission = Literal["review", "evidence", "agencies", "public", "training"]
 PERMISSIONS: tuple[Permission, ...] = get_args(Permission)
 # Published versions of the consent text, each a "## Version <id>" section of the document.
-VERSIONS = frozenset({"2026-11"})
+VERSIONS = frozenset({"2026-11", "2026-11-15"})
 DOCUMENT = "docs/report-consent.md"
 NOT_PERMITTED = {
     "review": "The contributor did not permit specialist review of this photo",

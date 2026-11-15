@@ -1,3 +1,4 @@
+import type { SegmentationEvidence } from "../components/segmentation-overlay";
 import type { DeviceProvenance } from "./device-reports";
 import type { Finding } from "./findings";
 import type { Judged } from "./judgements";
@@ -56,6 +57,7 @@ export type Photo = Judged & {
   referrals?: Referral[];
   lead?: PhotoLeads;
   scores: {
+    segmentation?: SegmentationEvidence;
     best_species?: string;
     similarity?: number;
     margin?: number;
