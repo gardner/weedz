@@ -8,9 +8,10 @@ location is exact and was never obscured, so it is kept as sent, with its accura
 is copied into the review store only with image consent, under the licence chosen then.
 
 ``sync`` runs before every request that reads the run. When a report has been withdrawn,
-its item leaves the queue: its image copy is deleted and its location, capture time and
-credit are erased. Its id, candidate and model stamp stay, so the append-only reviews,
-judgements, referrals and lead events made on it still read sensibly.
+its item leaves the queue: its image copy is deleted, and its location, capture time,
+credit and species are erased, as the consent text promises (docs/report-consent.md).
+Its id, consent record and model stamp stay, so the append-only reviews, judgements,
+referrals and lead events made on it still have something to belong to.
 """
 
 import fcntl
@@ -179,9 +180,10 @@ def _names(store: Store, identifier: str, image_path: str) -> bool:
     return row is not None and json.loads(row["record"])["image_path"] == image_path
 
 
-def _add(store: Store, stored: StoredReport) -> None:
+def _add(store: Store, reports: ReportStore, stored: StoredReport) -> None:
     """Add a report. Its row names the crop before the crop is written, so every copy on
-    disk is one a withdrawal can find and delete."""
+    disk is one a withdrawal can find and delete. Intake is asked again once it is in, so
+    a withdrawal that came after the listing is applied by this same sync."""
     record, found = item(stored), scores(stored)
     data = _crop(stored, record)
     if data:
@@ -196,6 +198,9 @@ def _add(store: Store, stored: StoredReport) -> None:
         )
     if data and cursor.rowcount == 1:
         _store_crop(store, record.id, record.image_path, data)
+    added = record.model_dump(mode="json")
+    if _withdrawn(reports, added):
+        _withdraw(store, record.id, added)
 
 
 def _store_crop(store: Store, identifier: str, image_path: str, data: bytes) -> None:
@@ -224,6 +229,8 @@ def _erased(record: dict) -> dict:
         | erased
         | {
             "coordinate_status": "missing",
+            "original_taxon": "",
+            "original_common_name": "",
             "observed_on": None,
             "attribution": "",
             "image_path": "",
@@ -240,7 +247,8 @@ def _withdraw(store: Store, identifier: str, record: dict) -> None:
     with store.connect() as db:
         db.execute("PRAGMA secure_delete=ON")
         db.execute(
-            "UPDATE photos SET record=? WHERE run_id=? AND id=?",
+            # The scores hold the species and its margin, so they go too.
+            "UPDATE photos SET record=?, scores='{}' WHERE run_id=? AND id=?",
             (json.dumps(_erased(record)), RUN_ID, identifier),
         )
     with store.connect() as db:
@@ -311,7 +319,7 @@ def _sync(store: Store, reports: ReportStore) -> None:
         known = {row["id"]: json.loads(row["record"]) for row in rows}
     for identifier, stored in active.items():
         if identifier not in known:
-            _add(store, stored)
+            _add(store, reports, stored)
         elif known[identifier].get("image_path"):
             _restore(store, stored, known[identifier])
     gone = 0

@@ -17,7 +17,7 @@ from weedz.discovery.device_reports import RUN_ID
 from weedz.discovery.store import Store
 from weedz.intake.api import IntakeAPI
 from weedz.intake.limits import Limits
-from weedz.intake.store import ReportStore
+from weedz.intake.store import ReportStore, StoredReport
 
 
 def credited(location: dict) -> dict:
@@ -45,7 +45,10 @@ def test_a_withdrawal_leaves_no_trace_in_the_database_files(tmp_path: Path) -> N
     synced(tmp_path, intake)
     files = sorted((tmp_path / "pilot").glob("discovery.sqlite3*"))
     raw = b"".join(path.read_bytes() for path in files)
-    for detail in (b"Aroha Unique", b"-41.271234", b"173.283456", b"2026-10-01T10:00:00"):
+    # Nor the species: the consent text promises to keep "not your name, the photo, the
+    # location or the species" (docs/report-consent.md, 2026-11).
+    details = (b"Aroha Unique", b"-41.271234", b"173.283456", b"2026-10-01T10:00:00")
+    for detail in (*details, b"Ulex europaeus", b"Gorse"):
         assert detail not in raw
 
 
@@ -74,6 +77,27 @@ def test_a_crop_written_while_its_report_is_withdrawn_is_deleted(
     monkeypatch.setattr(device_reports, "_write_private", withdrawn_meanwhile)
     [photo] = synced(tmp_path, intake)
     assert photo["consent"]["withdrawn_at"]
+    assert list((tmp_path / "pilot" / "images" / "device").iterdir()) == []
+
+
+def test_a_report_withdrawn_while_it_is_added_is_erased_by_the_same_sync(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Intake is checked again once the report is in, so a withdrawal that commits after
+    the listing never leaves the report or its crop behind until the next request."""
+    intake = tmp_path / "intake"
+    report_id = send(intake, with_image(jpeg()))
+    read = device_reports._crop
+
+    def read_then_withdrawn(stored: StoredReport, record: device_reports.DeviceItem) -> bytes:
+        data = read(stored, record)  # the crop's bytes are already in hand
+        ReportStore(intake).withdraw(1, report_id)
+        assert data is not None
+        return data
+
+    monkeypatch.setattr(device_reports, "_crop", read_then_withdrawn)
+    [photo] = synced(tmp_path, intake)
+    assert photo["consent"]["withdrawn_at"] and photo["latitude"] is None
     assert list((tmp_path / "pilot" / "images" / "device").iterdir()) == []
 
 

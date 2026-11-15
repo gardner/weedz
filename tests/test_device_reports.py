@@ -190,6 +190,7 @@ def test_a_withdrawn_report_leaves_the_queue_and_loses_its_image_but_keeps_histo
     assert kept["consent"]["withdrawn_at"] and kept["image_path"] == "" and kept["sha256"] == ""
     assert kept["latitude"] is None and kept["observed_on"] is None
     assert kept["attribution"] == "" and kept["device"]["captured_at"] is None
+    assert kept["original_taxon"] == "" and kept["scores"] == {}
     assert kept["review_status"] == "confirmed"
 
 
