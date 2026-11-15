@@ -165,6 +165,14 @@ both that live worker and a reachable Temporal service before accepting a start.
 A listening port alone is not readiness. Collection availability does not expose a
 Temporal history link; that needs a separately configured reachable UI.
 
+The worker checks service health every five seconds with a two-second RPC deadline.
+A false reply, RPC error or timeout removes its readiness immediately, then retries
+without stopping its owned server. A successful check resets the failure streak
+and republishes readiness. Three consecutive failed checks escalate to normal
+supervised worker recovery. Explicit stop, cancellation and unexpected fatal errors
+still exit and revoke readiness; short transport interruptions do not restart the
+whole processing stack.
+
 The worker unit uses the existing isolated SAM Python environment through `uv run
 --active --no-sync`, with an immutable Weedz wheel installed using `uv pip install
 --no-deps` and the matching release source path. It must never use an editable
