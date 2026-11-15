@@ -96,7 +96,9 @@ def test_gpu_run_does_not_reuse_preloaded_cpu_encoder(tmp_path, monkeypatch):
     activities.store.create_run("run", RunSpec(screening_backend="cuda-fp32-v1"))
     activities.screeners["bioclip-2"] = SimpleNamespace(metadata={"device": "cpu"})
     calls = []
-    gpu = SimpleNamespace(metadata={"device": "cuda:0", "backend_profile": "cuda-fp32-v1"})
+    gpu = SimpleNamespace(
+        metadata={"model_key": "bioclip-2", "device": "cuda:0", "backend_profile": "cuda-fp32-v1"}
+    )
 
     def load(cache, *, model, backend):
         calls.append((model, backend))
