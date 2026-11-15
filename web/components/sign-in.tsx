@@ -3,7 +3,11 @@
 import { type FormEvent, useState } from "react";
 
 /** Exchange a reviewer token for a session cookie; the token never stays in the page. */
-export default function SignIn({ onSignedIn }: { onSignedIn: (reviewer: string) => void }) {
+export default function SignIn({
+  onSignedIn,
+}: {
+  onSignedIn: (reviewer: string, canStartRuns: boolean) => void;
+}) {
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,7 +30,7 @@ export default function SignIn({ onSignedIn }: { onSignedIn: (reviewer: string) 
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.detail ?? `Sign-in failed (${response.status})`);
       setToken("");
-      onSignedIn(body.reviewer);
+      onSignedIn(body.reviewer, body.can_start_runs !== false);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Sign-in failed");
     } finally {

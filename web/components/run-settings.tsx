@@ -11,7 +11,9 @@ export default function RunSettings({
   onSwitch,
   onStarted,
   onError,
+  canStartRuns = true,
 }: {
+  canStartRuns?: boolean;
   runs: Run[];
   runId: string;
   createdAt?: string;
@@ -98,6 +100,7 @@ export default function RunSettings({
           type="button"
           className="primary"
           disabled={
+            !canStartRuns ||
             starting ||
             !Number.isInteger(limit) ||
             limit < 1 ||
@@ -114,6 +117,11 @@ export default function RunSettings({
           {starting ? "Starting…" : "Start bounded run ↗"}
         </button>
       </div>
+      {!canStartRuns && (
+        <p role="status">
+          New collections are not enabled on this review service. Existing evidence can be reviewed.
+        </p>
+      )}
       <p>
         Animal photos are spread across every season in the period, at most one per observer per
         day. Also requests one reference photo for each of three target species in each region.

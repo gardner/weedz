@@ -1,0 +1,12 @@
+[Unit]
+Description=Weedz isolated Cloudflare Tunnel
+After=weedz-site-web.service
+Requires=weedz-site-web.service
+[Service]
+ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate run --token-file %h/.config/weedz/cloudflare/site-tunnel-token
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+[Install]
+WantedBy=default.target

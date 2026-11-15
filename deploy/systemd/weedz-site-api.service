@@ -1,0 +1,11 @@
+[Unit]
+Description=Weedz authenticated review API
+[Service]
+WorkingDirectory=%h/.local/share/weedz/site/current
+ExecStart=%h/.local/share/weedz/site/current/.venv/bin/python scripts/serve_review_site.py --data %h/.local/share/weedz/site/data --port 8058
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+[Install]
+WantedBy=default.target

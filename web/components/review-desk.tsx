@@ -60,9 +60,11 @@ const UNTIMED = new Set<keyof Payloads>(["leads"]);
 export default function ReviewDesk({
   signedInAs,
   onSignOut,
+  canStartRuns = true,
 }: {
   signedInAs?: string;
   onSignOut?: () => void;
+  canStartRuns?: boolean;
 }) {
   const requestGeneration = useRef(0);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -306,6 +308,7 @@ export default function ReviewDesk({
             </div>
           </div>
           <RunSettings
+            canStartRuns={canStartRuns}
             runs={runs}
             runId={runId}
             createdAt={run?.created_at}
