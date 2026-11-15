@@ -4,6 +4,7 @@ import fcntl
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 
 from PIL import Image
@@ -126,8 +127,6 @@ def propose_sam3_batch(
         if previous is not None:
             for name in ("proposals.jsonl", "ready.json"):
                 with (destination / name).open("rb") as stream:
-                    import os
-
                     os.fsync(stream.fileno())
             _durable_namespace(destination)
             return previous

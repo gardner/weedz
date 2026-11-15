@@ -139,3 +139,42 @@ def test_masked_crop_padding_and_geometry_revision_bind_shared_identity():
         shared_regional_version(value)["sha256"] for value in (legacy, rectangular, padded, changed)
     ]
     assert len(set(versions)) == 4
+
+
+def test_sam3_identity_names_its_actual_prompted_model_and_binds_thresholds():
+    from dataclasses import asdict
+
+    from weedz.segmentation.sam3_image import Sam3Config
+
+    classifier, _ = metadata()
+    proposer = {
+        "model": "SAM3 still-image concept segmentation",
+        "profile": "sam3-image-concept-v1",
+        "code_revision": "sam3-code",
+        "checkpoint_revision": "sam3-weights",
+        "checkpoint_sha256": "d" * 64,
+        "processor_resolution": 1008,
+        "processor_output_threshold": 0.0,
+        "mask_probability_threshold": 0.5,
+        "score_kind": "uncalibrated_concept_score",
+        "calibrated": False,
+        "precision": "FP32 weights; BF16 CUDA autocast",
+        "torch": "2.10",
+        "numpy": "2",
+        "pillow": "13",
+        "config": asdict(Sam3Config()),
+    }
+    original = shared_regional_version({**classifier, "proposer": proposer})
+    assert original["model_version"].startswith("SAM3 + PlantCLEF masked v1")
+    changed = deepcopy(proposer)
+    changed["config"]["concept_threshold"] = 0.2
+    assert (
+        original["sha256"] != shared_regional_version({**classifier, "proposer": changed})["sha256"]
+    )
+
+
+def test_unknown_proposer_profile_is_not_silently_named_sam2():
+    classifier, proposer = metadata()
+    proposer["profile"] = "unknown-future-model"
+    with pytest.raises(ValueError, match="profile"):
+        shared_regional_version({**classifier, "proposer": proposer})

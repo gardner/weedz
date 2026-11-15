@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from temporalio.client import Client
+from temporalio.common import WorkflowIDReusePolicy
 from temporalio.worker import Worker
 
 from weedz.batches.activities import BatchActivities
@@ -27,6 +28,7 @@ from weedz.batches.workflow import (
     SEGMENTATION,
     BatchAnnotationWorkflow,
 )
+from weedz.segmentation.sam3_image import Sam3Config
 
 ROLES = {
     "publication": (PUBLICATION, ("batch_publish_v1",)),
@@ -78,10 +80,18 @@ async def worker(args, config):
 
 
 async def submit(args):
-    request = batch_request(json.loads(args.request.read_text()))
+    request = batch_request(json.loads(args.request.read_text(encoding="utf-8")))
     client = await Client.connect(args.address, namespace=args.namespace)
     handle = await client.start_workflow(
-        BatchAnnotationWorkflow.run, request, id=args.workflow_id, task_queue=CONTROL
+        BatchAnnotationWorkflow.run,
+        request,
+        id=args.workflow_id,
+        task_queue=CONTROL,
+        id_reuse_policy=(
+            WorkflowIDReusePolicy.ALLOW_DUPLICATE_FAILED_ONLY
+            if args.retry_failed
+            else WorkflowIDReusePolicy.REJECT_DUPLICATE
+        ),
     )
     print(json.dumps({"workflow_id": handle.id}), flush=True)
 
@@ -97,6 +107,9 @@ def main():
     prepare.add_argument("--classifier-checkpoint", type=Path, required=True)
     prepare.add_argument("--labels", type=Path, required=True)
     prepare.add_argument("--device", default="cuda:0")
+    prepare.add_argument("--proposer", choices=["sam2", "sam3"], default="sam2")
+    prepare.add_argument("--prompts", nargs="+", default=["plant", "flower"])
+    prepare.add_argument("--concept-threshold", type=float, default=0.5)
     serve = commands.add_parser("worker")
     serve.add_argument("--config", type=Path, required=True)
     serve.add_argument("--roles", required=True)
@@ -104,10 +117,19 @@ def main():
     start = commands.add_parser("submit")
     start.add_argument("--request", type=Path, required=True)
     start.add_argument("--workflow-id", required=True)
+    start.add_argument("--retry-failed", action="store_true")
     args = parser.parse_args()
     if args.command == "prepare":
         config = prepare_config(
-            args.root, args.sam_checkpoint, args.classifier_checkpoint, args.labels, args.device
+            args.root,
+            args.sam_checkpoint,
+            args.classifier_checkpoint,
+            args.labels,
+            args.device,
+            proposer_kind=args.proposer,
+            sam3_config=Sam3Config(
+                prompts=tuple(args.prompts), concept_threshold=args.concept_threshold
+            ),
         )
         digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode()).hexdigest()
         print(
@@ -120,7 +142,7 @@ def main():
             )
         )
     elif args.command == "worker":
-        asyncio.run(worker(args, json.loads(args.config.read_text())))
+        asyncio.run(worker(args, json.loads(args.config.read_text(encoding="utf-8"))))
     else:
         asyncio.run(submit(args))
 

@@ -3,8 +3,9 @@
 import hashlib
 import json
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
 
 from temporalio import activity
 
@@ -24,6 +25,7 @@ from weedz.discovery.activities import while_heartbeating
 class BatchRegistry:
     segmentation: dict[str, ModelProfile]
     classifiers: dict[str, dict[str, ModelProfile]]
+    proposer_kinds: dict[str, Literal["sam2", "sam3"]] = field(default_factory=dict)
 
     def pins(self, request: dict) -> dict[str, str]:
         try:
@@ -129,6 +131,7 @@ class BatchActivities:
         sam = self.registry.segmentation[request["segmentation_profile"]]
         classifiers = self.registry.classifiers[request["classifier_profile"]]
         cached = request["cached"]
+        proposer_kind = self.registry.proposer_kinds.get(request["segmentation_profile"], "sam2")
         if stage == "batch_validate_v1":
             return Computed(request["manifest"], "activity-cache")
         self._artifact(context, "batch_validate_v1")
@@ -139,6 +142,7 @@ class BatchActivities:
                 f"{context.namespace}/proposals",
                 sam,
                 external=cached.get("proposals"),
+                kind=proposer_kind,
             )
         if stage == "batch_package_v1":
             inputs = {"proposals": self._artifact(context, "batch_segment_v1")}
@@ -167,6 +171,7 @@ class BatchActivities:
                 classifiers[kind],
                 sam,
                 external=cached.get(kind),
+                kind=proposer_kind,
             )
         return classify(
             self.root, context.batch, output, classifiers[kind], external=cached.get(kind)

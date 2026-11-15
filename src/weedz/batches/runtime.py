@@ -8,9 +8,10 @@ from weedz.batches.activities import BatchRegistry
 from weedz.batches.profiles import ModelProfile
 from weedz.classification.batch import Profile, classifier_metadata
 from weedz.classification.plantclef import PlantClassifier
-from weedz.classification.regions import regional_metadata
+from weedz.classification.regions import Proposer, regional_metadata
 from weedz.segmentation.regions import ProposalConfig
 from weedz.segmentation.sam2 import CHECKPOINT_SHA256, Sam2Proposer
+from weedz.segmentation.sam3_image import Sam3Config, Sam3Image
 
 
 class ClassifierView:
@@ -22,11 +23,26 @@ class ClassifierView:
 
 
 def prepare_config(
-    root: Path, sam_checkpoint: Path, checkpoint: Path, labels: Path, device: str = "cuda:0"
+    root: Path,
+    sam_checkpoint: Path,
+    checkpoint: Path,
+    labels: Path,
+    device: str = "cuda:0",
+    *,
+    proposer_kind: Proposer = "sam2",
+    sam3_config: Sam3Config | None = None,
 ) -> dict:
     model_cache = root / "temporal-model-cache"
-    config = ProposalConfig()
-    sam = Sam2Proposer(sam_checkpoint, CHECKPOINT_SHA256, model_cache / "sam2", config, device)
+    if proposer_kind == "sam3":
+        if device != "cuda:0":
+            raise ValueError(
+                "SAM3 uses logical cuda:0; select its physical GPU with CUDA_VISIBLE_DEVICES"
+            )
+        sam = Sam3Image.load(sam_checkpoint, sam3_config or Sam3Config(), model_cache / "sam3")
+    else:
+        sam = Sam2Proposer(
+            sam_checkpoint, CHECKPOINT_SHA256, model_cache / "sam2", ProposalConfig(), device
+        )
     classifier = PlantClassifier.load(checkpoint, labels, device)
     return {
         "schema": 1,
@@ -36,13 +52,16 @@ def prepare_config(
         "classifier_checkpoint": str(checkpoint.resolve()),
         "classifier_labels": str(labels.resolve()),
         "model_cache": str(model_cache.resolve()),
-        "segmentation_profile": "sam2.1-tiny-v1",
-        "classifier_profile": "plantclef-v2",
+        "proposer_kind": proposer_kind,
+        "segmentation_profile": "sam3-image-concept-v1"
+        if proposer_kind == "sam3"
+        else "sam2.1-tiny-v1",
+        "classifier_profile": "plantclef-sam3-v3" if proposer_kind == "sam3" else "plantclef-v2",
         "metadata": {
             "proposals": sam.metadata,
             "frame": classifier_metadata(classifier, "frame"),
             "tiles": classifier_metadata(classifier, "tiles"),
-            "regions": regional_metadata(classifier, sam.metadata, "sam2"),
+            "regions": regional_metadata(classifier, sam.metadata, proposer_kind),
         },
     }
 
@@ -50,9 +69,18 @@ def prepare_config(
 def registry_from_config(config: dict) -> BatchRegistry:
     metadata = config["metadata"]
     device = config["device"]
+    proposer_kind = config.get("proposer_kind", "sam2")
+    if proposer_kind not in {"sam2", "sam3"}:
+        raise ValueError("Unknown configured segmentation model kind")
 
     @cache
     def sam():
+        if proposer_kind == "sam3":
+            return Sam3Image.load(
+                Path(config["sam_checkpoint"]),
+                Sam3Config(**metadata["proposals"]["config"]),
+                Path(config["model_cache"]) / "sam3",
+            )
         return Sam2Proposer(
             Path(config["sam_checkpoint"]),
             CHECKPOINT_SHA256,
@@ -70,7 +98,7 @@ def registry_from_config(config: dict) -> BatchRegistry:
     def view(kind: str):
         model = classifier()
         actual = (
-            regional_metadata(model, metadata["proposals"], "sam2")
+            regional_metadata(model, metadata["proposals"], cast(Proposer, proposer_kind))
             if kind == "regions"
             else classifier_metadata(model, cast(Profile, kind))
         )
@@ -93,4 +121,5 @@ def registry_from_config(config: dict) -> BatchRegistry:
                 for kind in ("frame", "tiles", "regions")
             }
         },
+        {config["segmentation_profile"]: cast(Proposer, proposer_kind)},
     )

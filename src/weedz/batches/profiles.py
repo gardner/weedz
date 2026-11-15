@@ -11,6 +11,7 @@ from weedz.annotation.semantic import (
     CONFIG_FIELDS,
     PROPOSER_FIELDS,
     classifier_runtime,
+    proposer_semantic,
 )
 from weedz.batches.contract import PROFILE
 
@@ -24,6 +25,8 @@ def _fields(metadata: dict, names: tuple[str, ...]) -> dict:
 
 
 def sam_identity(metadata: dict) -> dict:
+    if metadata.get("profile") is not None:
+        return proposer_semantic(metadata)[0]
     selected = _fields(metadata, PROPOSER_FIELDS)
     config = metadata.get("proposal_config")
     if not isinstance(config, dict) or not CONFIG_FIELDS.issubset(config):

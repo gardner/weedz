@@ -14,6 +14,7 @@ from weedz.classification.regions import _inputs, _restore
 from weedz.contract import Sample
 from weedz.segmentation.batch import propose_batch
 from weedz.segmentation.regions import ProposalConfig
+from weedz.segmentation.sam3_batch import propose_sam3_batch
 
 
 def proposal_rows(
@@ -52,18 +53,24 @@ def _reference(root: Path, path: Path) -> dict[str, str]:
     )
 
 
-def _cached(root: Path, batch: ClosedBatch, directory: Path, profile: ModelProfile) -> dict | None:
+def _cached(
+    root: Path,
+    batch: ClosedBatch,
+    directory: Path,
+    profile: ModelProfile,
+    kind: Literal["sam2", "sam3"],
+) -> dict | None:
     if not (directory / "ready.json").exists():
         return None
     ready = json.loads(read_owned_file(directory / "ready.json", root, 64_000))
     if ready.get("manifest_sha256") != batch.sha256:
         raise ValueError("Existing proposal readiness belongs to another manifest")
-    if ready.get("counts", {}).get("failed", 1) != 0:
+    if ready.get("counts", {}).get("failed", 1) != 0 or ready.get("counts", {}).get("partial", 0):
         return None
     reference = _reference(root, directory / "proposals.jsonl")
     if ready.get("proposals_sha256") != reference["sha256"]:
         raise ValueError("Proposal readiness checksum differs from its output")
-    rows = proposal_rows(root, batch, reference, profile)
+    rows = proposal_rows(root, batch, reference, profile, kind)
     if ready.get("count") != len(rows):
         raise ValueError("Proposal readiness count differs")
     return reference
@@ -76,12 +83,13 @@ def segment(
     profile: ModelProfile,
     *,
     external: dict[str, str] | None = None,
+    kind: Literal["sam2", "sam3"] = "sam2",
 ) -> Computed:
     if profile.kind != "proposals":
         raise ValueError("Choose a registered proposal model profile")
     if external is not None:
         reference = artifact(external)
-        proposal_rows(root, batch, reference, profile)
+        proposal_rows(root, batch, reference, profile, kind)
         return Computed(reference, "external-compute")
     pinned = artifact({"path": relative_output, "sha256": "0" * 64})
     directory = root / pinned["path"]
@@ -89,20 +97,29 @@ def segment(
         batch.manifest.parent
     ):
         raise ValueError("Proposal output must use an independent owned namespace")
-    previous = _cached(root, batch, directory, profile)
+    previous = _cached(root, batch, directory, profile, kind)
     if previous is not None:
         return Computed(previous, "activity-cache")
     model = profile.load()
-    summary = propose_batch(
-        batch.manifest,
-        batch.manifest.parent,
-        directory,
-        model,
-        expected_manifest_sha256=batch.sha256,
-        config=ProposalConfig(**profile.metadata["proposal_config"]),
-    )
-    if summary["counts"]["failed"]:
+    if kind == "sam3":
+        summary = propose_sam3_batch(
+            batch.manifest,
+            batch.manifest.parent,
+            directory,
+            model,
+            expected_manifest_sha256=batch.sha256,
+        )
+    else:
+        summary = propose_batch(
+            batch.manifest,
+            batch.manifest.parent,
+            directory,
+            model,
+            expected_manifest_sha256=batch.sha256,
+            config=ProposalConfig(**profile.metadata["proposal_config"]),
+        )
+    if summary["counts"]["failed"] or summary["counts"].get("partial", 0):
         raise RuntimeError("Some proposal work failed; completed samples remain resumable")
     reference = _reference(root, directory / "proposals.jsonl")
-    proposal_rows(root, batch, reference, profile)
+    proposal_rows(root, batch, reference, profile, kind)
     return Computed(reference, "temporal-activity")
