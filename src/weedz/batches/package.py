@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
+from weedz.annotation.credits import photo_credit
 from weedz.batches.storage import read_artifact
 from weedz.contract import Sample
 
@@ -56,6 +57,12 @@ def _task(task: dict, sample: Sample, key: str, prefix: str, files: dict) -> tup
         or parse_qs(address.query) != {"d": [relative]}
     ):
         raise ValueError("Publication image must reference its exact canonical storage path")
+    rights = sample.rights
+    expected_credit = photo_credit(
+        rights.attribution, rights.media_license, rights.metadata_license, rights.license_source
+    )
+    if task["data"].get("photo_credit") != expected_credit:
+        raise ValueError("Publication requires the exact visible source credit and licences")
     image = f"images/{relative}"
     if sample.media.uri != image or files.get(image) != sample.media.sha256:
         raise ValueError("Publication image checksum differs from its canonical sample")
