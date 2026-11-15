@@ -133,6 +133,9 @@ are never served in either mode, and nothing is published on anyone's behalf.
 
 ### Reports from devices
 
+See [intake hosting](intake-hosting.md) for shared-process ordering, crash recovery,
+configurable deadlines, database contention and pre-authentication request limits.
+
 A future phone app (its platform is issue #50) sends only the reports a person
 has approved on the phone. The server side of that (issue #57) is a separate
 API, never mounted on the review API. Each device is a *submitter*, a different
@@ -196,10 +199,10 @@ The contract, with every request sending `Authorization: Bearer weedzsub_…`:
   `intake withdraw`. An unknown id is an error. If the report may still be on
   its way, `--not-yet-received` records the withdrawal, so the report is
   refused (410) if it arrives.
-- One submitter's uploads and withdrawals are handled one at a time. A body
-  that stops arriving for 30 seconds gets 408, so a phone that drops off
-  mid-upload doesn't hold up its own retries or withdrawals. A slow but steady
-  upload is never cut off.
+- One submitter's uploads and withdrawals are handled one at a time across
+  local server and operator processes. A body that stops arriving for 30 seconds
+  or takes more than 120 seconds in total gets 408. Even a steady upload
+  must finish within that total deadline.
 - Each submitter may send 100 reports and 50 MB of images per rolling 24 hours,
   including withdrawn reports and crops refused after decoding. Past that, the
   server answers 429 with `Retry-After`. Usage records (ids, times and stored
