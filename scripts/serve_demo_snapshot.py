@@ -1,7 +1,8 @@
 """Serve only an external, sanitized capture snapshot; every write route is blocked."""
 
 import argparse
-import shutil
+import hashlib
+import json
 import sqlite3
 import tempfile
 from collections.abc import Iterator
@@ -15,6 +16,32 @@ from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import RequestResponseEndpoint
 
 from weedz.discovery.api import create_app
+
+
+def copy_verified_images(source: Path, target: Path) -> None:
+    proof = json.loads((source / "capture-provenance.json").read_text())
+    if not isinstance(proof, dict) or not isinstance(proof.get("photos"), list):
+        raise ValueError("Snapshot photo manifest is missing or malformed")
+    copied: set[str] = set()
+    for record in proof["photos"]:
+        name = record.get("file") if isinstance(record, dict) else None
+        if not isinstance(name, str):
+            raise ValueError("Snapshot photo path is missing")
+        relative = Path(name)
+        if len(relative.parts) != 2 or relative.parts[0] != "images" or ".." in relative.parts:
+            raise ValueError("Snapshot photo path must remain inside images")
+        key = relative.as_posix()
+        if key in copied:
+            raise ValueError("Snapshot photo manifest contains duplicate files")
+        copied.add(key)
+        image = (source / relative).resolve()
+        if not image.is_relative_to(source.resolve() / "images"):
+            raise ValueError("Snapshot photo path escapes images")
+        raw = image.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != record.get("sha256"):
+            raise ValueError("Snapshot image checksum differs from its source credits")
+        (target / relative).parent.mkdir(exist_ok=True)
+        (target / relative).write_bytes(raw)
 
 
 @contextmanager
@@ -32,8 +59,7 @@ def snapshot_app(source: Path, instance: str = "") -> Iterator[FastAPI]:
             closing(sqlite3.connect(copy / "discovery.sqlite3")) as target,
         ):
             original.backup(target)
-        if (source / "images").exists():
-            shutil.copytree(source / "images", copy / "images")
+        copy_verified_images(source, copy)
         app = create_app(copy)
 
         @app.middleware("http")

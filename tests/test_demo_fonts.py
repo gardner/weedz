@@ -57,3 +57,11 @@ def test_bad_font_refuses_render_before_output_is_created(tmp_path):
     with pytest.raises(ValueError, match="ui-font"):
         render(Namespace(output=output, ui_font=tmp_path / "missing.ttf", ui_bold_font=None))
     assert not output.exists()
+
+
+def test_invalid_credit_font_fails_preflight(tmp_path):
+    renderer = importlib.import_module("render_demo")
+    credit = tmp_path / "credit.otf"
+    credit.write_text("download error, not a font")
+    with pytest.raises(ValueError, match="credit-font"):
+        renderer.validate_credit_font(credit)

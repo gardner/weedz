@@ -94,7 +94,7 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
         )
     )
     credit_font = tmp_path / "font.otf"
-    credit_font.touch()
+    credit_font.write_bytes(Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf").read_bytes())
     (mobile / "erasure-verification.json").write_text(
         json.dumps(
             {
@@ -111,6 +111,10 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
                 "report_created_via_real_api": 201,
                 "stable_deletion_status": 200,
                 "upload_after_deletion": 401,
+                "media_sha256": {
+                    name: hashlib.sha256((mobile / name).read_bytes()).hexdigest()
+                    for name in renderer.MOBILE_MEDIA
+                },
             }
         )
     )
@@ -240,3 +244,26 @@ def test_snapshot_uses_the_same_validated_receipt_after_receipt_replacement(tmp_
     private.mkdir()
     with pytest.raises(ValueError, match="checksum"):
         renderer.checked_files(tmp_path, renderer.WEB_MEDIA, validated["media_sha256"], private)
+
+
+def test_replaced_mobile_media_cannot_inherit_real_deletion_receipt(tmp_path):
+    hashes = {}
+    for name in renderer.MOBILE_MEDIA:
+        (tmp_path / name).write_bytes(b"original app recording")
+        hashes[name] = hashlib.sha256(b"original app recording").hexdigest()
+    (tmp_path / "live-capture.json").write_text(
+        json.dumps(
+            {
+                "captureSuccess": True,
+                "browser_errors": [],
+                "media_sha256": hashes,
+                "report_created_via_real_api": 201,
+                "stable_deletion_status": 200,
+                "upload_after_deletion": 401,
+            }
+        )
+    )
+    renderer.validate_mobile_capture(tmp_path)
+    (tmp_path / renderer.MOBILE_MEDIA[0]).write_bytes(b"unrelated valid app video")
+    with pytest.raises(ValueError, match="checksum"):
+        renderer.validate_mobile_capture(tmp_path)

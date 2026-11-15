@@ -107,3 +107,7 @@ checked snapshots. Mixing likewise verifies `picture.mp4` and the native narrati
 against the render's `sha256.json`, then reads checked private copies. Replacement
 media cannot inherit an earlier receipt. Historical hashless receipts and delivered
 films remain untouched; a fresh render requires freshly produced complete receipts.
+The same checksum/private-copy contract covers the mobile WebM and deletion
+screenshot. The snapshot server copies only manifest-listed image bytes whose
+checksums match their source credits. The credit font is loaded during preflight
+alongside UI font checks, before output creation or encoding.

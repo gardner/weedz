@@ -3,6 +3,8 @@
 import hashlib
 from pathlib import Path
 
+MOBILE_MEDIA = ("live-flutter-settings.webm", "live-settings-deleted.png")
+
 WEB_MEDIA = (
     "web-review-interactions.webm",
     "web-reference-comparison.png",

@@ -11,8 +11,9 @@ from pathlib import Path
 from demo_credits import portable_credits
 from demo_evidence import photo_record, verified_photo_bytes
 from demo_frames import Frames, caption, configure_fonts, dissolve
-from demo_integrity import WEB_MEDIA, checked_files
+from demo_integrity import MOBILE_MEDIA, WEB_MEDIA, checked_files
 from demo_timeline import caption_cues, load_timeline, narration_master, portable_timeline, srt
+from PIL import ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import outside_git  # noqa: E402
@@ -45,7 +46,7 @@ def validate_browser_capture(web: Path) -> dict:
     return proof
 
 
-def validate_mobile_capture(mobile: Path) -> None:
+def validate_mobile_capture(mobile: Path) -> dict:
     try:
         proof = json.loads((mobile / "live-capture.json").read_text())
     except (OSError, ValueError) as error:
@@ -67,9 +68,18 @@ def validate_mobile_capture(mobile: Path) -> None:
         raise ValueError(
             "Mobile browser capture must finish without errors and verify real API outcomes"
         )
+    checked_files(mobile, MOBILE_MEDIA, proof.get("media_sha256"))
+    return proof
 
 
-def validate_captures(args: argparse.Namespace) -> dict:
+def validate_credit_font(path: Path) -> None:
+    try:
+        ImageFont.truetype(str(path), 27)
+    except OSError as error:
+        raise ValueError("Cannot load --credit-font") from error
+
+
+def validate_captures(args: argparse.Namespace) -> tuple[dict, dict]:
     required = [
         args.captures / name
         for name in (
@@ -91,13 +101,14 @@ def validate_captures(args: argparse.Namespace) -> dict:
             "Required captures are missing; use the documented pilot run: " + ", ".join(missing)
         )
 
+    validate_credit_font(args.credit_font)
     validate_erasure(args.mobile_captures)
-    validate_mobile_capture(args.mobile_captures)
+    mobile = validate_mobile_capture(args.mobile_captures)
     proof = validate_browser_capture(args.captures / "web-final")
     manifest = json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
     for relative in ("images/460347209.png", "images/447484684.png"):
         verified_photo_bytes(args.captures, relative, manifest)
-    return proof
+    return proof, mobile
 
 
 def render(args: argparse.Namespace) -> None:
@@ -105,22 +116,23 @@ def render(args: argparse.Namespace) -> None:
     if output.exists():
         raise ValueError("Choose a new output directory; renders are never overwritten")
     configure_fonts(getattr(args, "ui_font", None), getattr(args, "ui_bold_font", None))
-    proof = validate_captures(args)
+    proof, mobile_proof = validate_captures(args)
     with tempfile.TemporaryDirectory(prefix="weedz-checked-review-") as private:
         web = Path(private)
         checked_files(args.captures / "web-final", WEB_MEDIA, proof.get("media_sha256"), web)
-        _render(args, output, web)
+        mobile = web / "mobile"
+        mobile.mkdir()
+        checked_files(args.mobile_captures, MOBILE_MEDIA, mobile_proof.get("media_sha256"), mobile)
+        _render(args, output, web, mobile)
 
 
-def _render(args: argparse.Namespace, output: Path, web: Path) -> None:
+def _render(args: argparse.Namespace, output: Path, web: Path, mobile: Path) -> None:
     scenes = load_timeline(args.script, args.audio)
     cues = caption_cues(scenes, args.transcript)
     output.mkdir(parents=True)
     narration_master(scenes, output / "narration-native-24k.wav")
     (output / "weedz-demo.srt").write_text(srt(cues))
-    frames = Frames(
-        args.captures, args.ffmpeg, args.fps, args.credit_font, args.mobile_captures, web
-    )
+    frames = Frames(args.captures, args.ffmpeg, args.fps, args.credit_font, mobile, web)
     command = [
         str(args.ffmpeg),
         "-hide_banner",
