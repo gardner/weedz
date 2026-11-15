@@ -8,9 +8,6 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-from weedz.pipeline import run_pipeline
-from weedz.provenance import fetch_dataset, verify_dataset
-
 logger = logging.getLogger("weedz")
 
 
@@ -40,6 +37,7 @@ TOOLS = {
     "bundles": ("weedz.bundles.cli", False),
     "intake": ("weedz.intake.cli", False),
     "release": ("weedz.release_cli", False),
+    "sam3-image": ("weedz.segmentation.sam3_cli", False),
 }
 
 
@@ -55,6 +53,9 @@ def run_tool(argv: list[str]) -> bool:
 def main() -> None:
     if run_tool(sys.argv[1:]):
         return
+    from weedz.pipeline import run_pipeline
+    from weedz.provenance import fetch_dataset, verify_dataset
+
     parser = argparse.ArgumentParser(description="Leafy Spurge baseline and offline review map")
     parser.add_argument("command", nargs="?", choices=("fetch", "run"), default="run")
     parser.add_argument("--data-dir", type=Path, default=Path("data/leafy-spurge"))
