@@ -37,13 +37,14 @@ export default function ReviewQueue({
   onSelect,
 }: Props) {
   const strip = useRef<HTMLDivElement>(null);
+  const queueIdentity = JSON.stringify(filtered.map((photo) => photo.id));
   useEffect(() => {
     const list = strip.current;
     if (!activeId) {
       if (list) list.scrollLeft = 0;
       return;
     }
-    if (!list) return;
+    if (!list || queueIdentity === "[]") return;
     function revealSelected() {
       if (!list) return;
       const selected = list.querySelector<HTMLButtonElement>(".selected");
@@ -58,7 +59,7 @@ export default function ReviewQueue({
     const observer = new ResizeObserver(revealSelected);
     observer.observe(list);
     return () => observer.disconnect();
-  }, [activeId]);
+  }, [activeId, queueIdentity]);
   const auditing = cohort === "audit";
   const specialist = cohort === "specialist";
   return (

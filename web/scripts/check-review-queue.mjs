@@ -5,10 +5,10 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
   const run = { id: "queue", status: "completed", created_at: "2026-11-15", spec: {} };
-  const photos = Array.from({ length: 12 }, (_, index) => ({
+  const photos = Array.from({ length: 40 }, (_, index) => ({
     id: `photo-${index}`,
     cohort: "incidental",
-    region: "Nelson",
+    region: index % 2 ? "Tasman" : "Nelson",
     original_taxon: `Bird ${index}`,
     original_common_name: `Bird ${index}`,
     review_status: "unreviewed",
@@ -65,7 +65,20 @@ try {
       );
     }
   }
+  await page.locator(".photo-row").nth(20).focus();
+  await page.keyboard.press("Enter");
   await page.getByLabel("Filter region").selectOption("Nelson");
+  await page.waitForFunction(
+    () => {
+      const selected = document.querySelector(".photo-row.selected")?.getBoundingClientRect();
+      const strip = document.querySelector(".photo-list")?.getBoundingClientRect();
+      return (
+        selected && strip && selected.left >= strip.left - 1 && selected.right <= strip.right + 1
+      );
+    },
+    null,
+    { timeout: 1500 },
+  );
   await page.getByRole("button", { name: "Device reports", exact: true }).click();
   assert.equal(
     await page.getByLabel("Filter region").count(),
