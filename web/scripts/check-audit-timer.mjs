@@ -53,6 +53,9 @@ try {
     }
     await route.fulfill({ json: { run, photos: [photo()] } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.getByRole("button", { name: "Audit sample" }).click();
   await page.getByLabel("Your name").fill("Ana");

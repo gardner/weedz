@@ -35,10 +35,13 @@ settings without replacing the plant-only default. Its 24 newly computed results
 9 reused exact verified results retain real masks/scores and truthful source cohorts;
 it is not a population-performance evaluation.
 
-There is no Temporal server/discovery worker in this service deployment. New collection
-creation is explicitly disabled by `WEEDZ_RUN_CREATION=disabled` in both proxy and UI;
-existing evidence, studies and review records remain usable. Enable collection creation
-only after provisioning and verifying the workflow stack. No fake workflow response is used.
+The hosted worker now owns a real SDK-managed local Temporal evaluation service.
+Authenticated collection creation is enabled only while both that service and its
+scoped model worker are healthy. New submissions default to the versioned SAM2.1
+profile, followed by the unchanged baseline, proposal-view scoring and export.
+`WEEDZ_RUN_CREATION=disabled` remains an operational stop switch. Existing evidence,
+studies and reviews remain usable while processing is unavailable. No fake workflow
+response is used.
 R2 is not part of the active storage path; durable data is on beast.
 
 ## Files and lifecycle
@@ -61,12 +64,15 @@ otherwise the newest completed run is selected. User-selected runs stay selected
 refresh. Rebuild to change the preference. Runtime code must not depend on a removable development worktree or an
 expiring tool session. User lingering was already enabled on beast.
 
-The three templates in `deploy/systemd/` define only these new user units:
+The four templates in `deploy/systemd/` define these owned user units. After the
+private data, model runtime/wheel and `worker.env` are prepared, install all four
+verified templates and enable them explicitly:
 
 ```sh
-systemctl --user status weedz-site-api weedz-site-web weedz-site-tunnel
-systemctl --user restart weedz-site-api weedz-site-web
-journalctl --user -u weedz-site-api -u weedz-site-web -u weedz-site-tunnel
+systemctl --user daemon-reload
+systemctl --user enable --now weedz-site-api weedz-site-web weedz-site-worker weedz-site-tunnel
+systemctl --user status weedz-site-api weedz-site-web weedz-site-worker weedz-site-tunnel
+journalctl --user -u weedz-site-api -u weedz-site-web -u weedz-site-worker -u weedz-site-tunnel
 ```
 
 Do not restart or overwrite unrelated user services. Logs must never include invite
@@ -101,12 +107,35 @@ that store before giving anyone its URL. Keep data directories owner-only.
 ## Build, update and rollback
 
 Keep a pinned release checkout/archive, run `uv sync --locked`, then in `web/` run
-`pnpm install --frozen-lockfile`, `pnpm check`, and `pnpm build` using Node 26. Copy the
-three service templates into the user's systemd directory only after verifying they
-are this installation's units. Switch `site/current` to the new release, reload user
-systemd and restart the API/web units. Keep the previous release for rollback; switch
-the symlink back and restart those two units. The data directory and tunnel credential
-stay outside releases and must not be overwritten during an update.
+`pnpm install --frozen-lockfile`, `pnpm check`, and `pnpm build` using Node 26.
+Stop the owned worker before replacing its installed wheel or selecting another release:
+
+```sh
+systemctl --user stop weedz-site-worker
+```
+
+Build the new release's wheel with `uv build --wheel` and install that exact wheel into
+the prepared SAM runtime with `uv pip install --python RUNTIME/bin/python --no-deps WHEEL`.
+Copy all four verified service templates into the user's systemd directory. Switch
+`site/current` to the new release, then apply the owned services explicitly:
+
+```sh
+systemctl --user daemon-reload
+systemctl --user enable --now weedz-site-api weedz-site-web weedz-site-worker weedz-site-tunnel
+systemctl --user restart weedz-site-api weedz-site-web
+```
+
+`WantedBy` alone does not start a new worker on an existing installation. The shared
+tunnel remains running during application/worker restarts, so Label Studio is not
+interrupted. Do not restart it merely because the application release changed.
+
+Keep a previous compatible release and wheel for rollback. Use the same stop-worker,
+matching-wheel installation, symlink switch, reload and start sequence. A release
+predating the hosted worker cannot execute the new versioned activities: leave
+processing stopped and set `WEEDZ_RUN_CREATION=disabled` until a compatible worker
+is restored. Do not roll back the shared tunnel configuration with application code.
+The data, Temporal history and tunnel credentials stay outside releases and must not
+be overwritten during an update.
 
 Before declaring an update healthy, verify anonymous evidence returns 401, valid HTTPS sign-in,
 Secure/HttpOnly/Strict cookie, real PNG bytes/MIME, private no-store headers, actual
@@ -115,3 +144,55 @@ A source-only build is not proof of a functioning public route. Browser interact
 review writes and token revocation need their own verification; screenshots alone do
 not prove them. Cloudflare bot policy may refuse non-browser clients; normal HTTPS
 browser behavior is the user-facing acceptance target.
+
+## Hosted processing worker
+
+`scripts/run_hosted_worker.py --data PRIVATE_DATA` owns the pipeline worker. Without
+`--temporal-url`, it uses the Python SDK's local Temporal service automatically, on
+127.0.0.1:7258 with namespace `weedz-hosted`, no UI, and persistent state in
+`site/temporal/temporal.sqlite3`. The process is ephemeral; its workflow history is
+not. This is a single-host evaluation service, not a production cluster. A configured
+`--temporal-url HOST:PORT`, `--namespace` and optional `--tls` connect to an existing
+service instead. An optional existing CLI override never silently downloads a
+replacement if its path is invalid.
+
+The dedicated `weedz-hosted-discovery-v2` queue prevents unrelated development
+workers taking hosted jobs. The worker registers the project's activity registry,
+loads the actual pinned SAM/BioCLIP models before readiness, admits only hosted
+CC0/CC BY source data, and runs one activity at a time. Its private heartbeat is
+scoped to address/namespace/queue and expires after 20 seconds. The API requires
+both that live worker and a reachable Temporal service before accepting a start.
+A listening port alone is not readiness. Collection availability does not expose a
+Temporal history link; that needs a separately configured reachable UI.
+
+The worker checks service health every five seconds with a two-second RPC deadline.
+A false reply, RPC error or timeout removes its readiness immediately, then retries
+without stopping its owned server. A successful check resets the failure streak
+and republishes readiness. Three consecutive failed checks escalate to normal
+supervised worker recovery. Explicit stop, cancellation and unexpected fatal errors
+still exit and revoke readiness; short transport interruptions do not restart the
+whole processing stack.
+
+The worker unit uses the existing isolated SAM Python environment through `uv run
+--active --no-sync`, with an immutable Weedz wheel installed using `uv pip install
+--no-deps` and the matching release source path. It must never use an editable
+installation tied to a disposable worktree. `worker.env` is owner-private and sets
+`WEEDZ_SAM2_CHECKPOINT` to the verified cached checkpoint. CUDA is restricted to GPU0;
+the baseline encoder currently runs on CPU. Stop the worker before changing its
+installed release wheel. Restart only `weedz-site-worker`; review remains usable
+while processing is unavailable.
+
+New hosted requests can default to the versioned SAM profile after real validation;
+explicit `segmentation: off` is preserved, and old saved specifications retain their
+legacy off behavior. Failed and empty proposal results are distinct stage outcomes.
+Do not enable the website's collection flag until a real authenticated run and
+workflow/worker restart recovery have been verified against actual Temporal history
+and immutable model-stage artifacts.
+
+Actual restart validation on 15 November used workflow
+`nelson-tasman-26c5fca23e18`: eight unique licensed photos, 31 class-agnostic masks,
+two legitimate empty results and all five activities completed. Both the model-worker
+and SDK-server PIDs changed while that same workflow was running. Existing completed
+artifacts and human-review state were preserved. The owner-private proof contains the
+actual Temporal history and exported-stage checksums; this is operational recovery
+evidence, not identification-accuracy validation.

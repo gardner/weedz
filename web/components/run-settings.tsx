@@ -119,14 +119,14 @@ export default function RunSettings({
       </div>
       {!canStartRuns && (
         <p role="status">
-          New collections are not enabled on this review service. Existing evidence can be reviewed.
+          Collection processing is unavailable right now. Existing evidence can be reviewed.
         </p>
       )}
       <p>
         Animal photos are spread across every season in the period, at most one per observer per
         day. Also requests one reference photo for each of three target species in each region.
-        Queries use current council boundaries and eligible CC0, CC BY or CC BY-NC photos and
-        metadata.
+        Queries use current council boundaries. Hosted collections use CC0 or CC BY photos and
+        metadata. Local collectors may also permit CC BY-NC.
       </p>
     </details>
   );

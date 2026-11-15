@@ -6,7 +6,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Literal
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from temporalio.client import Client
 
@@ -18,6 +18,7 @@ from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
 from weedz.discovery.device_reports import IntakeMismatch, sync
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
+from weedz.discovery.hosted_workflows import HostedWorkflows
 from weedz.discovery.image_type import image_media_type
 from weedz.discovery.judgements import Judgement, unsupported
 from weedz.discovery.leads import LeadEvent, lead_states, no_leads, record_lead, selections
@@ -93,9 +94,16 @@ def check_lead(photo: dict, record: LeadEvent) -> None:
 
 
 class ReviewAPI:
-    def __init__(self, root: Path, temporal_address: str, intake_dir: Path | None = None) -> None:
+    def __init__(
+        self,
+        root: Path,
+        temporal_address: str,
+        intake_dir: Path | None = None,
+        hosted_workflows: HostedWorkflows | None = None,
+    ) -> None:
         self.store = Store(root)
         self.temporal_address = temporal_address
+        self.hosted_workflows = hosted_workflows
         self.reports = ReportStore(intake_dir) if intake_dir else None
 
     def sync_reports(self) -> None:
@@ -131,19 +139,36 @@ class ReviewAPI:
         return self.served()
 
     async def start(self, spec: RunSpec) -> dict:
+        if self.hosted_workflows:
+            spec = self.hosted_workflows.apply_defaults(spec)
         run_id = f"nelson-tasman-{uuid.uuid4().hex[:12]}"
         # Queue the workflow before exposing a queued run. Workers also ensure the
         # row exists, covering an API crash immediately after Temporal accepts it.
         try:
-            client = await Client.connect(self.temporal_address)
+            client = (
+                await self.hosted_workflows.client_if_ready()
+                if self.hosted_workflows
+                else await Client.connect(self.temporal_address)
+            )
+            if client is None:
+                raise RuntimeError("Hosted collection worker is unavailable")
             await client.start_workflow(
                 DiscoveryWorkflow.run,
                 spec.model_dump(mode="json"),
                 id=run_id,
-                task_queue=TASK_QUEUE,
+                task_queue=(
+                    self.hosted_workflows.connection.task_queue
+                    if self.hosted_workflows
+                    else TASK_QUEUE
+                ),
             )
         except Exception as error:
-            raise HTTPException(503, "Temporal is unavailable; start the local stack") from error
+            detail = (
+                "Collection processing is temporarily unavailable. Please try again."
+                if self.hosted_workflows
+                else "Temporal is unavailable; start the local stack"
+            )
+            raise HTTPException(503, detail) from error
         self.store.create_run(run_id, spec)
         return {"id": run_id}
 
@@ -410,6 +435,7 @@ def create_app(
     temporal_address: str = "localhost:7234",
     access: Literal["local", "tokens"] = "local",
     intake_dir: Path | None = None,
+    hosted_workflows: HostedWorkflows | None = None,
 ) -> FastAPI:
     """In "local" mode names are self-declared; in "tokens" mode every request needs a
     reviewer's invite token and records carry that reviewer's name (issue #31). With an
@@ -422,8 +448,15 @@ def create_app(
         # The schema and its docs are for local development, not for remote reviewers.
         openapi_url=None if locked else "/openapi.json",
     )
-    app.get("/session")(session)
-    api = ReviewAPI(root, temporal_address, intake_dir)
+
+    async def current_session(request: Request) -> dict[str, object]:
+        result: dict[str, object] = dict(session(request))
+        if hosted_workflows is not None:
+            result["can_start_runs"] = await hosted_workflows.ready()
+        return result
+
+    app.get("/session")(current_session)
+    api = ReviewAPI(root, temporal_address, intake_dir, hosted_workflows)
     app.get("/runs")(api.runs)
     app.post("/runs", status_code=202)(api.start)
     app.get("/runs/{run_id}")(api.detail)

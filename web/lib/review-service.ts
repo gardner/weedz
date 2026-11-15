@@ -86,3 +86,18 @@ export function reviewJson(body: unknown, init: ResponseInit = {}): Response {
 export function runCreationEnabled(env: ReviewEnvironment = process.env): boolean {
   return env.WEEDZ_RUN_CREATION !== "disabled";
 }
+
+/** Hosted processing is available only when the API confirms its owned worker is healthy. */
+export function sessionCanStartRuns(
+  backend: unknown,
+  env: ReviewEnvironment = process.env,
+): boolean {
+  return (
+    runCreationEnabled(env) &&
+    (env.WEEDZ_DEPLOYMENT !== "beast" ||
+      (backend !== null &&
+        typeof backend === "object" &&
+        "can_start_runs" in backend &&
+        backend.can_start_runs === true))
+  );
+}

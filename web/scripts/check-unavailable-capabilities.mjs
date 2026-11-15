@@ -4,18 +4,25 @@ import { chromium } from "@playwright/test";
 
 const browser = await chromium.launch({ headless: true });
 try {
-  for (const body of [{ error: "Unavailable" }, {}, { can_start_runs: "true" }, null]) {
+  for (const [status, body] of [
+    [503, { error: "Unavailable" }],
+    [200, {}],
+    [200, { can_start_runs: "true" }],
+    [200, null],
+  ]) {
     const page = await browser.newPage();
     await page.route("**/api/**", (route) =>
       route.fulfill({
-        status: new URL(route.request().url()).pathname === "/api/session" ? 503 : 200,
+        status: new URL(route.request().url()).pathname === "/api/session" ? status : 200,
         json: new URL(route.request().url()).pathname === "/api/session" ? body : [],
       }),
     );
-    await page.goto("http://127.0.0.1:3001", { waitUntil: "domcontentloaded" });
-    await page.locator(".run-settings summary").click();
-    await page.getByRole("button", { name: "Start bounded run" }).waitFor();
-    assert(await page.getByRole("button", { name: "Start bounded run" }).isDisabled());
+    await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001", {
+      waitUntil: "domcontentloaded",
+    });
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator(".workspace").count(), 0);
+    assert.equal(await page.getByRole("button", { name: "Start bounded run" }).count(), 0);
     assert.equal(await page.getByRole("link", { name: /Workflow history/ }).count(), 0);
     await page.close();
   }
@@ -27,7 +34,9 @@ try {
       json: session ? { mode: "tokens", reviewer: "Test reviewer" } : [],
     });
   });
-  await page.goto("http://127.0.0.1:3001", { waitUntil: "domcontentloaded" });
+  await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001", {
+    waitUntil: "domcontentloaded",
+  });
   await page.getByLabel("Reviewer token", { exact: true }).fill("test-token");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.locator(".run-settings summary").click();

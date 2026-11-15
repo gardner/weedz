@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import {
   backendOrigin,
   reviewJson,
-  runCreationEnabled,
+  sessionCanStartRuns,
   sessionOrigin,
 } from "../../../lib/review-service";
 import {
@@ -30,8 +30,9 @@ async function session(authorization: string | undefined) {
 export async function GET(request: NextRequest) {
   try {
     const response = await session(bearerFrom(request.headers.get("cookie")));
+    const body = await response.json();
     return reviewJson(
-      { ...(await response.json()), can_start_runs: runCreationEnabled() },
+      { ...body, can_start_runs: sessionCanStartRuns(body) },
       { status: response.status },
     );
   } catch {
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     const body = await response.json();
     if (!response.ok || body.mode !== "tokens") return refused;
     return reviewJson(
-      { ...body, can_start_runs: runCreationEnabled() },
+      { ...body, can_start_runs: sessionCanStartRuns(body) },
       {
         headers: { "Set-Cookie": sessionCookie(presented, sessionOrigin(request)) },
       },
