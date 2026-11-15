@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 from PIL import Image
 
+from weedz.annotation.aotearoa import frame_runtime
 from weedz.annotation.auto_labels import frame_prediction, proposals_prediction
 from weedz.annotation.credits import photo_credit
 from weedz.annotation.export import _output
@@ -178,7 +179,7 @@ def _write(
         provenance = {
             "nonfinite_result_policy": NONFINITE_POLICY,
             "classifier_runtime": {
-                "frame": classifier_runtime(frames["model"]) if frames else None,
+                "frame": frame_runtime(frames["model"]) if frames else None,
                 **{
                     name: classifier_runtime(variant.document["model"])
                     for name, variant in variants.items()
