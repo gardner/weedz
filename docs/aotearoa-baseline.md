@@ -29,6 +29,7 @@ Correct EXIF orientation, convert RGB, resize the shorter edge to416 while retai
 ratio with antialiased bilinear filtering, then take a centred384×384 crop. An odd spare
 pixel stays on the bottom/right, matching the released application. Convert bytes to FP32,
 scale by255, normalise each channel with mean/std0.5, and arrange NCHW `[1,3,384,384]`.
+A40MP resized-intermediate guard rejects extreme aspect ratios before allocation.
 Pillow implements the resize here; its version and this policy are part of pipeline identity.
 This is not a claim of bitwise equivalence to the application's custom resize implementation.
 

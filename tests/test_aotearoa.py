@@ -139,3 +139,22 @@ def test_session_consumes_verified_snapshot_not_replaced_checkpoint_path(tmp_pat
     monkeypatch.setattr(aotearoa.importlib, "import_module", lambda _: runtime)
     model = aotearoa.AotearoaClassifier.load(checkpoint, mapping)
     assert model.labels[14305] == "Taxon 14305"
+
+
+def test_extreme_aspect_resize_is_refused_before_allocating_intermediate(monkeypatch):
+    image = Image.new("RGB", (1, 100_000))
+    monkeypatch.setattr(
+        Image.Image, "resize", lambda *_args, **_kwargs: pytest.fail("unbounded resize")
+    )
+    with pytest.raises(ValueError, match="resized pixel cap"):
+        preprocess(image)
+
+
+def test_artifact_read_refuses_more_than_its_byte_budget(tmp_path, monkeypatch):
+    from weedz.classification import aotearoa
+
+    path = tmp_path / "oversized"
+    path.write_bytes(b"12345")
+    monkeypatch.setattr(aotearoa, "MAX_ARTIFACT_BYTES", 4)
+    with pytest.raises(ValueError, match="byte cap"):
+        verified_bytes(path, hashlib.sha256(b"12345").hexdigest())

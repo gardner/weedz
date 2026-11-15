@@ -18,11 +18,16 @@ SOURCE_REVISION = "c36d8838f189d64de7dde8037ebb7a606dc39968"
 WEIGHTS_SHA256 = "1905b995f53f58cfab8c611c388ff670bab2dcb5019e8cceec0937e9f0291e68"
 LABELS_SHA256 = "b2b27faf173e9b0613f3580fdc0b4c380c962341ef1466b4abd55b2bf078882e"
 CLASS_COUNT = 14991
+MAX_ARTIFACT_BYTES = 160_000_000
+MAX_RESIZED_PIXELS = 40_000_000
 INPUT_POLICY = "EXIF-upright RGB; antialiased bilinear short edge416; centre384; no source taxonomy"
 
 
 def verified_bytes(path: Path, expected_sha256: str) -> bytes:
-    encoded = path.read_bytes()
+    with path.open("rb") as stream:
+        encoded = stream.read(MAX_ARTIFACT_BYTES + 1)
+    if len(encoded) > MAX_ARTIFACT_BYTES:
+        raise ValueError("Aotearoa artifact exceeds byte cap")
     if hashlib.sha256(encoded).hexdigest() != expected_sha256:
         raise ValueError("Aotearoa artifact checksum mismatch")
     return encoded
@@ -44,6 +49,8 @@ def preprocess(image: Image.Image) -> np.ndarray:
     upright = ImageOps.exif_transpose(image).convert("RGB")
     width, height = upright.size
     size = (416, int(416 * height / width)) if width <= height else (int(416 * width / height), 416)
+    if size[0] * size[1] > MAX_RESIZED_PIXELS:
+        raise ValueError("Aotearoa preprocessing exceeds resized pixel cap")
     resized = upright.resize(size, Image.Resampling.BILINEAR)
     # Released application puts the extra pixel on the bottom/right.
     left, top = (size[0] - 384) // 2, (size[1] - 384) // 2
