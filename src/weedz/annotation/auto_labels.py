@@ -107,9 +107,27 @@ def proposals_prediction(
     for region in regions:
         mask, _ = mask_prediction(region, size, label="Unknown")
         results.extend([mask, taxon_result("Unknown", str(region["id"]))])
-    results.append(evidence_result({"interpretation": PROPOSALS_POLICY}))
+    if metadata.get("profile") == "sam3-image-concept-v1":
+        name = "SAM3 concept region proposals"
+        policy = "Prompt-conditioned SAM3 regions; uncalibrated concept scores, not species labels"
+        evidence = {
+            "interpretation": policy,
+            "concept_regions": [
+                {
+                    key: region.get(key)
+                    for key in ("id", "prompt", "concept_score", "concept_score_kind")
+                }
+                for region in regions
+            ],
+        }
+    elif metadata.get("profile") in {None, "sam2.1-tiny-v1"}:
+        name, policy = "SAM2.1 mask proposals", PROPOSALS_POLICY
+        evidence = {"interpretation": policy}
+    else:
+        raise ValueError("Unknown proposal model profile")
+    results.append(evidence_result(evidence))
     return {
-        "model_version": display_version("SAM2.1 mask proposals", metadata, PROPOSALS_POLICY),
+        "model_version": display_version(name, metadata, policy),
         "result": results,
     }
 
