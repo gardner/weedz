@@ -91,6 +91,9 @@ async function open(meaning) {
     const photos = [photo("ranked", false), photo("sampled", true)];
     await route.fulfill({ json: { run, photos, score_meaning: meaning } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
   await page.getByText("Bird ranked").first().waitFor();
   return page;

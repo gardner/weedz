@@ -5,6 +5,8 @@ import hashlib
 import json
 import os
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
 
@@ -14,6 +16,13 @@ MAX_ARTIFACT_BYTES = 32_000_000
 
 def digest(value: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
+def evidence_priority(result: dict) -> int:
+    """Completed views dominate retained proposals, which dominate proposal failure."""
+    if result.get("view_status") in {"ok", "empty"}:
+        return 2
+    return int(result.get("proposal_status") in {"ok", "empty"})
 
 
 def sync_directory(path: Path) -> None:
@@ -80,18 +89,26 @@ class StageArtifacts:
             raise ValueError("Stage artifact provenance changed; start a new run")
         return record["result"]
 
-    def write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
+    @contextmanager
+    def locked(self, stage: Stage, photo_id: str) -> Iterator[None]:
         durable_mkdir(self.root)
         # A previous interrupted sync can leave existing but unacknowledged entries.
         # Re-establish the whole artifact hierarchy before even a cached success returns.
         self._sync_hierarchy()
         with self._path(stage, photo_id).with_suffix(".lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
+            yield
+
+    def write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
+        with self.locked(stage, photo_id):
             return self._write(stage, photo_id, inputs, result)
 
     def _write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
         previous = self.read(stage, photo_id, inputs)
-        if previous and previous.get("status") in {"ok", "empty"}:
+        if previous and (
+            previous.get("status") in {"ok", "empty"}
+            or (stage == "views" and evidence_priority(previous) > evidence_priority(result))
+        ):
             return previous
         payload = {"stage": stage, "photo_id": photo_id, "inputs": inputs, "result": result}
         encoded = json.dumps({"schema": 1, **payload, "sha256": digest(payload)}, allow_nan=False)

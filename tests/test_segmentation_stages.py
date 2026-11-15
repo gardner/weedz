@@ -11,6 +11,7 @@ from test_discovery import observation
 from weedz.discovery.records import RunSpec
 from weedz.discovery.source import photo_from_observation
 from weedz.discovery.store import Store
+from weedz.segmentation.artifacts import digest
 from weedz.segmentation.stages import PipelineStages
 
 
@@ -216,9 +217,9 @@ def test_canonical_region_result_is_attached_when_late_classifier_fails(store, m
             proposal = artifacts.entry("proposals", first["id"])
             assert proposal
             inputs = {
-                "proposal_sha256": proposal["sha256"],
+                "proposal_inputs_sha256": digest(proposal["inputs"]),
                 "classifier": model.metadata,
-                "version": 1,
+                "version": 2,
             }
             canonical = {
                 **proposal["result"],
@@ -297,3 +298,123 @@ def test_region_classification_retries_are_independent_for_later_photos(store, m
     result = stages.score_regions("run")
     assert result["completed"] == 2 and result["failed"] == 0
     assert seen == {0: 3, 1: 2}
+
+
+@pytest.mark.parametrize("late_status", ["failed", "skipped_proposal_failure"])
+def test_successful_attachment_dominates_stale_failed_attempt(store, late_status):
+    stages = runner(store, Proposer())
+    baseline = {"margin": -0.04, "model": "unchanged-baseline"}
+    store.score("run", "0", baseline)
+    good = {"status": "ok", "view_status": "ok", "regions": [{"id": "canonical-success"}]}
+    failed = {"status": "failed", "view_status": late_status, "regions": []}
+    stages._attach("run", "0", failed)
+    stages._attach("run", "0", good)
+    stages._attach("run", "0", failed)
+    assert store.photos("run")[0]["scores"] == {**baseline, "segmentation": good}
+
+
+def test_failed_proposal_recovery_does_not_poison_existing_fallback_views(store, monkeypatch):
+    proposer = Proposer()
+    stages = runner(store, proposer)
+    assert stages.segment("run")["failed"] == 1
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    monkeypatch.setattr(
+        "weedz.segmentation.stages.identify_views",
+        lambda _model, views, _subject: {name: {"margin": -0.2} for name in views},
+    )
+    assert stages.score_regions("run")["failed"] == 1
+    proposer.fail_second = False
+    assert stages.segment("run")["completed"] == 2
+    result = stages.score_regions("run")
+    assert result["completed"] == 2 and result["cache_hits"] == 1
+    recovered = store.photos("run")[1]["scores"]
+    assert recovered["margin"] == -0.04
+    assert recovered["segmentation"]["view_status"] == "ok"
+    assert recovered["segmentation"]["regions"]
+    from weedz.segmentation.artifacts import StageArtifacts
+
+    canonical = StageArtifacts(store.root, "run").entry("proposals", "1")
+    assert canonical
+    assert (
+        recovered["segmentation"]["provenance"]["proposal_artifact_sha256"] == canonical["sha256"]
+    )
+
+
+def test_late_skipped_attachment_keeps_masks_when_classifier_failed(store):
+    stages = runner(store, Proposer())
+    store.score("run", "0", {"margin": -0.04})
+    retained = {
+        "status": "failed",
+        "proposal_status": "ok",
+        "view_status": "failed",
+        "regions": [{"id": "real-proposal"}],
+    }
+    skipped = {
+        "status": "failed",
+        "proposal_status": "failed",
+        "view_status": "skipped_proposal_failure",
+        "regions": [],
+    }
+    stages._attach("run", "0", retained)
+    stages._attach("run", "0", skipped)
+    assert store.photos("run")[0]["scores"]["segmentation"] == retained
+
+
+def test_failed_snapshot_is_revalidated_before_fallback_commit(store, monkeypatch):
+    proposer = Proposer()
+    stages = runner(store, proposer)
+    assert stages.segment("run")["failed"] == 1
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    original = stages._proposal
+    recovered = []
+
+    def interleaved(artifacts, photo):
+        snapshot = original(artifacts, photo)
+        if snapshot["result"]["status"] == "failed" and not recovered:
+            recovered.append(True)
+            proposer.fail_second = False
+            stages.segment("run")
+        return snapshot
+
+    monkeypatch.setattr(stages, "_proposal", interleaved)
+    monkeypatch.setattr(
+        "weedz.segmentation.stages.identify_views",
+        lambda _model, views, _subject: {name: {"margin": -0.2} for name in views},
+    )
+    assert stages.score_regions("run")["failed"] == 0
+    photo = store.photos("run")[1]
+    assert photo["scores"]["segmentation"]["regions"]
+    assert photo["scores"]["segmentation"]["view_status"] == "ok"
+
+
+def test_failed_fallback_attachment_holds_the_proposal_writer_lock(store, monkeypatch):
+    import fcntl
+
+    from weedz.segmentation.artifacts import StageArtifacts
+
+    stages = runner(store, Proposer())
+    stages.segment("run")
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    original = stages._attach
+    checked = []
+
+    def observed(run_id, photo_id, evidence):
+        if evidence["proposal_status"] == "failed":
+            path = (
+                StageArtifacts(store.root, run_id)._path("proposals", photo_id).with_suffix(".lock")
+            )
+            with path.open("a") as writer, pytest.raises(BlockingIOError):
+                fcntl.flock(writer, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            checked.append(True)
+        original(run_id, photo_id, evidence)
+
+    monkeypatch.setattr(stages, "_attach", observed)
+    monkeypatch.setattr(
+        "weedz.segmentation.stages.identify_views",
+        lambda _model, views, _subject: {name: {"margin": -0.2} for name in views},
+    )
+    stages.score_regions("run")
+    assert checked == [True]

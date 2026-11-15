@@ -71,6 +71,9 @@ try {
     const photos = [photo("sampled", true, 0.04), photo("other", false, 0.5)];
     await route.fulfill({ json: { run, photos, audit: summary() } });
   });
+  await page.route("**/api/session", (route) =>
+    route.fulfill({ json: { mode: "local", can_start_runs: true } }),
+  );
   await page.goto(process.env.WEEDZ_WEB_URL ?? "http://127.0.0.1:3001");
 
   // Until it is audited, a sampled photo stays out of the ranked queue, so nobody sees
