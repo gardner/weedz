@@ -48,3 +48,15 @@ def test_config_and_checkpoint_change_cache_identity():
     first = cache_key(b"photo", "checkpoint-a", ProposalConfig())
     assert first != cache_key(b"photo", "checkpoint-b", ProposalConfig())
     assert first != cache_key(b"photo", "checkpoint-a", ProposalConfig(max_proposals=2))
+
+
+def test_retained_views_are_bounded_and_transform_provenance_is_explicit():
+    mask = np.ones((64, 64), dtype=bool)
+    region = proposals(
+        Image.new("RGB", (2000, 2000)),
+        [{"segmentation": mask, "predicted_iou": 0.9, "stability_score": 0.95}],
+        ProposalConfig(max_side=64),
+    )[0]
+    assert all(max(view.size) <= 64 for view in region.views.values())
+    assert region.record()["view_transforms"]["masked"]["source_box"] == [0, 0, 2000, 2000]
+    assert region.record()["view_transforms"]["masked"]["resized_size"] == [64, 64]
