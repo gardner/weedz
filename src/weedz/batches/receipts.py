@@ -71,7 +71,7 @@ def write_receipt(root: Path, relative: str, document: dict[str, Any]) -> dict[s
     if not path.resolve().is_relative_to(root):
         raise ValueError("Completion receipt escapes owned storage")
     _directory(path.parent, root)
-    descriptor = os.open(path.with_suffix(".lock"), os.O_WRONLY | os.O_CREAT, 0o600)
+    descriptor = os.open(path.with_suffix(".lock"), os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     with os.fdopen(descriptor, "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         _publish(path, encoded)
