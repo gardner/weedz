@@ -22,7 +22,7 @@ class ClosedBatch:
     samples: tuple[Sample, ...]
 
 
-def _read(path: Path, root: Path, maximum: int) -> bytes:
+def read_owned_file(path: Path, root: Path, maximum: int) -> bytes:
     resolved = path.resolve()
     if not resolved.is_relative_to(root.resolve()) or path.is_symlink():
         raise ValueError("Batch artifact escapes owned storage or is a symbolic link")
@@ -37,7 +37,7 @@ def _read(path: Path, root: Path, maximum: int) -> bytes:
 
 def read_artifact(root: Path, reference: dict, maximum: int) -> bytes:
     pinned = artifact(reference)
-    encoded = _read(root / pinned["path"], root, maximum)
+    encoded = read_owned_file(root / pinned["path"], root, maximum)
     if hashlib.sha256(encoded).hexdigest() != pinned["sha256"]:
         raise ValueError("Batch artifact checksum mismatch")
     return encoded
@@ -52,7 +52,7 @@ def _media(sample: Sample, folder: Path) -> None:
         or rights.metadata_license.lower() not in PUBLIC
     ):
         raise ValueError("Canonical annotation batches require public CC0/CC BY rights")
-    encoded = _read(folder / sample.media.uri, folder, 160 * 1024 * 1024)
+    encoded = read_owned_file(folder / sample.media.uri, folder, 160 * 1024 * 1024)
     if hashlib.sha256(encoded).hexdigest() != sample.media.sha256:
         raise ValueError("Canonical image checksum mismatch")
     with Image.open(io.BytesIO(encoded)) as image:
