@@ -418,3 +418,19 @@ def test_failed_fallback_attachment_holds_the_proposal_writer_lock(store, monkey
     )
     stages.score_regions("run")
     assert checked == [True]
+
+
+def test_failed_proposal_is_published_once_with_final_elapsed_time(store, monkeypatch):
+    from weedz.segmentation.artifacts import StageArtifacts
+
+    original = StageArtifacts.write
+    failed = []
+
+    def observed(self, stage, photo_id, inputs, result):
+        if stage == "proposals" and result["status"] == "failed":
+            failed.append(dict(result))
+        return original(self, stage, photo_id, inputs, result)
+
+    monkeypatch.setattr(StageArtifacts, "write", observed)
+    assert runner(store, Proposer()).segment("run")["failed"] == 1
+    assert len(failed) == 1 and failed[0]["elapsed_seconds"] >= 0

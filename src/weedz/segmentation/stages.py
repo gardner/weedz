@@ -98,7 +98,6 @@ class PipelineStages:
                 )
             except (ValueError, *RETRYABLE) as error:
                 result.update(status="failed", failure_type=type(error).__name__)
-                result = artifacts.write("proposals", photo["id"], inputs, result)
             result["elapsed_seconds"] = time.monotonic() - start
             result = artifacts.write("proposals", photo["id"], inputs, result)
             count["failed" if result["status"] == "failed" else "completed"] += 1
@@ -201,7 +200,6 @@ class PipelineStages:
                 evidence.update(
                     status="failed", view_status="failed", failure_type=type(error).__name__
                 )
-                evidence = artifacts.write("views", photo["id"], inputs, evidence)
         return artifacts.write("views", photo["id"], inputs, evidence)
 
     def _classified_regions(self, path: Path, result: dict, model: Any, photo: dict) -> list:
