@@ -200,13 +200,17 @@ def test_existing_image_is_resealed_before_any_rest_write(canonical_batch, tmp_p
 
 
 @pytest.mark.parametrize("failure", [httpx.ConnectError, httpx.ConnectTimeout])
+@pytest.mark.parametrize("existing_task", [False, True])
 def test_definite_connection_failure_releases_only_its_new_intents(
-    canonical_batch, tmp_path, failure
+    canonical_batch, tmp_path, failure, existing_task
 ):
     package = validate_package(
         exported(canonical_batch, tmp_path), manifest_sha(tmp_path / "export")
     )
     service = Service()
+    if existing_task:
+        run(service, package, tmp_path)
+        service.predictions = {identifier: [] for identifier in service.predictions}
     original = service.handle
 
     def offline(request):

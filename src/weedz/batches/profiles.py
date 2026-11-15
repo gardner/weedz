@@ -10,6 +10,7 @@ from weedz.annotation.semantic import (
     CLASSIFIER_FIELDS,
     CONFIG_FIELDS,
     PROPOSER_FIELDS,
+    classifier_numerics,
     classifier_runtime,
     proposer_semantic,
 )
@@ -38,6 +39,7 @@ def model_identity(metadata: dict, kind: Kind) -> dict:
     if kind == "proposals":
         return sam_identity(metadata)
     selected = _fields(metadata, (*CLASSIFIER_FIELDS, "input_policy"))
+    selected.update(classifier_numerics(metadata))
     runtime = classifier_runtime(metadata)
     if runtime["status"] == "recorded":
         selected.update({key: runtime[key] for key in ("pillow", "torchvision")})
