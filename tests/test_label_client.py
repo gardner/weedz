@@ -27,7 +27,9 @@ def test_task_index_filters_project_and_keys_without_touching_annotations(tmp_pa
                 ),
             )
     before = path.read_bytes()
-    assert task_index(path, 1, ["a"]) == {"a": {"id": 1, "data": {"image": "exact"}}}
+    assert task_index(path, 1, ["a"]) == {
+        "a": {"id": 1, "data": {"image": "exact"}, "meta": {"external_id": "a"}}
+    }
     assert path.read_bytes() == before
 
 

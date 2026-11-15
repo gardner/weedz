@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 import httpx
 
 from weedz.batches.label_client import UndeliveredRequest
+from weedz.batches.legacy_identity import LegacyIdentities, load_legacy_identities
 from weedz.batches.package import Package, validate_package
 from weedz.batches.publication_state import Intents, writer_lock
 from weedz.batches.receipts import seal_file
@@ -49,12 +50,19 @@ def _image_address(address: str) -> tuple:
     return url.scheme, url.netloc, url.path, parse_qs(url.query), url.fragment
 
 
-def _canonical_data(current: dict, expected: dict) -> None:
+def _canonical_data(
+    current: dict, expected: dict, legacy: LegacyIdentities | None, adopted: set[int]
+) -> None:
+    current_task, expected_task = current, expected
+    current, expected = current["data"], expected["data"]
     if _image_address(current["image"]) != _image_address(expected["image"]):
         raise ValueError("Existing task image differs from the canonical publication")
-    for name in ("source_dataset", "photo_credit"):
-        if current.get(name) != expected[name]:
-            raise ValueError(f"Existing task {name} differs from the canonical publication")
+    if current.get("photo_credit") != expected["photo_credit"]:
+        raise ValueError("Existing task photo_credit differs from the canonical publication")
+    if "source_dataset" not in current and legacy is not None:
+        adopted.add(legacy.approve(current_task, expected_task))
+    elif current.get("source_dataset") != expected["source_dataset"]:
+        raise ValueError("Existing task source_dataset differs from the canonical publication")
 
 
 def _missing(
@@ -63,6 +71,8 @@ def _missing(
     index: Index,
     intents: Intents,
     heartbeat: Callable[[], None],
+    legacy: LegacyIdentities | None,
+    adopted: set[int],
 ) -> list[dict]:
     missing = []
     for task in tasks:
@@ -71,7 +81,7 @@ def _missing(
         if key not in index:
             continue
         current = index[key]
-        _canonical_data(current["data"], task["data"])
+        _canonical_data(current, task, legacy, adopted)
         existing = _predictions(client, current["id"])
         intents.complete(f"task:{key}")
         for prediction in task.get("predictions", []):
@@ -188,24 +198,31 @@ def publish(
     state: Path,
     lock: Path,
     heartbeat: Callable[[], None] = lambda: None,
+    *,
+    legacy_allowlist: dict | None = None,
 ) -> dict:
     if type(project) is not int or project <= 0:
         raise ValueError("Choose a positive Label Studio project")
     # Re-read pinned bytes instead of trusting mutable nested dictionaries from a caller.
     package = validate_package(package.root, package.sha256, heartbeat)
     with writer_lock(lock, heartbeat):
+        legacy = load_legacy_identities(legacy_allowlist, project)
+        adopted: set[int] = set()
         intents = Intents(state, project)
         current = index()
         # Discover conflicts before importing new tasks or appending any model output.
-        _missing(client, package.tasks, current, intents, heartbeat)
+        _missing(client, package.tasks, current, intents, heartbeat, legacy, adopted)
         _copy_images(package, images, heartbeat)
+        if legacy is not None:
+            current = index()
+            _missing(client, package.tasks, current, intents, heartbeat, legacy, adopted)
         new = [task for task in package.tasks if task["meta"]["external_id"] not in current]
         if new:
             current = _import_tasks(client, project, new, index, intents)
-        missing = _missing(client, package.tasks, current, intents, heartbeat)
+        missing = _missing(client, package.tasks, current, intents, heartbeat, legacy, adopted)
         _append_predictions(client, project, missing, intents, heartbeat)
         heartbeat()
-        return {
+        receipt = {
             "schema": 1,
             "project_id": project,
             "package_sha256": package.sha256,
@@ -214,3 +231,10 @@ def publish(
             "new_predictions": len(missing),
             "human_annotation_writes": 0,
         }
+        if adopted and legacy is not None:
+            receipt["legacy_adoption"] = {
+                "task_ids": sorted(adopted),
+                "allowlist_sha256": legacy.sha256,
+                "provenance_sha256": legacy.provenance_sha256,
+            }
+        return receipt

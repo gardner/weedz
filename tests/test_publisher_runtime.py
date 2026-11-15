@@ -42,3 +42,42 @@ def test_failed_initial_authentication_leaves_no_uncertain_intent(
         publish(package, 1)
     assert not (tmp_path / "state").exists()
     assert not (tmp_path / "writer.lock").exists()
+
+
+def test_optional_legacy_reference_is_forwarded_without_mutating_configuration(monkeypatch):
+    from pathlib import Path
+
+    import weedz.batches.publisher_runtime as module
+    from weedz.batches.package import Package
+
+    reference = {"path": "/private/approved.json", "sha256": "a" * 64}
+    config = {
+        "project_id": 1,
+        "api_url": "http://127.0.0.1:8068",
+        "token_file": "/private/token",
+        "database": "/private/db",
+        "images": "/private/images",
+        "state": "/private/state",
+        "lock": "/private/lock",
+        "legacy_identity_allowlist": reference,
+    }
+    observed = []
+
+    class Client:
+        def __init__(self, *args):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def refresh(self):
+            pass
+
+    monkeypatch.setattr(module, "LabelStudioClient", Client)
+    monkeypatch.setattr(module, "publish", lambda *a, **kw: observed.append(kw) or {})
+    module.publisher_from_config(config)(Package(Path("/unused"), "a" * 64, (), {}), 1)
+    assert observed[0]["legacy_allowlist"] == reference
+    assert config["legacy_identity_allowlist"] == reference
