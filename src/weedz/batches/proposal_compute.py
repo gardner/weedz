@@ -1,12 +1,9 @@
 """Canonical SAM computation and exact completed-output adoption without inference."""
 
 import hashlib
-import io
 import json
 from pathlib import Path
 from typing import Literal
-
-from PIL import Image
 
 from weedz.batches.compute import Computed
 from weedz.batches.contract import artifact
@@ -39,8 +36,10 @@ def proposal_rows(
         records = stage["regions"]
         if len({r["id"] for r in records}) != len(records):
             raise ValueError("Duplicate proposal region identities")
-        with Image.open(io.BytesIO(_snapshot(sample, batch.manifest.parent))) as image:
-            _restore(image, stage, kind)
+        encoded_image = _snapshot(sample, batch.manifest.parent)
+        if sample.media.sha256 is None:
+            raise ValueError("Canonical source lacks its image checksum")
+        _restore(encoded_image, sample.media.sha256, stage, kind)
     if len(versions) != 1 or None in versions:
         raise ValueError("Proposal model versions disagree within the batch")
     return rows

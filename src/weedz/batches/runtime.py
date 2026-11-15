@@ -1,0 +1,96 @@
+"""Resident model factories and explicit metadata captured by a real model preflight."""
+
+from functools import cache
+from pathlib import Path
+from typing import Any, cast
+
+from weedz.batches.activities import BatchRegistry
+from weedz.batches.profiles import ModelProfile
+from weedz.classification.batch import Profile, classifier_metadata
+from weedz.classification.plantclef import PlantClassifier
+from weedz.classification.regions import regional_metadata
+from weedz.segmentation.regions import ProposalConfig
+from weedz.segmentation.sam2 import CHECKPOINT_SHA256, Sam2Proposer
+
+
+class ClassifierView:
+    def __init__(self, model: Any, metadata: dict) -> None:
+        self.model, self.metadata = model, metadata
+
+    def predict(self, images, top_k=5):
+        return self.model.predict(images, top_k=top_k)
+
+
+def prepare_config(
+    root: Path, sam_checkpoint: Path, checkpoint: Path, labels: Path, device: str = "cuda:0"
+) -> dict:
+    model_cache = root / "temporal-model-cache"
+    config = ProposalConfig()
+    sam = Sam2Proposer(sam_checkpoint, CHECKPOINT_SHA256, model_cache / "sam2", config, device)
+    classifier = PlantClassifier.load(checkpoint, labels, device)
+    return {
+        "schema": 1,
+        "artifact_root": str(root.resolve()),
+        "device": device,
+        "sam_checkpoint": str(sam_checkpoint.resolve()),
+        "classifier_checkpoint": str(checkpoint.resolve()),
+        "classifier_labels": str(labels.resolve()),
+        "model_cache": str(model_cache.resolve()),
+        "segmentation_profile": "sam2.1-tiny-v1",
+        "classifier_profile": "plantclef-v2",
+        "metadata": {
+            "proposals": sam.metadata,
+            "frame": classifier_metadata(classifier, "frame"),
+            "tiles": classifier_metadata(classifier, "tiles"),
+            "regions": regional_metadata(classifier, sam.metadata, "sam2"),
+        },
+    }
+
+
+def registry_from_config(config: dict) -> BatchRegistry:
+    metadata = config["metadata"]
+    device = config["device"]
+
+    @cache
+    def sam():
+        return Sam2Proposer(
+            Path(config["sam_checkpoint"]),
+            CHECKPOINT_SHA256,
+            Path(config["model_cache"]) / "sam2",
+            ProposalConfig(**metadata["proposals"]["proposal_config"]),
+            device,
+        )
+
+    @cache
+    def classifier():
+        return PlantClassifier.load(
+            Path(config["classifier_checkpoint"]), Path(config["classifier_labels"]), device
+        )
+
+    def view(kind: str):
+        model = classifier()
+        actual = (
+            regional_metadata(model, metadata["proposals"], "sam2")
+            if kind == "regions"
+            else classifier_metadata(model, cast(Profile, kind))
+        )
+        return ClassifierView(model, actual)
+
+    return BatchRegistry(
+        {
+            config["segmentation_profile"]: ModelProfile(
+                config["segmentation_profile"], "proposals", metadata["proposals"], sam
+            )
+        },
+        {
+            config["classifier_profile"]: {
+                kind: ModelProfile(
+                    f"{config['classifier_profile']}-{kind}",
+                    kind,
+                    metadata[kind],
+                    lambda kind=kind: view(kind),
+                )
+                for kind in ("frame", "tiles", "regions")
+            }
+        },
+    )

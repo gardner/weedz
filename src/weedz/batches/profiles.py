@@ -46,6 +46,7 @@ def model_identity(metadata: dict, kind: Kind) -> dict:
                 "proposer_kind",
                 "primary_view",
                 "crop_geometry_revision",
+                "masked_view_policy",
             )
             if key in metadata
         }

@@ -103,6 +103,8 @@ def classify(
         model,
         cast(Literal["frame", "tiles"], profile.kind),
     )
+    if not profile.matches(result["model"]):
+        raise ValueError("Computed classifier method differs from its registered profile")
     if result["manifest_sha256"] != batch.sha256:
         raise ValueError("Classifier source changed after closed-batch validation")
     reference["sha256"] = hashlib.sha256(read_owned_file(output, root, 128_000_000)).hexdigest()

@@ -12,6 +12,7 @@ from weedz.batches.profiles import ModelProfile
 from weedz.batches.proposal_compute import segment
 from weedz.batches.regional_compute import regions
 from weedz.batches.storage import validate_closed_batch
+from weedz.classification.regions import regional_metadata
 
 
 class Masks(Proposer):
@@ -33,13 +34,7 @@ def test_masked_miss_computes_and_audited_legacy_adoption_never_recomputes(batch
     proposal_profile = ModelProfile("sam2-v1", "proposals", sam.metadata, lambda: sam)
     proposals = segment(root, closed, "outputs/proposals", proposal_profile)
     model = Model()
-    model.metadata.update(
-        input_policy="Actual SAM masked crop only; source taxonomy not supplied",
-        proposer=sam.metadata,
-        proposer_kind="sam2",
-        primary_view="masked",
-        crop_geometry_revision=1,
-    )
+    model.metadata = regional_metadata(model, sam.metadata, "sam2")
     loads = []
     profile = ModelProfile(
         "plantclef-regions-v1", "regions", model.metadata, lambda: loads.append(1) or model
