@@ -191,3 +191,17 @@ def test_truncated_canonical_png_is_not_published(canonical_batch, tmp_path):
     with pytest.raises(OSError):
         export_samples(manifest, output)
     assert not output.exists()
+
+
+@pytest.mark.parametrize("prefix", ["images with spaces", "hash#mark", "query?mark", "amp&mark"])
+def test_custom_image_prefix_is_url_encoded(canonical_batch, tmp_path, prefix):
+    from urllib.parse import parse_qs, urlsplit
+
+    manifest, _, _ = canonical_batch
+    output = tmp_path / "encoded"
+    export_samples(manifest, output, image_prefix=prefix)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    parsed = urlsplit(task["data"]["image"])
+    relative = parse_qs(parsed.query)["d"][0]
+    assert not parsed.fragment
+    assert (output / "images" / relative).is_file()

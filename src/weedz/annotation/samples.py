@@ -6,6 +6,7 @@ import json
 import shutil
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from PIL import Image
 
@@ -109,7 +110,7 @@ def _prepare(
     )
     imported: dict[str, Any] = {
         "data": {
-            "image": f"/data/local-files/?d={image_prefix}/{digest}.png",
+            "image": f"/data/local-files/?d={quote(f'{image_prefix}/{digest}.png')}",
             "source_dataset": sample.source,
             "pipeline_state": "; ".join(s for s in (proposal_state, frame_state) if s)
             or "Awaiting model output",
