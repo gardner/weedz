@@ -53,3 +53,7 @@ Historical receipts without this hash are not silently upgraded or presented as 
 checksummed generation evidence. Keep historical delivered media unchanged; a future new
 render must use recordings with the documented generation receipt. These checks do not
 normalize, trim, resample, adjust gain or otherwise process the native narration.
+The source checkout must also be clean, including nonignored untracked files;
+modified inference code cannot inherit the pinned source revision. Ignored runtime
+caches and the separately recorded installed dependencies remain a trusted local
+runtime boundary, not an attestation of every dependency on the host.

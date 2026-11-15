@@ -94,3 +94,23 @@ remain historical artifacts and are not modified by these source checks.
 Both web and mobile source-video segments must decode their full requested frame counts
 and exit successfully. Missing/truncated frames or decoder failures abort the render;
 they are never replaced with frozen or blank footage.
+
+UI typography defaults to the producing machine's DejaVu Sans regular/bold files.
+On another system, pass `--ui-font /path/to/regular.ttf` and
+`--ui-bold-font /path/to/bold.ttf` using existing readable font files. Both fonts
+are loaded before creating the output or starting a render; no OS installation
+is required. `--credit-font` remains separate for source-credit character coverage.
+
+New browser capture receipts bind the three consumed web media files by SHA-256,
+recorded only after capture closure. Rendering verifies them and consumes private
+checked snapshots. Mixing likewise verifies `picture.mp4` and the native narration
+against the render's `sha256.json`, then reads checked private copies. Replacement
+media cannot inherit an earlier receipt. Historical hashless receipts and delivered
+films remain untouched; a fresh render requires freshly produced complete receipts.
+The same checksum/private-copy contract covers the mobile WebM and deletion
+screenshot. The snapshot server copies only manifest-listed image bytes whose
+checksums match their source credits. The credit font is loaded during preflight
+alongside UI font checks, before output creation or encoding.
+New snapshot manifests also pin the fully closed sanitized database bytes; the
+server verifies and copies those exact bytes before initializing its private app.
+Mobile erasure and recording receipts must share the same nonempty capture instance.

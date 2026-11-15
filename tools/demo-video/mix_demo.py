@@ -8,10 +8,22 @@ import subprocess
 import sys
 import tempfile
 import wave
+from copy import copy
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from demo_integrity import checked_files  # noqa: E402
 from demo_paths import new_output  # noqa: E402
+
+
+def snapshot_render(render: Path, private: Path) -> dict:
+    try:
+        manifest = json.loads((render / "sha256.json").read_text())
+    except (OSError, ValueError) as error:
+        raise ValueError("Render checksum manifest is missing or malformed") from error
+    names = ("picture.mp4", "narration-native-24k.wav")
+    checked_files(render, names, manifest, private)
+    return {name: manifest[name] for name in names}
 
 
 def check_music(path: Path) -> bytes:
@@ -39,10 +51,17 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="weedz-checked-music-") as temporary:
         checked = Path(temporary) / args.music.name
         checked.write_bytes(encoded)
-        encode_mix(args, output, checked, hashlib.sha256(encoded).hexdigest())
+        render = Path(temporary) / "render"
+        render.mkdir()
+        hashes = snapshot_render(args.render, render)
+        private_args = copy(args)
+        private_args.render = render
+        encode_mix(private_args, output, checked, hashlib.sha256(encoded).hexdigest(), hashes)
 
 
-def encode_mix(args: argparse.Namespace, output: Path, music: Path, music_sha256: str) -> None:
+def encode_mix(
+    args: argparse.Namespace, output: Path, music: Path, music_sha256: str, render_hashes: dict
+) -> None:
     music_gain = 0.055
     filters = (
         "[1:a]aresample=48000,pan=stereo|c0=c0|c1=c0[voice];"
@@ -92,6 +111,7 @@ def encode_mix(args: argparse.Namespace, output: Path, music: Path, music_sha256
             portable_command[index + 1] = Path(command[index + 1]).name
     portable_command[-1] = output.name
     metadata = {
+        "render_input_sha256": render_hashes,
         "music": args.music.name,
         "music_sha256": music_sha256,
         "music_assembly_provenance": args.music.with_suffix(".assembly.json").name,

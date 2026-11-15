@@ -18,10 +18,27 @@ MUTED = "#b7cfc1"
 ACCENT = "#c5e79a"
 
 
+_FONT_PATHS = (
+    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+)
+
+
+def configure_fonts(regular: Path | None = None, bold: Path | None = None) -> None:
+    global _FONT_PATHS
+    paths = (regular or _FONT_PATHS[0], bold or _FONT_PATHS[1])
+    try:
+        for path in paths:
+            ImageFont.truetype(str(path.resolve()), 24)
+    except OSError as error:
+        raise ValueError("Cannot load UI fonts; supply --ui-font and --ui-bold-font") from error
+    _FONT_PATHS = tuple(path.resolve() for path in paths)
+    font.cache_clear()
+
+
 @lru_cache(maxsize=24)
 def font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    suffix = "-Bold" if bold else ""
-    return ImageFont.truetype(f"/usr/share/fonts/truetype/dejavu/DejaVuSans{suffix}.ttf", size)
+    return ImageFont.truetype(str(_FONT_PATHS[int(bold)]), size)
 
 
 def text(
@@ -39,9 +56,16 @@ def text(
 
 class Frames:
     def __init__(
-        self, captures: Path, ffmpeg: Path, fps: int, credit_font: Path, mobile_captures: Path
+        self,
+        captures: Path,
+        ffmpeg: Path,
+        fps: int,
+        credit_font: Path,
+        mobile_captures: Path,
+        web_captures: Path | None = None,
     ) -> None:
         self.captures = captures
+        self.web_captures = web_captures or captures / "web-final"
         self.provenance = json.loads(
             (captures / "review-snapshot/capture-provenance.json").read_text()
         )
@@ -62,7 +86,12 @@ class Frames:
                     self.captures, relative.removeprefix("review-snapshot/"), self.provenance
                 )
             else:
-                with Image.open(self.captures / relative) as original:
+                path = (
+                    self.web_captures / relative.removeprefix("web-final/")
+                    if relative.startswith("web-final/")
+                    else self.captures / relative
+                )
+                with Image.open(path) as original:
                     self.images[relative] = original.convert("RGB")
         return self.images[relative]
 
@@ -113,7 +142,7 @@ class Frames:
                         "-v",
                         "error",
                         "-i",
-                        str(self.captures / "web-final/web-review-interactions.webm"),
+                        str(self.web_captures / "web-review-interactions.webm"),
                         "-t",
                         "13",
                         "-vf",
@@ -245,7 +274,7 @@ class Frames:
         text(
             canvas,
             (90, 360),
-            "Public photography · iNaturalist · CC BY 4.0 / CC0",
+            "Non-commercial demo · photo and observation terms in companion credits",
             29,
             MUTED,
             width=100,

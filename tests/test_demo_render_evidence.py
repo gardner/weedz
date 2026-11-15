@@ -81,12 +81,24 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
         "web-candidate-window.png",
     ]:
         (web / name).touch()
-    (web / "web-capture.json").write_text(json.dumps({"browserErrors": [], "captureSuccess": True}))
+    (web / "web-capture.json").write_text(
+        json.dumps(
+            {
+                "browserErrors": [],
+                "captureSuccess": True,
+                "media_sha256": {
+                    name: hashlib.sha256((web / name).read_bytes()).hexdigest()
+                    for name in renderer.WEB_MEDIA
+                },
+            }
+        )
+    )
     credit_font = tmp_path / "font.otf"
-    credit_font.touch()
+    credit_font.write_bytes(Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf").read_bytes())
     (mobile / "erasure-verification.json").write_text(
         json.dumps(
             {
+                "capture_instance": "test-instance",
                 "active_report_bodies_after_real_app_deletion": 0,
                 "remaining_crop_files": 0,
             }
@@ -97,9 +109,14 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
             {
                 "captureSuccess": True,
                 "browser_errors": [],
+                "capture_instance": "test-instance",
                 "report_created_via_real_api": 201,
                 "stable_deletion_status": 200,
                 "upload_after_deletion": 401,
+                "media_sha256": {
+                    name: hashlib.sha256((mobile / name).read_bytes()).hexdigest()
+                    for name in renderer.MOBILE_MEDIA
+                },
             }
         )
     )
@@ -170,3 +187,94 @@ def test_mobile_capture_requires_closed_error_free_real_api_evidence(tmp_path, c
 def test_missing_mobile_capture_receipt_is_not_renderable(tmp_path):
     with pytest.raises(ValueError, match="Mobile browser capture"):
         renderer.validate_mobile_capture(tmp_path)
+
+
+def test_replaced_capture_media_cannot_inherit_success(tmp_path):
+    hashes = {}
+    for name in renderer.WEB_MEDIA:
+        (tmp_path / name).write_bytes(b"original")
+        hashes[name] = hashlib.sha256(b"original").hexdigest()
+    (tmp_path / "web-capture.json").write_text(
+        json.dumps({"captureSuccess": True, "browserErrors": [], "media_sha256": hashes})
+    )
+    renderer.validate_browser_capture(tmp_path)
+    (tmp_path / renderer.WEB_MEDIA[0]).write_bytes(b"replacement valid video")
+    with pytest.raises(ValueError, match="checksum"):
+        renderer.validate_browser_capture(tmp_path)
+
+
+def test_frames_read_private_verified_capture_instead_of_replaced_original(
+    produced_captures, tmp_path
+):
+    web = produced_captures / "web-final"
+    web.mkdir()
+    checked = tmp_path / "verified-web"
+    checked.mkdir()
+    name = "web-reference-comparison.png"
+    Image.new("RGB", (3, 3), "green").save(checked / name)
+    Image.new("RGB", (3, 3), "red").save(web / name)
+    frames = frames_module.Frames(
+        produced_captures, Path("unused"), 25, Path("unused"), Path("unused"), checked
+    )
+    assert frames.image("web-final/" + name).getpixel((0, 0)) == (0, 128, 0)
+
+
+def test_snapshot_uses_the_same_validated_receipt_after_receipt_replacement(tmp_path):
+    hashes = {}
+    for name in renderer.WEB_MEDIA:
+        (tmp_path / name).write_bytes(b"original")
+        hashes[name] = hashlib.sha256(b"original").hexdigest()
+    receipt = tmp_path / "web-capture.json"
+    receipt.write_text(
+        json.dumps({"captureSuccess": True, "browserErrors": [], "media_sha256": hashes})
+    )
+    validated = renderer.validate_browser_capture(tmp_path)
+    for name in renderer.WEB_MEDIA:
+        (tmp_path / name).write_bytes(b"unrelated replacement")
+    receipt.write_text(
+        json.dumps(
+            {
+                "captureSuccess": False,
+                "media_sha256": {
+                    name: hashlib.sha256(b"unrelated replacement").hexdigest()
+                    for name in renderer.WEB_MEDIA
+                },
+            }
+        )
+    )
+    private = tmp_path / "private"
+    private.mkdir()
+    with pytest.raises(ValueError, match="checksum"):
+        renderer.checked_files(tmp_path, renderer.WEB_MEDIA, validated["media_sha256"], private)
+
+
+def test_replaced_mobile_media_cannot_inherit_real_deletion_receipt(tmp_path):
+    hashes = {}
+    for name in renderer.MOBILE_MEDIA:
+        (tmp_path / name).write_bytes(b"original app recording")
+        hashes[name] = hashlib.sha256(b"original app recording").hexdigest()
+    (tmp_path / "live-capture.json").write_text(
+        json.dumps(
+            {
+                "captureSuccess": True,
+                "browser_errors": [],
+                "media_sha256": hashes,
+                "capture_instance": "test-instance",
+                "report_created_via_real_api": 201,
+                "stable_deletion_status": 200,
+                "upload_after_deletion": 401,
+            }
+        )
+    )
+    renderer.validate_mobile_capture(tmp_path)
+    (tmp_path / renderer.MOBILE_MEDIA[0]).write_bytes(b"unrelated valid app video")
+    with pytest.raises(ValueError, match="checksum"):
+        renderer.validate_mobile_capture(tmp_path)
+
+
+@pytest.mark.parametrize("erased,recorded", [("old", "new"), (None, None), ("", "")])
+def test_erasure_and_recording_must_belong_to_the_same_real_capture(erased, recorded):
+    with pytest.raises(ValueError, match="capture instance"):
+        renderer.validate_capture_instances(
+            {"capture_instance": erased}, {"capture_instance": recorded}
+        )

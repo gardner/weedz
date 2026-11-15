@@ -24,7 +24,18 @@ def test_serving_snapshot_leaves_published_database_unchanged(tmp_path, monkeypa
     Store(source)
     with closing(sqlite3.connect(source / "discovery.sqlite3")) as db:
         db.execute("PRAGMA journal_mode=DELETE")
-    (source / "capture-provenance.json").write_text("{}")
+    import json
+
+    (source / "capture-provenance.json").write_text(
+        json.dumps(
+            {
+                "photos": [],
+                "database_sha256": hashlib.sha256(
+                    (source / "discovery.sqlite3").read_bytes()
+                ).hexdigest(),
+            }
+        )
+    )
     database = source / "discovery.sqlite3"
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     files = set(source.rglob("*"))
@@ -38,3 +49,131 @@ def test_serving_snapshot_leaves_published_database_unchanged(tmp_path, monkeypa
         assert hashlib.sha256(database.read_bytes()).hexdigest() == before
         assert set(source.rglob("*")) == files
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
+
+
+def test_replaced_snapshot_image_is_rejected_before_serving(tmp_path, monkeypatch):
+    import json
+
+    import pytest
+
+    root = Path(__file__).parents[1]
+    monkeypatch.syspath_prepend(str(root / "scripts"))
+    spec = importlib.util.spec_from_file_location(
+        "snapshot_images", root / "scripts/serve_demo_snapshot.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = tmp_path / "source"
+    (source / "images").mkdir(parents=True)
+    image = source / "images/photo.png"
+    original = b"verified encoded pixels"
+    image.write_bytes(b"different valid image")
+    (source / "capture-provenance.json").write_text(
+        json.dumps(
+            {
+                "photos": [
+                    {"file": "images/photo.png", "sha256": hashlib.sha256(original).hexdigest()}
+                ]
+            }
+        )
+    )
+    target = tmp_path / "target"
+    target.mkdir()
+    with pytest.raises(ValueError, match="checksum"):
+        module.copy_verified_images(source, target)
+
+
+def test_only_manifest_bound_image_bytes_are_copied(tmp_path, monkeypatch):
+    import json
+
+    root = Path(__file__).parents[1]
+    monkeypatch.syspath_prepend(str(root / "scripts"))
+    spec = importlib.util.spec_from_file_location(
+        "verified_images", root / "scripts/serve_demo_snapshot.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = tmp_path / "source"
+    (source / "images").mkdir(parents=True)
+    raw = b"unchanged public encoded photo"
+    (source / "images/kept.png").write_bytes(raw)
+    (source / "images/unlisted.png").write_bytes(b"not part of the capture")
+    (source / "capture-provenance.json").write_text(
+        json.dumps(
+            {"photos": [{"file": "images/kept.png", "sha256": hashlib.sha256(raw).hexdigest()}]}
+        )
+    )
+    target = tmp_path / "target"
+    target.mkdir()
+    module.copy_verified_images(source, target)
+    assert (target / "images/kept.png").read_bytes() == raw
+    assert not (target / "images/unlisted.png").exists()
+
+
+def test_matching_external_image_symlink_is_not_served(tmp_path, monkeypatch):
+    import json
+
+    import pytest
+
+    root = Path(__file__).parents[1]
+    monkeypatch.syspath_prepend(str(root / "scripts"))
+    spec = importlib.util.spec_from_file_location(
+        "confined_images", root / "scripts/serve_demo_snapshot.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = tmp_path / "source"
+    (source / "images").mkdir(parents=True)
+    external = tmp_path / "private-photo.png"
+    external.write_bytes(b"external bytes stay unchanged")
+    (source / "images/photo.png").symlink_to(external)
+    (source / "capture-provenance.json").write_text(
+        json.dumps(
+            {
+                "photos": [
+                    {
+                        "file": "images/photo.png",
+                        "sha256": hashlib.sha256(external.read_bytes()).hexdigest(),
+                    }
+                ]
+            }
+        )
+    )
+    target = tmp_path / "target"
+    target.mkdir()
+    with pytest.raises(ValueError, match="escapes"):
+        module.copy_verified_images(source, target)
+    assert external.read_bytes() == b"external bytes stay unchanged"
+    assert not (target / "images").exists()
+
+
+def test_changed_snapshot_database_is_rejected_before_serving(tmp_path, monkeypatch):
+    import json
+
+    import pytest
+
+    root = Path(__file__).parents[1]
+    monkeypatch.syspath_prepend(str(root / "scripts"))
+    spec = importlib.util.spec_from_file_location(
+        "database_pin", root / "scripts/serve_demo_snapshot.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source = tmp_path / "published"
+    Store(source)
+    database = source / "discovery.sqlite3"
+    with closing(sqlite3.connect(database)) as db:
+        db.execute("PRAGMA journal_mode=DELETE")
+    (source / "capture-provenance.json").write_text(
+        json.dumps(
+            {"photos": [], "database_sha256": hashlib.sha256(database.read_bytes()).hexdigest()}
+        )
+    )
+    with closing(sqlite3.connect(database)) as db:
+        db.execute("PRAGMA user_version=42")
+    with pytest.raises(ValueError, match="checksum"), module.snapshot_app(source):
+        pass

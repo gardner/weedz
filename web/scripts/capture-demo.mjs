@@ -1,6 +1,7 @@
 // Capture the real review app against the external, read-only demo snapshot.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "@playwright/test";
@@ -89,11 +90,25 @@ try {
   await browser.close();
   if (captureSuccess) {
     assert.deepEqual(errors, []);
+    const media_sha256 = {};
+    for (const name of [
+      "web-review-interactions.webm",
+      "web-reference-comparison.png",
+      "web-candidate-window.png",
+    ]) {
+      media_sha256[name] = createHash("sha256")
+        .update(await readFile(path.join(output, name)))
+        .digest("hex");
+    }
     const filename = path.join(output, "web-capture.json");
     const evidence = JSON.parse(await readFile(filename, "utf8"));
     await writeFile(
       filename,
-      JSON.stringify({ ...evidence, browserErrors: errors, captureSuccess: true }, null, 2),
+      JSON.stringify(
+        { ...evidence, browserErrors: errors, media_sha256, captureSuccess: true },
+        null,
+        2,
+      ),
     );
   }
 }

@@ -1,11 +1,11 @@
 """Serve only an external, sanitized capture snapshot; every write route is blocked."""
 
 import argparse
-import shutil
-import sqlite3
+import hashlib
+import json
 import tempfile
 from collections.abc import Iterator
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 from pathlib import Path
 
 import uvicorn
@@ -17,23 +17,51 @@ from starlette.middleware.base import RequestResponseEndpoint
 from weedz.discovery.api import create_app
 
 
+def _photo_rows(source: Path, proof: dict | None) -> list[dict]:
+    if proof is None:
+        proof = json.loads((source / "capture-provenance.json").read_text())
+    if not isinstance(proof, dict) or not isinstance(proof.get("photos"), list):
+        raise ValueError("Snapshot photo manifest is missing or malformed")
+    return proof["photos"]
+
+
+def copy_verified_images(source: Path, target: Path, proof: dict | None = None) -> None:
+    copied: set[str] = set()
+    for record in _photo_rows(source, proof):
+        name = record.get("file") if isinstance(record, dict) else None
+        if not isinstance(name, str):
+            raise ValueError("Snapshot photo path is missing")
+        relative = Path(name)
+        if len(relative.parts) != 2 or relative.parts[0] != "images" or ".." in relative.parts:
+            raise ValueError("Snapshot photo path must remain inside images")
+        key = relative.as_posix()
+        if key in copied:
+            raise ValueError("Snapshot photo manifest contains duplicate files")
+        copied.add(key)
+        image = (source / relative).resolve()
+        if not image.is_relative_to(source.resolve() / "images"):
+            raise ValueError("Snapshot photo path escapes images")
+        raw = image.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != record.get("sha256"):
+            raise ValueError("Snapshot image checksum differs from its source credits")
+        (target / relative).parent.mkdir(exist_ok=True)
+        (target / relative).write_bytes(raw)
+
+
 @contextmanager
 def snapshot_app(source: Path, instance: str = "") -> Iterator[FastAPI]:
     if any((source / f"discovery.sqlite3{suffix}").exists() for suffix in ("-wal", "-shm")):
         raise ValueError("Serve only a closed standalone snapshot without WAL sidecars")
     with tempfile.TemporaryDirectory(prefix="weedz-snapshot-server-") as temporary:
         copy = Path(temporary)
-        with (
-            closing(
-                sqlite3.connect(
-                    (source / "discovery.sqlite3").as_uri() + "?mode=ro&immutable=1", uri=True
-                )
-            ) as original,
-            closing(sqlite3.connect(copy / "discovery.sqlite3")) as target,
+        proof = json.loads((source / "capture-provenance.json").read_text())
+        raw = (source / "discovery.sqlite3").read_bytes()
+        if not isinstance(proof, dict) or hashlib.sha256(raw).hexdigest() != proof.get(
+            "database_sha256"
         ):
-            original.backup(target)
-        if (source / "images").exists():
-            shutil.copytree(source / "images", copy / "images")
+            raise ValueError("Snapshot database checksum differs from its producer receipt")
+        (copy / "discovery.sqlite3").write_bytes(raw)
+        copy_verified_images(source, copy, proof)
         app = create_app(copy)
 
         @app.middleware("http")

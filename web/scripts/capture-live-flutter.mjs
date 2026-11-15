@@ -1,6 +1,7 @@
 // Actual compiled Flutter application, real HTTPS intake and real browser secure storage.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "@playwright/test";
@@ -145,7 +146,13 @@ encoder.stdin.end();
 await finished;
 assert.deepEqual(errors, [], "Actual app capture reported browser errors");
 assert(evidence);
+const media_sha256 = {};
+for (const name of ["live-flutter-settings.webm", "live-settings-deleted.png"]) {
+  media_sha256[name] = createHash("sha256")
+    .update(await readFile(path.join(output, name)))
+    .digest("hex");
+}
 await writeFile(
   path.join(output, "live-capture.json"),
-  JSON.stringify({ ...evidence, captureSuccess: true }, null, 2),
+  JSON.stringify({ ...evidence, media_sha256, captureSuccess: true }, null, 2),
 );

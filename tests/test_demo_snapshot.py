@@ -31,6 +31,8 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
     record = {
         "photo_id": 1,
         "photo_license": "cc-by",
+        "observation_license": "cc-by-nc",
+        "observer": "Public observer",
         "image_path": "images/1.jpg",
         "sha256": hashlib.sha256((source / "images/1.jpg").read_bytes()).hexdigest(),
         "attribution": "Example public creator, CC BY",
@@ -58,6 +60,10 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
         db.execute("INSERT INTO reviews VALUES('private live decision')")
     before = hashlib.sha256(database.read_bytes()).hexdigest()
     result = script.snapshot(source, target)
+    assert (
+        result["database_sha256"]
+        == hashlib.sha256((target / "discovery.sqlite3").read_bytes()).hexdigest()
+    )
     assert hashlib.sha256(database.read_bytes()).hexdigest() == before
     with sqlite3.connect(target / "discovery.sqlite3") as copied:
         row = copied.execute(
@@ -72,6 +78,12 @@ def test_snapshot_does_not_write_live_source_and_erases_coordinates_from_copy(
     assert "Private note" not in (target / "discovery.sqlite3").read_bytes().decode(errors="ignore")
     assert not list(target.glob("discovery.sqlite3-*"))
     assert result["photos"][0]["file"] == "images/1.png"
+    rights = result["photos"][0]["rights"]
+    assert rights["photo_licence"] == "cc-by"
+    assert rights["observation_licence"] == "cc-by-nc"
+    assert rights["observer"] == "Public observer"
+    assert rights["non_commercial"] is True
+    assert "non-commercial" in rights["observation_terms"]
     with Image.open(target / "images/1.png") as image:
         assert not image.getexif()
 
@@ -98,6 +110,8 @@ def incomplete_source(tmp_path: Path) -> Path:
     record = {
         "photo_id": 1,
         "photo_license": "cc-by",
+        "observation_license": "cc-by-nc",
+        "observer": "Public observer",
         "image_path": "images/missing.png",
         "sha256": hashlib.sha256(expected_image.getvalue()).hexdigest(),
         "attribution": "Public creator, CC BY",
@@ -188,3 +202,16 @@ def test_replaced_public_cache_cannot_inherit_original_scores_or_attribution(
         script.snapshot(incomplete_source, destination)
     assert not destination.exists()
     assert source_database.read_bytes() == before
+
+
+def test_unadmitted_observation_terms_are_not_silently_relicensed(incomplete_source, tmp_path):
+    with sqlite3.connect(incomplete_source / "discovery.sqlite3") as db:
+        record = json.loads(db.execute("SELECT record FROM photos").fetchone()[0])
+        record["observation_license"] = "all-rights-reserved"
+        db.execute("UPDATE photos SET record=?", (json.dumps(record),))
+    before = (incomplete_source / "discovery.sqlite3").read_bytes()
+    output = tmp_path / "unpublished"
+    with pytest.raises(ValueError, match="Not admitted"):
+        script.snapshot(incomplete_source, output)
+    assert not output.exists()
+    assert (incomplete_source / "discovery.sqlite3").read_bytes() == before
