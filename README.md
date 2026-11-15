@@ -26,6 +26,9 @@ reliable improvement on incidental weed discovery.
 The [Product Requirements Document](docs/prd.md) defines the intended users,
 discovery workflow, pilot scope, and product success criteria.
 
+The [dataset problem statement](docs/problem-dataset.md) explains the first of
+the project's three problems: no dataset shows where weeds appear in real NZ photos.
+
 See [Datasets, curation, and detection methods](docs/datasets.md) for the source
 shortlist, the implemented pipeline, and proposed processing paths for each
 candidate dataset. The CLI supports the regional pilot and Leafy Spurge crops.
