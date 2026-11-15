@@ -58,6 +58,7 @@ Most of the plumbing exists, but nobody has run it end to end on reviewed data y
 - CC BY-NC photos can't pass through the batch and Label Studio tools;
 - samples don't carry location groups;
 - review history doesn't travel with a release.
+- a release doesn't yet require accepted reviews, so a reviewer box nobody has checked could be frozen into it.
 
 #167 plans a dry run that builds a tiny gold release from fixture samples, so the remaining breaks show up together rather than one at a time.
 
