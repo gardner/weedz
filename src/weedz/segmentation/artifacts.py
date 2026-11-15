@@ -16,6 +16,13 @@ def digest(value: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
 
 
+def evidence_priority(result: dict) -> int:
+    """Completed views dominate retained proposals, which dominate proposal failure."""
+    if result.get("view_status") in {"ok", "empty"}:
+        return 2
+    return int(result.get("proposal_status") in {"ok", "empty"})
+
+
 def sync_directory(path: Path) -> None:
     descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
     try:
@@ -91,7 +98,10 @@ class StageArtifacts:
 
     def _write(self, stage: Stage, photo_id: str, inputs: dict[str, Any], result: dict) -> dict:
         previous = self.read(stage, photo_id, inputs)
-        if previous and previous.get("status") in {"ok", "empty"}:
+        if previous and (
+            previous.get("status") in {"ok", "empty"}
+            or (stage == "views" and evidence_priority(previous) > evidence_priority(result))
+        ):
             return previous
         payload = {"stage": stage, "photo_id": photo_id, "inputs": inputs, "result": result}
         encoded = json.dumps({"schema": 1, **payload, "sha256": digest(payload)}, allow_nan=False)
