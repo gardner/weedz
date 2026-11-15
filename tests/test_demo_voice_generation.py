@@ -17,6 +17,10 @@ def test_breeze_generation_records_the_exact_native_wav_hash(tmp_path, monkeypat
     output = tmp_path / "voice.wav"
     passage = tmp_path / "passage.txt"
     passage.write_text("Hello")
+    reference = tmp_path / "reference.wav"
+    reference.write_bytes(b"native-reference-bytes")
+    reference_text = tmp_path / "reference.txt"
+    reference_text.write_text("Reference words")
     monkeypatch.setattr(
         sys,
         "argv",
@@ -28,6 +32,10 @@ def test_breeze_generation_records_the_exact_native_wav_hash(tmp_path, monkeypat
             str(tmp_path / "model"),
             "--text-file",
             str(passage),
+            "--reference-audio",
+            str(reference),
+            "--reference-text-file",
+            str(reference_text),
             "--output",
             str(output),
         ],
@@ -49,3 +57,7 @@ def test_breeze_generation_records_the_exact_native_wav_hash(tmp_path, monkeypat
     assert proof["wav_sha256"] == hashlib.sha256(output.read_bytes()).hexdigest()
     assert proof["text"] == "Hello"
     assert proof["model"] == "BreezeBlue/Breeze-TTS-2"
+
+    assert "checkpoint_path" not in proof
+    assert proof["reference_audio"] == reference.name
+    assert proof["reference_audio_sha256"] == hashlib.sha256(reference.read_bytes()).hexdigest()
