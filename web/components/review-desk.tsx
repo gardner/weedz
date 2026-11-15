@@ -107,7 +107,7 @@ export default function ReviewDesk({
           initializedRun.current = selected;
           setCohort(
             VIEWS.find(([view]) => result.photos.some((photo) => photo.cohort === view))?.[0] ??
-              "incidental",
+              defaultView(selected),
           );
         }
         setEffortSummary(result.review_effort);
