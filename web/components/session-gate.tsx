@@ -1,33 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReviewDesk from "./review-desk";
 import SignIn from "./sign-in";
 
-/** Who is reviewing: `signedInAs` when the API requires tokens; null until signed in. */
+/** Who is reviewing; worker availability can change without changing this identity. */
 type Session = { signedInAs?: string; canStartRuns?: boolean } | null;
 
-/**
- * Show the review desk to whoever the API accepts. Only a 401 asks for sign-in; any other
- * answer opens the desk, which reports its own errors (issue #31).
- */
 export default function SessionGate() {
   const [session, setSession] = useState<Session>();
+  const version = useRef(0);
+  const refreshing = useRef(true);
   useEffect(() => {
-    fetch("/api/session", { cache: "no-store" })
-      .then(async (response): Promise<Session> => {
-        if (response.status === 401) return null;
+    let mounted = true;
+    let pending = false;
+    async function refresh() {
+      if (!refreshing.current || pending) return;
+      pending = true;
+      const requested = ++version.current;
+      const current = () => mounted && refreshing.current && requested === version.current;
+      const unavailable = () => {
+        if (current())
+          setSession((previous) =>
+            previous === null ? null : { ...previous, canStartRuns: false },
+          );
+      };
+      try {
+        const response = await fetch("/api/session", { cache: "no-store" });
+        if (!current()) return;
+        if (response.status === 401) {
+          refreshing.current = false;
+          setSession(null);
+          return;
+        }
+        if (!response.ok) return unavailable();
         const body = await response.json().catch(() => ({}));
-        const signedIn = body.mode === "tokens" && typeof body.reviewer === "string";
-        return signedIn
-          ? { signedInAs: body.reviewer, canStartRuns: body.can_start_runs === true }
-          : { canStartRuns: body.can_start_runs === true };
-      })
-      .catch(() => ({ canStartRuns: false }))
-      .then(setSession);
+        if (!current()) return;
+        if (body?.mode === "tokens" && typeof body.reviewer === "string") {
+          setSession({ signedInAs: body.reviewer, canStartRuns: body.can_start_runs === true });
+        } else if (body?.mode === "local") {
+          setSession({ canStartRuns: body.can_start_runs === true });
+        } else unavailable();
+      } catch {
+        unavailable();
+      } finally {
+        pending = false;
+      }
+    }
+    void refresh();
+    const timer = setInterval(() => void refresh(), 5000);
+    return () => {
+      mounted = false;
+      version.current++;
+      clearInterval(timer);
+    };
   }, []);
 
   async function signOut() {
+    refreshing.current = false;
+    version.current++;
     await fetch("/api/session", { method: "DELETE" }).catch(() => undefined);
     setSession(null);
   }
@@ -36,7 +67,11 @@ export default function SessionGate() {
   if (session === null) {
     return (
       <SignIn
-        onSignedIn={(reviewer, canStartRuns) => setSession({ signedInAs: reviewer, canStartRuns })}
+        onSignedIn={(reviewer, canStartRuns) => {
+          version.current++;
+          refreshing.current = true;
+          setSession({ signedInAs: reviewer, canStartRuns });
+        }}
       />
     );
   }

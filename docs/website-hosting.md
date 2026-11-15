@@ -64,12 +64,15 @@ otherwise the newest completed run is selected. User-selected runs stay selected
 refresh. Rebuild to change the preference. Runtime code must not depend on a removable development worktree or an
 expiring tool session. User lingering was already enabled on beast.
 
-The three templates in `deploy/systemd/` define only these new user units:
+The four templates in `deploy/systemd/` define these owned user units. After the
+private data, model runtime/wheel and `worker.env` are prepared, install all four
+verified templates and enable them explicitly:
 
 ```sh
-systemctl --user status weedz-site-api weedz-site-web weedz-site-tunnel
-systemctl --user restart weedz-site-api weedz-site-web
-journalctl --user -u weedz-site-api -u weedz-site-web -u weedz-site-tunnel
+systemctl --user daemon-reload
+systemctl --user enable --now weedz-site-api weedz-site-web weedz-site-worker weedz-site-tunnel
+systemctl --user status weedz-site-api weedz-site-web weedz-site-worker weedz-site-tunnel
+journalctl --user -u weedz-site-api -u weedz-site-web -u weedz-site-worker -u weedz-site-tunnel
 ```
 
 Do not restart or overwrite unrelated user services. Logs must never include invite
@@ -104,12 +107,35 @@ that store before giving anyone its URL. Keep data directories owner-only.
 ## Build, update and rollback
 
 Keep a pinned release checkout/archive, run `uv sync --locked`, then in `web/` run
-`pnpm install --frozen-lockfile`, `pnpm check`, and `pnpm build` using Node 26. Copy the
-three service templates into the user's systemd directory only after verifying they
-are this installation's units. Switch `site/current` to the new release, reload user
-systemd and restart the API/web units. Keep the previous release for rollback; switch
-the symlink back and restart those two units. The data directory and tunnel credential
-stay outside releases and must not be overwritten during an update.
+`pnpm install --frozen-lockfile`, `pnpm check`, and `pnpm build` using Node 26.
+Stop the owned worker before replacing its installed wheel or selecting another release:
+
+```sh
+systemctl --user stop weedz-site-worker
+```
+
+Build the new release's wheel with `uv build --wheel` and install that exact wheel into
+the prepared SAM runtime with `uv pip install --python RUNTIME/bin/python --no-deps WHEEL`.
+Copy all four verified service templates into the user's systemd directory. Switch
+`site/current` to the new release, then apply the owned services explicitly:
+
+```sh
+systemctl --user daemon-reload
+systemctl --user enable --now weedz-site-api weedz-site-web weedz-site-worker weedz-site-tunnel
+systemctl --user restart weedz-site-api weedz-site-web
+```
+
+`WantedBy` alone does not start a new worker on an existing installation. The shared
+tunnel remains running during application/worker restarts, so Label Studio is not
+interrupted. Do not restart it merely because the application release changed.
+
+Keep a previous compatible release and wheel for rollback. Use the same stop-worker,
+matching-wheel installation, symlink switch, reload and start sequence. A release
+predating the hosted worker cannot execute the new versioned activities: leave
+processing stopped and set `WEEDZ_RUN_CREATION=disabled` until a compatible worker
+is restored. Do not roll back the shared tunnel configuration with application code.
+The data, Temporal history and tunnel credentials stay outside releases and must not
+be overwritten during an update.
 
 Before declaring an update healthy, verify anonymous evidence returns 401, valid HTTPS sign-in,
 Secure/HttpOnly/Strict cookie, real PNG bytes/MIME, private no-store headers, actual
