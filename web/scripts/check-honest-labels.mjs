@@ -112,6 +112,20 @@ try {
     await page.locator(".image-stage svg").getAttribute("aria-label"),
     /Gorse|Ulex/,
   );
+  photos[0].scores.segmentation.status = "failed";
+  photos[0].scores.segmentation.proposal_status = "ok";
+  photos[0].scores.segmentation.view_status = "failed";
+  photos[0].scores.segmentation.regions[0].views = {};
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator(".photo-row").filter({ hasText: "Black-fronted Tern" }).click();
+  await page
+    .getByRole("status")
+    .filter({ hasText: "Region classification failed" })
+    .waitFor({ timeout: 1500 });
+  assert(
+    await page.getByLabel("Mask overlay", { exact: true }).isVisible(),
+    "Real SAM masks remain selectable after classification failure",
+  );
   console.log(
     "Original subject titles, negative/positive hints, explicit target review and blind/device boundaries verified.",
   );

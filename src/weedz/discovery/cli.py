@@ -53,12 +53,7 @@ async def worker(root: Path, address: str, stack: AsyncExitStack) -> None:
             await Client.connect(address),
             task_queue=TASK_QUEUE,
             workflows=[DiscoveryWorkflow],
-            activities=[
-                activities.collect_photos,
-                activities.screen_photos,
-                activities.export_run,
-                activities.fail_run,
-            ],
+            activities=activities.registered_activities(),
             activity_executor=executor,
             max_concurrent_activities=1,
         )
@@ -153,6 +148,7 @@ async def discover(args: argparse.Namespace) -> None:
         sampling=args.sampling,
         lookalikes_per_taxon=args.lookalikes,
         model=args.model,
+        segmentation=getattr(args, "segmentation", "off"),
     )
     async with httpx.AsyncClient(timeout=30, headers=api_headers()) as client:
         response = await client.post(f"{args.api_url}/runs", json=spec.model_dump(mode="json"))
@@ -353,6 +349,12 @@ def parse(argv: list[str]) -> argparse.Namespace:
         choices=["bioclip", "bioclip-2"],
         default="bioclip-2",
         help="Pinned screening model (see benchmarks/model-comparison.json)",
+    )
+    run.add_argument(
+        "--segmentation",
+        choices=["off", "sam2.1-tiny-v1"],
+        default="off",
+        help="Optional pinned SAM activities; the connected worker must preflight SAM",
     )
     snapshot = commands.add_parser(
         "references", help="Snapshot DOC weed records from GBIF for distance comparison"
