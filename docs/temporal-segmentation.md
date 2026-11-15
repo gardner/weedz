@@ -161,6 +161,8 @@ using separately versioned plant, flower, yellow-flower, and leaf prompt profile
 Concept scores remain distinct from species softmax scores; neither is a calibrated
 confidence measure. See [SAM3 comparison setup](sam3-image-comparison.md).
 
+## Hosted-stage recovery and CLI opt-in
+
 CLI opt-in uses the same RunSpec field as the API:
 
 ```sh
@@ -183,3 +185,9 @@ by proposal writers, including its database attachment. Recovery that already wo
 consumed instead; immutable successful proposals release the lock before GPU scoring.
 Recovery committed after that fallback boundary requires another view-stage invocation;
 the completed partial outcome does not retroactively claim to have scored it.
+
+PlantCLEF comparisons run with explicit FP32 weights/inputs, TF32 disabled and
+autocast disabled during classification. The math policy and NumPy version are
+part of new model identities; historical results retain their original declarations.
+SAM3 and classifier GPU worker roles use separate processes in the batch runner,
+so SAM3 import-time CUDA policy changes cannot race classifier inference.
