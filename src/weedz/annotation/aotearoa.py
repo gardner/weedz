@@ -8,6 +8,10 @@ POLICY = "top1 closed-set species including fauna/fungi; uncalibrated; released 
 
 
 def frame_runtime(metadata: dict[str, Any]) -> dict[str, Any]:
+    if metadata.get("pipeline_name") == "WeedScan488":
+        from weedz.annotation.weedscan import runtime
+
+        return runtime(metadata)
     if metadata.get("pipeline_name") != "Aotearoa NZ":
         from weedz.annotation.semantic import classifier_runtime
 

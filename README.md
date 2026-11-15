@@ -16,6 +16,13 @@ incidental discoveries have not yet been established.
 
 The earlier Leafy Spurge point-classification baseline remains available.
 
+Optional [Temporal comparison batches](docs/canonical-temporal-batches.md) run
+real SAM masks followed by separate regional identification and Label Studio
+verification. [WeedScan488](docs/weedscan-comparison.md) provides a pinned CPU
+frame/region comparison alongside PlantCLEF and the NZ Aotearoa frame model.
+These machine suggestions remain unverified; segmentation has not yet shown a
+reliable improvement on incidental weed discovery.
+
 The [Product Requirements Document](docs/prd.md) defines the intended users,
 discovery workflow, pilot scope, and product success criteria.
 

@@ -1,11 +1,17 @@
 """Build a timed, sample-preserving narration master and readable captions."""
 
+import hashlib
+import io
 import json
 import re
+import sys
 import wave
 from difflib import SequenceMatcher
 from pathlib import Path, PureWindowsPath
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from demo_voice import verified_narration  # noqa: E402
 
 
 def load_timeline(script: Path, audio: Path) -> list[dict[str, Any]]:
@@ -15,7 +21,10 @@ def load_timeline(script: Path, audio: Path) -> list[dict[str, Any]]:
         filename = "breeze-intro-v1.wav" if index == 0 else f"scene-{index + 1:02}-raw-v3.wav"
         filename = scene.get("audio_file", filename)
         scene["audio"] = str(audio / filename)
-        with wave.open(scene["audio"]) as source:
+        raw, provenance = verified_narration(Path(scene["audio"]), scene["narration"])
+        scene["audio_sha256"] = provenance["wav_sha256"]
+        scene["narration_provenance"] = provenance
+        with wave.open(io.BytesIO(raw)) as source:
             if (source.getnchannels(), source.getsampwidth(), source.getframerate()) != (
                 1,
                 2,
@@ -47,7 +56,10 @@ def narration_master(scenes: list[dict[str, Any]], output: Path) -> None:
     """Insert silence between utterances; retain every source PCM sample unchanged."""
     master = bytearray(int(scenes[-1]["end"] * 24000) * 2)
     for scene in scenes:
-        with wave.open(scene["audio"]) as source:
+        raw, _ = verified_narration(Path(scene["audio"]), scene["narration"])
+        if hashlib.sha256(raw).hexdigest() != scene["audio_sha256"]:
+            raise ValueError("Breeze provenance changed after timeline validation")
+        with wave.open(io.BytesIO(raw)) as source:
             frames = source.readframes(source.getnframes())
         offset = round(scene["speech_start"] * 24000) * 2
         master[offset : offset + len(frames)] = frames

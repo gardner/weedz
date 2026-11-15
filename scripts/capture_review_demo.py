@@ -52,6 +52,9 @@ def main() -> None:
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     output = new_output(args.output)
+    snapshot = args.snapshot.resolve()
+    if output.is_relative_to(snapshot) or snapshot.is_relative_to(output):
+        raise ValueError("Capture output and source snapshot must be independent directories")
     output.mkdir(parents=True, exist_ok=False)
     api_port, web_port = available_port(), available_port()
     while web_port == api_port:

@@ -40,3 +40,14 @@ Hugging Face Hub below 1. The lockfile records those compatible transitive
 requirements; dependencies were resolved with `uv add` rather than changing the
 main project's newer libraries. PyTorch/CUDA availability was checked on the
 local RTX 5090 before generating the first intro sample.
+
+New generation receipts include `wav_sha256`, binding the exact untouched native WAV
+bytes to the declared model/source revisions and passage. Video rendering checks this
+receipt before accepting an utterance and rechecks the same bytes during PCM assembly.
+The selected file hash is retained in the portable timeline. A same-format replacement
+or different passage cannot inherit another recording's Breeze provenance.
+
+Historical receipts without this hash are not silently upgraded or presented as original
+checksummed generation evidence. Keep historical delivered media unchanged; a future new
+render must use recordings with the documented generation receipt. These checks do not
+normalize, trim, resample, adjust gain or otherwise process the native narration.
