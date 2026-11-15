@@ -58,8 +58,10 @@ select another relative subdirectory. Merely setting the document root returns
 Every task carries `data.photo_credit`, displayed by a plain-text object tag beside
 the photo in both modes: authoritative attribution, separate image/metadata licences,
 public source URL and normalization notice. Credit strings are not HTML and do not
-cause source pages to be fetched. Keep these required public credits visible; only
-the fuller provenance belongs in the private directory. When upgrading an existing
+cause source pages to be fetched. Keep these required public credits visible.
+Explicit recognized licence versions receive canonical licence URIs. Ambiguous
+historical codes keep their names/codes and source URL without an inferred version.
+Only the fuller provenance belongs in the private directory. When upgrading an existing
 project, migrate this data field and the configuration without reimporting tasks or
 changing identities, images, predictions or human annotations.
 

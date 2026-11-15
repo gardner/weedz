@@ -340,3 +340,25 @@ def test_canonical_credit_is_visible_plain_text_without_source_class(canonical_b
     assert '<Creator & friends> "authoritative"' in credit
     assert "CC-BY-4.0" in credit and "https://example.test/source" in credit
     assert "Private source class context" not in json.dumps(task)
+
+
+@pytest.mark.parametrize(
+    "licence, uri",
+    [
+        ("CC-BY-4.0", "https://creativecommons.org/licenses/by/4.0/"),
+        ("cc-by-3.0", "https://creativecommons.org/licenses/by/3.0/"),
+        ("CC0-1.0", "https://creativecommons.org/publicdomain/zero/1.0/"),
+    ],
+)
+def test_explicit_licence_versions_have_canonical_links(licence, uri):
+    from weedz.annotation.credits import photo_credit
+
+    assert uri in photo_credit("Author", licence, licence, "https://example.test/source")
+
+
+def test_ambiguous_historical_licence_codes_do_not_invent_versions():
+    from weedz.annotation.credits import photo_credit
+
+    text = photo_credit("Author", "cc-by", "cc0", "https://example.test/source")
+    assert "creativecommons.org" not in text
+    assert "[cc-by]" in text and "[cc0]" in text
