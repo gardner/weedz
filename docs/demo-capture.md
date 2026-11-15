@@ -42,26 +42,38 @@ children after recording. No Temporal workflow, live review decision or intake
 request is started. Playwright captures actual navigation, selection and search-
 window toggling as 1920×1080 PNGs and a closed WebM; no HTML mock is substituted.
 
-## Flutter approval and settings
+## Actual Flutter settings and deletion
 
-Use a licensed public JPEG whose attribution accompanies the demo. Then run:
+Use an isolated worktree with Flutter's web bootstrap (`flutter create --platforms
+web --project-name weedz .` inside mobile), then build the actual application:
 
 ```sh
 cd mobile
-WEEDZ_CAPTURE_DIR="$HOME/src/weedz-demo-artifacts/captures/flutter" \
-WEEDZ_DEMO_IMAGE="$HOME/src/weedz-demo-artifacts/captures/assets/gorse-reference.jpg" \
-WEEDZ_FLUTTER_SDK="$HOME/.local/opt/flutter" \
-  "$HOME/.local/opt/flutter/bin/flutter" test test/demo/capture_widgets_test.dart
+flutter build web --release --dart-define=WEEDZ_INTAKE_BASE_URL=https://127.0.0.1:8443
+cd ..
+uv run python scripts/capture_live_flutter.py \
+  --output "$HOME/src/weedz-demo-artifacts/captures/live-flutter" \
+  --source-pilot "$HOME/src/weedz/data/pilot" \
+  --public-image "$HOME/src/weedz-demo-artifacts/captures/assets/gorse-reference.jpg" \
+  --ffmpeg /absolute/path/to/full/ffmpeg
 ```
 
-This opt-in widget test is skipped by ordinary tests. It renders the production
-`ApprovalScreen` and `DeviceSettings`, including real theme, layout and Roboto/
-MaterialIcons fonts, into 1080×2160 PNGs. The report is synthetic and contains no
-location or capture time; its illustrative score matches the cited public pilot
-reference. An in-memory test enrollment and no-network deletion transport show
-confirmation and recoverable pending state. Every capture has a visible prototype
-banner. No upload, deletion request or native model inference occurs. These are
-real Flutter widget renders, not proof of a finished native inference pipeline.
+The helper runs the release-compiled app with its actual secure-storage web plugin
+and real HTTPS intake in a private temporary directory. A self-signed loopback
+certificate is accepted only by the local capture browser. A read-only public pilot
+record supplies its original model score/revision and attributed CC BY gorse crop;
+no location or private image is included. The helper submits that report through
+the real API, securely enrolls the actual app, then starts recording only after
+the token form is gone. The app performs DELETE /submitter; receipt retry,
+revoked upload access and actual database/image erasure are verified afterward.
+Temporary credentials, browser state, certificate and intake are destroyed.
+
+The output includes real PNG states, a closed `live-flutter-settings.webm`, and
+verification JSON without credentials. This shows browser app settings/deletion,
+not native model inference or an integrated scan-to-approval flow. No app state,
+transport, screen or successful response is mocked. Keep source photo credit with
+the video; the gorse source is Saryu Mae 前 朝琉, CC BY,
+https://www.inaturalist.org/observations/250240131.
 
 ## Verification
 
