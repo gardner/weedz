@@ -44,3 +44,55 @@ def test_overlong_speech_is_refused_instead_of_cut_or_sped_up(tmp_path: Path) ->
     script.write_text(json.dumps({"scenes": [{"id": "intro", "start": 0, "end": 0.65}]}))
     with pytest.raises(ValueError, match="Speech does not fit"):
         timeline.load_timeline(script, tmp_path)
+
+
+@pytest.mark.parametrize(
+    "identity",
+    [
+        {"scene": 2, "file": "selected.wav"},
+        {"scene": 1, "file": "older-take.wav"},
+    ],
+)
+def test_caption_alignment_refuses_a_different_passage(
+    tmp_path: Path, identity: dict[str, object]
+) -> None:
+    transcript = tmp_path / "transcript.json"
+    transcript.write_text(json.dumps([{**identity, "words": [{"word": "Hello", "start": 0.1}]}]))
+    scenes = [
+        {
+            "id": "scene-01",
+            "audio": str(tmp_path / "selected.wav"),
+            "narration": "Hello",
+            "speech_duration": 1,
+            "speech_start": 0.6,
+        }
+    ]
+    with pytest.raises(ValueError, match="Transcript identity"):
+        timeline.caption_cues(scenes, transcript)
+
+
+def test_caption_identity_accepts_the_selected_filename_from_another_machine(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "transcript.json"
+    transcript.write_text(
+        json.dumps(
+            [
+                {
+                    "scene": 1,
+                    "file": "C:\\recording\\selected.wav",
+                    "words": [{"word": "Hello", "start": 0.1}],
+                }
+            ]
+        )
+    )
+    scenes = [
+        {
+            "id": "scene-01",
+            "audio": str(tmp_path / "selected.wav"),
+            "narration": "Hello",
+            "speech_duration": 1,
+            "speech_start": 0.6,
+        }
+    ]
+    assert timeline.caption_cues(scenes, transcript)[0]["text"] == "Hello"

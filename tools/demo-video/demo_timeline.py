@@ -71,7 +71,10 @@ def caption_cues(scenes: list[dict[str, Any]], transcript: Path) -> list[dict[st
     """Align canonical spelling to measured ASR word times."""
     measured = json.loads(transcript.read_text())
     cues = []
-    for scene, spoken in zip(scenes, measured, strict=True):
+    for index, (scene, spoken) in enumerate(zip(scenes, measured, strict=True), 1):
+        source_file = Path(str(spoken.get("file", "")).replace("\\", "/")).name
+        if spoken.get("scene") != index or source_file != Path(scene["audio"]).name:
+            raise ValueError(f"Transcript identity does not match {scene['id']}")
         words = scene["narration"].replace("—", " — ").split()
         times = word_times(words, spoken, scene["speech_duration"])
         start = 0

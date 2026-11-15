@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from demo_credits import portable_credits
+from demo_evidence import photo_record, verified_photo_bytes
 from demo_frames import Frames, caption, dissolve
 from demo_timeline import caption_cues, load_timeline, narration_master, srt
 
@@ -21,8 +22,7 @@ def validate_captures(args: argparse.Namespace) -> None:
         for name in (
             "review-snapshot/images/460347209.png",
             "review-snapshot/capture-provenance.json",
-            "assets/gorse-reference.jpg",
-            "assets/attribution.json",
+            "review-snapshot/images/447484684.png",
             "web-final/web-review-interactions.webm",
             "web-final/web-reference-comparison.png",
             "web-final/web-candidate-window.png",
@@ -37,6 +37,10 @@ def validate_captures(args: argparse.Namespace) -> None:
         raise ValueError(
             "Required captures are missing; use the documented pilot run: " + ", ".join(missing)
         )
+
+    manifest = json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
+    for relative in ("images/460347209.png", "images/447484684.png"):
+        verified_photo_bytes(args.captures, relative, manifest)
 
 
 def render(args: argparse.Namespace) -> None:
@@ -93,12 +97,8 @@ def render(args: argparse.Namespace) -> None:
             "license": "https://huggingface.co/BreezeBlue/Breeze-TTS-2/blob/main/LICENSE",
         },
         "music": "MiniMax Music3; see music provenance supplied with final mix",
-        "photo_sources": portable_credits(
-            json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
-        ),
-        "flutter_photo": portable_credits(
-            json.loads((args.captures / "assets/attribution.json").read_text())
-        ),
+        "photo_sources": portable_credits(frames.provenance),
+        "flutter_photo": portable_credits(photo_record(frames.provenance, "images/447484684.png")),
         "photo_modifications": "Metadata removed, orientation corrected, resized for composition. "
         "Search-window and report-field graphics explain the pipeline; no photo pan or zoom.",
         "credit_font": "Noto Sans CJK Japanese / SIL Open Font License 1.1",

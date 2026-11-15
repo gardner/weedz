@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import io
 import json
 import math
 import sys
@@ -72,7 +73,12 @@ def assemble(args: argparse.Namespace) -> None:
         provenance = json.loads(source.with_suffix(".json").read_text())
         if provenance.get("model") != "MiniMaxAI/MiniMax-Music3":
             raise ValueError("Only Music3 source passages may enter this music-only assembly")
-        audio, source_rate = sf.read(source, dtype="float32", always_2d=True)
+        encoded = source.read_bytes()
+        digest = hashlib.sha256(encoded).hexdigest()
+        if digest != provenance.get("sha256"):
+            raise ValueError(f"Source WAV SHA-256 does not match generation provenance: {source}")
+        # Decode the exact checked bytes, rather than reopening a replaceable path.
+        audio, source_rate = sf.read(io.BytesIO(encoded), dtype="float32", always_2d=True)
         if rate is not None and rate != source_rate:
             raise ValueError(
                 "Source rates differ; resampling must be an explicit separate operation"
@@ -81,11 +87,11 @@ def assemble(args: argparse.Namespace) -> None:
         pieces.append(audio)
         sources.append(
             {
-                "file": str(source.resolve()),
-                "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                "file": source.name,
+                "sha256": digest,
                 "frames": len(audio),
                 "seconds": len(audio) / rate,
-                "generation_provenance": str(source.with_suffix(".json").resolve()),
+                "generation_provenance": source.with_suffix(".json").name,
             }
         )
     assert rate is not None
@@ -109,7 +115,7 @@ def assemble(args: argparse.Namespace) -> None:
         "narration_modified": False,
         "peak": float(np.max(np.abs(result))),
         "rms": float(np.sqrt(np.mean(result**2))),
-        "output": str(output),
+        "output": output.name,
         "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
     }
     manifest.write_text(json.dumps(record, indent=2) + "\n")

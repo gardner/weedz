@@ -161,7 +161,7 @@ def render_take(
             "rms": float(np.sqrt(np.mean(samples**2))),
             "samples_at_full_scale_fraction": float(np.mean(np.abs(samples) >= 1)),
             "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
-            "output": str(output.resolve()),
+            "output": output.name,
             "subtype": "PCM_16",
             "postprocessing": "none",
             "signal_statistics": "Generated floats before PCM16 quantization; no normalization.",

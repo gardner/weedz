@@ -59,7 +59,7 @@ Mix the original instrumental quietly under the narration:
 ```sh
 uv run python tools/demo-video/mix_demo.py \
   --render /absolute/path/to/artifacts/video/weedz-demo-v1 \
-  --music /absolute/path/to/artifacts/music/music3-conservation-seed112-v1.wav \
+  --music /absolute/path/to/artifacts/music/music3-conservation-180s-v1.wav \
   --ffmpeg /absolute/path/to/ffmpeg \
   --output /absolute/path/to/artifacts/video/weedz-demo-v1/weedz-demo.mp4
 ```
