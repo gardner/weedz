@@ -1,5 +1,8 @@
 "use client";
 
+import { watchlistHint } from "../lib/photo-labels";
+import { names } from "../lib/types";
+
 export type RegionEvidence = {
   id: string;
   box: number[];
@@ -40,10 +43,12 @@ export function SegmentationMask({
 
 export function SegmentationControls({
   evidence,
+  declaredComparison = false,
   selected,
   onSelect,
 }: {
   evidence: SegmentationEvidence;
+  declaredComparison?: boolean;
   selected: number | null;
   onSelect: (index: number | null) => void;
 }) {
@@ -90,7 +95,8 @@ export function SegmentationControls({
           <ul>
             {Object.entries(evidence.regions[selected].views).map(([view, score]) => (
               <li key={view}>
-                {view}: {score.best_species} · relative margin {score.margin.toFixed(3)}
+                {view}: {watchlistHint(score, declaredComparison, names)}; top watchlist comparison:{" "}
+                {score.best_species} · relative margin {score.margin.toFixed(3)}
               </li>
             ))}
           </ul>
