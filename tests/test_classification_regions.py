@@ -121,3 +121,30 @@ def test_explicit_legacy_cache_adoption_still_validates_source_masks(tmp_path, d
             "sam3",
             verified_existing_sha256=hashlib.sha256(out.read_bytes()).hexdigest(),
         )
+
+
+def test_one_prompt_cannot_consume_another_prompts_region_budget(tmp_path):
+    from dataclasses import asdict, replace
+
+    manifest, proposal, row = inputs(tmp_path)
+    masks = np.zeros((2, 32, 32), bool)
+    masks[0, 2:6, 2:6] = True
+    masks[1, 10:14, 10:14] = True
+    config = Sam3Config(prompts=("plant", "flower"), max_regions=2)
+    stage = row["segmentation"]
+    stage["regions"] = concept_regions(
+        Image.new("RGB", (32, 32), "green"),
+        "plant",
+        {
+            "masks": masks,
+            "scores": np.array([0.9, 0.8]),
+            "boxes": np.array([[2, 2, 6, 6], [10, 10, 14, 14]]),
+        },
+        config,
+    )["regions"]
+    stage["provenance"]["config"] = asdict(replace(config, max_regions=1))
+    proposal.write_text(json.dumps(row) + "\n")
+    model = Classifier()
+    with pytest.raises(ValueError, match="per-prompt"):
+        classify_region_batch(manifest, tmp_path, proposal, tmp_path / "out", model, "sam3")
+    assert model.calls == 0
