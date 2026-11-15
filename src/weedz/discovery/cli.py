@@ -21,7 +21,7 @@ from weedz.discovery.access import Access
 from weedz.discovery.activities import Activities, export
 from weedz.discovery.api import create_app
 from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
-from weedz.discovery.device_reports import sync
+from weedz.discovery.device_reports import IntakeMismatch, sync
 from weedz.discovery.occurrences import fetch_snapshot
 from weedz.discovery.outcome_report import to_markdown
 from weedz.discovery.outcomes import outcomes
@@ -189,7 +189,10 @@ def sync_device_run(store: Store, intake_dir: Path | None) -> None:
         raise SystemExit(
             f"{DEVICE_RUN} holds device reports: pass --intake-dir so withdrawals apply first"
         )
-    sync(store, ReportStore(intake_dir))
+    try:
+        sync(store, ReportStore(intake_dir))
+    except IntakeMismatch as error:
+        raise SystemExit(f"Not read: {error}. Check --intake-dir.") from error
 
 
 def package(args: argparse.Namespace) -> None:

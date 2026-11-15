@@ -32,6 +32,7 @@ from weedz import consent
 from weedz.discovery.records import SPECIES
 from weedz.discovery.sharing import withdrawn
 from weedz.discovery.store import Store, now
+from weedz.intake.deletion import Deletions
 from weedz.intake.store import ReportStore, StoredReport
 
 RUN_ID = "device-reports"
@@ -327,12 +328,24 @@ def _create_run(store: Store) -> None:
         )
 
 
-def _withdrawn(reports: ReportStore, record: dict) -> bool:
-    """Whether intake says the person withdrew it. A report merely missing, as from a
-    wrong or empty intake folder, is left alone rather than erased."""
+class IntakeMismatch(Exception):
+    """The intake folder is not the one these reports came from, so their withdrawals
+    cannot be checked. The device run is refused rather than served unchecked."""
+
+
+def _intake_state(reports: ReportStore, record: dict) -> str:
+    """ "withdrawn", "received", or "unknown" when intake has no record of the report.
+    Intake never forgets a report: a withdrawal or deletion leaves a tombstone. Once a
+    device's deletion has begun (its point of no return) its reports count as withdrawn."""
     device = record["device"]
+    if Deletions(reports.folder.parent).started(device["submitter"]):
+        return "withdrawn"
     receipt = reports.receipt(device["submitter"], device["report_id"])
-    return receipt is not None and receipt.status == "withdrawn"
+    return receipt.status if receipt else "unknown"
+
+
+def _withdrawn(reports: ReportStore, record: dict) -> bool:
+    return _intake_state(reports, record) == "withdrawn"
 
 
 def _private(store: Store) -> None:
@@ -347,6 +360,8 @@ def sync(store: Store, reports: ReportStore) -> None:
     """Bring the device run up to date with intake: add new reports, erase withdrawn ones.
     Syncs take turns, across processes too, so one that listed a report before it was
     withdrawn never writes it back after a later sync erased it."""
+    if not reports.path.is_file():
+        raise IntakeMismatch(f"No report intake at {reports.folder.parent}")
     with (store.root / LOCK).open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         _sync(store, reports)
@@ -359,6 +374,15 @@ def _sync(store: Store, reports: ReportStore) -> None:
     with store.connect() as db:
         rows = db.execute("SELECT id, record FROM photos WHERE run_id=?", (RUN_ID,))
         known = {row["id"]: json.loads(row["record"]) for row in rows}
+    # Decided before anything changes: an intake that has never heard of a report is
+    # the wrong intake, and a sync against it would serve withdrawn reports (fail closed).
+    states = {
+        identifier: _intake_state(reports, record)
+        for identifier, record in known.items()
+        if identifier not in active and not withdrawn(record)
+    }
+    if "unknown" in states.values():
+        raise IntakeMismatch(f"{reports.folder.parent} is not the intake these reports came from")
     for identifier, stored in active.items():
         if identifier not in known:
             _add(store, reports, stored)
@@ -369,7 +393,7 @@ def _sync(store: Store, reports: ReportStore) -> None:
         if withdrawn(record):
             _erase_late_text(store, identifier)
             gone += 1
-        elif identifier not in active and _withdrawn(reports, record):
+        elif states.get(identifier) == "withdrawn":
             _withdraw(store, identifier, record)
             gone += 1
     _sweep(store)

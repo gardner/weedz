@@ -15,7 +15,7 @@ from weedz.discovery.activities import export, review_history
 from weedz.discovery.agreed_limits import study_budget
 from weedz.discovery.audit import audit_sample, summarize_audit
 from weedz.discovery.device_reports import RUN_ID as DEVICE_RUN
-from weedz.discovery.device_reports import sync
+from weedz.discovery.device_reports import IntakeMismatch, sync
 from weedz.discovery.effort import summarize_effort
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.judgements import Judgement, unsupported
@@ -98,16 +98,24 @@ class ReviewAPI:
         self.reports = ReportStore(intake_dir) if intake_dir else None
 
     def sync_reports(self) -> None:
-        """Bring device reports up to date, so a withdrawal applies to this request (#58)."""
+        """Bring device reports up to date, so a withdrawal applies to this request (#58).
+        Against the wrong intake, withdrawals cannot be checked, so the run is refused."""
         if self.reports:
-            sync(self.store, self.reports)
+            try:
+                sync(self.store, self.reports)
+            except IntakeMismatch as error:
+                raise HTTPException(503, f"Device reports unavailable: {error}") from error
 
     def served(self) -> list[dict]:
-        """The runs, after syncing device reports. Without intake, withdrawals cannot be
-        checked, so a device run kept from an earlier session is not served at all."""
-        self.sync_reports()
+        """The runs, after syncing device reports. Without a usable intake, withdrawals
+        cannot be checked, so a device run kept from an earlier session is not served."""
+        try:
+            self.sync_reports()
+            usable = self.reports is not None
+        except HTTPException:
+            usable = False
         runs = self.store.runs()
-        return runs if self.reports else [run for run in runs if run["id"] != DEVICE_RUN]
+        return runs if usable else [run for run in runs if run["id"] != DEVICE_RUN]
 
     def run(self, run_id: str) -> dict:
         if run_id == DEVICE_RUN:

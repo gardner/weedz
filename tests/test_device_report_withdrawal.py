@@ -17,6 +17,7 @@ from weedz.discovery.device_reports import RUN_ID
 from weedz.discovery.records import Finding
 from weedz.discovery.store import Store
 from weedz.intake.api import IntakeAPI
+from weedz.intake.deletion import Deletions
 from weedz.intake.limits import Limits
 from weedz.intake.store import ReportStore, StoredReport
 
@@ -26,15 +27,38 @@ def credited(location: dict) -> dict:
     return body | {"consent": body["consent"] | {"credit": "Aroha Unique"}}
 
 
-def test_a_report_missing_from_intake_is_not_erased(tmp_path: Path) -> None:
-    """A wrong or empty intake folder is not a withdrawal."""
+def test_a_wrong_or_empty_intake_folder_is_refused(tmp_path: Path) -> None:
+    """Withdrawals cannot be checked against an intake the reports did not come from, so
+    the device run is refused, failing closed, and nothing is erased."""
+    intake, pilot = tmp_path / "intake", tmp_path / "pilot"
+    report_id = send(intake, with_image(jpeg()))
+    [before] = synced(tmp_path, intake)
+    ReportStore(intake).withdraw(1, report_id)
+    empty = tmp_path / "empty"
+    ReportStore(empty).active()  # an intake store that never received these reports
+    for wrong in (empty, tmp_path / "missing"):
+        with pytest.raises(device_reports.IntakeMismatch):
+            synced(tmp_path, wrong)
+        client = TestClient(create_app(pilot, intake_dir=wrong))
+        assert client.get(f"/runs/{RUN_ID}").status_code == 503
+        assert RUN_ID not in [run["id"] for run in client.get("/runs").json()]
+    assert not (tmp_path / "missing").exists()
+    [kept] = Store(pilot).photos(RUN_ID)
+    assert kept["id"] == before["id"] and kept["latitude"] == -41.27
+    # The right intake applies the withdrawal.
+    [after] = synced(tmp_path, intake)
+    assert after["consent"]["withdrawn_at"]
+
+
+def test_a_submitter_deletion_under_way_counts_as_withdrawal(tmp_path: Path) -> None:
+    """Once a device's deletion has begun (its point of no return), its reports are gone
+    from review even if the deletion was interrupted before marking each one."""
     intake = tmp_path / "intake"
     send(intake, with_image(jpeg()))
-    [before] = synced(tmp_path, intake)
-    [after] = synced(tmp_path, tmp_path / "elsewhere")
-    assert not after["consent"]["withdrawn_at"] and after["latitude"] == -41.27
-    assert (tmp_path / "pilot" / after["image_path"]).is_file()
-    assert synced(tmp_path, intake) == [after] and after["id"] == before["id"]
+    synced(tmp_path, intake)
+    Deletions(intake).begin(1)
+    [photo] = synced(tmp_path, intake)
+    assert photo["consent"]["withdrawn_at"] and photo["latitude"] is None
 
 
 def test_a_withdrawal_leaves_no_trace_in_the_database_files(tmp_path: Path) -> None:

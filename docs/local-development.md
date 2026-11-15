@@ -233,9 +233,10 @@ cohort, so they never change an iNaturalist run's counts.
   identifications and notes on it (which can name the species). Past reviews
   and judgements stay in the append-only store, but every review-API route
   answers 404 for it: it is not shown, exported, packaged or acted on again.
-  The erased bytes are zeroed in the review database and its log. Only a
-  withdrawal recorded by intake erases a report; a report merely missing (for
-  example, from a wrong `--intake-dir`) is left as it was.
+  The erased bytes are zeroed in the review database and its log. A device
+  whose deletion has begun counts as withdrawn. If `--intake-dir` points at
+  an intake that never received these reports (or none at all), the device
+  run is refused rather than served unchecked, and nothing is erased.
 - Once it holds device reports, the review database is owner-only.
 - Without `--intake-dir`, the review app does not serve a device run it
   stored earlier, since withdrawals cannot be checked. The `study` and
