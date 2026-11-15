@@ -135,10 +135,16 @@ def _rows(
 
 
 def _stream_rows(
-    path: Path, rows: Iterator[dict], *, ready: Path | None = None
+    path: Path,
+    rows: Iterator[dict],
+    *,
+    ready: Path | None = None,
+    statuses: tuple[str, ...] = ("ok", "empty", "failed"),
+    maximum_bytes: int | None = None,
 ) -> tuple[str, dict[str, int]]:
     checksum = hashlib.sha256()
-    counts = {status: 0 for status in ("ok", "empty", "failed")}
+    counts = {status: 0 for status in statuses}
+    written = 0
     with tempfile.NamedTemporaryFile(
         dir=path.parent, prefix="proposals-", suffix=".tmp", delete=False
     ) as stream:
@@ -146,6 +152,9 @@ def _stream_rows(
         try:
             for row in rows:
                 raw = (json.dumps(row, allow_nan=False) + "\n").encode()
+                written += len(raw)
+                if maximum_bytes is not None and written > maximum_bytes:
+                    raise ValueError("Closed proposal batch exceeds its output byte budget")
                 stream.write(raw)
                 stream.flush()
                 checksum.update(raw)
@@ -199,6 +208,15 @@ def _publish(
     return summary
 
 
+def _durable_namespace(destination: Path) -> None:
+    durable_mkdir(destination)
+    # Existing directories can be remnants of an interrupted creation/sync attempt.
+    for directory in (destination, *destination.parents):
+        sync_directory(directory)
+        if not os.access(directory.parent, os.W_OK):
+            break
+
+
 def propose_batch(
     manifest: Path,
     media_root: Path,
@@ -229,12 +247,7 @@ def propose_batch(
     if any((parent / ".git").exists() for parent in (destination, *destination.parents)):
         raise ValueError("Batch outputs must remain outside Git")
     samples = _samples(raw, root)
-    durable_mkdir(destination)
-    # Existing directories can be remnants of an interrupted creation/sync attempt.
-    for directory in (destination, *destination.parents):
-        sync_directory(directory)
-        if not os.access(directory.parent, os.W_OK):
-            break
+    _durable_namespace(destination)
     output = destination
     with (output / ".batch.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
