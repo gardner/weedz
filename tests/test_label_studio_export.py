@@ -278,3 +278,17 @@ def test_required_public_photo_credit_is_visible_in_each_mode(public_run, tmp_pa
     assert display.attrib["valueType"] == "text"
     assert display.attrib["selectionEnabled"] == "false"
     assert config.find("HyperText") is None
+
+
+def test_completed_run_unicode_credit_uses_utf8_under_legacy_locale(
+    public_run, tmp_path, monkeypatch
+):
+    from test_annotation_samples import simulate_cp1252_default
+
+    simulate_cp1252_default(monkeypatch)
+    output = tmp_path / "utf8-run"
+    export_label_studio(public_run, "run", output)
+    task = json.loads((output / "tasks.json").read_bytes().decode("utf-8"))[0]
+    assert "Actual creator 前" in task["data"]["photo_credit"]
+    private = json.loads((output / "private/provenance.json").read_bytes().decode("utf-8"))
+    assert private["photos"][0]["photo"]["attribution"] == "Actual creator 前"

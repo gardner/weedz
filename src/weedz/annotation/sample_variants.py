@@ -19,7 +19,7 @@ class Variant:
 def read_variant(path: Path | None, field: str, expected: str | None) -> Variant | None:
     if path is None:
         return None
-    document = json.loads(path.read_text())
+    document = json.loads(path.read_text(encoding="utf-8"))
     if expected is None or document.get(field) != expected:
         raise ValueError(f"Model {field.replace('_sha256', '')} checksum mismatch")
     rows = {row["external_id"]: row for row in document["predictions"]}

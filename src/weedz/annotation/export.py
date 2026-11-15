@@ -184,9 +184,9 @@ def export_label_studio(
                 }
             )
         (output / "tasks.json").write_text(
-            json.dumps(tasks, ensure_ascii=False, allow_nan=False) + "\n"
+            json.dumps(tasks, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8"
         )
-        (output / "label-config.xml").write_text(label_config(mode))
+        (output / "label-config.xml").write_text(label_config(mode), encoding="utf-8")
         document = {
             "nonfinite_result_policy": NONFINITE_POLICY,
             "schema_version": 1,
@@ -203,7 +203,7 @@ def export_label_studio(
             ),
             "photos": provenance,
         }
-        (private / "provenance.json").write_text(result_json(document) + "\n")
+        (private / "provenance.json").write_text(result_json(document) + "\n", encoding="utf-8")
         files = {
             str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(output.rglob("*"))
@@ -216,7 +216,9 @@ def export_label_studio(
             "task_count": len(tasks),
             "files": files,
         }
-        (output / "manifest.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        (output / "manifest.json").write_text(
+            json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+        )
         return receipt
     except BaseException:
         shutil.rmtree(output)

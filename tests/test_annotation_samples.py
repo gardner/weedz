@@ -362,3 +362,52 @@ def test_ambiguous_historical_licence_codes_do_not_invent_versions():
     text = photo_credit("Author", "cc-by", "cc0", "https://example.test/source")
     assert "creativecommons.org" not in text
     assert "[cc-by]" in text and "[cc0]" in text
+
+
+def simulate_cp1252_default(monkeypatch):
+    original_read, original_write = Path.read_text, Path.write_text
+
+    def read(path, *args, **kwargs):
+        kwargs.setdefault("encoding", "cp1252")
+        return original_read(path, *args, **kwargs)
+
+    def write(path, text, *args, **kwargs):
+        kwargs.setdefault("encoding", "cp1252")
+        return original_write(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read)
+    monkeypatch.setattr(Path, "write_text", write)
+
+
+def test_all_variant_inputs_and_outputs_use_utf8_under_a_legacy_locale(
+    classified_batch, tmp_path, monkeypatch
+):
+    manifest, frame, proposals, regional, tiled = classified_batch
+    for path in (frame, regional, tiled):
+        document = json.loads(path.read_text())
+        row = document["predictions"][0]
+        topk = row["regions"][0]["topk"] if path == regional else row["topk"]
+        topk[0]["taxon"] = "Święta species Ł."
+        if path == regional:
+            row["regions"][0]["views"]["masked"] = topk
+        path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+    simulate_cp1252_default(monkeypatch)
+    output = tmp_path / "utf8-variants"
+    export_samples(
+        manifest,
+        output,
+        frame_results=frame,
+        proposals=proposals,
+        regional_results=regional,
+        tiled_results=tiled,
+    )
+    task = json.loads((output / "tasks.json").read_bytes().decode("utf-8"))[0]
+    for index in (0, 2, 3):
+        text = next(
+            r
+            for r in task["predictions"][index]["result"]
+            if r["from_name"] in {"predicted_taxon", "region_taxon"}
+        )
+        assert text["value"]["text"] == ["Święta species Ł."]
+    private = json.loads((output / "private/provenance.json").read_bytes().decode("utf-8"))
+    assert private["samples"][0]["frame_result"]["topk"][0]["taxon"] == "Święta species Ł."
