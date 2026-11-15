@@ -148,6 +148,7 @@ async def discover(args: argparse.Namespace) -> None:
         sampling=args.sampling,
         lookalikes_per_taxon=args.lookalikes,
         model=args.model,
+        screening_backend=getattr(args, "screening_backend", "cpu"),
         segmentation=getattr(args, "segmentation", "off"),
     )
     async with httpx.AsyncClient(timeout=30, headers=api_headers()) as client:
@@ -344,6 +345,7 @@ def parse(argv: list[str]) -> argparse.Namespace:
         default=0,
         help="Lookalike photos per declared lookalike taxon per region (0–3)",
     )
+    run.add_argument("--screening-backend", choices=["cpu", "cuda-fp32-v1"], default="cpu")
     run.add_argument(
         "--model",
         choices=["bioclip", "bioclip-2"],

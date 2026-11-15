@@ -161,7 +161,9 @@ def _configuration(model: dict[str, Any]) -> tuple[str, int]:
 def _applies(meaning: dict[str, Any] | None, model: dict[str, Any]) -> bool:
     """Whether a declaration describes the model, checkpoint and ranking that scored a run."""
     return (
-        meaning is not None
+        model.get("backend_profile") is None
+        and model.get("device", "cpu") == "cpu"
+        and meaning is not None
         and (meaning["model_key"], meaning["ranking_revision"]) == _configuration(model)
         and model.get("revision") == meaning["model_revision"]
         and model.get("calibrated") is False

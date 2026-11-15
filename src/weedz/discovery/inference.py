@@ -15,6 +15,7 @@ from typing import Any, Protocol, cast
 import numpy as np
 from PIL import Image, ImageOps
 
+from weedz.discovery.encoder_backend import cosine_scores
 from weedz.discovery.records import SPECIES
 
 # Bump when image decoding changes, so cached embeddings are not reused.
@@ -279,8 +280,13 @@ class Screener:
         }
 
     @classmethod
-    def load(cls, cache_dir: Path | None = None, model: str = "bioclip") -> "Screener":
+    def load(
+        cls, cache_dir: Path | None = None, model: str = "bioclip", *, backend: str = "cpu"
+    ) -> "Screener":
         # Heavy libraries are deliberately outside deterministic Temporal workflow imports.
+        from weedz.discovery.encoder_backend import CudaEncoder, require_backend
+
+        require_backend(backend)
         import open_clip
         import torch
         from huggingface_hub import snapshot_download
@@ -298,7 +304,12 @@ class Screener:
         weights = file_sha256(path / entry["weights"])
         tokenizer = open_clip.get_tokenizer(entry["tokenizer"])
         preprocessing = {**library_versions(), **open_clip.get_model_preprocess_cfg(encoder)}
-        return cls(
+        execution = {}
+        if backend != "cpu":
+            encoder = CudaEncoder(encoder)
+            execution = encoder.metadata
+            preprocessing = {**preprocessing, "execution": execution}
+        screener = cls(
             cast(Encoder, encoder),
             transform,
             tokenizer,
@@ -307,6 +318,8 @@ class Screener:
             preprocessing=preprocessing,
             model_key=model,
         )
+        screener.metadata.update(execution)
+        return screener
 
     def encode_text(self, prompts: list[str]) -> Any:
         with self.torch.inference_mode():
@@ -369,8 +382,7 @@ class Screener:
         features, cache_state = self.window_features(
             image, boxes, self.cache_path(image_bytes, boxes)
         )
-        with torch.inference_mode():
-            scores = (features.to(text.dtype) @ text.T).cpu().numpy()
+        scores = cosine_scores(self, features, text)
         # The whole frame always counts; featureless tiles keep their scores but cannot win.
         eligible = [
             index == 0 or not featureless(image.crop(box)) for index, box in enumerate(boxes)
