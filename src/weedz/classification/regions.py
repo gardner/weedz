@@ -119,6 +119,27 @@ def _predict(samples, rows, root, model, proposer, version):
     return result
 
 
+def regional_metadata(model: Classifier, provenance: dict, proposer: Proposer) -> dict:
+    """Share the exact crop policy with workflow preflight without loading a model."""
+    metadata = {
+        **model.metadata,
+        "input_policy": (
+            "Actual SAM masked crop, centred neutral square letterbox before timm transform; "
+            "source taxonomy not supplied"
+        ),
+        "proposer": provenance,
+        "proposer_kind": proposer,
+        "primary_view": "masked",
+        "crop_geometry_revision": 2,
+        "masked_view_policy": {
+            "padding": "centred square",
+            "colour": list(inference.LETTERBOX),
+            "transform": "recorded timm preprocessing",
+        },
+    }
+    return json.loads(json.dumps(metadata, allow_nan=False))
+
+
 def classify_region_batch(
     manifest: Path,
     media_root: Path,
@@ -144,23 +165,7 @@ def classify_region_batch(
     provenance = rows[0]["segmentation"]["provenance"]
     if any(digest(row["segmentation"]["provenance"]) != digest(provenance) for row in rows):
         raise ValueError("Proposal model provenance differs within the batch")
-    metadata = {
-        **model.metadata,
-        "input_policy": (
-            "Actual SAM masked crop, centred neutral square letterbox before timm transform; "
-            "source taxonomy not supplied"
-        ),
-        "proposer": provenance,
-        "proposer_kind": proposer,
-        "primary_view": "masked",
-        "crop_geometry_revision": 2,
-        "masked_view_policy": {
-            "padding": "centred square",
-            "colour": list(inference.LETTERBOX),
-            "transform": "recorded timm preprocessing",
-        },
-    }
-    metadata = json.loads(json.dumps(metadata, allow_nan=False))
+    metadata = regional_metadata(model, provenance, proposer)
     version = f"{proposer.upper()} + PlantCLEF masked · {digest(metadata)[:12]}"
     header = {
         "schema": 1,

@@ -57,6 +57,13 @@ def _metadata(model: Classifier, profile: Profile) -> dict:
     }
 
 
+def classifier_metadata(model: Classifier, profile: Profile) -> dict:
+    """Canonical pipeline identity for worker preflight and the actual batch runner."""
+    if profile not in {"frame", "tiles"}:
+        raise ValueError("Unknown classification profile")
+    return json.loads(json.dumps(_metadata(model, profile), allow_nan=False))
+
+
 def _source(sample: Sample, root: Path) -> Path:
     require_task(sample, "inference")
     consent = sample.rights.consent
@@ -258,7 +265,7 @@ def classify_batch(
     # Verify bytes even when a result already exists: a cached score cannot hide changed media.
     for sample in samples:
         _snapshot(sample, media_root)
-    metadata = json.loads(json.dumps(_metadata(model, profile), allow_nan=False))
+    metadata = classifier_metadata(model, profile)
     stamp = hashlib.sha256(
         json.dumps(metadata, sort_keys=True, allow_nan=False).encode()
     ).hexdigest()
