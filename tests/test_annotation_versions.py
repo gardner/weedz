@@ -1,6 +1,7 @@
 """A logical pipeline version ignores corpus notes, never weights or inference settings."""
 
 from copy import deepcopy
+from typing import Any
 
 import pytest
 
@@ -117,3 +118,24 @@ def test_historical_missing_runtime_keeps_its_existing_semantic_hash():
         "pillow": None,
         "torchvision": None,
     }
+
+
+def test_masked_crop_padding_and_geometry_revision_bind_shared_identity():
+    classifier, proposer = metadata()
+    legacy = {"classifier": classifier, "proposer": proposer}
+    rectangular = dict(legacy, crop_geometry_revision=1)
+    padded: dict[str, Any] = dict(
+        legacy,
+        crop_geometry_revision=2,
+        masked_view_policy={
+            "padding": "centred square",
+            "colour": [124, 116, 104],
+            "transform": "recorded timm preprocessing",
+        },
+    )
+    changed = deepcopy(padded)
+    changed["masked_view_policy"]["colour"][0] = 125
+    versions = [
+        shared_regional_version(value)["sha256"] for value in (legacy, rectangular, padded, changed)
+    ]
+    assert len(set(versions)) == 4

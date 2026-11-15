@@ -164,6 +164,7 @@ def label_config(mode: Mode) -> str:
     return f"""<View>
   <Header value="Annotate visible regions; model proposals are not verified labels."/>
   <Image name="image" value="$image"/>
+  <Text name="photo_credit" value="$photo_credit" valueType="text" selectionEnabled="false"/>
   <Header value="Verify, correct or clear the image taxon before submitting."/>
   <TextArea name="predicted_taxon" toName="image" editable="true" rows="1" maxSubmissions="1"/>
   <Header value="Check the whole image, including regions without model masks."/>

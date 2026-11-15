@@ -11,6 +11,7 @@ from typing import Any
 
 from PIL import Image
 
+from weedz.annotation.credits import photo_credit
 from weedz.annotation.label_studio import Mode, label_config, model_version, task
 from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Annotation, Media, Rights, Sample
@@ -155,6 +156,9 @@ def export_label_studio(
         scores = json.loads(row["scores"])
         photo, encoded, size = _photo(source, row["record"], scores)
         imported, masks = task(photo.id, photo.sha256, scores, model, size, mode, image_prefix)
+        imported["data"]["photo_credit"] = photo_credit(
+            photo.attribution, photo.photo_license, photo.observation_license, photo.source_url
+        )
         prepared.append((photo, encoded, size, scores, imported, masks))
     output.mkdir(parents=True, exist_ok=False)
     try:
@@ -180,9 +184,9 @@ def export_label_studio(
                 }
             )
         (output / "tasks.json").write_text(
-            json.dumps(tasks, ensure_ascii=False, allow_nan=False) + "\n"
+            json.dumps(tasks, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8"
         )
-        (output / "label-config.xml").write_text(label_config(mode))
+        (output / "label-config.xml").write_text(label_config(mode), encoding="utf-8")
         document = {
             "nonfinite_result_policy": NONFINITE_POLICY,
             "schema_version": 1,
@@ -199,7 +203,7 @@ def export_label_studio(
             ),
             "photos": provenance,
         }
-        (private / "provenance.json").write_text(result_json(document) + "\n")
+        (private / "provenance.json").write_text(result_json(document) + "\n", encoding="utf-8")
         files = {
             str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(output.rglob("*"))
@@ -212,7 +216,9 @@ def export_label_studio(
             "task_count": len(tasks),
             "files": files,
         }
-        (output / "manifest.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        (output / "manifest.json").write_text(
+            json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+        )
         return receipt
     except BaseException:
         shutil.rmtree(output)

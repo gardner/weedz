@@ -97,6 +97,13 @@ def shared_regional_version(metadata: dict[str, Any]) -> dict[str, Any]:
         },
         "mask_transform": "alpha>0; nearest-neighbour to upright source; v1",
     }
+    semantic.update(
+        {
+            key: metadata[key]
+            for key in ("crop_geometry_revision", "masked_view_policy")
+            if key in metadata
+        }
+    )
     encoded = json.dumps(semantic, sort_keys=True, allow_nan=False).encode()
     stamp = hashlib.sha256(encoded).hexdigest()
     return {

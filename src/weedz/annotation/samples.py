@@ -11,6 +11,7 @@ from urllib.parse import quote
 from PIL import Image
 
 from weedz.annotation.auto_labels import frame_prediction, proposals_prediction
+from weedz.annotation.credits import photo_credit
 from weedz.annotation.export import _output
 from weedz.annotation.label_studio import label_config
 from weedz.annotation.sample_variants import add_variants, load_variants
@@ -24,7 +25,7 @@ PUBLIC = {"cc0", "cc0-1.0", "cc-by", "cc-by-3.0", "cc-by-4.0"}
 
 def _inputs(manifest: Path, frame_results: Path | None, proposals: Path | None) -> tuple:
     source_digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
-    frames = json.loads(frame_results.read_text()) if frame_results else None
+    frames = json.loads(frame_results.read_text(encoding="utf-8")) if frame_results else None
     if frame_results is not None and (
         not isinstance(frames, dict)
         or not isinstance(frames.get("model"), dict)
@@ -37,7 +38,9 @@ def _inputs(manifest: Path, frame_results: Path | None, proposals: Path | None) 
     if frames and len(frame_rows) != len(frames["predictions"]):
         raise ValueError("Duplicate classifier asset identities")
     proposed = (
-        [json.loads(line) for line in proposals.read_text().splitlines()] if proposals else []
+        [json.loads(line) for line in proposals.read_text(encoding="utf-8").splitlines()]
+        if proposals
+        else []
     )
     proposal_rows = {row["sample_id"]: row for row in proposed}
     if len(proposed) != len(proposal_rows):
@@ -121,6 +124,12 @@ def _prepare(
         "data": {
             "image": f"/data/local-files/?d={quote(f'{image_prefix}/{digest}.png')}",
             "source_dataset": sample.source,
+            "photo_credit": photo_credit(
+                sample.rights.attribution,
+                sample.rights.media_license,
+                sample.rights.metadata_license,
+                sample.rights.license_source,
+            ),
             "pipeline_state": "; ".join(s for s in (proposal_state, frame_state) if s)
             or "Awaiting model output",
         },
@@ -163,9 +172,9 @@ def _write(
                 }
             )
         (output / "tasks.json").write_text(
-            json.dumps(tasks, ensure_ascii=False, allow_nan=False) + "\n"
+            json.dumps(tasks, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8"
         )
-        (output / "label-config.xml").write_text(label_config("assisted"))
+        (output / "label-config.xml").write_text(label_config("assisted"), encoding="utf-8")
         provenance = {
             "nonfinite_result_policy": NONFINITE_POLICY,
             "classifier_runtime": {
@@ -187,7 +196,9 @@ def _write(
                 "Editable predictions only; source class is context, never annotation truth"
             ),
         }
-        (output / "private/provenance.json").write_text(result_json(provenance) + "\n")
+        (output / "private/provenance.json").write_text(
+            result_json(provenance) + "\n", encoding="utf-8"
+        )
         files = {
             str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(output.rglob("*"))
@@ -200,7 +211,9 @@ def _write(
             "image_prefix": image_prefix,
             "files": files,
         }
-        (output / "manifest.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        (output / "manifest.json").write_text(
+            json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+        )
         return receipt
     except BaseException:
         shutil.rmtree(output)

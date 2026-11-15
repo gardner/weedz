@@ -326,3 +326,88 @@ def test_explicit_frame_results_cannot_silently_disappear(canonical_batch, tmp_p
     with pytest.raises(ValueError, match="classifier result document"):
         export_samples(manifest, output, frame_results=frame)
     assert not output.exists()
+
+
+def test_canonical_credit_is_visible_plain_text_without_source_class(canonical_batch, tmp_path):
+    manifest, _, _ = canonical_batch
+    document = json.loads(manifest.read_text())
+    document["rights"]["attribution"] = '<Creator & friends> "authoritative"'
+    manifest.write_text(json.dumps(document) + "\n")
+    output = tmp_path / "visible-credit"
+    export_samples(manifest, output)
+    task = json.loads((output / "tasks.json").read_text())[0]
+    credit = task["data"]["photo_credit"]
+    assert '<Creator & friends> "authoritative"' in credit
+    assert "CC-BY-4.0" in credit and "https://example.test/source" in credit
+    assert "Private source class context" not in json.dumps(task)
+
+
+@pytest.mark.parametrize(
+    "licence, uri",
+    [
+        ("CC-BY-4.0", "https://creativecommons.org/licenses/by/4.0/"),
+        ("cc-by-3.0", "https://creativecommons.org/licenses/by/3.0/"),
+        ("CC0-1.0", "https://creativecommons.org/publicdomain/zero/1.0/"),
+    ],
+)
+def test_explicit_licence_versions_have_canonical_links(licence, uri):
+    from weedz.annotation.credits import photo_credit
+
+    assert uri in photo_credit("Author", licence, licence, "https://example.test/source")
+
+
+def test_ambiguous_historical_licence_codes_do_not_invent_versions():
+    from weedz.annotation.credits import photo_credit
+
+    text = photo_credit("Author", "cc-by", "cc0", "https://example.test/source")
+    assert "creativecommons.org" not in text
+    assert "[cc-by]" in text and "[cc0]" in text
+
+
+def simulate_cp1252_default(monkeypatch):
+    original_read, original_write = Path.read_text, Path.write_text
+
+    def read(path, *args, **kwargs):
+        kwargs.setdefault("encoding", "cp1252")
+        return original_read(path, *args, **kwargs)
+
+    def write(path, text, *args, **kwargs):
+        kwargs.setdefault("encoding", "cp1252")
+        return original_write(path, text, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read)
+    monkeypatch.setattr(Path, "write_text", write)
+
+
+def test_all_variant_inputs_and_outputs_use_utf8_under_a_legacy_locale(
+    classified_batch, tmp_path, monkeypatch
+):
+    manifest, frame, proposals, regional, tiled = classified_batch
+    for path in (frame, regional, tiled):
+        document = json.loads(path.read_text())
+        row = document["predictions"][0]
+        topk = row["regions"][0]["topk"] if path == regional else row["topk"]
+        topk[0]["taxon"] = "Święta species Ł."
+        if path == regional:
+            row["regions"][0]["views"]["masked"] = topk
+        path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+    simulate_cp1252_default(monkeypatch)
+    output = tmp_path / "utf8-variants"
+    export_samples(
+        manifest,
+        output,
+        frame_results=frame,
+        proposals=proposals,
+        regional_results=regional,
+        tiled_results=tiled,
+    )
+    task = json.loads((output / "tasks.json").read_bytes().decode("utf-8"))[0]
+    for index in (0, 2, 3):
+        text = next(
+            r
+            for r in task["predictions"][index]["result"]
+            if r["from_name"] in {"predicted_taxon", "region_taxon"}
+        )
+        assert text["value"]["text"] == ["Święta species Ł."]
+    private = json.loads((output / "private/provenance.json").read_bytes().decode("utf-8"))
+    assert private["samples"][0]["frame_result"]["topk"][0]["taxon"] == "Święta species Ł."

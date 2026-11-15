@@ -55,6 +55,16 @@ LOCAL_FILES_DOCUMENT_ROOT. With document root `/private/published-images`, regis
 select another relative subdirectory. Merely setting the document root returns
 404 in Label Studio 1.23.2 without the registered project storage.
 
+Every task carries `data.photo_credit`, displayed by a plain-text object tag beside
+the photo in both modes: authoritative attribution, separate image/metadata licences,
+public source URL and normalization notice. Credit strings are not HTML and do not
+cause source pages to be fetched. Keep these required public credits visible.
+Explicit recognized licence versions receive canonical licence URIs. Ambiguous
+historical codes keep their names/codes and source URL without an inferred version.
+Only the fuller provenance belongs in the private directory. When upgrading an existing
+project, migrate this data field and the configuration without reimporting tasks or
+changing identities, images, predictions or human annotations.
+
 An API publisher must serialize reconciliation by external ID. Import new tasks
 once. On existing tasks append only missing prediction model_versions; never
 reimport the task, replace annotations, or manufacture a human acceptance. If a
@@ -92,6 +102,9 @@ and explicitly report unrecorded runtime pins in private provenance only. Their
 existing prediction result shape is preserved; recorded new pairs appear in evidence.
 Partial or blank version pairs are refused. Old imported predictions are not rewritten
 and historical versions are never inferred from the current environment.
+Recorded masked-view policy and crop-geometry revision also enter shared identities,
+so rectangular historical crops and square-padded crops cannot share a declared
+method identity. Historical records omitting those fields keep their original hashes.
 Invalid legacy result numbers (NaN or infinities) produce Unknown taxon proposals
 and are represented as JSON null in evidence/provenance, never invented finite
 scores. Model metadata and version hashing remain strict and reject such numbers.
@@ -106,7 +119,9 @@ uv run --extra annotation python scripts/export_label_studio.py \
 
 This read-only adapter excludes private device reports and unsupported licences.
 `--mode blind` removes model predictions, hints and original taxonomy from imported
-tasks; the private provenance remains available to the experiment owner. The
+tasks; required credit and public source URLs remain. Someone can deliberately look
+up those public sources, so this does not guarantee prevention of unblinding. The
+private provenance remains available to the experiment owner. The
 canonical-batch assisted command does not promise a blind export mode.
 
 The output follows the official [prediction import format](https://labelstud.io/guide/predictions),
