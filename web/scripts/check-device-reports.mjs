@@ -128,6 +128,13 @@ try {
   await rows.nth(1).waitFor();
   const tab = page.getByRole("button", { name: "Device reports" });
   assert.equal(await tab.getAttribute("aria-pressed"), "true");
+  await page.getByRole("button", { name: "Incidental photos", exact: true }).click();
+  await page.getByLabel("Filter region").selectOption("Nelson");
+  await tab.click();
+  await rows.nth(1).waitFor({ timeout: 3000 });
+  await page.getByRole("button", { name: "Incidental photos", exact: true }).click();
+  assert.equal(await page.getByLabel("Filter region").inputValue(), "Nelson");
+  await tab.click();
   // Suitability measures sampled runs only; the device run does not offer it.
   assert.equal(await page.locator(".suitability-panel").count(), 0);
 
