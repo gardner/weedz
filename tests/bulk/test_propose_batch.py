@@ -261,3 +261,16 @@ def test_interrupted_retry_never_leaves_old_ready_over_new_rows(tmp_path, monkey
     resumed = Proposer()
     assert propose_batch(manifest, manifest.parent, output, resumed)["counts"]["ok"] == 1
     assert resumed.calls == 0
+
+
+def test_actual_artifact_cap_rejection_becomes_an_explicit_failed_photo(tmp_path, monkeypatch):
+    from weedz.segmentation import artifacts
+
+    manifest, _ = source(tmp_path)
+    monkeypatch.setattr(artifacts, "MAX_ARTIFACT_BYTES", 900)
+    output = tmp_path / "out"
+    result = propose_batch(manifest, manifest.parent, output, Proposer())
+    assert result["counts"] == {"ok": 0, "empty": 0, "failed": 1}
+    row = json.loads((output / "proposals.jsonl").read_text())
+    assert row["segmentation"]["failure_type"] == "ArtifactTooLarge"
+    assert row["segmentation"]["regions"] == []

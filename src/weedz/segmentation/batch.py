@@ -15,7 +15,13 @@ from typing import Any
 from PIL import Image, ImageOps
 
 from weedz.contract import Sample, require_task
-from weedz.segmentation.artifacts import StageArtifacts, digest, durable_mkdir, sync_directory
+from weedz.segmentation.artifacts import (
+    ArtifactTooLarge,
+    StageArtifacts,
+    digest,
+    durable_mkdir,
+    sync_directory,
+)
 from weedz.segmentation.pipeline import Proposer
 from weedz.segmentation.regions import (
     MAX_SOURCE_BYTES,
@@ -97,6 +103,19 @@ def _result(sample: Sample, root: Path, proposer: Proposer, config: ProposalConf
     return {**result, "elapsed_seconds": time.monotonic() - start}
 
 
+def _publish_sample(artifacts: StageArtifacts, sample_id: str, inputs: dict, result: dict) -> dict:
+    try:
+        return artifacts.write("proposals", sample_id, inputs, result)
+    except ArtifactTooLarge:
+        # Only the known publication cap is per-photo fallback: provenance/storage errors propagate.
+        return artifacts.write(
+            "proposals",
+            sample_id,
+            inputs,
+            {"status": "failed", "failure_type": "ArtifactTooLarge", "regions": []},
+        )
+
+
 def _rows(
     samples: list[Sample],
     root: Path,
@@ -114,8 +133,8 @@ def _rows(
         }
         result = artifacts.read("proposals", sample.id, inputs)
         if result is None or result["status"] == "failed":
-            result = artifacts.write(
-                "proposals", sample.id, inputs, _result(sample, root, proposer, config)
+            result = _publish_sample(
+                artifacts, sample.id, inputs, _result(sample, root, proposer, config)
             )
         yield {
             "schema": 1,
