@@ -60,3 +60,15 @@ def test_retained_views_are_bounded_and_transform_provenance_is_explicit():
     assert all(max(view.size) <= 64 for view in region.views.values())
     assert region.record()["view_transforms"]["masked"]["source_box"] == [0, 0, 2000, 2000]
     assert region.record()["view_transforms"]["masked"]["resized_size"] == [64, 64]
+
+
+def test_nonfinite_quality_and_zero_sized_masks_are_refused():
+    import pytest
+
+    for mask, quality in [(np.ones((8, 8), bool), float("nan")), (np.zeros((0, 8), bool), 0.9)]:
+        with pytest.raises(ValueError):
+            proposals(
+                Image.new("RGB", (8, 8)),
+                [{"segmentation": mask, "predicted_iou": quality, "stability_score": 0.95}],
+                ProposalConfig(),
+            )

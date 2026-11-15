@@ -114,7 +114,9 @@ def proposals(image: Image.Image, raw: list[dict], config: ProposalConfig) -> li
     ordered = sorted(raw, key=lambda row: float(row["predicted_iou"]), reverse=True)
     for row in ordered:
         mask = np.asarray(row["segmentation"], dtype=bool)
-        if mask.ndim != 2 or max(mask.shape) > config.max_side:
+        if not all(np.isfinite(float(row[key])) for key in ("predicted_iou", "stability_score")):
+            raise ValueError("Nonfinite mask quality")
+        if mask.ndim != 2 or min(mask.shape) < 1 or max(mask.shape) > config.max_side:
             raise ValueError("Mask exceeds configured geometry")
         if abs(mask.shape[1] / mask.shape[0] - image.width / image.height) > 2 / min(mask.shape):
             raise ValueError("Mask and upright original have different aspect ratios")
