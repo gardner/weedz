@@ -29,6 +29,11 @@ collection-query defaults do not describe the curated selection. The previous si
 run and its review history remain available. The import adds a distinct run and image
 namespace without replacing discovery history or reviewer credentials. Selection and
 runtime provenance are retained in the owner’s plant experiment artifact directory.
+The separate `licensed-expanded-sam21-20261115` run adds 33 curated licensed cases
+(4 references, 14 incidental photos and 15 lookalikes). It is available in collection
+settings without replacing the plant-only default. Its 24 newly computed results and
+9 reused exact verified results retain real masks/scores and truthful source cohorts;
+it is not a population-performance evaluation.
 
 There is no Temporal server/discovery worker in this service deployment. New collection
 creation is explicitly disabled by `WEEDZ_RUN_CREATION=disabled` in both proxy and UI;
