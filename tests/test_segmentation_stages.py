@@ -166,3 +166,80 @@ def test_region_runtime_failure_keeps_masks_and_is_retryable_before_final_fallba
         photo["scores"]["segmentation"]["regions"][0]["views"] == {}
         for photo in store.photos("run")
     )
+
+
+def test_completed_matching_proposals_win_even_if_late_local_work_fails(store):
+    from dataclasses import asdict
+
+    from weedz.segmentation.artifacts import StageArtifacts
+    from weedz.segmentation.stages import CONFIG, PROFILE
+
+    photo = store.photos("run")[0]
+
+    class Racing(Proposer):
+        fail_second = False
+
+        def generate(self, image):
+            if image.getpixel((0, 0))[0] == 0:
+                inputs = {
+                    "profile": PROFILE,
+                    "image_sha256": photo["sha256"],
+                    "config": asdict(CONFIG),
+                    "proposer": self.metadata,
+                }
+                StageArtifacts(store.root, "run").write(
+                    "proposals",
+                    photo["id"],
+                    inputs,
+                    {"status": "empty", "regions": [], "elapsed_seconds": 1.0},
+                )
+                raise RuntimeError("Late attempt failed after another attempt committed")
+            return super().generate(image)
+
+    result = runner(store, Racing(), 1).segment("run")
+    assert result["completed"] == 2 and result["failed"] == 0
+
+
+def test_canonical_region_result_is_attached_when_late_classifier_fails(store, monkeypatch):
+    from weedz.segmentation.artifacts import StageArtifacts
+
+    proposer = Proposer()
+    proposer.fail_second = False
+    stages = runner(store, proposer)
+    stages.segment("run")
+    for photo in store.photos("run"):
+        store.score("run", photo["id"], {"margin": -0.04})
+    first = store.photos("run")[0]
+    artifacts = StageArtifacts(store.root, "run")
+    calls = []
+
+    def racing(model, views, _subject):
+        calls.append(True)
+        if len(calls) == 1:
+            proposal = artifacts.entry("proposals", first["id"])
+            assert proposal
+            inputs = {
+                "proposal_sha256": proposal["sha256"],
+                "classifier": model.metadata,
+                "version": 1,
+            }
+            canonical = {
+                **proposal["result"],
+                "proposal_status": "ok",
+                "view_status": "ok",
+                "baseline_retained": True,
+            }
+            canonical["regions"] = [
+                {**row, "views": {name: {"margin": 0.123} for name in views}}
+                for row in proposal["result"]["regions"]
+            ]
+            artifacts.write("views", first["id"], inputs, canonical)
+            raise RuntimeError("Late classifier failed after another attempt completed")
+        return {name: {"margin": -0.2} for name in views}
+
+    monkeypatch.setattr("weedz.segmentation.stages.identify_views", racing)
+    result = stages.score_regions("run")
+    assert result["completed"] == 2 and result["failed"] == 0
+    first = store.photos("run")[0]
+    assert first["scores"]["segmentation"]["regions"][0]["views"]["tight"]["margin"] == 0.123
+    assert first["scores"]["margin"] == -0.04

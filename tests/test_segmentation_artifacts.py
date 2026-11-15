@@ -35,8 +35,12 @@ def test_tampered_stage_output_is_not_trusted(tmp_path):
         artifacts.read("proposals", "photo", {})
 
 
-def test_completed_evidence_cannot_be_replaced_by_late_retry(tmp_path):
+def test_completed_evidence_canonically_wins_a_late_matching_retry(tmp_path):
     artifacts = StageArtifacts(tmp_path, "run")
-    artifacts.write("proposals", "photo", {}, {"status": "empty", "regions": []})
-    with pytest.raises(ValueError, match="completed"):
-        artifacts.write("proposals", "photo", {}, {"status": "failed", "regions": []})
+    original = {"status": "empty", "regions": [], "elapsed_seconds": 1.0}
+    artifacts.write("proposals", "photo", {}, original)
+    path = next(tmp_path.rglob("*.json"))
+    encoded = path.read_bytes()
+    actual = artifacts.write("proposals", "photo", {}, {**original, "elapsed_seconds": 2.0})
+    assert actual == original
+    assert path.read_bytes() == encoded
