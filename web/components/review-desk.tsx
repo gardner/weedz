@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DEVICE_RUN } from "../lib/device-reports";
 import type { NewFinding } from "../lib/findings";
 import type { NewJudgement } from "../lib/judgements";
 import type { NewLeadEvent } from "../lib/leads";
@@ -331,7 +332,8 @@ export default function ReviewDesk({
             }}
             onError={setError}
           />
-          <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />
+          {/* Suitability measures a sampled run; device reports are not one (#123). */}
+          {runId !== DEVICE_RUN && <SuitabilityPanel key={`suitability:${runId}`} runId={runId} />}
           <ScreeningNote meaning={scoreMeaning} />
           <div className="workspace">
             <section className="queue" aria-label="Photo review queue">

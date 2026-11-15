@@ -159,6 +159,66 @@ def test_a_crop_whose_copy_failed_is_copied_again(
     assert (tmp_path / "pilot" / photo["image_path"]).is_file()
 
 
+def test_a_crop_restored_while_its_report_is_withdrawn_is_erased(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    intake = tmp_path / "intake"
+    report_id = send(intake, with_image(jpeg()))
+    write, read = device_reports._write_private, device_reports._crop
+
+    def full_disk(target: Path, data: bytes) -> None:
+        raise OSError("No space left on device")
+
+    def read_then_withdrawn(stored: StoredReport, record: device_reports.DeviceItem) -> bytes:
+        data = read(stored, record)
+        ReportStore(intake).withdraw(1, report_id)
+        assert data is not None
+        return data
+
+    monkeypatch.setattr(device_reports, "_write_private", full_disk)
+    with pytest.raises(OSError):
+        synced(tmp_path, intake)
+    monkeypatch.setattr(device_reports, "_write_private", write)
+    monkeypatch.setattr(device_reports, "_crop", read_then_withdrawn)
+    [photo] = synced(tmp_path, intake)
+    assert photo["consent"]["withdrawn_at"]
+    assert list((tmp_path / "pilot" / "images" / "device").iterdir()) == []
+
+
+def test_reviewers_notes_and_identifications_go_with_a_withdrawal(tmp_path: Path) -> None:
+    """The species can be in what reviewers wrote, so their identifications and notes on
+    the report are erased too; the records themselves, ids and boxes stay."""
+    intake, pilot = tmp_path / "intake", tmp_path / "pilot"
+    client = TestClient(create_app(pilot, intake_dir=intake))
+    report_id = send(intake, with_image(jpeg()))
+    [photo] = client.get(f"/runs/{RUN_ID}").json()["photos"]
+    path = f"/runs/{RUN_ID}/photos/{photo['id']}"
+    said = "Gorse by the fence"
+    actions = {
+        "review": {"status": "confirmed", "reviewer": "Ana", "note": said},
+        "findings": {"kind": "addition", "species": "Ulex europaeus", "reviewer": "Ana"}
+        | {"note": said, "box": [1, 1, 5, 5]},
+        "judgements": {"dimension": "identity", "value": "confirmed", "reviewer": "Ana"}
+        | {"note": said},
+        "leads": {"action": "selected", "selector": "Ana", "reason": said},
+        "referrals": {"reason": "lookalike", "note": said, "referrer": "Ana"},
+    }
+    for action, request in actions.items():
+        assert client.post(f"{path}/{action}", json=request).status_code == 200, action
+    other = client.post(
+        f"{path}/findings",
+        json=actions["findings"] | {"species": None} | {"other_taxon": "Ulex minor"},
+    )
+    assert other.status_code == 200
+    ReportStore(intake).withdraw(1, report_id)
+    client.get(f"/runs/{RUN_ID}")
+    raw = b"".join(file.read_bytes() for file in sorted(pilot.glob("discovery.sqlite3*")))
+    for detail in (b"Ulex europaeus", b"Ulex minor", b"Gorse"):
+        assert detail not in raw, detail
+    [finding, _] = Store(pilot).findings(RUN_ID, photo["id"])
+    assert finding["box"] == [1, 1, 5, 5] and finding["species"] is None
+
+
 def test_a_report_withdrawn_before_it_arrives_never_enters_review(tmp_path: Path) -> None:
     intake = tmp_path / "intake"
     report_id = new_id()
@@ -191,18 +251,21 @@ def test_the_device_run_claims_no_historical_query(tmp_path: Path) -> None:
     send(intake, report())
     client = TestClient(create_app(tmp_path / "pilot", intake_dir=intake))
     assert client.get(f"/runs/{RUN_ID}").json()["run"]["spec"] == {}
-    suitability = client.get(f"/runs/{RUN_ID}/suitability")
-    assert suitability.status_code == 200
-    assert "requested photos" not in suitability.text
-    dates = suitability.json()["dates"]
+    # Its export states no query period, sampling or year gaps.
+    dates = client.get(f"/runs/{RUN_ID}/export").json()["source_suitability"]["dates"]
     assert dates["query_period"] is None and dates["corpus"]["sampling"] is None
     assert dates["years_without_photos"] == [] and dates["seasons_without_photos"] == []
     assert not any("unassessed, not weed-free" in note for note in dates["notes"])
     # A study period reaching past 2024 is not "outside" a query that never ran.
     study = body(period_start="2020-01-01", period_end="2026-12-31") | {"run_id": RUN_ID}
     assert client.post("/studies", json=study).status_code == 201
-    linked = client.get(f"/runs/{RUN_ID}/suitability").json()["dates"]
+    export = client.get(f"/runs/{RUN_ID}/export").json()
+    linked = export["source_suitability"]["dates"]
     assert not any("query period" in note for note in linked["notes"])
+    # The sampled-run measures themselves refuse it, as the CLI does.
+    for measure in ("outcomes", "suitability"):
+        response = client.get(f"/runs/{RUN_ID}/{measure}")
+        assert response.status_code == 409 and "sampled" in response.text
 
 
 def test_syncs_take_turns(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

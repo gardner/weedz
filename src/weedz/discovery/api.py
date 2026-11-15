@@ -192,13 +192,20 @@ class ReviewAPI:
             },
         )
 
-    def outcomes(self, run_id: str) -> dict:
+    def sampled_only(self, run_id: str) -> None:
+        """Outcomes and suitability measure a sampled run's incidental photos; device
+        reports are not a sample, so an empty summary would mislead (#123)."""
         self.run(run_id)
+        if run_id == DEVICE_RUN:
+            raise HTTPException(409, "Only sampled iNaturalist runs have this measure")
+
+    def outcomes(self, run_id: str) -> dict:
+        self.sampled_only(run_id)
         return outcomes(export(self.store, run_id))
 
     def suitability(self, run_id: str) -> dict:
         """What the run's photos can and cannot support, before review (PRD P02, P14)."""
-        self.run(run_id)
+        self.sampled_only(run_id)
         return export(self.store, run_id)["source_suitability"]
 
     def studies(self) -> list[dict]:

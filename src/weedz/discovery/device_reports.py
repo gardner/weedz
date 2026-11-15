@@ -18,6 +18,7 @@ import fcntl
 import hashlib
 import json
 import os
+import sqlite3
 import time
 import uuid
 from io import BytesIO
@@ -212,13 +213,16 @@ def _store_crop(store: Store, identifier: str, image_path: str, data: bytes) -> 
         target.unlink(missing_ok=True)
 
 
-def _restore(store: Store, stored: StoredReport, record: dict) -> None:
-    """Copy again a crop whose earlier copy did not complete (a full disk, a crash)."""
+def _restore(store: Store, reports: ReportStore, stored: StoredReport, record: dict) -> None:
+    """Copy again a crop whose earlier copy did not complete (a full disk, a crash), then
+    ask intake again, as ``_add`` does, so a withdrawal meanwhile erases it at once."""
     if (store.root / record["image_path"]).exists():
         return
     data = _crop(stored, DeviceItem.model_validate(record))
     if data and hashlib.sha256(data).hexdigest() == record["sha256"]:
         _store_crop(store, record["id"], record["image_path"], data)
+    if _withdrawn(reports, record):
+        _withdraw(store, record["id"], record)
 
 
 def _erased(record: dict) -> dict:
@@ -251,10 +255,31 @@ def _withdraw(store: Store, identifier: str, record: dict) -> None:
             "UPDATE photos SET record=?, scores='{}' WHERE run_id=? AND id=?",
             (json.dumps(_erased(record)), RUN_ID, identifier),
         )
+        _erase_what_reviewers_wrote(db, identifier)
     with store.connect() as db:
         db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     if record.get("image_path"):
         (store.root / record["image_path"]).unlink(missing_ok=True)
+
+
+# What reviewers wrote about a report can name its species, so a withdrawal erases it
+# too. The records stay, with their ids, boxes and decisions, so history still counts them.
+REVIEWER_TEXT = [
+    "UPDATE findings SET species=NULL, other_taxon=NULL, note='' WHERE {photo}",
+    "UPDATE reviews SET note='' WHERE {photo}",
+    "UPDATE audits SET note='' WHERE {photo}",
+    "UPDATE judgements SET note='' WHERE {photo}",
+    "UPDATE lead_selections SET reason='' WHERE {photo}",
+    "UPDATE referral_events SET note='' WHERE referral_id IN "
+    "(SELECT id FROM referrals WHERE {photo})",
+    "UPDATE referrals SET note='', expertise='' WHERE {photo}",
+    "UPDATE photos SET review_note='' WHERE run_id=? AND id=?",
+]
+
+
+def _erase_what_reviewers_wrote(db: sqlite3.Connection, identifier: str) -> None:
+    for statement in REVIEWER_TEXT:
+        db.execute(statement.format(photo="run_id=? AND photo_id=?"), (RUN_ID, identifier))
 
 
 def _sweep(store: Store) -> None:
@@ -321,7 +346,7 @@ def _sync(store: Store, reports: ReportStore) -> None:
         if identifier not in known:
             _add(store, reports, stored)
         elif known[identifier].get("image_path"):
-            _restore(store, stored, known[identifier])
+            _restore(store, reports, stored, known[identifier])
     gone = 0
     for identifier, record in known.items():
         if withdrawn(record):

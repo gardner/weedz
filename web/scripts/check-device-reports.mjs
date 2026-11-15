@@ -128,6 +128,8 @@ try {
   await rows.nth(1).waitFor();
   const tab = page.getByRole("button", { name: "Device reports" });
   assert.equal(await tab.getAttribute("aria-pressed"), "true");
+  // Suitability measures sampled runs only; the device run does not offer it.
+  assert.equal(await page.locator(".suitability-panel").count(), 0);
 
   const evidence = page.locator(".evidence");
   await evidence.getByText("DEVICE REPORT", { exact: false }).first().waitFor();

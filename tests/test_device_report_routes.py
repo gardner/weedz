@@ -28,6 +28,8 @@ BODIES = {
 }
 # Run routes that are not about one run's photos.
 NOT_ABOUT_PHOTOS = {"/runs/{run_id}/study"}
+# Measures of a sampled run's incidental photos, which the device run is not (#123).
+SAMPLED_ONLY = {"/runs/{run_id}/outcomes", "/runs/{run_id}/suitability"}
 
 
 def withdrawn_client(tmp_path: Path) -> tuple[TestClient, str, int]:
@@ -79,7 +81,8 @@ def test_no_run_route_mentions_a_withdrawn_report(tmp_path: Path) -> None:
         if method != "GET" or "{photo_id}" in template or template in NOT_ABOUT_PHOTOS:
             continue
         response = client.get(template.format(run_id=RUN_ID))
-        assert response.status_code == 200, f"{template}: {response.text}"
+        expected = 409 if template in SAMPLED_ONLY else 200
+        assert response.status_code == expected, f"{template}: {response.text}"
         assert photo_id.encode() not in response.content, template
         walked += 1
     assert walked >= 6
