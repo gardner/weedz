@@ -109,3 +109,10 @@ sidecars. The orchestrator uses temporary local ports, checks its child processe
 and verifies a per-capture identity through both API and web proxy before recording.
 The renderer requires successful browser-capture and mobile-erasure verification
 records; media left by a failed capture is not sufficient evidence.
+
+New snapshot credits keep photo and observation-data rights separate. Photos remain
+restricted to CC0/CC BY; admitted observation data may also be CC BY-NC because this
+is an explicitly non-commercial demo. Each credit carries the actual codes, observer,
+source link and the sharing policy's terms. Unknown observation terms are refused;
+no licence version is inferred for generic observation codes. Historical media and
+receipts are preserved rather than silently upgraded to this newer credit schema.

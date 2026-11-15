@@ -17,6 +17,8 @@ from typing import Any
 from demo_paths import new_output, outside_git
 from PIL import Image, ImageOps
 
+from weedz.discovery.sharing import refuse_unadmitted, terms
+
 ADMITTED = {"cc0", "cc-by"}
 
 
@@ -82,6 +84,8 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
             if record["photo_license"] not in ADMITTED or not json.loads(row["scores"]):
                 copied.execute("DELETE FROM photos WHERE id=?", (row["id"],))
                 continue
+            refuse_unadmitted(record["photo_license"], record.get("observation_license", ""))
+            rights = terms(record)
             image = (source / record["image_path"]).resolve()
             if not image.is_relative_to(source / "images") or not image.is_file():
                 raise ValueError("A source image must be within the pilot's public image cache")
@@ -112,6 +116,7 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
             credits.append(
                 {
                     "photo_id": row["id"],
+                    "rights": rights,
                     "file": str(relative),
                     "sha256": record["sha256"],
                     "creator_attribution": record["attribution"],
@@ -140,7 +145,8 @@ def _build_snapshot(source: Path, output: Path, run_id: str | None) -> dict[str,
     manifest = {
         "run": run_id,
         "database_sha256": hashlib.sha256((output / "discovery.sqlite3").read_bytes()).hexdigest(),
-        "disclosure": "Curated CC0/CC BY subset of a completed public pilot. Original screening "
+        "disclosure": "Non-commercial demonstration: CC0/CC BY photos with separately credited "
+        "admitted observation-data terms (including CC BY-NC). Original screening "
         "scores, not a new evaluation. Review decisions are demonstration-only. "
         "Locations withheld.",
         "photos": credits,

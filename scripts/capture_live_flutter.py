@@ -26,6 +26,16 @@ def verify_erasure(state: Path) -> tuple[int, int]:
     return active, crops
 
 
+def stop_server(server: subprocess.Popen) -> None:
+    if server.poll() is None:
+        os.killpg(server.pid, signal.SIGTERM)
+        try:
+            server.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            os.killpg(server.pid, signal.SIGKILL)
+            server.wait(timeout=10)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -98,9 +108,7 @@ def main() -> None:
                     + "\n"
                 )
             finally:
-                if server.poll() is None:
-                    os.killpg(server.pid, signal.SIGTERM)
-                    server.wait(timeout=10)
+                stop_server(server)
 
 
 if __name__ == "__main__":

@@ -85,3 +85,25 @@ def test_review_capture_rejects_output_inside_snapshot_before_writing(tmp_path: 
     assert "independent" in result.stderr
     assert not output.exists()
     assert list(source.iterdir()) == []
+
+
+@pytest.mark.parametrize("times_out", [False, True])
+def test_owned_server_is_reaped_even_if_graceful_shutdown_times_out(monkeypatch, times_out):
+    import importlib
+    import signal
+    from types import SimpleNamespace
+
+    monkeypatch.syspath_prepend(str(ROOT / "scripts"))
+    module = importlib.import_module("capture_live_flutter")
+    signals, waits = [], []
+
+    def wait(timeout):
+        waits.append(timeout)
+        if times_out and len(waits) == 1:
+            raise subprocess.TimeoutExpired("owned-server", timeout)
+        return 0
+
+    monkeypatch.setattr(module.os, "killpg", lambda pid, sig: signals.append((pid, sig)))
+    module.stop_server(SimpleNamespace(pid=123, poll=lambda: None, wait=wait))
+    assert signals == [(123, signal.SIGTERM)] + ([(123, signal.SIGKILL)] if times_out else [])
+    assert waits == ([10, 10] if times_out else [10])

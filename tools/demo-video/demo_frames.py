@@ -274,7 +274,7 @@ class Frames:
         text(
             canvas,
             (90, 360),
-            "Public photography · iNaturalist · CC BY 4.0 / CC0",
+            "Non-commercial demo · photo and observation terms in companion credits",
             29,
             MUTED,
             width=100,
