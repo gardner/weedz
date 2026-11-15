@@ -273,4 +273,24 @@ def test_actual_artifact_cap_rejection_becomes_an_explicit_failed_photo(tmp_path
     assert result["counts"] == {"ok": 0, "empty": 0, "failed": 1}
     row = json.loads((output / "proposals.jsonl").read_text())
     assert row["segmentation"]["failure_type"] == "ArtifactTooLarge"
+    assert row["segmentation"]["elapsed_seconds"] >= 0
     assert row["segmentation"]["regions"] == []
+
+
+def test_sparse_unrepresentable_mask_is_one_failed_photo_not_a_stalled_batch(tmp_path):
+    manifest, _ = source(tmp_path)
+    first = json.loads(manifest.read_text())
+    second = {**first, "id": "test:second", "source_id": "second"}
+    manifest.write_text(json.dumps(first) + "\n" + json.dumps(second) + "\n")
+
+    class Sparse(Proposer):
+        def generate(self, image):
+            if self.calls == 0:
+                self.calls += 1
+                mask = np.zeros((768, 768), bool)
+                mask[:4, :4] = True
+                return [{"segmentation": mask, "predicted_iou": 0.9, "stability_score": 0.9}]
+            return super().generate(image)
+
+    result = propose_batch(manifest, manifest.parent, tmp_path / "out", Sparse())
+    assert result["counts"] == {"ok": 1, "empty": 0, "failed": 1}

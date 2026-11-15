@@ -112,7 +112,12 @@ def _publish_sample(artifacts: StageArtifacts, sample_id: str, inputs: dict, res
             "proposals",
             sample_id,
             inputs,
-            {"status": "failed", "failure_type": "ArtifactTooLarge", "regions": []},
+            {
+                "status": "failed",
+                "failure_type": "ArtifactTooLarge",
+                "regions": [],
+                "elapsed_seconds": result["elapsed_seconds"],
+            },
         )
 
 
