@@ -109,3 +109,40 @@ def test_model_load_failure_does_not_publish_a_partial_catalog(
     assert folder.exists() == existing_folder
     if existing_folder:
         assert not list(folder.iterdir())
+
+
+@pytest.mark.parametrize("seconds", [60, 60.5, 180])
+def test_batch_catalogue_and_track_receipts_share_requested_duration(
+    tmp_path, monkeypatch, seconds
+):
+    snapshot = tmp_path / "model"
+    snapshot.mkdir()
+    (snapshot / "LICENSE").write_text("Test fixture licence")
+    folder = tmp_path / "auditions"
+    monkeypatch.setattr(music, "load_pipeline", lambda: (object(), snapshot))
+    catalogues = []
+    original = music.write_catalog
+
+    def catalog(*args, **kwargs):
+        original(*args, **kwargs)
+        catalogues.append(json.loads((folder / "index.json").read_text()))
+
+    def render(_pipeline, requested, seed, output, prompt, extra):
+        assert requested == seconds
+        return {
+            **extra,
+            "output": output.name,
+            "prompt": prompt,
+            "seed": seed,
+            "requested_seconds": requested,
+            "actual_seconds": requested / 2,
+        }
+
+    monkeypatch.setattr(music, "write_catalog", catalog)
+    monkeypatch.setattr(music, "render_take", render)
+    music.generate_batch(seconds, folder, PRESETS)
+    assert catalogues[0]["completed"] == 0 and catalogues[-1]["completed"] == 10
+    for entry in catalogues:
+        assert entry["requested_seconds"] == seconds
+        assert entry["duration_policy"].startswith(f"{seconds:g}-second upper bounds;")
+        assert all(track["requested_seconds"] == seconds for track in entry["tracks"])

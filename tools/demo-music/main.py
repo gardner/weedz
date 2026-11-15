@@ -225,13 +225,14 @@ def load_presets(path: Path) -> list[dict[str, Any]]:
 
 
 def write_catalog(
-    folder: Path, records: list[dict[str, Any]], presets: list[dict[str, Any]]
+    folder: Path, records: list[dict[str, Any]], presets: list[dict[str, Any]], seconds: float
 ) -> None:
     (folder / "index.json").write_text(
         json.dumps(
             {
                 "model": MODEL,
                 "model_revision": REVISION,
+                "requested_seconds": seconds,
                 "completed": len(records),
                 "requested": len(presets),
                 "tracks": records,
@@ -239,7 +240,7 @@ def write_catalog(
                     "Original AI-generated Music3 auditions; not human-composed performances."
                 ),
                 "duration_policy": (
-                    "180-second upper bounds; no padding, looping, "
+                    f"{seconds:g}-second upper bounds; no padding, looping, "
                     "assembly or narration processing."
                 ),
             },
@@ -290,7 +291,7 @@ def generate_batch(seconds: float, folder: Path, preset_file: Path) -> None:
     folder.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(preset_file, folder / "presets.json")
     records: list[dict[str, Any]] = []
-    write_catalog(folder, records, presets)
+    write_catalog(folder, records, presets, seconds)
     shutil.copyfile(snapshot / "LICENSE", folder / "LICENSE.txt")
     for item, output in zip(presets, outputs, strict=True):
         print(f"BEGIN {item['name']}: seed {item['seed']}, upper bound {seconds}s", flush=True)
@@ -310,7 +311,7 @@ def generate_batch(seconds: float, folder: Path, preset_file: Path) -> None:
             },
         )
         records.append(record)
-        write_catalog(folder, records, presets)
+        write_catalog(folder, records, presets, seconds)
         print(
             f"COMPLETED {len(records)}/10: {output} ({record['actual_seconds']:.3f}s)", flush=True
         )
