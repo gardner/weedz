@@ -83,6 +83,39 @@ def test_preflight_uses_snapshot_instead_of_undocumented_assets(produced_capture
         (web / name).touch()
     credit_font = tmp_path / "font.otf"
     credit_font.touch()
+    (mobile / "erasure-verification.json").write_text(
+        json.dumps(
+            {
+                "active_report_bodies_after_real_app_deletion": 0,
+                "remaining_crop_files": 0,
+            }
+        )
+    )
     renderer.validate_captures(
         Namespace(captures=produced_captures, mobile_captures=mobile, credit_font=credit_font)
     )
+    (mobile / "erasure-verification.json").unlink()
+    with pytest.raises(ValueError, match="erasure"):
+        renderer.validate_captures(
+            Namespace(captures=produced_captures, mobile_captures=mobile, credit_font=credit_font)
+        )
+
+
+@pytest.mark.parametrize(
+    "proof",
+    [
+        None,
+        {},
+        [],
+        {"active_report_bodies_after_real_app_deletion": False, "remaining_crop_files": 0},
+        {"active_report_bodies_after_real_app_deletion": 1, "remaining_crop_files": 0},
+        {"active_report_bodies_after_real_app_deletion": 0, "remaining_crop_files": 1},
+    ],
+)
+def test_failed_or_unverified_mobile_erasure_is_not_renderable(produced_captures, tmp_path, proof):
+    mobile = tmp_path / "mobile"
+    mobile.mkdir()
+    if proof is not None:
+        (mobile / "erasure-verification.json").write_text(json.dumps(proof))
+    with pytest.raises(ValueError, match="erasure"):
+        renderer.validate_erasure(mobile)

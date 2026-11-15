@@ -16,6 +16,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from demo_paths import outside_git  # noqa: E402
 
 
+def validate_erasure(mobile: Path) -> None:
+    try:
+        proof = json.loads((mobile / "erasure-verification.json").read_text())
+    except (OSError, ValueError) as error:
+        raise ValueError("Mobile erasure verification is missing or malformed") from error
+    keys = ("active_report_bodies_after_real_app_deletion", "remaining_crop_files")
+    if not isinstance(proof, dict) or any(
+        type(proof.get(key)) is not int or proof[key] != 0 for key in keys
+    ):
+        raise ValueError("Mobile erasure verification must confirm zero retained bodies and crops")
+
+
 def validate_captures(args: argparse.Namespace) -> None:
     required = [
         args.captures / name
@@ -38,6 +50,7 @@ def validate_captures(args: argparse.Namespace) -> None:
             "Required captures are missing; use the documented pilot run: " + ", ".join(missing)
         )
 
+    validate_erasure(args.mobile_captures)
     manifest = json.loads((args.captures / "review-snapshot/capture-provenance.json").read_text())
     for relative in ("images/460347209.png", "images/447484684.png"):
         verified_photo_bytes(args.captures, relative, manifest)

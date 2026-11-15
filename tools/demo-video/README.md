@@ -36,7 +36,7 @@ uv run python tools/demo-video/render_demo.py \
   --captures /absolute/path/to/artifacts/captures \
   --audio /absolute/path/to/artifacts/audio \
   --transcript /absolute/path/to/artifacts/audio/raw-final-transcripts.json \
-  --mobile-captures /absolute/path/to/artifacts/captures/live-flutter-final \
+  --mobile-captures /absolute/path/to/artifacts/captures/live-flutter \
   --ffmpeg /absolute/path/to/ffmpeg \
   --credit-font /absolute/path/to/NotoSansCJKjp-Regular.otf \
   --output /absolute/path/to/artifacts/video/weedz-demo-v1
