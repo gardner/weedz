@@ -82,3 +82,26 @@ def test_readonly_json_does_not_coerce_non_json_bytes_into_review_claims():
                 payload={"value": b"bytes"},
             )
         )
+
+
+def test_equal_nested_review_objects_have_one_canonical_manifest_order():
+    from test_contract import sample
+
+    from weedz.contract import Sample
+    from weedz.manifest import manifest_bytes
+
+    common = dict(
+        id="event",
+        sample_id="test:1",
+        media_sha256=SHA,
+        origin="source",
+        actor="publisher",
+        action="published",
+        dimension="annotation",
+    )
+    first = ReviewEvent.model_validate(dict(common, payload={"z": [{"b": 2, "a": 1}], "a": 0}))
+    second = ReviewEvent.model_validate(dict(common, payload={"a": 0, "z": [{"a": 1, "b": 2}]}))
+    assert first == second
+    a = Sample.model_validate(sample(review_history=[first]))
+    b = Sample.model_validate(sample(review_history=[second]))
+    assert manifest_bytes([a]) == manifest_bytes([b])
