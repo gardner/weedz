@@ -85,3 +85,58 @@ def test_existing_posix_acl_is_preserved_when_supported(tmp_path):
     with staged_release(output) as staging:
         assert mode(staging) == 0o700
     assert os.getxattr(output, "system.posix_acl_access") == expected
+
+
+def test_existing_default_acl_is_inherited_by_staged_files(tmp_path):
+    import errno
+    import struct
+
+    output = tmp_path / "release"
+    output.mkdir(mode=0o750)
+    entries = [
+        (1, 7, 0xFFFFFFFF),
+        (2, 6, os.getuid() + 1),
+        (4, 4, 0xFFFFFFFF),
+        (16, 6, 0xFFFFFFFF),
+        (32, 0, 0xFFFFFFFF),
+    ]
+    acl = struct.pack("<I", 2) + b"".join(struct.pack("<HHI", *row) for row in entries)
+    try:
+        os.setxattr(output, "system.posix_acl_default", acl)
+    except OSError as error:
+        if error.errno in {errno.ENOTSUP, errno.EOPNOTSUPP, errno.EPERM, errno.EINVAL}:
+            pytest.skip("Local filesystem does not support this POSIX ACL fixture")
+        raise
+    reference = output / "reference"
+    reference.write_bytes(b"reference")
+    expected = os.getxattr(reference, "system.posix_acl_access")
+    reference.unlink()
+    with staged_release(output) as staging:
+        assert mode(staging) & 0o777 == 0o700
+        payload = staging / "payload"
+        payload.write_bytes(b"complete")
+        assert os.getxattr(payload, "system.posix_acl_access") == expected
+    assert os.getxattr(output, "system.posix_acl_default") == acl
+    assert os.getxattr(output / "payload", "system.posix_acl_access") == expected
+
+
+def test_existing_setgid_is_inherited_by_staged_children(tmp_path):
+    output = tmp_path / "release"
+    output.mkdir()
+    available = [group for group in os.getgroups() if group != output.stat().st_gid]
+    if available:
+        os.chown(output, -1, available[0])
+    output.chmod(0o2750)
+    reference = output / "reference"
+    reference.mkdir()
+    expected_group = reference.stat().st_gid
+    expected_setgid = reference.stat().st_mode & stat.S_ISGID
+    reference.rmdir()
+    assert expected_setgid
+    with staged_release(output) as staging:
+        assert mode(staging) & 0o777 == 0o700
+        child = staging / "child"
+        child.mkdir()
+        assert child.stat().st_gid == expected_group
+        assert child.stat().st_mode & stat.S_ISGID == expected_setgid
+    assert mode(output) == 0o2750

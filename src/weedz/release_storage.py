@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import stat
 import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -46,6 +47,7 @@ def staged_release(directory: Path, *, private: bool = True) -> Iterator[Path]:
     directory.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{directory.name}-pending-", dir=directory.parent))
     try:
+        _initialize_inheritance(staging, directory)
         yield staging
         _sync_tree(staging)
         require_empty(directory)
@@ -72,3 +74,17 @@ def _publication_metadata(staging: Path, directory: Path, *, private: bool) -> N
         template.mkdir()
         shutil.copystat(template, staging, follow_symlinks=False)
         template.rmdir()
+
+
+def _initialize_inheritance(staging: Path, directory: Path) -> None:
+    if not directory.exists():
+        return
+    # Initialize group/default ACL before any payload is created, so child files
+    # inherit exactly as they would inside the explicit empty destination.
+    if staging.stat().st_gid != directory.stat().st_gid:
+        os.chown(staging, -1, directory.stat().st_gid)
+    shutil.copystat(directory, staging, follow_symlinks=False)
+    inherited_setgid = directory.stat().st_mode & stat.S_ISGID
+    # chmod restricts the access ACL mask too; the default ACL stays intact for
+    # inheritance while neither group nor named users can traverse staging.
+    staging.chmod(0o700 | inherited_setgid)

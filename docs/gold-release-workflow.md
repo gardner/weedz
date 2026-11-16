@@ -145,6 +145,8 @@ and synced. A new legacy format-1 release retains normal mkdir/umask permissions
 a new format-2/history-bearing release or review snapshot defaults to0700. To
 explicitly share one, pre-create an empty output directory with the intended mode,
 group and ACL. Publication preserves those directory attributes when atomically
-replacing it. File permissions still follow the caller's umask; arrange an appropriate
+replacing it. Destination group/default ACL inheritance is initialized before
+writing children, while access to staging remains owner-only. File permissions
+still follow the caller's umask or that explicit default ACL; arrange an appropriate
 umask for readers of the files as well. The human-import package always remains
 owner-private and is not affected by release-sharing choices.
