@@ -21,7 +21,7 @@ from weedz.contract import (
     Task,
     require_task,
 )
-from weedz.gold import promote_detection, validate_detection
+from weedz.gold import ReviewPolicy, promote_detection, validate_detection
 from weedz.manifest import manifest_bytes, read_manifest, write_atomic, write_manifest
 from weedz.release_assets import collect_assets, verify_assets
 from weedz.release_evidence import checked_negatives
@@ -43,6 +43,13 @@ from weedz.release_models import (
     StatusChange,
     TestStatus,
     _check_advance,
+)
+from weedz.release_scope import (
+    Target,
+    TargetScope,
+    annotation_target,
+    release_target_scope,
+    task_annotations,
 )
 from weedz.release_storage import require_empty, staged_release
 from weedz.rights_profiles import require_rights
@@ -163,21 +170,13 @@ def _check_separation(
 
 
 def _evidence(task: Task, members: list[Sample]) -> list[Annotation]:
-    needed = TASK_SUPERVISION[task]
-    return [
-        note
-        for sample in members
-        for note in sample.annotations
-        if note.supervises() and note.supervision in needed
-    ]
+    return [note for sample in members for note in task_annotations(sample, task)]
 
 
 def _check_target(task: Task, kept: list[Sample]) -> None:
     """An absent label denies its named taxon/category; a binary task needs one target."""
     targets = {
-        ("taxon", note.taxon) if note.taxon is not None else ("category", note.category)
-        for note in _evidence(task, kept)
-        if note.taxon is not None or note.category is not None
+        target for note in _evidence(task, kept) if (target := annotation_target(note)) is not None
     }
     if task in BINARY_TASKS and len(targets) > 1:
         raise ValueError(f"{task} needs one target taxon or category, found {sorted(targets)}")
@@ -243,6 +242,14 @@ def _check_consent(samples: list[Sample]) -> None:
             raise ValueError(f"Refused {sample.id}: {reason}")
 
 
+def _review_targets(policy: ReviewPolicy | None) -> TargetScope | None:
+    if policy is None:
+        return None
+    targets: list[Target] = [("taxon", name) for name in policy.taxa]
+    targets.extend(("category", name) for name in policy.categories)
+    return tuple(sorted(targets))
+
+
 def build_release(
     samples: list[Sample], spec: ReleaseSpec, *, recorded_at: str
 ) -> tuple[Release, list[Sample]]:
@@ -264,14 +271,19 @@ def build_release(
     keys = list(dict.fromkeys([key, *separate]))
     _check_separation(kept, assigned, keys, _lineage_roots(samples))
     _check_target(spec.task, kept)
+    target_scope = release_target_scope(
+        spec.task, kept, targets=_review_targets(spec.review_policy)
+    )
     by_split = _by_split(kept, assigned, spec)
     snapshots: dict[str, set[str]] = {}
     for sample in kept:
         snapshots.setdefault(sample.source, set()).add(sample.snapshot)
     draft = Release(
         id="",
+        target_scope=target_scope,
         release_format=2
-        if any(s.schema_version == 2 for s in kept)
+        if target_scope
+        or any(s.schema_version == 2 for s in kept)
         or spec.review_policy is not None
         or spec.rights_profile is not None
         else 1,
@@ -351,6 +363,11 @@ def read_release(directory: Path) -> tuple[Release, list[Sample]]:
     samples = read_manifest(directory / release.manifest, release.manifest_sha256)
     if max(sample.schema_version for sample in samples) != release.contract_schema_version:
         raise ValueError("Release contract schema version differs from its actual samples")
+    if (
+        release_target_scope(release.task, samples, targets=_review_targets(release.review_policy))
+        != release.target_scope
+    ):
+        raise ValueError("Release target scope differs from its sample evidence")
     listed = sorted(sample for members in release.splits.values() for sample in members.samples)
     if sorted(sample.id for sample in samples) != listed:
         raise ValueError(f"Release {release.id} splits do not list its manifest's samples")

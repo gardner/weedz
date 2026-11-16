@@ -21,6 +21,7 @@ from pydantic import (
 
 from weedz.contract import Sha256, SourceName, Task, Text
 from weedz.gold import ReviewPolicy
+from weedz.release_scope import TargetScope
 from weedz.rights_profiles import RightsProfile
 
 SplitName = Literal["fit", "validation", "test"]
@@ -157,6 +158,15 @@ class Release(Frozen):
     split: SplitRule
     separate: list[str]
     contract_schema_version: int
+    target_scope: TargetScope | None = None
+
+    @field_validator("target_scope")
+    @classmethod
+    def canonical_scope(cls, value: TargetScope | None) -> TargetScope | None:
+        if value is not None and (not value or len(set(value)) != len(value)):
+            raise ValueError("A release target scope needs unique named targets")
+        return tuple(sorted(value)) if value is not None else None
+
     # Always the sibling file, so an edited record cannot point outside the release.
     manifest: Literal["samples.jsonl"] = MANIFEST
     manifest_sha256: Sha256
@@ -185,7 +195,13 @@ class Release(Frozen):
     @model_serializer(mode="wrap")
     def without_absent_policy(self, handler: SerializerFunctionWrapHandler) -> dict:
         data = handler(self)
-        for key in ("review_policy", "rights_profile", "metadata_licenses", "assets"):
+        for key in (
+            "review_policy",
+            "rights_profile",
+            "metadata_licenses",
+            "assets",
+            "target_scope",
+        ):
             if data.get(key) is None:
                 data.pop(key, None)
         return data
@@ -200,6 +216,7 @@ class Release(Frozen):
             self.rights_profile is not None,
             self.metadata_licenses is not None,
             self.assets is not None,
+            self.target_scope is not None,
             any(c.categories or c.checked_negatives for c in self.counts.values()),
         )
         if self.release_format == 1 and any(extensions):
