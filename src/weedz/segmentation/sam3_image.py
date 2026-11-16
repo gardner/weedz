@@ -245,19 +245,40 @@ class Sam3Image:
         metadata: dict[str, Any],
         cache: Path,
         context_factory: Callable[[], AbstractContextManager] | None = None,
+        *,
+        max_source_bytes: int | None = None,
     ) -> None:
+        from weedz.segmentation.ingress import proposal_metadata, source_budget
+
+        if "source_ingress" in metadata:
+            raise ValueError("Declare SAM3 source ingress with max_source_bytes, not raw metadata")
+        self._source_byte_limit = source_budget(max_source_bytes)
         self.processor, self.config, self.cache = processor, config, Path(cache)
         self.context_factory = context_factory or nullcontext
-        self.metadata = {**metadata, "profile": "sam3-image-concept-v1", "config": asdict(config)}
+        self.metadata = proposal_metadata(
+            {**metadata, "profile": "sam3-image-concept-v1", "config": asdict(config)},
+            max_source_bytes,
+        )
         self.identity = hashlib.sha256(
             json.dumps(self.metadata, sort_keys=True, allow_nan=False).encode()
         ).hexdigest()
         self.model_version = f"sam3-image-concept-v1:{self.identity}"
 
     @classmethod
-    def load(cls, checkpoint: Path, config: Sam3Config, cache: Path) -> "Sam3Image":
+    def load(
+        cls,
+        checkpoint: Path,
+        config: Sam3Config,
+        cache: Path,
+        *,
+        max_source_bytes: int | None = None,
+    ) -> "Sam3Image":
         import importlib
         import importlib.metadata
+
+        from weedz.segmentation.ingress import source_budget
+
+        source_budget(max_source_bytes)
 
         path = Path(checkpoint)
         actual = hashlib.sha256()
@@ -315,13 +336,17 @@ class Sam3Image:
             with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
                 yield
 
-        return cls(processor, config, metadata, cache, inference)
+        return cls(processor, config, metadata, cache, inference, max_source_bytes=max_source_bytes)
+
+    @property
+    def source_byte_limit(self) -> int:
+        return self._source_byte_limit
 
     def screen(self, path: Path) -> dict:
         with Path(path).open("rb") as stream:
-            encoded = stream.read(MAX_SOURCE_BYTES + 1)
+            encoded = stream.read(self.source_byte_limit + 1)
         source_sha = hashlib.sha256(encoded).hexdigest()
-        image = _decoded_image(encoded)
+        image = _decoded_image(encoded, self.source_byte_limit)
         prepared = image.copy()
         prepared.thumbnail((self.config.max_side, self.config.max_side), Image.Resampling.LANCZOS)
         artifacts = StageArtifacts(self.cache, f"sam3-{self.identity[:20]}")
