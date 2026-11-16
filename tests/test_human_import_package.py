@@ -40,7 +40,7 @@ def package(tmp_path, dimensions=(10, 10)):
     files = {
         "images/a.png": pixels,
         "tasks.json": json.dumps(
-            [{"meta": {"external_id": key}, "data": {"image": "/data/local-files/?d=corpus/a.png"}}]
+            [{"meta": {"external_id": key}, "data": {"image": "/data/local-files/?d=a.png"}}]
         ).encode(),
         "private/provenance.json": json.dumps(
             {"samples": [{"external_id": key, "sample": sample.model_dump(mode="json")}]}
@@ -77,3 +77,17 @@ def test_decoded_geometry_must_match_canonical_snapshot(tmp_path):
     checksum, _ = package(tmp_path, (11, 10))
     with pytest.raises(ValueError, match="geometry"):
         read_package(tmp_path, checksum)
+
+
+def test_task_image_reference_must_name_its_pinned_media(tmp_path):
+    checksum, _ = package(tmp_path)
+    manifest = json.loads((tmp_path / "manifest.json").read_bytes())
+    tasks = json.loads((tmp_path / "tasks.json").read_bytes())
+    tasks[0]["data"]["image"] = "/data/local-files/?d=other.png"
+    raw = json.dumps(tasks).encode()
+    (tmp_path / "tasks.json").write_bytes(raw)
+    manifest["files"]["tasks.json"] = hashlib.sha256(raw).hexdigest()
+    encoded = json.dumps(manifest).encode()
+    (tmp_path / "manifest.json").write_bytes(encoded)
+    with pytest.raises(ValueError, match="image"):
+        read_package(tmp_path, hashlib.sha256(encoded).hexdigest())

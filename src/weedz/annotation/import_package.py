@@ -5,6 +5,7 @@ import io
 import json
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+from urllib.parse import parse_qs, urlsplit
 
 from PIL import Image
 
@@ -93,7 +94,15 @@ def _tasks(files: dict[str, bytes], samples: dict[str, Sample]) -> dict[str, dic
         key = task["meta"]["external_id"]
         if key not in samples or key in tasks:
             raise ValueError("Task set differs from canonical sample identities")
+        _task_image(task, samples[key])
         tasks[key] = task
     if tasks.keys() != samples.keys():
         raise ValueError("Package is missing canonical tasks")
     return tasks
+
+
+def _task_image(task: dict, sample: Sample) -> None:
+    url = urlsplit(task["data"]["image"])
+    expected = sample.media.uri.removeprefix("images/")
+    if url.path != "/data/local-files/" or url.fragment or parse_qs(url.query) != {"d": [expected]}:
+        raise ValueError("Task image does not identify its canonical media")
