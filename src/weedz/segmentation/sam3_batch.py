@@ -25,8 +25,8 @@ from weedz.segmentation.sam3_image import Sam3Image, restore_concept_regions
 STATUSES = ("ok", "empty", "partial", "failed")
 
 
-def _validate_image(sample, root: Path) -> bytes:
-    raw = _image_bytes(sample, root)
+def _validate_image(sample, root: Path, maximum: int) -> bytes:
+    raw = _image_bytes(sample, root, maximum)
     with Image.open(io.BytesIO(raw)) as image:
         if (
             image.size != (sample.media.width, sample.media.height)
@@ -66,10 +66,11 @@ def _completed(output: Path, samples, root: Path, model: Sam3Image, identity: di
         ):
             raise ValueError("Closed SAM3 row identity differs")
         restore_concept_regions(
-            _validate_image(sample, root),
+            _validate_image(sample, root, model.source_byte_limit),
             stage["regions"],
             model.config,
             expected_sha256=sample.media.sha256,
+            max_source_bytes=model.source_byte_limit,
         )
     return previous
 
@@ -116,9 +117,9 @@ def propose_sam3_batch(
         raise ValueError("Use independent source/output namespaces")
     if any((parent / ".git").exists() for parent in (destination, *destination.parents)):
         raise ValueError("Keep canonical model outputs outside Git")
-    samples = _samples(raw, root)
+    samples = _samples(raw, root, model.source_byte_limit)
     for sample in samples:
-        _validate_image(sample, root)
+        _validate_image(sample, root, model.source_byte_limit)
     identity = {"manifest_sha256": manifest_sha, "model_version": model.model_version}
     _durable_namespace(destination)
     with (destination / ".batch.lock").open("a") as lock:

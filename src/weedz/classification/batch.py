@@ -16,7 +16,8 @@ from weedz.discovery import inference
 from weedz.discovery.inference import file_sha256, region_boxes, square_view
 from weedz.manifest import read_manifest, write_atomic
 from weedz.segmentation.artifacts import digest
-from weedz.segmentation.regions import MAX_SOURCE_BYTES, MAX_SOURCE_PIXELS
+from weedz.segmentation.ingress import source_budget
+from weedz.segmentation.regions import MAX_SOURCE_PIXELS
 
 Profile = Literal["frame", "tiles"]
 MAX_RESULT_BYTES = 128_000_000
@@ -79,10 +80,11 @@ def _source(sample: Sample, root: Path) -> Path:
     return path
 
 
-def _snapshot(sample: Sample, root: Path) -> bytes:
+def _snapshot(sample: Sample, root: Path, max_source_bytes: int | None = None) -> bytes:
+    maximum = source_budget(max_source_bytes)
     with _source(sample, root).open("rb") as stream:
-        encoded = stream.read(MAX_SOURCE_BYTES + 1)
-    if len(encoded) > MAX_SOURCE_BYTES:
+        encoded = stream.read(maximum + 1)
+    if len(encoded) > maximum:
         raise ValueError("Canonical image exceeds the source byte cap")
     if not sample.media.sha256 or hashlib.sha256(encoded).hexdigest() != sample.media.sha256:
         raise ValueError("Source media checksum mismatch")

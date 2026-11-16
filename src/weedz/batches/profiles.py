@@ -15,6 +15,7 @@ from weedz.annotation.semantic import (
     proposer_semantic,
 )
 from weedz.batches.contract import PROFILE
+from weedz.segmentation.ingress import ingress_identity
 
 Kind = Literal["proposals", "frame", "tiles", "regions"]
 
@@ -32,7 +33,7 @@ def sam_identity(metadata: dict) -> dict:
     config = metadata.get("proposal_config")
     if not isinstance(config, dict) or not CONFIG_FIELDS.issubset(config):
         raise ValueError("Incomplete registered proposal profile configuration")
-    return {**selected, "proposal_config": config}
+    return {**selected, "proposal_config": config, **ingress_identity(metadata)}
 
 
 def model_identity(metadata: dict, kind: Kind) -> dict:
@@ -40,6 +41,7 @@ def model_identity(metadata: dict, kind: Kind) -> dict:
         return sam_identity(metadata)
     selected = _fields(metadata, (*CLASSIFIER_FIELDS, "input_policy"))
     selected.update(classifier_numerics(metadata))
+    selected.update(ingress_identity(metadata))
     runtime = classifier_runtime(metadata)
     if runtime["status"] == "recorded":
         selected.update({key: runtime[key] for key in ("pillow", "torchvision")})

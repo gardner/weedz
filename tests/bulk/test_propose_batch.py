@@ -51,6 +51,36 @@ def source(tmp_path):
     return manifest, image
 
 
+@pytest.mark.parametrize(
+    "maximum", [True, False, 0, -1, 160_000_001, 1.5, float("inf"), float("nan")]
+)
+def test_explicit_source_byte_budget_is_a_bounded_positive_integer(tmp_path, maximum):
+    manifest, _ = source(tmp_path)
+    output = tmp_path / "refused"
+    with pytest.raises(ValueError, match="byte"):
+        propose_batch(manifest, manifest.parent, output, Proposer(), max_source_bytes=maximum)
+    assert not output.exists()
+
+
+def test_large_encoded_input_needs_explicit_budget_before_any_inference(tmp_path):
+    manifest, image = source(tmp_path)
+    image.write_bytes(image.read_bytes() + bytes(20_000_000))
+    record = json.loads(manifest.read_text())
+    record["media"]["sha256"] = hashlib.sha256(image.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(record) + "\n")
+    proposer = Proposer()
+    with pytest.raises(ValueError, match="cap"):
+        propose_batch(manifest, manifest.parent, tmp_path / "default", proposer)
+    assert proposer.calls == 0
+    result = propose_batch(
+        manifest, manifest.parent, tmp_path / "explicit", proposer, max_source_bytes=160_000_000
+    )
+    assert result["counts"] == {"ok": 1, "empty": 0, "failed": 0}
+    assert proposer.calls == 1
+    row = json.loads((tmp_path / "explicit/proposals.jsonl").read_text())
+    assert row["segmentation"]["provenance"]["source_ingress"]["max_source_bytes"] == 160_000_000
+
+
 def test_real_geometry_closed_hashes_and_completed_retry(tmp_path):
     manifest, _ = source(tmp_path)
     proposer = Proposer()
@@ -58,6 +88,10 @@ def test_real_geometry_closed_hashes_and_completed_retry(tmp_path):
     first = propose_batch(manifest, manifest.parent, output, proposer)
     second = propose_batch(manifest, manifest.parent, output, proposer)
     assert proposer.calls == 1
+    assert first["model_version"] == (
+        "canonical-proposals-batch-v1:"
+        "2369ca58cf9b47fa0d23c2d49f622e956a13016351b0e1795d60c3ebe0c0dc6e"
+    )
     assert first == second == json.loads((output / "ready.json").read_text())
     assert first["manifest_sha256"] == hashlib.sha256(manifest.read_bytes()).hexdigest()
     assert (
@@ -68,6 +102,21 @@ def test_real_geometry_closed_hashes_and_completed_retry(tmp_path):
     assert row["sample_id"] == "test:plant"
     assert row["source_sample"]["annotations"] == []
     assert row["segmentation"]["regions"][0]["box"] == [0, 0, 64, 64]
+    assert "source_ingress" not in row["segmentation"]["provenance"]
+
+
+def test_explicit_ingress_policy_cannot_alias_default_or_changed_budget(tmp_path):
+    manifest, _ = source(tmp_path)
+    proposer = Proposer()
+    first = propose_batch(manifest, manifest.parent, tmp_path / "default", proposer)
+    larger = propose_batch(
+        manifest, manifest.parent, tmp_path / "explicit", proposer, max_source_bytes=160_000_000
+    )
+    assert first["model_version"] != larger["model_version"]
+    with pytest.raises(ValueError, match="provenance"):
+        propose_batch(
+            manifest, manifest.parent, tmp_path / "explicit", proposer, max_source_bytes=80_000_000
+        )
 
 
 def test_changed_manifest_or_pixels_cannot_inherit_completion(tmp_path):
