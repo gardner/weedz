@@ -21,7 +21,7 @@ from weedz.contract import (
     Task,
     require_task,
 )
-from weedz.gold import promote_detection
+from weedz.gold import promote_detection, validate_detection
 from weedz.manifest import manifest_bytes, read_manifest, write_atomic, write_manifest
 from weedz.release_assets import collect_assets, verify_assets
 from weedz.release_evidence import checked_negatives
@@ -358,7 +358,21 @@ def read_release(directory: Path) -> tuple[Release, list[Sample]]:
         if collect_assets(samples) != release.assets:
             raise ValueError("Release assets differ from its manifest/history references")
         verify_assets(directory, release.assets)
+    _verify_review_policy(release, samples)
     return release, samples
+
+
+def _verify_review_policy(release: Release, samples: list[Sample]) -> None:
+    if release.rights_profile is not None:
+        for sample in samples:
+            require_rights(sample, release.rights_profile)
+    if release.review_policy is None:
+        return
+    if release.assets is None:
+        raise ValueError("A gold release must close its pinned assets")
+    for sample in samples:
+        require_task(sample, "detection")
+        validate_detection(sample, release.review_policy)
 
 
 def record_test_status(

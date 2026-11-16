@@ -133,3 +133,20 @@ def test_policy_and_history_tampering_are_detected_on_read(tmp_path: Path) -> No
     (directory / "release.json").write_text(json.dumps(value))
     with pytest.raises(ValueError, match="content"):
         read_release(directory)
+
+
+def test_reading_rechecks_evidence_against_even_a_self_consistent_policy_record(
+    tmp_path: Path,
+) -> None:
+    from weedz.release import Release
+
+    source, directory = tmp_path / "source", tmp_path / "release"
+    original = write_release(directory, materialize(source), spec(), assets_root=source)
+    changed = Release.model_validate(
+        original.model_dump(mode="json")
+        | {"review_policy": policy(min_reviewers=2).model_dump(mode="json")}
+    )
+    changed = changed.model_copy(update={"id": changed.content_id()})
+    (directory / "release.json").write_text(changed.model_dump_json())
+    with pytest.raises(ValueError, match="reviewer"):
+        read_release(directory)

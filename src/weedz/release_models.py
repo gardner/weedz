@@ -204,6 +204,10 @@ class Release(Frozen):
         )
         if self.release_format == 1 and any(extensions):
             raise ValueError("Release format 1 cannot contain version 2 extensions")
+        if self.review_policy is not None and (
+            self.task != "detection" or self.rights_profile is None
+        ):
+            raise ValueError("A gold policy needs detection and an explicit rights profile")
         for before, after in zip(self.test_history, self.test_history[1:], strict=False):
             _check_advance(before.status, after.status)
         if self.test_history[-1].status != self.test_status:
