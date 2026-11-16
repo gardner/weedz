@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 
 from weedz.annotation.import_claims import Claims
+from weedz.annotation.import_records import HumanRecord
 from weedz.contract import Annotation, Completeness, ReviewEvent, Sample
 
 
@@ -28,7 +29,7 @@ def _annotations(claims: Claims, categories: set[str]) -> tuple[list[Annotation]
                     mask_sha256=mask_sha,
                     origin="reviewer",
                     review=claims.decision.review,
-                    author=claims.record.actor,
+                    author=claims.record.author,
                     reviewers=[claims.record.actor],
                     recorded_at=claims.record.recorded_at,
                 )
@@ -37,11 +38,11 @@ def _annotations(claims: Claims, categories: set[str]) -> tuple[list[Annotation]
     return annotations, masks
 
 
-def _previous(sample: Sample, claims: Claims) -> ReviewEvent | None:
+def _previous(sample: Sample, record: HumanRecord) -> ReviewEvent | None:
     prior = [
         event
         for event in sample.review_history
-        if event.payload.get("annotation_revision_key") == claims.record.key
+        if event.payload.get("annotation_revision_key") == record.key
     ]
     return prior[-1] if prior else None
 
@@ -55,7 +56,7 @@ def apply_claims(
         if existing.payload.get("revision_sha256") != record.sha256:
             raise ValueError("Conflicting bytes for an existing human revision")
         return sample, {}
-    prior = _previous(sample, claims)
+    prior = _previous(sample, record)
     if prior and datetime.fromisoformat(
         record.recorded_at.replace("Z", "+00:00")
     ) <= datetime.fromisoformat(str(prior.recorded_at).replace("Z", "+00:00")):
@@ -93,6 +94,8 @@ def apply_claims(
                 "annotation_revision_key": record.key,
                 "revision_sha256": record.sha256,
                 "created_at": record.created_at,
+                "actor_field": record.actor_field,
+                "annotation_author": record.author,
                 "review": decision.review,
                 "completeness": coverage.model_dump(mode="json"),
                 "annotations": [a.model_dump(mode="json") for a in annotations],

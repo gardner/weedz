@@ -95,3 +95,21 @@ in the new receipt and must remain selected on later imports. A source package
 with an explicitly recorded profile cannot silently change profiles. Historical
 packages without a profile still require every source licence to pass the selected
 policy; an explicit noncommercial choice is needed for legacy NC metadata too.
+
+A previous import is bound to both the same project namespace and numeric project
+ID. Reusing a namespace for another project or renaming it mid-chain is refused;
+it cannot manufacture another agreeing reviewer or replace another project's claims.
+
+An explicit, attributable cancelled revision of an annotation already in the
+history retracts only that annotation's standing regions and completeness. It
+retains the old events/assets and appends a retraction with its timestamp,
+revision digest and `supersedes` link. Cancellation does not create a negative.
+Never-imported skipped rows and missing rows in a partial export do not retract
+anything. Repeated cancellation is idempotent; reopening needs a newer completed
+revision with explicit review controls.
+
+When present, `updated_by` identifies the exported revision account; `completed_by`
+remains the original annotation author. If the export omits `updated_by`, history
+explicitly attributes the account to `completed_by` and does not claim that it
+independently identifies the editor/canceller. Account fields are source attribution,
+not proof of a person's identity, independent expert review or authorization.

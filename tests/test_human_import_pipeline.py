@@ -249,3 +249,83 @@ def test_recorded_noncommercial_scope_cannot_disappear_when_licences_are_public(
     source = replace(request, package=output, package_sha256=checksum)
     with pytest.raises(ValueError, match="Source.*profile"):
         import_reviews(source, tmp_path / "source-downgrade")
+
+
+def test_previous_import_cannot_change_project_namespace(tmp_path):
+    from dataclasses import replace
+
+    request, _, _ = inputs(tmp_path)
+    output = tmp_path / "first"
+    import_reviews(request, output)
+    checksum = hashlib.sha256((output / "manifest.json").read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="project"):
+        import_reviews(
+            replace(request, namespace="renamed-project"),
+            tmp_path / "duplicate",
+            previous=output,
+            previous_sha256=checksum,
+        )
+
+
+def test_cancelled_later_revision_retracts_its_claims_without_creating_negative(tmp_path):
+    from dataclasses import replace
+
+    request, task, _ = inputs(tmp_path)
+    output = tmp_path / "first"
+    import_reviews(request, output)
+    checksum = hashlib.sha256((output / "manifest.json").read_bytes()).hexdigest()
+    task["annotations"][0].update(was_cancelled=True, updated_at="2026-11-16T02:00:00Z", result=[])
+    request.export.write_text(json.dumps([task]))
+    request = replace(
+        request, export_sha256=hashlib.sha256(request.export.read_bytes()).hexdigest()
+    )
+    retracted = tmp_path / "retracted"
+    receipt = import_reviews(request, retracted, previous=output, previous_sha256=checksum)
+    sample = read_manifest(retracted / "samples.jsonl")[0]
+    assert sample.annotations == () and sample.completeness == ()
+    assert len(sample.review_history) == 2
+    assert sample.review_history[-1].action == "retracted_human_annotation"
+    assert sample.review_history[-1].supersedes == sample.review_history[0].id
+    assert receipt["imported_revisions"] == 1
+    repeated = tmp_path / "repeated"
+    import_reviews(
+        request,
+        repeated,
+        previous=retracted,
+        previous_sha256=hashlib.sha256((retracted / "manifest.json").read_bytes()).hexdigest(),
+    )
+    assert (repeated / "samples.jsonl").read_bytes() == (retracted / "samples.jsonl").read_bytes()
+
+
+def test_previous_import_cannot_alias_a_different_numeric_project(tmp_path):
+    from dataclasses import replace
+
+    request, task, _ = inputs(tmp_path)
+    output = tmp_path / "first"
+    import_reviews(request, output)
+    checksum = hashlib.sha256((output / "manifest.json").read_bytes()).hexdigest()
+    task["project"] = 6
+    request.export.write_text(json.dumps([task]))
+    request = replace(
+        request, project_id=6, export_sha256=hashlib.sha256(request.export.read_bytes()).hexdigest()
+    )
+    with pytest.raises(ValueError, match="project"):
+        import_reviews(request, tmp_path / "aliased", previous=output, previous_sha256=checksum)
+
+
+def test_missing_annotation_is_not_an_implicit_withdrawal(tmp_path):
+    from dataclasses import replace
+
+    request, task, _ = inputs(tmp_path)
+    output = tmp_path / "first"
+    import_reviews(request, output)
+    checksum = hashlib.sha256((output / "manifest.json").read_bytes()).hexdigest()
+    task["annotations"] = []
+    request.export.write_text(json.dumps([task]))
+    request = replace(
+        request, export_sha256=hashlib.sha256(request.export.read_bytes()).hexdigest()
+    )
+    repeated = tmp_path / "partial-export"
+    receipt = import_reviews(request, repeated, previous=output, previous_sha256=checksum)
+    assert receipt["imported_revisions"] == 0
+    assert (output / "samples.jsonl").read_bytes() == (repeated / "samples.jsonl").read_bytes()

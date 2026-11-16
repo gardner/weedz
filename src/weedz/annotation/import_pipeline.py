@@ -10,6 +10,7 @@ from weedz.annotation.import_apply import apply_claims
 from weedz.annotation.import_claims import parse_claims
 from weedz.annotation.import_package import Package, pinned_bytes, read_package
 from weedz.annotation.import_records import completed_records, positive_id
+from weedz.annotation.import_retractions import retract
 from weedz.annotation.import_write import json_bytes, write_import
 from weedz.contract import Sample
 from weedz.manifest import manifest_bytes
@@ -47,14 +48,14 @@ def _prior(
         raise ValueError("Previous import requires its manifest SHA")
     prior = read_package(previous, checksum)
     receipt = json.loads(pinned_bytes(previous / "manifest.json", checksum))
+    if (receipt.get("project_namespace"), receipt.get("project_id")) != (
+        request.namespace,
+        request.project_id,
+    ):
+        raise ValueError("Previous import came from a different source project")
     if receipt.get("source_package_sha256") != request.package_sha256:
         raise ValueError("Previous import has a different source package")
-    if prior.samples.keys() != base.samples.keys():
-        raise ValueError("Previous sample set differs")
-    ignored = {"annotations", "completeness", "review_history"}
-    for key, sample in base.samples.items():
-        if sample.model_dump(exclude=ignored) != prior.samples[key].model_dump(exclude=ignored):
-            raise ValueError("Previous import changed original sample identity or rights")
+    _same_samples(base, prior)
     return prior
 
 
@@ -97,7 +98,15 @@ def _apply(
         if sample.media.width is None or sample.media.height is None:
             raise ValueError("Human review needs original image geometry")
         size = (sample.media.width, sample.media.height)
-        for record in completed_records(task, request.namespace):
+        known = frozenset(
+            str(event.payload.get("annotation_revision_key")) for event in sample.review_history
+        )
+        for record in completed_records(task, request.namespace, known_cancelled_keys=known):
+            before = len(sample.review_history)
+            if record.cancelled:
+                sample = retract(sample, record, evidence)
+                revisions += len(sample.review_history) - before
+                continue
             claims = parse_claims(
                 record,
                 size,
@@ -175,3 +184,12 @@ def _admit(request: ImportInputs, base: Package, prior: Package) -> None:
         raise ValueError("Source package rights profile must be preserved")
     if prior is not base and (prior.rights_profile or PUBLIC_PROFILE) != request.rights_profile:
         raise ValueError("Previous import rights profile must be preserved")
+
+
+def _same_samples(base: Package, prior: Package) -> None:
+    if prior.samples.keys() != base.samples.keys():
+        raise ValueError("Previous sample set differs")
+    ignored = {"annotations", "completeness", "review_history"}
+    for key, sample in base.samples.items():
+        if sample.model_dump(exclude=ignored) != prior.samples[key].model_dump(exclude=ignored):
+            raise ValueError("Previous import changed original sample identity or rights")

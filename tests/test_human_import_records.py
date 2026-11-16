@@ -51,3 +51,21 @@ def test_revision_timestamp_cannot_precede_creation():
     row = annotation() | {"updated_at": "2026-11-15T01:00:00Z"}
     with pytest.raises(ValueError, match="timestamp"):
         completed_records({"id": 1, "annotations": [row]}, "project-1")
+
+
+def test_actual_revision_actor_is_separate_from_original_annotation_author():
+    row = annotation() | {"updated_by": {"id": 9}}
+    record = completed_records({"id": 1, "annotations": [row]}, "project-1")[0]
+    assert record.author == "label-studio:project-1:account:7"
+    assert record.actor == "label-studio:project-1:account:9"
+    assert record.actor_field == "updated_by"
+
+
+def test_revision_digest_binds_both_actor_and_author_when_updated_by_is_present():
+    row = annotation() | {"updated_by": 9}
+    first = completed_records({"id": 1, "annotations": [row]}, "project-1")[0]
+    changed = completed_records({"id": 1, "annotations": [row | {"completed_by": 8}]}, "project-1")[
+        0
+    ]
+    assert first.revision == changed.revision and first.actor == changed.actor
+    assert first.sha256 != changed.sha256

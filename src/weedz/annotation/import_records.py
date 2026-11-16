@@ -41,15 +41,17 @@ class HumanRecord:
     created_at: str
     results: list[dict]
     sha256: str
+    author: str
+    actor_field: str
+    cancelled: bool = False
 
 
 def _record(row: dict, task_id: int, namespace: str) -> HumanRecord:
-    if row.get("was_cancelled") is not False or row.get("task") != task_id:
+    if type(row.get("was_cancelled")) is not bool or row.get("task") != task_id:
         raise ValueError("Human annotation must be completed for the exact task")
-    author = row.get("completed_by")
-    if isinstance(author, dict):
-        author = author.get("id")
-    author_id = positive_id(author)
+    author = _account(row.get("completed_by"), namespace)
+    actor_field = "updated_by" if row.get("updated_by") is not None else "completed_by"
+    actor = _account(row.get(actor_field), namespace)
     key = f"label-studio:{namespace}:task:{task_id}:annotation:{positive_id(row.get('id'))}"
     recorded = timestamp(row.get("updated_at"))
     created = timestamp(row.get("created_at"))
@@ -60,7 +62,16 @@ def _record(row: dict, task_id: int, namespace: str) -> HumanRecord:
     results = row.get("result")
     if not isinstance(results, list) or any(not isinstance(item, dict) for item in results):
         raise ValueError("Completed annotation requires result objects")
-    actor = f"label-studio:{namespace}:account:{author_id}"
+    state: dict[str, object] = {
+        "actor": actor,
+        "created_at": created,
+        "updated_at": recorded,
+        "result": results,
+    }
+    if actor_field == "updated_by":
+        state.update(annotation_author=author, actor_field=actor_field)
+    if row["was_cancelled"]:
+        state["was_cancelled"] = True
     return HumanRecord(
         key,
         f"{key}:{recorded}",
@@ -68,11 +79,16 @@ def _record(row: dict, task_id: int, namespace: str) -> HumanRecord:
         recorded,
         created,
         results,
-        digest({"actor": actor, "created_at": created, "updated_at": recorded, "result": results}),
+        digest(state),
+        author,
+        actor_field,
+        row["was_cancelled"],
     )
 
 
-def completed_records(task: dict, namespace: str) -> list[HumanRecord]:
+def completed_records(
+    task: dict, namespace: str, *, known_cancelled_keys: frozenset[str] = frozenset()
+) -> list[HumanRecord]:
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}", namespace):
         raise ValueError("Use a stable source project namespace")
     task_id = positive_id(task.get("id"))
@@ -80,8 +96,22 @@ def completed_records(task: dict, namespace: str) -> list[HumanRecord]:
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         raise ValueError("Task annotations must be objects")
     records = [
-        _record(row, task_id, namespace) for row in rows if row.get("was_cancelled") is not True
+        _record(row, task_id, namespace)
+        for row in rows
+        if _included(row, task_id, namespace, known_cancelled_keys)
     ]
     if len({record.key for record in records}) != len(records):
         raise ValueError("Duplicate annotation identities in export")
     return records
+
+
+def _account(value: object, namespace: str) -> str:
+    if isinstance(value, dict):
+        value = value.get("id")
+    return f"label-studio:{namespace}:account:{positive_id(value)}"
+
+
+def _included(row: dict, task_id: int, namespace: str, known: frozenset[str]) -> bool:
+    if row.get("was_cancelled") is not True:
+        return True
+    return f"label-studio:{namespace}:task:{task_id}:annotation:{row.get('id')}" in known
