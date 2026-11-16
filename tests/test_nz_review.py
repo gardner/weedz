@@ -62,3 +62,22 @@ def test_upright_review_image_has_context_not_gold_and_keeps_actual_licence_code
     assert sample.groups["observer"] == "inaturalist:9"
     with Image.open(tmp_path / sample.media.uri) as upright:
         assert upright.size == (2, 3) and not upright.getexif()
+
+
+def test_download_to_conversion_bytes_are_joined_before_source_attribution(tmp_path, monkeypatch):
+    import pytest
+
+    from weedz.discovery.records import Photo
+    from weedz.discovery.source import Inaturalist
+    from weedz.labelled.nz_review import downloaded_bytes
+    from weedz.labelled.publication import digest
+
+    (tmp_path / "source.jpg").write_bytes(b"changed after verified acquisition")
+    photo = Photo.model_construct(image_path="source.jpg", sha256=digest(b"acquired bytes"))
+    client = Inaturalist(tmp_path, allowed_photo_licences=frozenset({"cc0"}))
+    monkeypatch.setattr(client, "image", lambda _: photo)
+    try:
+        with pytest.raises(ValueError, match="source bytes changed"):
+            downloaded_bytes(client, photo)
+    finally:
+        client.close()

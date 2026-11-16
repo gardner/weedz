@@ -7,7 +7,7 @@ from pathlib import Path
 from weedz.contract import Annotation, Completeness, Media, Rights, Sample
 from weedz.labelled.archive import SourceArchive
 from weedz.labelled.images import prepare_image
-from weedz.labelled.publication import close_batch, digest, json_bytes, output_namespace, publish
+from weedz.labelled.publication import close_batch, digest, output_namespace, publish
 
 DOI = "https://doi.org/10.17632/8kjcztbjz2.2"
 LICENCE = "https://creativecommons.org/licenses/by/4.0/"
@@ -67,9 +67,33 @@ def source_boxes(image: dict, rows: list[dict], categories: list[dict]) -> tuple
     return tuple(result)
 
 
+def source_rights(native: dict, image: dict) -> Rights:
+    metadata = native["info"]["metadata"]
+    licences = {row["id"]: row["url"] for row in native["licenses"]}
+    if metadata["license"] != LICENCE or licences.get(image["license"]) != LICENCE:
+        raise ValueError("Image and metadata must separately match published CC BY4 rights")
+    creators = ", ".join(row["name"] for row in metadata["creator"])
+    if not creators:
+        raise ValueError("Publisher creator attribution is missing")
+    return Rights(
+        media_license="CC-BY-4.0",
+        metadata_license="CC-BY-4.0",
+        creator=creators,
+        attribution=f"{creators}; ImageWeeds v2; {DOI}; CC BY4",
+        license_source=DOI,
+    )
+
+
 def _sample(
-    source: SourceArchive, image: dict, native: dict, crop: str, output: Path, image_format: str
+    source: SourceArchive,
+    image: dict,
+    native: dict,
+    crop: str,
+    output: Path,
+    image_format: str,
+    native_sha256: str,
 ) -> Sample:
+    rights = source_rights(native, image)
     name = image["file_name"]
     raw = source.read(f"images/{name}", maximum_bytes=20_000_000)
     prepared = prepare_image(raw, (image["width"], image["height"]), image_format)
@@ -100,12 +124,7 @@ def _sample(
         source="imageweeds",
         source_id=f"{crop}/{name}",
         snapshot=f"{uuid}:v2:{archive_sha}",
-        rights=Rights(
-            media_license="CC-BY-4.0",
-            metadata_license="CC-BY-4.0",
-            attribution=f"Rai et al., ImageWeeds v2, {DOI}",
-            license_source=DOI,
-        ),
+        rights=rights,
         media=Media(
             uri=uri,
             sha256=digest(prepared.encoded),
@@ -132,7 +151,7 @@ def _sample(
             "source_frame_count": str(prepared.source_frames),
             "native_agcontext_id": str(image["agcontext_id"]),
             "annotation_granularity": "publisher manual box; individual identity unverified",
-            "native_annotations_sha256": digest(json_bytes(native)),
+            "native_annotations_sha256": native_sha256,
             "decoded_pixel_sha256": prepared.pixel_sha256,
             "original_encoded_sha256": digest(raw),
             "format_profile": image_format,
@@ -173,7 +192,7 @@ def prepare(
         images = sorted(native["images"], key=lambda image: image["id"])[:limit]
         excluded = quarantine(native)
         samples = [
-            _sample(source, image, native, crop, output, image_format)
+            _sample(source, image, native, crop, output, image_format, digest(raw))
             for image in images
             if image["file_name"] not in excluded
         ]

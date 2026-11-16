@@ -20,6 +20,10 @@ def publish(path: Path, raw: bytes) -> None:
     if any(part.is_symlink() for part in (path, *path.parents)):
         raise ValueError("Output contains a symlink")
     durable_mkdir(path.parent)
+    for directory in (path.parent, *path.parent.parents):
+        sync_directory(directory)
+        if not os.access(directory.parent, os.W_OK, effective_ids=True):
+            break
     with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as stream:
         temporary = Path(stream.name)
         try:

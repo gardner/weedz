@@ -7,7 +7,9 @@ import zipfile
 from pathlib import Path
 
 from weedz.labelled import cwfid, imageweeds, nz_review
+from weedz.labelled.audit import audit
 from weedz.labelled.images import FORMATS
+from weedz.labelled.publication import digest, json_bytes, output_namespace, publish
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -37,15 +39,26 @@ def main(argv: list[str] | None = None) -> None:
         default=[],
         help="Prior local canonical JSONL or source provenance JSON; repeatable",
     )
+    command = commands.add_parser("audit")
+    command.add_argument("--manifest", type=Path, action="append", required=True)
+    command.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         sha = _prepare(args)
     except (OSError, ValueError, tarfile.TarError, zipfile.BadZipFile) as error:
         parser.exit(1, f"labelled-batches: {error}\n")
-    print(json.dumps({"output": str(args.output.resolve()), "manifest_sha256": sha}))
+    key = "report_sha256" if args.source == "audit" else "manifest_sha256"
+    print(json.dumps({"output": str(args.output.resolve()), key: sha}))
 
 
 def _prepare(args: argparse.Namespace) -> str:
+    if args.source == "audit":
+        output = args.output
+        for manifest in args.manifest:
+            output = output_namespace(output, manifest.parent)
+        raw = json_bytes(audit(tuple(args.manifest)))
+        publish(output, raw)
+        return digest(raw)
     if args.source == "cwfid":
         return cwfid.prepare(args.archive, args.output, limit=args.limit)
     if args.source == "imageweeds":

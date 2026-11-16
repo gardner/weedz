@@ -44,3 +44,31 @@ def test_source_overlap_and_git_output_refused_before_creation(tmp_path):
     with pytest.raises(ValueError, match="outside Git"):
         output_namespace(Path(__file__).resolve().parent / "generated", source)
     assert not (source / "converted").exists()
+
+
+def test_retry_reseals_existing_ancestors_after_a_failed_directory_barrier(tmp_path, monkeypatch):
+    import weedz.labelled.publication as module
+
+    target = tmp_path / "nested" / "images" / "one.png"
+    original = module.sync_directory
+    failed = False
+
+    def fail_once(path):
+        nonlocal failed
+        if path == target.parent and not failed:
+            failed = True
+            raise OSError("directory barrier interrupted")
+        original(path)
+
+    monkeypatch.setattr(module, "sync_directory", fail_once)
+    with pytest.raises(OSError, match="barrier"):
+        publish(target, b"complete")
+    synced = []
+
+    def observe(path):
+        synced.append(path)
+        original(path)
+
+    monkeypatch.setattr(module, "sync_directory", observe)
+    publish(target, b"complete")
+    assert target.parent in synced and target.parent.parent in synced

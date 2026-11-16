@@ -40,3 +40,20 @@ def test_invalid_publisher_box_quarantines_whole_image_without_clipping():
         "one.jpg": "Source box outside image bounds; entire image withheld, no clipping"
     }
     assert native["annotations"][0]["bbox"] == [9, 0, 2, 2]
+
+
+def test_publisher_creator_and_separate_image_metadata_rights_are_preserved():
+    from weedz.labelled.imageweeds import LICENCE, source_rights
+
+    native = {
+        "info": {"metadata": {"license": LICENCE, "creator": [{"name": "Nitin Rai"}]}},
+        "licenses": [{"id": 0, "url": LICENCE}, {"id": 1, "url": "all rights reserved"}],
+    }
+    rights = source_rights(native, {"license": 0})
+    assert rights.creator == "Nitin Rai" and "Nitin Rai" in rights.attribution
+    assert rights.media_license == rights.metadata_license == "CC-BY-4.0"
+    with pytest.raises(ValueError, match="separately"):
+        source_rights(native, {"license": 1})
+    native["info"]["metadata"]["license"] = "unknown"
+    with pytest.raises(ValueError, match="separately"):
+        source_rights(native, {"license": 0})
