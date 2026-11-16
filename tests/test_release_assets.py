@@ -169,3 +169,68 @@ def test_materialized_release_assets_stay_outside_git(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="outside Git"):
         releases.write_release(repository / "release", samples, spec(), assets_root=source)
     assert not (repository / "release").exists()
+
+
+def claim_only_history(source: Path, samples: list[Sample]):
+    from weedz.contract import Annotation, revise_sample
+
+    assert samples[0].media.sha256 is not None
+    mask = source / "masks" / "old-targeted-claim.png"
+    mask.parent.mkdir(exist_ok=True)
+    Image.new("L", (40, 30), 255).save(mask)
+    sha = hashlib.sha256(mask.read_bytes()).hexdigest()
+    note = Annotation(
+        id="old:targeted-mask",
+        supervision="dense_mask",
+        taxon="Ulex europaeus",
+        label="present",
+        origin="reviewer",
+        review="accepted",
+        author="reviewer:old",
+        mask_uri="masks/old-targeted-claim.png",
+        mask_sha256=sha,
+    )
+    event = ReviewEvent(
+        id="old:targeted-acceptance",
+        sample_id=samples[0].id,
+        media_sha256=samples[0].media.sha256,
+        origin="reviewer",
+        actor="reviewer:old",
+        recorded_at=WHEN,
+        action="accepted",
+        dimension="identity",
+        annotation_id=note.id,
+        payload={"claim": note.model_dump(mode="json")},
+    )
+    samples[0] = revise_sample(samples[0], review_history=[*samples[0].review_history, event])
+    assert all(annotation.id != note.id for annotation in samples[0].annotations)
+    return mask, event, sha
+
+
+def test_removed_mask_referenced_only_by_targeted_claim_is_closed(tmp_path: Path):
+    source, output = tmp_path / "source", tmp_path / "release"
+    samples = materialize(source)
+    _, event, sha = claim_only_history(source, samples)
+    record = releases.write_release(output, samples, spec(), assets_root=source, recorded_at=WHEN)
+    assert record.assets is not None
+    assert record.assets["masks/old-targeted-claim.png"] == sha
+    assert hashlib.sha256((output / "masks/old-targeted-claim.png").read_bytes()).hexdigest() == sha
+    source.rename(tmp_path / "removed-source")
+    loaded, frozen = releases.read_release(output)
+    assert loaded == record and frozen[0].review_history[-1] == event
+
+
+@pytest.mark.parametrize("failure", ["missing", "corrupt"])
+def test_invalid_targeted_historical_mask_refuses_atomic_release(tmp_path: Path, failure: str):
+    source, output = tmp_path / "source", tmp_path / "release"
+    samples = materialize(source)
+    mask, _, _ = claim_only_history(source, samples)
+    if failure == "missing":
+        mask.unlink()
+    else:
+        mask.write_bytes(b"corrupt historical mask")
+    error = FileNotFoundError if failure == "missing" else ValueError
+    with pytest.raises(error):
+        releases.write_release(output, samples, spec(), assets_root=source, recorded_at=WHEN)
+    assert not output.exists()
+    assert not list(tmp_path.glob(".release-pending-*"))

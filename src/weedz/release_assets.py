@@ -46,7 +46,10 @@ def _add(assets: dict[str, str], uri: object, sha: object) -> None:
 def _historical_masks(payload: Mapping[str, FrozenJson], assets: dict[str, str]) -> None:
     rows = payload.get("annotations")
     if not isinstance(rows, tuple):
-        return
+        rows = ()
+    claim = payload.get("claim")
+    if isinstance(claim, Mapping):
+        rows = (*rows, claim)
     for row in rows:
         if isinstance(row, Mapping) and row.get("mask_uri") is not None:
             _add(assets, row["mask_uri"], row.get("mask_sha256"))
