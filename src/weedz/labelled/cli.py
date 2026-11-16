@@ -7,6 +7,7 @@ import zipfile
 from pathlib import Path
 
 from weedz.labelled import cwfid, imageweeds, nz_review
+from weedz.labelled.images import FORMATS
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -19,6 +20,7 @@ def main(argv: list[str] | None = None) -> None:
         command.add_argument("--limit", type=int, required=True)
         if name == "imageweeds":
             command.add_argument("--crop", choices=tuple(imageweeds.PROFILES), required=True)
+            command.add_argument("--format", choices=FORMATS, default="lossless-rgb-png")
     command = commands.add_parser("nz-review")
     command.add_argument(
         "--prior-root",
@@ -40,5 +42,7 @@ def _prepare(args: argparse.Namespace) -> str:
     if args.source == "cwfid":
         return cwfid.prepare(args.archive, args.output, limit=args.limit)
     if args.source == "imageweeds":
-        return imageweeds.prepare(args.archive, args.output, crop=args.crop, limit=args.limit)
+        return imageweeds.prepare(
+            args.archive, args.output, crop=args.crop, limit=args.limit, image_format=args.format
+        )
     return nz_review.prepare(args.prior_root, args.output, per_stratum=args.per_stratum)

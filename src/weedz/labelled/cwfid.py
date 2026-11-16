@@ -9,6 +9,7 @@ from PIL import Image
 
 from weedz.contract import Annotation, Completeness, Media, Rights, Sample
 from weedz.labelled.archive import SourceArchive
+from weedz.labelled.pixels import pixel_sha256
 from weedz.labelled.publication import close_batch, digest, output_namespace, publish
 
 REVISION = "36290d0912a032f0bd1a5678ed55457ddafde217"
@@ -129,7 +130,7 @@ def _sample(source: SourceArchive, prefix: str, number: int, output: Path, split
             "assessed_mask_sha256": digest(png(derived["assessed"])),
             "assessment_rule": "crop/weed coloured pixels only; unlabelled vegetation and "
             "algorithmically inferred background excluded",
-            "decoded_pixel_sha256": digest(clean.tobytes()),
+            "decoded_pixel_sha256": pixel_sha256(clean),
             "source_url": SOURCE,
             "release_scope": "private non-commercial research; not public/LS admission",
         },

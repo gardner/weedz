@@ -9,6 +9,7 @@ from PIL import Image, ImageOps
 from weedz.contract import Geography, Media, Rights, Sample
 from weedz.discovery.source import Inaturalist, photo_from_observation
 from weedz.labelled.cwfid import png
+from weedz.labelled.pixels import pixel_sha256
 from weedz.labelled.publication import close_batch, digest, json_bytes, output_namespace, publish
 
 STRATA = (
@@ -48,7 +49,7 @@ def prior_exposure(root: Path) -> tuple[set[int], set[str], set[str]]:
         if path.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
             continue
         with Image.open(path) as image:
-            pixels.add(digest(ImageOps.exif_transpose(image).convert("RGB").tobytes()))
+            pixels.add(pixel_sha256(ImageOps.exif_transpose(image)))
     return observations, observers, pixels
 
 
@@ -104,7 +105,7 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
             "uploaded_at": photo.uploaded_at or "unknown",
             "coordinate_status": photo.coordinate_status,
             "original_encoded_sha256": digest(image_raw),
-            "decoded_pixel_sha256": digest(clean.tobytes()),
+            "decoded_pixel_sha256": pixel_sha256(clean),
             "modifications": "EXIF upright, metadata-free RGB PNG; no resize",
             "encounter_group": "unknown; no independent-site claim",
             "source_photo_license_code": photo.photo_license,

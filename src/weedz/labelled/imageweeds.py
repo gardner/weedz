@@ -2,13 +2,11 @@
 
 import json
 import math
-from io import BytesIO
 from pathlib import Path
-
-from PIL import Image
 
 from weedz.contract import Annotation, Completeness, Media, Rights, Sample
 from weedz.labelled.archive import SourceArchive
+from weedz.labelled.images import prepare_image
 from weedz.labelled.publication import close_batch, digest, json_bytes, output_namespace, publish
 
 DOI = "https://doi.org/10.17632/8kjcztbjz2.2"
@@ -69,23 +67,15 @@ def source_boxes(image: dict, rows: list[dict], categories: list[dict]) -> tuple
     return tuple(result)
 
 
-def _sample(source: SourceArchive, image: dict, native: dict, crop: str, output: Path) -> Sample:
+def _sample(
+    source: SourceArchive, image: dict, native: dict, crop: str, output: Path, image_format: str
+) -> Sample:
     name = image["file_name"]
     raw = source.read(f"images/{name}", maximum_bytes=20_000_000)
-    with Image.open(BytesIO(raw)) as pixels:
-        if pixels.format not in {"JPEG", "MPO"} or pixels.getexif().get(274, 1) != 1:
-            raise ValueError("Source box frame requires an upright original JPEG")
-        if (
-            pixels.size != (image["width"], image["height"])
-            or pixels.width * pixels.height > 40_000_000
-        ):
-            raise ValueError("Image dimensions differ from source annotations or exceed budget")
-        encoded_format = pixels.format
-        frames = getattr(pixels, "n_frames", 1)
-        pixels.load()
-        pixel_sha = digest(pixels.convert("RGB").tobytes())
-    uri = f"images/{name}"
-    publish(output / uri, raw)
+    prepared = prepare_image(raw, (image["width"], image["height"]), image_format)
+    filename = str(Path(name).with_suffix(".png")) if prepared.output_format == "PNG" else name
+    uri = f"images/{filename}"
+    publish(output / uri, prepared.encoded)
     annotations = source_boxes(image, native["annotations"], native["categories"])
     uuid, archive_sha, _ = PROFILES[crop]
     categories = tuple(sorted({note.taxon for note in annotations if note.taxon}))
@@ -96,7 +86,7 @@ def _sample(source: SourceArchive, image: dict, native: dict, crop: str, output:
         else (
             Completeness(
                 id=f"{image['id']}-coverage",
-                media_sha256=digest(raw),
+                media_sha256=digest(prepared.encoded),
                 task="detection",
                 taxa=categories,
                 status="unknown",
@@ -117,7 +107,11 @@ def _sample(source: SourceArchive, image: dict, native: dict, crop: str, output:
             license_source=DOI,
         ),
         media=Media(
-            uri=uri, sha256=digest(raw), width=image["width"], height=image["height"], format="JPEG"
+            uri=uri,
+            sha256=digest(prepared.encoded),
+            width=image["width"],
+            height=image["height"],
+            format=prepared.output_format,
         ),
         view="nadir",
         scale="patch",
@@ -133,17 +127,20 @@ def _sample(source: SourceArchive, image: dict, native: dict, crop: str, output:
             "source_url": f"https://weed-ai.sydney.edu.au/datasets/{uuid}",
             "original_dataset": DOI,
             "native_image_id": str(image["id"]),
-            "encoded_format": str(encoded_format),
+            "encoded_format": prepared.source_format,
             "source_frame_index": "0",
-            "source_frame_count": str(frames),
+            "source_frame_count": str(prepared.source_frames),
             "native_agcontext_id": str(image["agcontext_id"]),
             "annotation_granularity": "publisher manual box; individual identity unverified",
             "native_annotations_sha256": digest(json_bytes(native)),
-            "decoded_pixel_sha256": pixel_sha,
+            "decoded_pixel_sha256": prepared.pixel_sha256,
             "original_encoded_sha256": digest(raw),
-            "format_profile": "standalone external benchmark original upright JPEG; "
-            "not public canonical PNG admission",
-            "modifications": "none; original encoded bytes and metadata retained privately",
+            "format_profile": image_format,
+            "modifications": (
+                "metadata-free lossless RGB PNG; no resize; primary frame0"
+                if image_format == "lossless-rgb-png"
+                else "none; original encoded bytes and metadata retained privately"
+            ),
             "split": "publisher split unavailable; descriptive diagnostics only",
         },
     )
@@ -161,7 +158,9 @@ def quarantine(native: dict) -> dict[str, str]:
     return excluded
 
 
-def prepare(archive: Path, output: Path, *, crop: str, limit: int) -> str:
+def prepare(
+    archive: Path, output: Path, *, crop: str, limit: int, image_format: str = "lossless-rgb-png"
+) -> str:
     uuid, archive_sha, count = PROFILES[crop]
     if not 1 <= limit <= count:
         raise ValueError(f"ImageWeeds {crop} limit must be between 1 and {count}")
@@ -174,7 +173,7 @@ def prepare(archive: Path, output: Path, *, crop: str, limit: int) -> str:
         images = sorted(native["images"], key=lambda image: image["id"])[:limit]
         excluded = quarantine(native)
         samples = [
-            _sample(source, image, native, crop, output)
+            _sample(source, image, native, crop, output, image_format)
             for image in images
             if image["file_name"] not in excluded
         ]
@@ -192,6 +191,7 @@ def prepare(archive: Path, output: Path, *, crop: str, limit: int) -> str:
                 "licence": LICENCE,
                 "selected_source_images": limit,
                 "retained_images": len(samples),
+                "image_format_profile": image_format,
                 "quarantined_source_images": excluded,
                 "source_family": "ImageWeeds v2; soybean and maize are not independent datasets",
             },

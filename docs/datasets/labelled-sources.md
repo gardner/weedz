@@ -14,7 +14,7 @@ conversions resume; conflicting existing bytes are refused rather than replaced.
 | DeepWeeds, already cached | 17,509 images | Original eight weed classes plus negative image class | Negative means no named target, not no plants. Weed-AI repackaging is not another independent dataset. Prior pipeline exposure. |
 | CWFID, newly acquired | 60 unique images | Expert crop/weed plant/part polygons intersected with algorithmic vegetation mask | Functional classes, not scientific taxa; false-colour multispectral sensor. Partial labels and split overlap. |
 | ImageWeeds v2, newly acquired | 81 soybean +94 maize images; 735 native boxes | Publisher manual species boxes, five taxa | Two mirror contexts are ONE dataset origin. One invalid maize image is quarantined, not clipped. No documented independent-site split. |
-| NZ review cohort | Explicit maximum120 | No gold annotations or model predictions | Source subjects are context only; later human review remains necessary. |
+| NZ review cohort | Explicit maximum 120 | No gold annotations or model predictions | Source subjects are context only; later human review remains necessary. |
 
 Leafy Spurge is [mpg-ranch/leafy_spurge](https://huggingface.co/datasets/mpg-ranch/leafy_spurge),
 pinned at `ede1689fa8d424bcaea2c02157e791d97e4eba04`, CC BY4, DOI
@@ -41,16 +41,16 @@ terms are not CC BY-NC. This adapter prepares private noncommercial research dat
 it does not admit CWFID to public/LS sharing profiles.
 
 Red source pixels mean weed, green mean crop. Black contains both inferred soil and
-unassigned vegetation. Derived binary `L` PNG category masks use0/255, with a
+unassigned vegetation. Derived binary `L` PNG category masks use 0/255, with a
 separate assessed mask containing only labelled crop/weed support. Soil inferred
 from NDVI is not promoted to human-assessed negative background. Source vegetation,
 RGB annotation and YAML polygons are preserved separately. Category supervision is
 `sparse_mask`/`sparse_segmentation`; no connected components become human instances.
 Mask paths are relative and individually SHA-pinned. Completeness remains partial.
 
-Native split has40 training +21 testing memberships but60 unique images: **028 is in
+Native split has 40 training +21 testing memberships but 60 unique images: **028 is in
 both**. Both memberships are retained and028 is quarantined from held-out scoring.
-All60 may support explicitly descriptive source-label diagnostics, not independent
+All 60 may support explicitly descriptive source-label diagnostics, not independent
 held-out accuracy claims. Polygons are plants/parts/labelled regions; do not infer
 an exhaustive individual-plant census.
 
@@ -80,21 +80,24 @@ and the original DOI; the Weed-AI mirror is a distribution copy, not another sou
 
 The five source species are *Erigeron canadensis*, *Bassia scoparia*, *Amaranthus
 retroflexus*, *Ambrosia artemisiifolia* and *Amaranthus tuberculatus*. Category IDs
-are local: soybeanID2 means *A.retroflexus*, maizeID2 means *A.tuberculatus*.
+are local: soybean ID 2 means *A.retroflexus*, maize ID 2 means *A.tuberculatus*.
 The adapter preserves native category text/IDs and uses explicit names, not inferred
 synonym equivalence. Empty COCO segmentation arrays do not become masks.
 
-Images are5472×3648. A measured8,466,536-byte JPEG becomes34,907,858 bytes as lossless
-RGB PNG. Therefore this standalone external benchmark preserves exact upright
-JPEG/MPO bytes privately, source metadata included, and records primary frame0.
-It refuses rotated/ambiguous annotation frames and mismatched dimensions. It does
-not resize, recompress, strip metadata destructively, or widen canonical public
-PNG/20MB segmentation defaults. A future provenance-bound high-resolution ingress
-profile can support lossless PNG without changing those defaults.
+Images are 5472×3648. A measured 8,466,536-byte JPEG becomes 34,907,858 bytes as
+lossless RGB PNG. The default `lossless-rgb-png` profile preserves exact decoded
+primary-frame pixels, strips metadata, records the source container (JPEG/MPO),
+and does not resize. Its explicit encoded-output budget is 160 MB with the existing
+40 MP decoded bound. This does not widen the segmentation pipeline's default 20 MB
+source ingress: evaluation must explicitly select its bounded high-resolution input
+profile. The alternative `--format original-jpeg` preserves exact original encoded
+bytes and metadata privately for a standalone comparison. Both profiles refuse
+rotated/ambiguous annotation frames and mismatched dimensions, retain source SHA
+and share decoded identity; they never overwrite each other's closed outputs.
 
-Maize `UASs_355.jpg`, annotation273, has x5366+width107=5473 beyond width5472. The
+Maize `UASs_355.jpg`, annotation 273, has x 5366 +width 107 =5473 beyond width 5472. The
 whole image is withheld from canonical labelled evaluation with its native record
-and reason retained; no box is silently clipped. All175 source images remain
+and reason retained; no box is silently clipped. All 175 source images remain
 acquired. Completeness is unknown, so missing boxes are not assessed negatives.
 
 ```sh
@@ -112,7 +115,7 @@ large downloads use the requested aria2c four-connection/four-job settings.
 The bounded preparation command reuses the rate-limited
 [iNaturalist API](https://api.inaturalist.org/v1/docs/) client and keeps six explicit
 strata: gorse, broom, pampas, old man's beard, other plants and incidental animals.
-Maximum20 per stratum,120 total; shortfalls remain visible rather than fabricated.
+Maximum 20 per stratum, 120 total; shortfalls remain visible rather than fabricated.
 Image and observation licences must each be `cc0` or `cc-by`; actual codes are
 retained without inventing a licence version. Observed/uploaded dates, observer and
 observation groups, source locations/uncertainty/privacy and exact source responses
@@ -124,7 +127,7 @@ inventory scope, not a claim that every image on the internet was checked. Image
 are EXIF-upright metadata-free RGB PNGs with original encoded and decoded hashes.
 All annotations/predictions remain absent; source subject labels stay context.
 Keep a later blind-review subset free of predictions and hide its source taxonomy
-in the review presentation. Do not reuse old33/133 as a fresh blind cohort.
+in the review presentation. Do not reuse old 33/133 as a fresh blind cohort.
 
 ```sh
 uv run main.py labelled-batches nz-review --prior-root "$PREVIOUS_PILOT" \

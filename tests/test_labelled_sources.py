@@ -39,3 +39,34 @@ def test_duplicate_members_refused(tmp_path):
         path, digest = archive(tmp_path, [("image", b"a"), ("image", b"b")])
     with pytest.raises(ValueError, match="Duplicate"), SourceArchive(path, digest):
         pass
+
+
+def test_tar_probe_rewinds_same_verified_descriptor(tmp_path):
+    import io
+    import tarfile
+
+    path = tmp_path / "source.tar.gz"
+    with tarfile.open(path, "w:gz") as output:
+        member = tarfile.TarInfo("folder/image")
+        member.size = 4
+        output.addfile(member, io.BytesIO(b"four"))
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    with SourceArchive(path, digest) as source:
+        assert source.read("folder/image") == b"four"
+        replacement = tmp_path / "other"
+        replacement.write_bytes(b"unrelated path bytes")
+        replacement.replace(path)
+        assert source.read("folder/image") == b"four"
+        source.verify()
+
+
+def test_zip_symlink_refused_without_touching_target(tmp_path):
+    path = tmp_path / "source.zip"
+    member = zipfile.ZipInfo("link")
+    member.create_system = 3
+    member.external_attr = 0o120777 << 16
+    with zipfile.ZipFile(path, "w") as output:
+        output.writestr(member, "/outside/private")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="symlink"), SourceArchive(path, digest):
+        pass
