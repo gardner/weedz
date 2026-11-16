@@ -73,9 +73,25 @@ def _revision_state(event: ReviewEvent, claim: Claim) -> str | None:
     return None
 
 
+def _same_targeted_claim(event: ReviewEvent, claim: Claim) -> bool:
+    snapshot = event.payload.get("claim")
+    if not isinstance(snapshot, Mapping):
+        return False
+    # Vote state may change during rejection/reopening without changing the claim
+    # being judged. All identity, geometry, authorship and derivation stay bound.
+    ignored = {"review", "reviewers"}
+    recorded = {key: thaw_json(value) for key, value in snapshot.items() if key not in ignored}
+    expected = claim.model_dump(mode="json", exclude=ignored)
+    return recorded == expected
+
+
 def _event_state(event: ReviewEvent, claim: Claim) -> str | None:
     dimension = "completeness" if isinstance(claim, Completeness) else "identity"
-    if event.annotation_id == claim.id and event.dimension == dimension:
+    if (
+        event.annotation_id == claim.id
+        and event.dimension == dimension
+        and _same_targeted_claim(event, claim)
+    ):
         return STATES.get(event.action)
     if event.action == "completed_human_revision" and event.dimension == "annotation":
         return _revision_state(event, claim)

@@ -62,6 +62,9 @@ def specimen(*, negative: bool = False) -> Sample:
             dimension=dimension,
             annotation_id=identifier,
             evidence={"export_sha256": SHA},
+            payload={
+                "claim": (coverage if dimension == "completeness" else box).model_dump(mode="json")
+            },
         )
         for dimension, identifier in [("completeness", coverage.id), ("identity", box.id)]
     ]

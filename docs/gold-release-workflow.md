@@ -130,3 +130,12 @@ public identities remain unchanged. A noncommercial profile cannot adopt an exis
 public readiness grant or package, substitute for contributed-image consent, or admit
 custom publisher terms as if they were Creative Commons licences. CWFID's custom
 research terms therefore need a separate private research workflow.
+
+Direct targeted review events must retain the contemporaneous full claim snapshot
+in `payload.claim`. Identity, geometry, taxon/category scope, authorship and derivation
+must match the standing claim. Only `review` and `reviewers` are excluded from the
+content comparison: these describe vote state, so a conflicting rejection or reopening
+of the same claim still vetoes acceptance. Completed human revisions use their existing
+full supported claim snapshots. Historical pilot events without a claim snapshot remain
+faithfully preserved inference evidence; IDs alone do not establish gold acceptance.
+The exporter never invents a snapshot for an existing real historical decision.

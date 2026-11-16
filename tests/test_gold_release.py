@@ -27,6 +27,8 @@ def reviewed_samples() -> list[Sample]:
             coverage["media_sha256"] = sha
         for event in value["review_history"]:
             event.update(sample_id=identifier, media_sha256=sha)
+            if event["dimension"] == "completeness":
+                event["payload"]["claim"]["media_sha256"] = sha
         result.append(Sample.model_validate(value))
     return result
 
@@ -45,6 +47,8 @@ def materialize(root: Path) -> list[Sample]:
             claim["media_sha256"] = sha
         for event in value["review_history"]:
             event["media_sha256"] = sha
+            if event["dimension"] == "completeness":
+                event["payload"]["claim"]["media_sha256"] = sha
         samples.append(Sample.model_validate(value))
     return samples
 
