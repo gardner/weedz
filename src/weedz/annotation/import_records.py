@@ -87,7 +87,12 @@ def _record(row: dict, task_id: int, namespace: str) -> HumanRecord:
 
 
 def completed_records(
-    task: dict, namespace: str, *, known_cancelled_keys: frozenset[str] = frozenset()
+    task: dict,
+    namespace: str,
+    *,
+    known_cancelled_keys: frozenset[str] = frozenset(),
+    source_keys: frozenset[str] = frozenset(),
+    source_revision_ids: frozenset[str] = frozenset(),
 ) -> list[HumanRecord]:
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}", namespace):
         raise ValueError("Use a stable source project namespace")
@@ -95,11 +100,18 @@ def completed_records(
     rows = task.get("annotations", [])
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         raise ValueError("Task annotations must be objects")
+    if any(
+        f"label-studio:{namespace}:task:{task_id}:annotation:{row.get('id')}" in source_keys
+        for row in rows
+    ):
+        raise ValueError("Human annotation identity collides with immutable source history")
     records = [
         _record(row, task_id, namespace)
         for row in rows
         if _included(row, task_id, namespace, known_cancelled_keys)
     ]
+    if any(record.revision in source_revision_ids for record in records):
+        raise ValueError("Human revision identity collides with immutable source history")
     if len({record.key for record in records}) != len(records):
         raise ValueError("Duplicate annotation identities in export")
     return records
