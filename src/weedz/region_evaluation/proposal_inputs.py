@@ -16,6 +16,8 @@ class ProposalBatch:
     proposals_sha256: str
     model_version: str
     rows: dict[str, dict]
+    source_sample_count: int = 0
+    excluded_sample_ids: tuple[str, ...] = ()
 
 
 def _pinned(path: Path, sha256: str, limit: int) -> bytes:
@@ -26,7 +28,9 @@ def _pinned(path: Path, sha256: str, limit: int) -> bytes:
     return encoded
 
 
-def load_proposals(ready: Path, sha256: str, samples: Sequence[Sample]) -> ProposalBatch:
+def load_proposals(
+    ready: Path, sha256: str, samples: Sequence[Sample], *, allow_subset: bool = False
+) -> ProposalBatch:
     """Join exact image identities, allowing independently versioned label manifests.
 
     The original inference manifest SHA remains in the result. It is not replaced by
@@ -43,17 +47,35 @@ def load_proposals(ready: Path, sha256: str, samples: Sequence[Sample]) -> Propo
     encoded = _pinned(
         ready.with_name("proposals.jsonl"), header["proposals_sha256"], 256 * 1024 * 1024
     )
-    rows = [json.loads(line) for line in encoded.splitlines()]
-    if len(rows) != len(samples) or header.get("count") != len(rows):
+    rows, keys = _source_rows(encoded, header)
+    if not allow_subset and len(rows) != len(samples):
         raise ValueError("Proposal count differs from evaluation sample count")
-    selected = _join(rows, expected, header["model_version"])
+    selected = _join(
+        [row for row in rows if row["sample_id"] in expected], expected, header["model_version"]
+    )
+    if len(selected) != len(expected):
+        raise ValueError("Missing selected proposal sample count")
     return ProposalBatch(
         sha256,
         header["manifest_sha256"],
         header["proposals_sha256"],
         header["model_version"],
         selected,
+        len(rows),
+        tuple(sorted(set(keys) - expected.keys())),
     )
+
+
+def _source_rows(encoded: bytes, header: dict) -> tuple[list[dict], list[str]]:
+    rows = [json.loads(line) for line in encoded.splitlines()]
+    if header.get("count") != len(rows) or not 1 <= len(rows) <= 1000:
+        raise ValueError("Closed proposal count differs from its rows")
+    keys = [row.get("sample_id") for row in rows]
+    if any(not isinstance(key, str) or not key for key in keys) or len(set(keys)) != len(keys):
+        raise ValueError("Invalid or duplicate source proposal identities")
+    if any(row.get("model_version") != header["model_version"] for row in rows):
+        raise ValueError("Proposal model identity differs within the closed source batch")
+    return rows, keys
 
 
 def _join(rows: list[dict], samples: dict[str, Sample], version: str) -> dict[str, dict]:

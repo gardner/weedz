@@ -76,3 +76,17 @@ def test_unpinned_media_cannot_be_an_evaluation_identity(tmp_path: Path) -> None
     unpinned = sample(media={"uri": "1.png", "width": 10, "height": 10})
     with pytest.raises(ValueError, match="pinned"):
         load_proposals(tmp_path / "ready.json", checksum, [unpinned])
+
+
+def test_primary_subset_is_explicit_and_retains_original_source_count(tmp_path: Path) -> None:
+    source(tmp_path)
+    first = json.loads((tmp_path / "proposals.jsonl").read_text())
+    second = {**first, "sample_id": "cwfid:2"}
+    checksum = source(tmp_path, [first, second])
+    with pytest.raises(ValueError, match="count"):
+        load_proposals(tmp_path / "ready.json", checksum, [sample()])
+    selected = load_proposals(tmp_path / "ready.json", checksum, [sample()], allow_subset=True)
+    assert selected.source_sample_count == 2
+    assert selected.excluded_sample_ids == ("cwfid:2",)
+    assert selected.manifest_sha256 == "b" * 64
+    assert list(selected.rows) == ["cwfid:1"]
