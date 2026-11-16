@@ -38,7 +38,7 @@ def main() -> None:
     taxa, categories = tuple(args.taxon), tuple(args.category)
     try:
         if args.command == "config":
-            raw = gold_config(taxa, categories).encode("utf-8")
+            raw = gold_config(taxa, categories, revision=2).encode("utf-8")
             output = new_output(args.output)
             output.parent.mkdir(parents=True, exist_ok=True)
             with output.open("xb") as stream:

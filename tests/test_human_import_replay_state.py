@@ -215,7 +215,7 @@ def test_all_journal_configs_are_validated_before_first_mask_decode(tmp_path, mo
     manifest = json.dumps(receipt).encode()
     (prior / "manifest.json").write_bytes(manifest)
     calls.clear()
-    with pytest.raises(ValueError, match="configuration"):
+    with pytest.raises(ValueError, match="[Cc]onfiguration"):
         import_reviews(
             request,
             tmp_path / "refused",
