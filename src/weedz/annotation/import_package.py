@@ -15,7 +15,7 @@ from weedz.rights_profiles import RightsProfile, rights_profile_fields
 MAX_BYTES = 256 * 1024 * 1024
 MAX_PACKAGE_BYTES = 512 * 1024 * 1024
 MAX_FILES = 10_000
-MAX_STRUCTURE_BYTES = 8 * 1024 * 1024
+MAX_STRUCTURE_BYTES = 64 * 1024 * 1024
 STRUCTURAL_FILES = frozenset({"tasks.json", "private/provenance.json"})
 
 
@@ -52,6 +52,7 @@ class Package:
     tasks: dict[str, dict]
     rights_profile: RightsProfile | None = None
     human_import: bool = False
+    task_bindings: dict[str, int] | None = None
 
 
 def _geometry(media: bytes, sample: Sample) -> None:
@@ -96,7 +97,15 @@ def read_package(root: Path, expected: str) -> Package:
     if profile is not None:
         rights_profile_fields(profile)
     imported = {"project_namespace", "project_id", "source_package_sha256"} <= manifest.keys()
-    return Package(expected, files, samples, _tasks(files, samples), profile, imported)
+    return Package(
+        expected,
+        files,
+        samples,
+        _tasks(files, samples),
+        profile,
+        imported,
+        manifest.get("task_bindings"),
+    )
 
 
 def _tasks(files: dict[str, bytes], samples: dict[str, Sample]) -> dict[str, dict]:

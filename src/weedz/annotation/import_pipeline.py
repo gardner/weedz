@@ -7,6 +7,7 @@ from pathlib import Path
 
 from weedz.annotation.gold_config import gold_config
 from weedz.annotation.import_apply import apply_claims
+from weedz.annotation.import_bindings import task_bindings
 from weedz.annotation.import_claims import parse_claims
 from weedz.annotation.import_package import Package, pinned_bytes, read_package
 from weedz.annotation.import_records import completed_records, positive_id
@@ -148,9 +149,14 @@ def import_reviews(
         "config_sha256": request.config_sha256,
         "source_package_sha256": request.package_sha256,
     }
-    changed, masks, count = _apply(
-        _human_tasks(exported, base, request.project_id), prior.samples, request, evidence
+    selected = _human_tasks(exported, base, request.project_id)
+    history = (
+        _historical_tasks(raw, base, request.project_id)
+        for name, raw in prior.files.items()
+        if prior is not base and name.startswith("private/exports/") and name.endswith(".json")
     )
+    bindings = task_bindings(prior, selected, history)
+    changed, masks, count = _apply(selected, prior.samples, request, evidence)
     files = {**prior.files, **masks}
     original = base.files["private/provenance.json"]
     files[f"private/source-provenance/{hashlib.sha256(original).hexdigest()}.json"] = original
@@ -177,6 +183,7 @@ def import_reviews(
             project_namespace=request.namespace,
             project_id=request.project_id,
             imported_revisions=count,
+            task_bindings=bindings,
             contract_schema_version=max(sample.schema_version for sample in changed.values()),
             **rights_profile_fields(request.rights_profile),
             interpretation=(
@@ -204,3 +211,9 @@ def _same_samples(base: Package, prior: Package) -> None:
             raise ValueError("Previous import cannot downgrade the source schema version")
         if sample.model_dump(exclude=ignored) != prior.samples[key].model_dump(exclude=ignored):
             raise ValueError("Previous import changed original sample identity or rights")
+
+
+def _historical_tasks(raw: bytes, base: Package, project_id: int) -> list[tuple[str, dict]]:
+    if len(raw) > MAX_EXPORT_BYTES:
+        raise ValueError("Historical human export exceeds the pre-decode resource cap")
+    return _human_tasks(raw, base, project_id)

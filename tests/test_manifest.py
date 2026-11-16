@@ -15,7 +15,13 @@ from weedz.manifest import read_manifest, write_manifest
 
 def samples() -> list[Sample]:
     box = annotation(
-        id="a2", supervision="box", box=[1, 2, 30, 40], origin="reviewer", author="Ana"
+        id="a2",
+        supervision="box",
+        box=[1, 2, 30, 40],
+        origin="reviewer",
+        author="Ana",
+        review="accepted",
+        reviewers=["Ben"],
     )
     return [
         Sample.model_validate(sample()),
