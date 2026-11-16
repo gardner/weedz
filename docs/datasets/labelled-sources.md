@@ -13,7 +13,7 @@ conversions resume; conflicting existing bytes are refused rather than replaced.
 | Leafy Spurge, already cached | 900 images, 800 train/100 test; 903 pinned files verified | Surveyed centre-point presence/absence of *Euphorbia esula* | Not boxes or masks; retain survey clusters and native split. Already used by this project's baseline. |
 | DeepWeeds, already cached | 17,509 images | Original eight weed classes plus negative image class | Negative means no named target, not no plants. Weed-AI repackaging is not another independent dataset. Prior pipeline exposure. |
 | CWFID, newly acquired | 60 unique images | Expert crop/weed plant/part polygons intersected with algorithmic vegetation mask | Functional classes, not scientific taxa; false-colour multispectral sensor. Partial labels and split overlap. |
-| ImageWeeds v2, newly acquired | 81 soybean +94 maize images; 735 native boxes | Publisher manual species boxes, five taxa | Two mirror contexts are ONE dataset origin. One invalid maize image is quarantined, not clipped. No documented independent-site split. |
+| ImageWeeds v2, newly acquired | 81 soybean + 94 maize images; 735 native boxes | Publisher manual species boxes, five taxa | Two mirror contexts are ONE dataset origin. One invalid maize image is quarantined, not clipped. No documented independent-site split. |
 | NZ review cohort | Explicit maximum 120 | No gold annotations or model predictions | Source subjects are context only; later human review remains necessary. |
 
 Leafy Spurge is [mpg-ranch/leafy_spurge](https://huggingface.co/datasets/mpg-ranch/leafy_spurge),
@@ -49,7 +49,7 @@ RGB annotation and YAML polygons are preserved separately. Category supervision 
 Mask paths are relative and individually SHA-pinned. Completeness remains partial.
 
 Native split has 40 training +21 testing memberships but 60 unique images: **028 is in
-both**. Both memberships are retained and028 is quarantined from held-out scoring.
+both**. Both memberships are retained and 028 is quarantined from held-out scoring.
 All 60 may support explicitly descriptive source-label diagnostics, not independent
 held-out accuracy claims. Polygons are plants/parts/labelled regions; do not infer
 an exhaustive individual-plant census.
@@ -61,8 +61,7 @@ uv run main.py labelled-batches cwfid --archive "$SOURCE/cwfid.tar.gz" \
   --output "$ARTIFACTS/cwfid-60" --limit 60
 ```
 
-The archive is read in
-place, never extracted, and is verified through the same descriptor before reading
+The archive is read in place, never extracted, and is verified through the same descriptor before reading
 and again before the batch closes. Unsafe/duplicate/link members are refused.
 
 ## ImageWeeds v2
@@ -141,5 +140,18 @@ uv run main.py labelled-batches nz-review --prior-root "$PREVIOUS_PILOT" \
   --prior-evidence "$PREVIOUS_33/private/provenance.json"
 ```
 
-No command writes source stores,
-review decisions, Label Studio project1 or any external account.
+No command writes source stores, review decisions, Label Studio project 1 or any external account.
+
+
+## Exact-asset inventory audit
+
+The read-only audit verifies each local media SHA and dimensions, then compares both
+encoded bytes and decoded EXIF-upright RGB pixels. Decoded identity includes mode
+and geometry, so a differently encoded copy is not counted as independent data.
+It retains all source IDs in duplicate groups rather than silently discarding labels.
+Near duplicates, shared sites and independent encounters remain unassessed.
+
+```sh
+uv run main.py labelled-batches audit --manifest "$COHORT_A/samples.jsonl" \
+  --manifest "$COHORT_B/samples.jsonl" --output "$ARTIFACTS/source-audit.json"
+```

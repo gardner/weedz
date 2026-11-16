@@ -28,6 +28,7 @@ def test_old_id_alias_pixels_and_observer_evidence_are_joined(tmp_path):
             license_source="https://www.inaturalist.org/observations/12",
         ),
         media=Media(uri="image.png", sha256=digest(raw), width=2, height=3),
+        groups={"observer": "inaturalist:Source-Observer"},
         tasks=frozenset({"inference"}),
     )
     manifest = tmp_path / "samples.jsonl"
@@ -45,6 +46,7 @@ def test_old_id_alias_pixels_and_observer_evidence_are_joined(tmp_path):
             }
         )
     )
+    assert additional((manifest,))[1] == {"login:source-observer"}
     observations, observers, pixels, pins = additional((manifest, provenance))
     assert observations == {12} and observers == {"login:source-observer"} and len(pixels) == 1
     assert len(pins) == 2 and all(len(pin["sha256"]) == 64 for pin in pins)

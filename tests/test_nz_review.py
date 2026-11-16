@@ -59,7 +59,7 @@ def test_upright_review_image_has_context_not_gold_and_keeps_actual_licence_code
     assert sample.geography is not None
     assert sample.geography.privacy == "obscured"
     assert sample.geography.uncertainty_m is None
-    assert sample.groups["observer"] == "inaturalist:9"
+    assert sample.groups["observer"] == "inaturalist:id:9"
     with Image.open(tmp_path / sample.media.uri) as upright:
         assert upright.size == (2, 3) and not upright.getexif()
 

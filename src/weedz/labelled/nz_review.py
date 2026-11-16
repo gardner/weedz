@@ -105,7 +105,7 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
         original_label=photo.original_taxon,
         groups={
             "observation": f"inaturalist:{photo.observation_id}",
-            "observer": f"inaturalist:{raw['user']['id']}",
+            "observer": f"inaturalist:id:{raw['user']['id']}",
         },
         tasks=frozenset({"inference"}),
         context={
@@ -122,6 +122,9 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
             "source_photo_license_code": photo.photo_license,
             "source_observation_license_code": photo.observation_license,
             "source_observer_credit": raw["user"]["login"],
+            "source_observer_id": str(raw["user"]["id"]),
+            "source_observer_login": raw["user"]["login"],
+            "observer_alias_basis": "same source API user object",
         },
     )
 
@@ -142,6 +145,8 @@ def prepare(
     exclusions = {
         "observations": sorted(old_ids),
         "additional_evidence": pins,
+        "observer_alias_policy": "typed IDs/logins; ambiguous legacy numeric groups exclude "
+        "both possibilities without asserting equivalence",
         "observers": sorted(old_observers),
         "decoded_pixel_sha256": sorted(old_pixels),
     }

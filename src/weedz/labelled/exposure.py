@@ -42,9 +42,7 @@ def _manifest(
         if match is None:
             raise ValueError("Unknown prior iNaturalist source ID representation")
         observations.add(int(match[1]))
-        observer = sample.groups.get("observer")
-        if observer and observer.startswith("inaturalist:"):
-            observers.add("id:" + observer.removeprefix("inaturalist:"))
+        observers.update(_observer_aliases(sample))
         image_path = (root / sample.media.uri).resolve()
         if not image_path.is_relative_to(root.resolve()):
             raise ValueError("Prior media must be confined to its explicit manifest root")
@@ -63,3 +61,34 @@ def _provenance(raw: bytes, observations: set[int], observers: set[str]) -> None
         photo = item["photo"]
         observations.add(int(photo["observation_id"]))
         observers.add("login:" + photo["observer"].casefold())
+
+
+def _observer_aliases(sample: Sample) -> set[str]:
+    aliases = _group_aliases(sample.groups.get("observer", ""))
+    if identity := sample.context.get("source_observer_id"):
+        aliases.add(_id_token(identity))
+    if login := sample.context.get("source_observer_login"):
+        aliases.add("login:" + login.casefold())
+    return aliases
+
+
+def _id_token(value: str) -> str:
+    if not value.isdecimal() or int(value) < 1:
+        raise ValueError("Explicit iNaturalist user ID must be a positive integer")
+    return f"id:{int(value)}"
+
+
+def _group_aliases(group: str) -> set[str]:
+    if not group.startswith("inaturalist:"):
+        return set()
+    value = group.removeprefix("inaturalist:")
+    if value.startswith("id:"):
+        return {_id_token(value.removeprefix("id:"))}
+    if value.startswith("login:"):
+        return {"login:" + value.removeprefix("login:").casefold()}
+    # Older opaque groups did not declare whether a numeric suffix was a user ID or
+    # a numeric login. Exclude both possibilities without asserting their equivalence.
+    aliases = {"login:" + value.casefold()}
+    if value.isdecimal() and int(value) > 0:
+        aliases.add(_id_token(value))
+    return aliases
