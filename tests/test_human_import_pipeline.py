@@ -250,7 +250,7 @@ def test_recorded_noncommercial_scope_cannot_disappear_when_licences_are_public(
     with pytest.raises(ValueError, match="Previous.*profile"):
         import_reviews(request, tmp_path / "downgrade", previous=output, previous_sha256=checksum)
     source = replace(request, package=output, package_sha256=checksum)
-    with pytest.raises(ValueError, match="Source.*profile"):
+    with pytest.raises(ValueError, match="fresh source"):
         import_reviews(source, tmp_path / "source-downgrade")
 
 

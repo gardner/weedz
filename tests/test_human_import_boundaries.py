@@ -108,3 +108,56 @@ def test_output_file_count_matches_reader_cap(tmp_path, monkeypatch):
     monkeypatch.setattr(package, "MAX_FILES", count)
     with pytest.raises(ValueError, match="resource cap"):
         import_reviews(request, tmp_path / "too-many-files")
+
+
+def test_reviewed_import_cannot_be_reused_as_fresh_source_under_new_accounts(tmp_path):
+    import hashlib
+    from dataclasses import replace
+
+    request, _, _ = inputs(tmp_path)
+    reviewed = tmp_path / "reviewed"
+    import_reviews(request, reviewed)
+    forged = replace(
+        request,
+        package=reviewed,
+        package_sha256=hashlib.sha256((reviewed / "manifest.json").read_bytes()).hexdigest(),
+        namespace="different-project-alias",
+    )
+    output = tmp_path / "duplicated"
+    with pytest.raises(ValueError, match="fresh source"):
+        import_reviews(forged, output)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("name", ["tasks.json", "private/provenance.json"])
+def test_structural_package_json_is_bounded_before_decode(tmp_path, monkeypatch, name):
+    import weedz.annotation.import_package as package
+
+    request, _, _ = inputs(tmp_path)
+    monkeypatch.setattr(package, "MAX_STRUCTURE_BYTES", 10, raising=False)
+    # Both structural files are independently subject to the limit, not only exports.
+    other = "private/provenance.json" if name == "tasks.json" else "tasks.json"
+    original = package.pinned_bytes
+
+    def limit_selected(path, expected, maximum=package.MAX_BYTES):
+        if str(path).endswith(other):
+            maximum = package.MAX_BYTES
+        return original(path, expected, maximum)
+
+    monkeypatch.setattr(package, "pinned_bytes", limit_selected)
+    output = tmp_path / "oversized-structure"
+    with pytest.raises(ValueError, match="oversized"):
+        import_reviews(request, output)
+    assert not output.exists()
+
+
+def test_output_provenance_must_fit_the_next_structural_decode_cap(tmp_path, monkeypatch):
+    import weedz.annotation.import_package as package
+
+    request, _, _ = inputs(tmp_path)
+    initial = max((request.package / name).stat().st_size for name in package.STRUCTURAL_FILES)
+    monkeypatch.setattr(package, "MAX_STRUCTURE_BYTES", initial + 100)
+    output = tmp_path / "unreplayable-structure"
+    with pytest.raises(ValueError, match="resource cap"):
+        import_reviews(request, output)
+    assert not output.exists()
