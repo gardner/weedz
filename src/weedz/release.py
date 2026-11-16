@@ -192,7 +192,12 @@ def _evidence_gap(task: Task, members: list[Sample]) -> str | None:
         labels.add("absent")
     kinds = " or ".join(sorted(needed))
     missing = sorted({"present", "absent"} - labels) if task in BINARY_TASKS else []
-    if not labels or missing:
+    checked = any(
+        coverage.task == task and coverage.supervises()
+        for sample in members
+        for coverage in sample.completeness
+    )
+    if (not labels and not checked) or missing:
         return f"{' '.join(missing[:1] + [kinds])} evidence"
     return None
 

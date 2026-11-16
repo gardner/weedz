@@ -39,7 +39,7 @@ def test_released_history_and_assets_survive_removing_the_source(tmp_path: Path)
         dimension="annotation",
         payload={
             "annotations": (
-                {"id": "old:mask", "mask_uri": "masks/historical.png", "mask_sha256": mask_sha}
+                {"id": "old:mask", "mask_uri": "masks/historical.png", "mask_sha256": mask_sha},
             )
         },
     )
