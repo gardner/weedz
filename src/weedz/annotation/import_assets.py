@@ -66,3 +66,9 @@ def add_snapshot(files: dict[str, bytes], name: str, raw: bytes) -> None:
     if name in files and files[name] != raw:
         raise ValueError("Retained file conflicts with an immutable snapshot")
     files[name] = raw
+
+
+def check_source_files(original: dict[str, bytes], retained: dict[str, bytes]) -> None:
+    regenerated = {"samples.jsonl", "private/provenance.json"}
+    if any(retained.get(name) != raw for name, raw in original.items() if name not in regenerated):
+        raise ValueError("Previous import changed or removed a retained source file")

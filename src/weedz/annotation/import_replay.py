@@ -5,7 +5,7 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from weedz.annotation.gold_config import gold_config
-from weedz.annotation.import_assets import add_snapshot, check_assets
+from weedz.annotation.import_assets import add_snapshot, check_assets, check_source_files
 from weedz.annotation.import_claims import PreparedClaims
 from weedz.annotation.import_package import Package
 from weedz.annotation.import_records import HumanRecord
@@ -140,6 +140,7 @@ def validate_prior(
     from weedz.annotation.import_bindings import task_bindings
     from weedz.annotation.import_pipeline import _apply
 
+    check_source_files(base.files, prior.files)
     check_assets(base.samples.values(), prior.files, base.files)
     journal = capture_journal(base, prior, request, owned)
     if len(journal) >= MAX_CAPTURES:
