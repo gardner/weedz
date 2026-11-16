@@ -62,7 +62,7 @@ def downloaded_bytes(client: Inaturalist, photo: Photo) -> bytes:
     return raw
 
 
-def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: Path) -> Sample:
+def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str) -> tuple[Sample, bytes]:
     photo = photo_from_observation(
         raw, "New Zealand", "incidental", allowed_licences=frozenset(LICENCES)
     )
@@ -75,7 +75,6 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
         clean = Image.frombytes("RGB", upright.size, upright.tobytes())
     encoded = png(clean)
     uri = f"images/{photo.observation_id}-{photo.photo_id}.png"
-    publish(output / uri, encoded)
     geography = None
     if photo.latitude is not None and photo.longitude is not None:
         geography = Geography(
@@ -86,7 +85,7 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
             ),
             privacy="obscured" if photo.coordinate_status == "obscured" else "public",
         )
-    return Sample(
+    sample = Sample(
         id=f"inaturalist:{photo.observation_id}/{photo.photo_id}",
         source="inaturalist",
         source_id=f"{photo.observation_id}/{photo.photo_id}",
@@ -127,6 +126,7 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
             "observer_alias_basis": "same source API user object",
         },
     )
+    return sample, encoded
 
 
 def prepare(
@@ -206,10 +206,11 @@ def _collect(
             )
             if photo is None:
                 continue
-            sample = _sample(raw, downloaded_bytes(client, photo), query_sha, stratum, output)
+            sample, encoded = _sample(raw, downloaded_bytes(client, photo), query_sha, stratum)
             pixel_sha = sample.context["decoded_pixel_sha256"]
             if pixel_sha in pixels:
                 continue
+            publish(output / sample.media.uri, encoded)
             samples.append(sample)
             ids.add(raw["id"])
             observers.update(observer_tokens(raw))

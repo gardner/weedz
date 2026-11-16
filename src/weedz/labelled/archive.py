@@ -42,6 +42,8 @@ class SourceArchive:
             raise ValueError("Archive member budget exceeded")
         for entry in entries:
             name = entry.orig_filename if isinstance(entry, zipfile.ZipInfo) else entry.name
+            if isinstance(entry, zipfile.ZipInfo) and entry.filename != entry.orig_filename:
+                raise ValueError("Unsafe normalized archive member name")
             parts = PurePosixPath(name).parts
             if "\\" in name or "\x00" in name or name.startswith("/") or ".." in parts:
                 raise ValueError(f"Unsafe archive member: {name!r}")
@@ -76,10 +78,10 @@ class SourceArchive:
         size = entry.file_size if isinstance(entry, zipfile.ZipInfo) else entry.size
         if size > maximum_bytes:
             raise ValueError("Archive member byte budget exceeded")
-        if isinstance(self.container, zipfile.ZipFile):
-            stream = self.container.open(name)
-        elif isinstance(self.container, tarfile.TarFile):
-            stream = self.container.extractfile(name)
+        if isinstance(self.container, zipfile.ZipFile) and isinstance(entry, zipfile.ZipInfo):
+            stream = self.container.open(entry)
+        elif isinstance(self.container, tarfile.TarFile) and isinstance(entry, tarfile.TarInfo):
+            stream = self.container.extractfile(entry)
         else:
             raise RuntimeError("Archive is not open")
         if stream is None:

@@ -78,3 +78,21 @@ def test_zip_original_nul_name_is_not_silently_normalized(tmp_path):
     sha = hashlib.sha256(path.read_bytes()).hexdigest()
     with pytest.raises(ValueError, match="Unsafe"), SourceArchive(path, sha):
         pass
+
+
+def test_unicode_path_extra_cannot_alias_another_source_member(tmp_path):
+    import struct
+    import zlib
+
+    path = tmp_path / "source.zip"
+    original = "images/a.jpg"
+    target = "images/b.jpg"
+    payload = b"\x01" + struct.pack("<I", zlib.crc32(original.encode())) + target.encode()
+    renamed = zipfile.ZipInfo(original)
+    renamed.extra = struct.pack("<HH", 0x7075, len(payload)) + payload
+    with zipfile.ZipFile(path, "w") as output:
+        output.writestr(target, b"REAL")
+        output.writestr(renamed, b"EVIL")
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="normalized"), SourceArchive(path, sha):
+        pass

@@ -50,7 +50,7 @@ def test_upright_review_image_has_context_not_gold_and_keeps_actual_licence_code
     exif[274] = 6
     encoded = BytesIO()
     image.save(encoded, format="JPEG", exif=exif)
-    sample = _sample(raw, encoded.getvalue(), "a" * 64, "gorse", tmp_path)
+    sample, normalized = _sample(raw, encoded.getvalue(), "a" * 64, "gorse")
     assert (sample.media.width, sample.media.height) == (2, 3)
     assert not sample.annotations and not sample.completeness
     assert sample.tasks == frozenset({"inference"})
@@ -60,7 +60,7 @@ def test_upright_review_image_has_context_not_gold_and_keeps_actual_licence_code
     assert sample.geography.privacy == "obscured"
     assert sample.geography.uncertainty_m is None
     assert sample.groups["observer"] == "inaturalist:id:9"
-    with Image.open(tmp_path / sample.media.uri) as upright:
+    with Image.open(BytesIO(normalized)) as upright:
         assert upright.size == (2, 3) and not upright.getexif()
 
 
@@ -81,3 +81,57 @@ def test_download_to_conversion_bytes_are_joined_before_source_attribution(tmp_p
             downloaded_bytes(client, photo)
     finally:
         client.close()
+
+
+def test_decoded_duplicate_never_publishes_an_unmanifested_canonical_png(tmp_path, monkeypatch):
+    from io import BytesIO
+
+    from PIL import Image
+
+    import weedz.labelled.nz_review as module
+    from weedz.discovery.source import Inaturalist
+
+    encoded = BytesIO()
+    Image.new("RGB", (3, 2), "green").save(encoded, format="PNG")
+    data = encoded.getvalue()
+    rows = []
+    for number in [1, 2]:
+        rows.append(
+            {
+                "id": number,
+                "uri": f"https://www.inaturalist.org/observations/{number}",
+                "license_code": "cc0",
+                "user": {"id": number, "login": f"user{number}"},
+                "taxon": {"name": "Unknown source subject"},
+                "photos": [
+                    {
+                        "id": number + 10,
+                        "url": f"https://static.inaturalist.org/photos/{number + 10}/square.jpg",
+                        "license_code": "cc0",
+                        "attribution": "Source photographer",
+                    }
+                ],
+            }
+        )
+    client = Inaturalist(tmp_path / "raw", allowed_photo_licences=frozenset({"cc0"}))
+    monkeypatch.setattr(client, "query", lambda *args: {"response": {"results": rows}})
+
+    def image(photo):
+        path = client.root / f"images/{photo.photo_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        photo.image_path = str(path.relative_to(client.root))
+        photo.sha256 = module.digest(data)
+        return photo
+
+    monkeypatch.setattr(client, "image", image)
+    monkeypatch.setattr(module, "STRATA", (("plants", {"taxon_id": 47126}),))
+    output = tmp_path / "canonical"
+    try:
+        accepted = module._collect(client, output, 20, (set(), set(), set()))
+    finally:
+        client.close()
+    assert len(accepted) == 1
+    assert {str(p.relative_to(output)) for p in (output / "images").glob("*.png")} == {
+        accepted[0].media.uri
+    }
