@@ -185,3 +185,30 @@ def test_foreign_keys_do_not_alias_numeric_one_with_bool_or_float(tmp_path, fiel
     with pytest.raises(ValueError):
         import_reviews(request, output)
     assert not output.exists()
+
+
+@pytest.mark.parametrize("value", [True, 1.0])
+def test_previous_receipt_project_must_be_a_strict_integer(tmp_path, value):
+    import hashlib
+    import json
+    from dataclasses import replace
+
+    request, task, _ = inputs(tmp_path)
+    task["project"] = 1
+    request.export.write_text(json.dumps([task]), encoding="utf-8")
+    request = replace(
+        request, project_id=1, export_sha256=hashlib.sha256(request.export.read_bytes()).hexdigest()
+    )
+    original = tmp_path / "previous"
+    import_reviews(request, original)
+    path = original / "manifest.json"
+    receipt = json.loads(path.read_bytes())
+    receipt["project_id"] = value
+    raw = json.dumps(receipt).encode()
+    path.write_bytes(raw)
+    output = tmp_path / "bad-identity"
+    with pytest.raises(ValueError):
+        import_reviews(
+            request, output, previous=original, previous_sha256=hashlib.sha256(raw).hexdigest()
+        )
+    assert not output.exists()

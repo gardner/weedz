@@ -54,7 +54,7 @@ def _prior(
         raise ValueError("Previous import requires its manifest SHA")
     prior = read_package(previous, checksum)
     receipt = json.loads(pinned_bytes(previous / "manifest.json", checksum))
-    if (receipt.get("project_namespace"), receipt.get("project_id")) != (
+    if (receipt.get("project_namespace"), positive_id(receipt.get("project_id"))) != (
         request.namespace,
         request.project_id,
     ):
