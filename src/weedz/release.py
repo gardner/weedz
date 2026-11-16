@@ -15,7 +15,6 @@ from pathlib import Path
 
 from weedz.consent import refusal
 from weedz.contract import (
-    SCHEMA_VERSION,
     TASK_SUPERVISION,
     Annotation,
     Sample,
@@ -24,6 +23,7 @@ from weedz.contract import (
 )
 from weedz.gold import promote_detection
 from weedz.manifest import manifest_bytes, read_manifest, write_atomic, write_manifest
+from weedz.release_assets import collect_assets, verify_assets
 from weedz.release_evidence import checked_negatives
 from weedz.release_models import (
     MANIFEST,
@@ -44,6 +44,7 @@ from weedz.release_models import (
     TestStatus,
     _check_advance,
 )
+from weedz.release_storage import require_empty, staged_release
 from weedz.rights_profiles import require_rights
 
 __all__ = [
@@ -264,12 +265,17 @@ def build_release(
         snapshots.setdefault(sample.source, set()).add(sample.snapshot)
     draft = Release(
         id="",
+        release_format=2
+        if any(s.schema_version == 2 for s in kept)
+        or spec.review_policy is not None
+        or spec.rights_profile is not None
+        else 1,
         name=spec.name,
         task=spec.task,
         protocol=spec.protocol,
         split=spec.split,
         separate=separate,
-        contract_schema_version=SCHEMA_VERSION,
+        contract_schema_version=max(sample.schema_version for sample in kept),
         manifest_sha256=hashlib.sha256(manifest_bytes(kept)).hexdigest(),
         source_snapshots={source: sorted(values) for source, values in sorted(snapshots.items())},
         licenses=sorted({sample.rights.media_license for sample in kept}),
@@ -305,16 +311,30 @@ def _write_record(directory: Path, release: Release) -> None:
 
 
 def write_release(
-    directory: Path, samples: list[Sample], spec: ReleaseSpec, *, recorded_at: str | None = None
+    directory: Path,
+    samples: list[Sample],
+    spec: ReleaseSpec,
+    *,
+    recorded_at: str | None = None,
+    assets_root: Path | None = None,
 ) -> Release:
-    """Build and write a release into a new or empty directory."""
-    if directory.exists() and any(directory.iterdir()):
-        raise ValueError(f"Release directory must be empty: {directory}")
-    release, kept = build_release(samples, spec, recorded_at=recorded_at or _now())
-    directory.mkdir(parents=True, exist_ok=True)
-    if write_manifest(directory / MANIFEST, kept) != release.manifest_sha256:
-        raise ValueError("The written manifest differs from the release record")
-    _write_record(directory, release)
+    """Publish one durable directory; gold releases require all referenced local assets."""
+    require_empty(directory)
+    if spec.review_policy is not None and assets_root is None:
+        raise ValueError("A gold release needs assets_root to close its pinned assets")
+    snapshots = [Sample.model_validate_json(sample.model_dump_json()) for sample in samples]
+    release, kept = build_release(snapshots, spec, recorded_at=recorded_at or _now())
+    assets = collect_assets(kept) if assets_root is not None else None
+    if assets is not None:
+        fields = release.model_dump(mode="json") | {"assets": assets, "release_format": 2}
+        release = Release.model_validate(fields)
+        release = release.model_copy(update={"id": release.content_id()})
+    with staged_release(directory) as staging:
+        if assets_root is not None and assets is not None:
+            verify_assets(assets_root, assets, staging)
+        if write_manifest(staging / MANIFEST, kept) != release.manifest_sha256:
+            raise ValueError("The written manifest differs from the release record")
+        _write_record(staging, release)
     return release
 
 
@@ -324,9 +344,15 @@ def read_release(directory: Path) -> tuple[Release, list[Sample]]:
     if release.content_id() != release.id:
         raise ValueError(f"Release {release.id} does not match its content")
     samples = read_manifest(directory / release.manifest, release.manifest_sha256)
+    if max(sample.schema_version for sample in samples) != release.contract_schema_version:
+        raise ValueError("Release contract schema version differs from its actual samples")
     listed = sorted(sample for members in release.splits.values() for sample in members.samples)
     if sorted(sample.id for sample in samples) != listed:
         raise ValueError(f"Release {release.id} splits do not list its manifest's samples")
+    if release.assets is not None:
+        if collect_assets(samples) != release.assets:
+            raise ValueError("Release assets differ from its manifest/history references")
+        verify_assets(directory, release.assets)
     return release, samples
 
 

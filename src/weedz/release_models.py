@@ -3,6 +3,8 @@
 import hashlib
 import json
 import math
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -11,6 +13,8 @@ from pydantic import (
     Field,
     SerializerFunctionWrapHandler,
     StringConstraints,
+    field_serializer,
+    field_validator,
     model_serializer,
     model_validator,
 )
@@ -145,7 +149,7 @@ class StatusChange(Frozen):
 
 
 class Release(Frozen):
-    release_format: Literal[1] = 1
+    release_format: Literal[1, 2] = 1
     id: str
     name: ReleaseName
     task: Task
@@ -167,17 +171,39 @@ class Release(Frozen):
     review_policy: ReviewPolicy | None = None
     rights_profile: RightsProfile | None = None
     metadata_licenses: list[str] | None = None
+    assets: Mapping[Text, Sha256] | None = None
+
+    @field_validator("assets")
+    @classmethod
+    def readonly_assets(cls, value: Mapping[str, str] | None) -> Mapping[str, str] | None:
+        return MappingProxyType(dict(value)) if value is not None else None
+
+    @field_serializer("assets")
+    def sorted_assets(self, value: Mapping[str, str] | None) -> dict[str, str] | None:
+        return dict(sorted(value.items())) if value is not None else None
 
     @model_serializer(mode="wrap")
     def without_absent_policy(self, handler: SerializerFunctionWrapHandler) -> dict:
         data = handler(self)
-        for key in ("review_policy", "rights_profile", "metadata_licenses"):
+        for key in ("review_policy", "rights_profile", "metadata_licenses", "assets"):
             if data.get(key) is None:
                 data.pop(key, None)
         return data
 
     @model_validator(mode="after")
     def history_only_advances(self) -> "Release":
+        if self.contract_schema_version not in {1, 2}:
+            raise ValueError("Unsupported release contract schema version")
+        extensions = (
+            self.contract_schema_version > 1,
+            self.review_policy is not None,
+            self.rights_profile is not None,
+            self.metadata_licenses is not None,
+            self.assets is not None,
+            any(c.categories or c.checked_negatives for c in self.counts.values()),
+        )
+        if self.release_format == 1 and any(extensions):
+            raise ValueError("Release format 1 cannot contain version 2 extensions")
         for before, after in zip(self.test_history, self.test_history[1:], strict=False):
             _check_advance(before.status, after.status)
         if self.test_history[-1].status != self.test_status:

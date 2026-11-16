@@ -1,9 +1,11 @@
 """Frozen gold releases include policy, scoped negatives and their original review history."""
 
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
+from PIL import Image
 from test_gold_policy import WHEN, policy, specimen
 
 from weedz.contract import Sample
@@ -29,6 +31,24 @@ def reviewed_samples() -> list[Sample]:
     return result
 
 
+def materialize(root: Path) -> list[Sample]:
+    root.mkdir()
+    samples = []
+    for number, sample in enumerate(reviewed_samples(), start=1):
+        path = root / sample.media.uri
+        path.parent.mkdir(exist_ok=True)
+        Image.new("RGB", (40, 30), (number, 40, 60)).save(path)
+        sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        value = sample.model_dump(mode="json")
+        value["media"]["sha256"] = sha
+        for claim in value["completeness"]:
+            claim["media_sha256"] = sha
+        for event in value["review_history"]:
+            event["media_sha256"] = sha
+        samples.append(Sample.model_validate(value))
+    return samples
+
+
 def spec(**fields: object) -> ReleaseSpec:
     return ReleaseSpec.model_validate(
         {
@@ -50,8 +70,11 @@ def spec(**fields: object) -> ReleaseSpec:
 def test_policy_promotes_samples_and_keeps_the_explicit_negative_in_a_release(
     tmp_path: Path,
 ) -> None:
-    samples = reviewed_samples()
-    release = write_release(tmp_path / "release", samples, spec(), recorded_at=WHEN)
+    source = tmp_path / "source"
+    samples = materialize(source)
+    release = write_release(
+        tmp_path / "release", samples, spec(), assets_root=source, recorded_at=WHEN
+    )
     verified, frozen = read_release(tmp_path / "release")
     assert verified.id == release.id
     assert all("detection" in sample.tasks for sample in frozen)
@@ -103,7 +126,8 @@ def test_changing_only_the_review_policy_changes_the_frozen_release_id() -> None
 
 def test_policy_and_history_tampering_are_detected_on_read(tmp_path: Path) -> None:
     directory = tmp_path / "release"
-    write_release(directory, reviewed_samples(), spec(), recorded_at=WHEN)
+    source = tmp_path / "source"
+    write_release(directory, materialize(source), spec(), assets_root=source, recorded_at=WHEN)
     value = json.loads((directory / "release.json").read_text())
     value["review_policy"]["independent"] = False
     (directory / "release.json").write_text(json.dumps(value))
