@@ -53,8 +53,10 @@ def prepare_claims(
     taxa: set[str],
     categories: set[str],
     budget: DecodeBudget,
+    *,
+    revision: int = 1,
 ) -> PreparedClaims:
-    declared = decisions(record.results, taxa, categories)
+    declared = decisions(record.results, taxa, categories, revision=revision)
     rows, geometries = [], []
     for result in record.results:
         kind = result.get("type")
@@ -73,6 +75,13 @@ def prepare_claims(
 
 
 def parse_claims(
-    record: HumanRecord, size: tuple[int, int], taxa: set[str], categories: set[str]
+    record: HumanRecord,
+    size: tuple[int, int],
+    taxa: set[str],
+    categories: set[str],
+    *,
+    revision: int = 1,
 ) -> Claims:
-    return prepare_claims(record, size, taxa, categories, DecodeBudget()).decode()
+    return prepare_claims(
+        record, size, taxa, categories, DecodeBudget(), revision=revision
+    ).decode()

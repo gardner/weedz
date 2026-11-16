@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from weedz.annotation.export import _output
-from weedz.annotation.gold_config import gold_config
+from weedz.annotation.gold_config import configuration_revision, gold_config
 from weedz.annotation.import_apply import apply_claims, has_revision
 from weedz.annotation.import_assets import add_snapshot, check_assets
 from weedz.annotation.import_bindings import task_bindings
@@ -98,6 +98,7 @@ def _prepare_jobs(
     request: ImportInputs,
     source_samples: dict[str, Sample],
 ) -> list[tuple[str, PreparedClaims | HumanRecord]]:
+    family = configuration_revision(request.taxa, request.categories, request.config_sha256)
     budget = DecodeBudget()
     jobs: list[tuple[str, PreparedClaims | HumanRecord]] = []
     for key, task in tasks:
@@ -132,6 +133,7 @@ def _prepare_jobs(
                             set(request.taxa),
                             set(request.categories),
                             budget,
+                            revision=family,
                         ),
                     )
                 )
@@ -186,7 +188,8 @@ def import_reviews(
     prior = _prior(request, base, previous, previous_sha256)
     _admit(request, base, prior)
     config = pinned_bytes(request.config, request.config_sha256, 1024 * 1024)
-    if config != gold_config(request.taxa, request.categories).encode("utf-8"):
+    family = configuration_revision(request.taxa, request.categories, request.config_sha256)
+    if config != gold_config(request.taxa, request.categories, revision=family).encode("utf-8"):
         raise ValueError("Configuration is not the declared opt-in human review schema")
     exported = pinned_bytes(request.export, request.export_sha256, MAX_EXPORT_BYTES)
     evidence = {

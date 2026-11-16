@@ -40,8 +40,24 @@ Create a separate opt-in project/configuration before collecting these answers:
 ```sh
 uv run python scripts/import_label_studio_reviews.py config \
   --taxon 'Ulex europaeus' --taxon 'Clematis vitalba' \
-  --output /absolute/outside-git/review-v1.xml
+  --output /absolute/outside-git/review-v2.xml
 ```
+
+The command creates review configuration revision 2. New production code should
+use `gold_config(taxa, categories, revision=2)` explicitly. Revision 2 combines
+named taxa/categories into one required `completeness_scope` choice group and
+sets both rectangle `canRotate="false"` and image `rotateControl="false"`.
+These are supported Label Studio controls ([Choices](https://labelstud.io/tags/choices),
+[RectangleLabels](https://labelstud.io/tags/rectanglelabels),
+[Image](https://labelstud.io/tags/image)). The combined control requires at least
+one selected scope without forcing an unrelated taxon or category.
+
+`gold_config()` retains revision 1 as its byte-compatible API default for archived
+callers. Import and journal replay recognize either exact canonical XML family by
+its recorded SHA and original ordered scopes. Legacy separate scope answers remain
+legacy; they are never interpreted as the new combined control, and mixing answer
+families refuses. Keep original exports/configurations unchanged when switching a
+project to revision 2; later edits must have their actual new revision identity.
 
 The scope arguments must match exactly when importing. Record the actual project
 configuration and its SHA; do not retroactively attach this configuration to old
@@ -52,7 +68,7 @@ segmentation requires masks. Partial/unknown coverage never establishes a negati
 uv run python scripts/import_label_studio_reviews.py import \
   --package /absolute/original-annotation-package --package-sha256 PACKAGE_MANIFEST_SHA \
   --export /absolute/private/completed.json --export-sha256 EXPORT_SHA \
-  --config /absolute/outside-git/review-v1.xml --config-sha256 CONFIG_SHA \
+  --config /absolute/outside-git/review-v2.xml --config-sha256 CONFIG_SHA \
   --project nz-review-project1 --project-id 1 \
   --taxon 'Ulex europaeus' --taxon 'Clematis vitalba' \
   --output /absolute/outside-git/new-human-import-v1

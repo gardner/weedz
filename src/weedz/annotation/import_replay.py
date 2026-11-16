@@ -1,10 +1,9 @@
 """Reconstruct prior human state only from ordered, receipt-owned captures."""
 
-import hashlib
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from weedz.annotation.gold_config import gold_config
+from weedz.annotation.gold_config import configuration_revision, gold_config
 from weedz.annotation.import_assets import add_snapshot, check_assets, check_source_files
 from weedz.annotation.import_claims import PreparedClaims
 from weedz.annotation.import_package import Package
@@ -80,6 +79,19 @@ def _journal_shape(journal: object) -> None:
         raise ValueError("Invalid capture journal export checksum")
 
 
+def _configuration(
+    prior: Package, row: dict, taxa: tuple[str, ...], categories: tuple[str, ...]
+) -> str:
+    checksum = row.get("config_sha256")
+    if not isinstance(checksum, str):
+        raise ValueError("Capture journal requires a configuration checksum")
+    family = configuration_revision(taxa, categories, checksum)
+    raw = gold_config(taxa, categories, revision=family).encode("utf-8")
+    if len(raw) > 1024 * 1024 or prior.files.get(f"private/configs/{checksum}.xml") != raw:
+        raise ValueError("Capture journal configuration is not its archived canonical schema")
+    return checksum
+
+
 def _captures(
     base: Package,
     prior: Package,
@@ -96,14 +108,7 @@ def _captures(
     visits = 0
     for row in journal:
         taxa, categories = _scopes(row, "taxa"), _scopes(row, "categories")
-        config = gold_config(taxa, categories).encode("utf-8")
-        config_sha = hashlib.sha256(config).hexdigest()
-        if (
-            len(config) > 1024 * 1024
-            or row.get("config_sha256") != config_sha
-            or prior.files.get(f"private/configs/{config_sha}.xml") != config
-        ):
-            raise ValueError("Capture journal configuration is not its archived canonical schema")
+        config_sha = _configuration(prior, row, taxa, categories)
         checksum = row["export_sha256"]
         if checksum not in parsed:
             parsed[checksum] = _historical_tasks(owned[checksum], base, request.project_id)
