@@ -32,6 +32,7 @@ def box_iou(truth: Box, prediction: Box) -> float:
 
 @dataclass(frozen=True)
 class MaskOverlap:
+    assessed_pixels: int
     truth_pixels: int
     predicted_pixels: int
     intersection_pixels: int
@@ -39,18 +40,31 @@ class MaskOverlap:
     dice: float | None
 
 
-def mask_overlap(truth: NDArray[np.generic], prediction: NDArray[np.generic]) -> MaskOverlap:
+def mask_overlap(
+    truth: NDArray[np.generic],
+    prediction: NDArray[np.generic],
+    *,
+    assessed: NDArray[np.generic] | None = None,
+) -> MaskOverlap:
     """Empty/empty overlap is undefined, never evidence of a correct negative."""
     if truth.dtype != np.bool_ or prediction.dtype != np.bool_:
         raise ValueError("Masks must contain boolean pixels")
     if truth.ndim != 2 or truth.shape != prediction.shape or not truth.size:
         raise ValueError("Masks must share a nonempty two-dimensional pixel grid")
+    assessed_pixels = truth.size
+    if assessed is not None:
+        if assessed.dtype != np.bool_ or assessed.shape != truth.shape:
+            raise ValueError("Assessment must be a boolean mask on the same grid")
+        assessed_pixels = int(np.count_nonzero(assessed))
+        truth = np.logical_and(truth, assessed)
+        prediction = np.logical_and(prediction, assessed)
     true_count = int(np.count_nonzero(truth))
     predicted_count = int(np.count_nonzero(prediction))
     intersection = int(np.count_nonzero(np.logical_and(truth, prediction)))
     union = true_count + predicted_count - intersection
     total = true_count + predicted_count
     return MaskOverlap(
+        assessed_pixels,
         true_count,
         predicted_count,
         intersection,

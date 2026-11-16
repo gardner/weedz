@@ -37,3 +37,22 @@ def test_different_mask_grids_and_nonbinary_inputs_refused() -> None:
         mask_overlap(np.zeros((2, 2), dtype=bool), np.zeros((3, 2), dtype=bool))
     with pytest.raises(ValueError, match="boolean"):
         mask_overlap(np.zeros((2, 2), dtype=np.uint8), np.zeros((2, 2), dtype=bool))
+
+
+def test_explicit_void_pixels_are_excluded_from_both_sides() -> None:
+    truth = np.array([[True, False], [False, False]])
+    prediction = np.ones((2, 2), dtype=bool)
+    assessed = np.array([[True, True], [False, False]])
+    result = mask_overlap(truth, prediction, assessed=assessed)
+    assert result.truth_pixels == 1
+    assert result.predicted_pixels == 2
+    assert result.iou == 0.5
+
+
+def test_empty_assessment_does_not_become_a_negative_observation() -> None:
+    result = mask_overlap(
+        np.ones((2, 2), dtype=bool),
+        np.ones((2, 2), dtype=bool),
+        assessed=np.zeros((2, 2), dtype=bool),
+    )
+    assert result.iou is result.dice is None
