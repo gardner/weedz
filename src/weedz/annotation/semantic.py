@@ -5,6 +5,7 @@ import json
 from typing import Any
 
 from weedz.discovery.records import SPECIES
+from weedz.segmentation.ingress import ingress_identity
 
 CLASSIFIER_FIELDS = (
     "repository",
@@ -110,6 +111,13 @@ def _fields(metadata: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]
     return {key: metadata[key] for key in fields}
 
 
+def _source_ingress(metadata: dict, classifier: dict) -> dict:
+    outer, inner = ingress_identity(metadata), ingress_identity(classifier)
+    if outer and inner and outer != inner:
+        raise ValueError("Conflicting source ingress declarations")
+    return outer or inner
+
+
 def proposer_semantic(proposer: dict[str, Any]) -> tuple[dict[str, Any], str]:
     profile = proposer.get("profile")
     if profile == "sam3-image-concept-v1":
@@ -124,13 +132,17 @@ def proposer_semantic(proposer: dict[str, Any]) -> tuple[dict[str, Any], str]:
         }
         if not isinstance(config, dict) or not required.issubset(config):
             raise ValueError("Incomplete SAM3 semantic proposal configuration")
-        return _fields(proposer, SAM3_PROPOSER_FIELDS), "SAM3"
+        return {**_fields(proposer, SAM3_PROPOSER_FIELDS), **ingress_identity(proposer)}, "SAM3"
     if profile not in {None, "sam2.1-tiny-v1"}:
         raise ValueError("Unknown semantic proposer profile")
     config = proposer.get("proposal_config", proposer.get("config"))
     if not isinstance(config, dict) or not CONFIG_FIELDS.issubset(config):
         raise ValueError("Incomplete semantic proposal configuration")
-    return {**_fields(proposer, PROPOSER_FIELDS), "proposal_config": config}, "SAM2.1"
+    return {
+        **_fields(proposer, PROPOSER_FIELDS),
+        "proposal_config": config,
+        **ingress_identity(proposer),
+    }, "SAM2.1"
 
 
 def shared_regional_version(metadata: dict[str, Any]) -> dict[str, Any]:
@@ -176,6 +188,7 @@ def shared_regional_version(metadata: dict[str, Any]) -> dict[str, Any]:
             if key in metadata
         }
     )
+    semantic.update(_source_ingress(metadata, classifier))
     encoded = json.dumps(semantic, sort_keys=True, allow_nan=False).encode()
     stamp = hashlib.sha256(encoded).hexdigest()
     return {
