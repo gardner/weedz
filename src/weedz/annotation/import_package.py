@@ -13,6 +13,7 @@ from weedz.contract import Sample
 from weedz.rights_profiles import RightsProfile, rights_profile_fields
 
 MAX_BYTES = 256 * 1024 * 1024
+MAX_MANIFEST_BYTES = 4 * 1024 * 1024
 MAX_PACKAGE_BYTES = 512 * 1024 * 1024
 MAX_FILES = 10_000
 MAX_STRUCTURE_BYTES = 64 * 1024 * 1024
@@ -72,7 +73,7 @@ def _geometry(media: bytes, sample: Sample) -> None:
 
 
 def read_package(root: Path, expected: str) -> Package:
-    raw = pinned_bytes(root / "manifest.json", expected, 4 * 1024 * 1024)
+    raw = pinned_bytes(root / "manifest.json", expected, MAX_MANIFEST_BYTES)
     manifest = json.loads(raw)
     if not isinstance(manifest.get("files"), dict):
         raise ValueError("Annotation package needs a closed file manifest")
@@ -158,3 +159,8 @@ def check_output_files(files: dict[str, bytes]) -> None:
 
 def _file_limit(name: str) -> int:
     return min(MAX_BYTES, MAX_STRUCTURE_BYTES) if name in STRUCTURAL_FILES else MAX_BYTES
+
+
+def check_output_manifest(encoded: bytes) -> None:
+    if len(encoded) > MAX_MANIFEST_BYTES:
+        raise ValueError("Generated manifest exceeds the replay manifest resource cap")

@@ -212,3 +212,15 @@ def test_previous_receipt_project_must_be_a_strict_integer(tmp_path, value):
             request, output, previous=original, previous_sha256=hashlib.sha256(raw).hexdigest()
         )
     assert not output.exists()
+
+
+def test_generated_receipt_must_fit_the_manifest_replay_cap(tmp_path, monkeypatch):
+    import weedz.annotation.import_package as package
+
+    request, _, _ = inputs(tmp_path)
+    initial_size = (request.package / "manifest.json").stat().st_size
+    monkeypatch.setattr(package, "MAX_MANIFEST_BYTES", initial_size + 100, raising=False)
+    output = tmp_path / "unreplayable-receipt"
+    with pytest.raises(ValueError, match="manifest.*cap"):
+        import_reviews(request, output)
+    assert not output.exists()
