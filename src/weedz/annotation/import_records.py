@@ -47,7 +47,7 @@ class HumanRecord:
 
 
 def _record(row: dict, task_id: int, namespace: str) -> HumanRecord:
-    if type(row.get("was_cancelled")) is not bool or row.get("task") != task_id:
+    if type(row.get("was_cancelled")) is not bool or positive_id(row.get("task")) != task_id:
         raise ValueError("Human annotation must be completed for the exact task")
     author = _account(row.get("completed_by"), namespace)
     actor_field = "updated_by" if row.get("updated_by") is not None else "completed_by"

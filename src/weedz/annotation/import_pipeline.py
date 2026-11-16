@@ -72,7 +72,7 @@ def _human_tasks(encoded: bytes, base: Package, project_id: int) -> list[tuple[s
     seen = set()
     task_ids: set[int] = set()
     for task in tasks:
-        if not isinstance(task, dict) or task.get("project") != project_id:
+        if not isinstance(task, dict) or positive_id(task.get("project")) != project_id:
             raise ValueError("Export project identity mismatch")
         task_id = positive_id(task.get("id"))
         if task_id in task_ids:
