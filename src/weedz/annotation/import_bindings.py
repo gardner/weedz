@@ -25,22 +25,26 @@ def task_bindings(
         bindings[key] = identifier
         reverse[identifier] = key
 
-    # Old receipts have no explicit table: their retained, pinned exports still
-    # record task IDs even for rows without any completed human annotation.
+    declared = _recorded(prior.task_bindings)
+    for key, value in (declared or {}).items():
+        add(key, value)
     for exported in history:
         for key, row in exported:
+            _known_historical(declared, key)
             add(key, row["id"])
-    _verify_recorded(prior.task_bindings, bindings)
     for key, row in selected:
         add(key, row["id"])
     return dict(sorted(bindings.items()))
 
 
-def _verify_recorded(table: object, bindings: dict[str, int]) -> None:
-    if table is None:
-        return
-    if not isinstance(table, dict):
+def _recorded(value: object) -> dict[str, int] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
         raise ValueError("Recorded task ID bindings must be an object")
-    declared = {key: positive_id(value) for key, value in table.items()}
-    if declared != bindings:
-        raise ValueError("Recorded task ID bindings differ from the retained exports")
+    return {key: positive_id(identifier) for key, identifier in value.items()}
+
+
+def _known_historical(declared: dict[str, int] | None, key: str) -> None:
+    if declared is not None and key not in declared:
+        raise ValueError("Owned export task ID binding is missing from the recorded table")

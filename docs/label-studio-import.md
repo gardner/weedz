@@ -186,3 +186,19 @@ a box stays a box and a brush stays a mask, including mixed annotations. No geom
 conversion or task promotion is inferred. Exhaustive named coverage still requires
 matching geometry for those targets; partial/unknown coverage establishes no absence
 or completeness for another task. Gold acceptance remains a separate policy.
+
+The receipt's `owned_export_sha256` records the verified export snapshots that this
+importer owns, including empty exports and exports with no completed human rows.
+Replay reads only these receipt-proven snapshots, verifies their actual hashes, and
+checks their task identities against the pinned task table. Other source-owned files
+under `private/exports/` remain opaque preserved data; a pathname never grants authority.
+Legacy receipts may use their explicit current-export anchor and genuinely added
+importer-event anchors, excluding source history. A complete pinned task table keeps
+its previous IDs. Before-table legacy chains with unprovable earlier captures refuse
+with an ownership error rather than guessing or rewriting the old prototype.
+
+For before-table legacy receipts, even a source-shaped export file can be ambiguous:
+it may also have been an actual zero-human capture. Without a recorded table or
+owned lineage, any such unproven retained capture causes refusal; original bytes
+are left untouched. New receipts do not have this ambiguity and keep unrelated
+source JSON inert, regardless of its filename or task-shaped content.
