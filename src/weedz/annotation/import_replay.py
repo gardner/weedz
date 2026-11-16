@@ -5,7 +5,7 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from weedz.annotation.gold_config import gold_config
-from weedz.annotation.import_assets import check_assets
+from weedz.annotation.import_assets import add_snapshot, check_assets
 from weedz.annotation.import_claims import PreparedClaims
 from weedz.annotation.import_package import Package
 from weedz.annotation.import_records import HumanRecord
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 MAX_REPLAY_BRUSH_PIXELS = 2_000_000_000
 MAX_REPLAY_VISITS = 100_000
 MAX_CAPTURES = 10_000
+MAX_REPLAY_JSON_BYTES = 64 * 1024 * 1024
 
 
 @dataclass
@@ -86,8 +87,10 @@ def _captures(
     owned: dict[str, bytes],
     journal: list[dict],
 ) -> list[tuple["ImportInputs", list[tuple[str, dict]]]]:
-    from weedz.annotation.import_pipeline import _human_tasks
+    from weedz.annotation.import_pipeline import _historical_tasks
 
+    if sum(len(raw) for raw in owned.values()) > MAX_REPLAY_JSON_BYTES:
+        raise ValueError("Historical replay exceeds its distinct captured JSON byte budget")
     captures = []
     parsed = {}
     visits = 0
@@ -103,7 +106,7 @@ def _captures(
             raise ValueError("Capture journal configuration is not its archived canonical schema")
         checksum = row["export_sha256"]
         if checksum not in parsed:
-            parsed[checksum] = _human_tasks(owned[checksum], base, request.project_id)
+            parsed[checksum] = _historical_tasks(owned[checksum], base, request.project_id)
         tasks = parsed[checksum]
         for _, task in tasks:
             if not isinstance(task.get("annotations", []), list):
@@ -141,9 +144,9 @@ def validate_prior(
     journal = capture_journal(base, prior, request, owned)
     if len(journal) >= MAX_CAPTURES:
         raise ValueError("Ordered capture journal exceeds its replay resource cap")
-    prospective = replace(
-        prior, files={**prior.files, f"private/configs/{request.config_sha256}.xml": config}
-    )
+    prospective_files = dict(prior.files)
+    add_snapshot(prospective_files, f"private/configs/{request.config_sha256}.xml", config)
+    prospective = replace(prior, files=prospective_files)
     # Preflight the next closed chain too, so its output remains replayable.
     captures = _captures(
         base,

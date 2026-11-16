@@ -227,3 +227,7 @@ Large or long-running chains need smaller closed batches. Legacy receipts withou
 a journal are accepted only when a single capture and its exact current declared
 configuration are provable; ambiguous multi-capture prototypes remain unchanged
 and are refused, rather than guessing order from human history or SHA sorting.
+Distinct capture snapshots (including the next export, deduplicated by verified
+SHA) additionally have a shared 64 MiB encoded JSON cap checked before replay
+parsing; each export still has its separate 8 MiB pre-decode cap. These are input
+byte bounds, not promises that decoded Python objects occupy the same memory.

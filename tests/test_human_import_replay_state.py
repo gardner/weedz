@@ -223,3 +223,82 @@ def test_all_journal_configs_are_validated_before_first_mask_decode(tmp_path, mo
             previous_sha256=hashlib.sha256(manifest).hexdigest(),
         )
     assert calls == []
+
+
+def test_historical_capture_limit_precedes_json_decode(tmp_path, monkeypatch):
+    from dataclasses import replace
+
+    import weedz.annotation.import_pipeline as pipeline
+
+    request, _, _ = inputs(tmp_path)
+    prior = tmp_path / "prior"
+    import_reviews(request, prior)
+    checksum = hashlib.sha256((prior / "manifest.json").read_bytes()).hexdigest()
+    historical = request.export.read_bytes()
+    request.export.write_bytes(b"[]")
+    current = replace(request, export_sha256=hashlib.sha256(b"[]").hexdigest())
+    monkeypatch.setattr(pipeline, "MAX_EXPORT_BYTES", len(historical) - 1)
+    parse = pipeline._human_tasks
+    seen = []
+
+    def observed(raw, *args):
+        seen.append(raw)
+        return parse(raw, *args)
+
+    monkeypatch.setattr(pipeline, "_human_tasks", observed)
+    with pytest.raises(ValueError, match="Historical human export"):
+        import_reviews(current, tmp_path / "refused", previous=prior, previous_sha256=checksum)
+    assert seen == [b"[]"]
+
+
+def test_distinct_historical_json_is_bounded_before_replay_parse(tmp_path, monkeypatch):
+    from dataclasses import replace
+
+    import weedz.annotation.import_pipeline as pipeline
+    import weedz.annotation.import_replay as replay
+
+    request, _, _ = inputs(tmp_path)
+    prior = tmp_path / "prior"
+    import_reviews(request, prior)
+    checksum = hashlib.sha256((prior / "manifest.json").read_bytes()).hexdigest()
+    raw = request.export.read_bytes()
+    monkeypatch.setattr(replay, "MAX_REPLAY_JSON_BYTES", len(raw))
+    # Repeated captures share one verified raw snapshot, so do not consume more bytes.
+    import_reviews(request, tmp_path / "same", previous=prior, previous_sha256=checksum)
+    request.export.write_bytes(b"[]")
+    current = replace(request, export_sha256=hashlib.sha256(b"[]").hexdigest())
+    parse = pipeline._human_tasks
+    seen = []
+
+    def observed(encoded, *args):
+        seen.append(encoded)
+        return parse(encoded, *args)
+
+    monkeypatch.setattr(pipeline, "_human_tasks", observed)
+    with pytest.raises(ValueError, match="distinct captured JSON"):
+        import_reviews(current, tmp_path / "refused", previous=prior, previous_sha256=checksum)
+    assert seen == [b"[]"]
+
+
+def test_retained_configuration_conflict_refuses_before_historical_decode(tmp_path, monkeypatch):
+    from test_human_import_decode_budget import decoder, request_with_masks
+
+    request, task = request_with_masks(tmp_path)
+    calls = decoder(monkeypatch)
+    request = save(request, task)
+    prior = tmp_path / "prior"
+    receipt = import_reviews(request, prior)
+    name = f"private/configs/{request.config_sha256}.xml"
+    (prior / name).write_bytes(b"changed configuration")
+    receipt["files"][name] = hashlib.sha256(b"changed configuration").hexdigest()
+    manifest = json.dumps(receipt).encode()
+    (prior / "manifest.json").write_bytes(manifest)
+    calls.clear()
+    with pytest.raises(ValueError, match="snapshot"):
+        import_reviews(
+            request,
+            tmp_path / "refused",
+            previous=prior,
+            previous_sha256=hashlib.sha256(manifest).hexdigest(),
+        )
+    assert calls == []
