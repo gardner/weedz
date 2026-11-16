@@ -22,6 +22,7 @@ from weedz.discovery import inference
 from weedz.discovery.inference import file_sha256, square_view
 from weedz.manifest import read_manifest, write_atomic
 from weedz.segmentation.artifacts import digest
+from weedz.segmentation.ingress import proposal_metadata, source_budget
 from weedz.segmentation.regions import ProposalConfig
 from weedz.segmentation.sam3_image import Sam3Config, restore_concept_regions
 from weedz.segmentation.stages import restored_regions
@@ -29,7 +30,9 @@ from weedz.segmentation.stages import restored_regions
 Proposer = Literal["sam2", "sam3"]
 
 
-def _inputs(manifest: Path, manifest_sha: str, encoded: bytes, root: Path):
+def _inputs(
+    manifest: Path, manifest_sha: str, encoded: bytes, root: Path, maximum: int | None = None
+):
     samples = read_manifest(manifest, manifest_sha)
     if not 1 <= len(samples) <= 1000:
         raise ValueError("Use a nonempty batch of at most 1000 samples")
@@ -37,7 +40,7 @@ def _inputs(manifest: Path, manifest_sha: str, encoded: bytes, root: Path):
     if len(rows) != len(samples):
         raise ValueError("Incomplete proposal rows")
     for sample, row in zip(samples, rows, strict=True):
-        _snapshot(sample, root)
+        _snapshot(sample, root, maximum)
         if row.get("sample_id") != sample.id or row.get("image_sha256") != sample.media.sha256:
             raise ValueError("Proposal asset provenance mismatch")
         stage = row["segmentation"]
@@ -48,7 +51,9 @@ def _inputs(manifest: Path, manifest_sha: str, encoded: bytes, root: Path):
     return samples, rows
 
 
-def _restore(encoded: bytes, expected_sha: str, stage: dict, proposer: Proposer) -> list:
+def _restore(
+    encoded: bytes, expected_sha: str, stage: dict, proposer: Proposer, maximum: int | None = None
+) -> list:
     records = stage["regions"]
     if proposer == "sam2":
         with Image.open(io.BytesIO(encoded)) as image:
@@ -58,19 +63,23 @@ def _restore(encoded: bytes, expected_sha: str, stage: dict, proposer: Proposer)
                 ProposalConfig(**stage["provenance"]["proposal_config"]),
             )
     config = Sam3Config(**stage["provenance"]["config"])
-    return restore_concept_regions(encoded, records, config, expected_sha256=expected_sha)
+    return restore_concept_regions(
+        encoded, records, config, expected_sha256=expected_sha, max_source_bytes=maximum
+    )
 
 
-def _restored_photo(sample: Sample, source: dict, root: Path, proposer: Proposer) -> tuple:
+def _restored_photo(
+    sample: Sample, source: dict, root: Path, proposer: Proposer, maximum: int | None = None
+) -> tuple:
     stage = source["segmentation"]
     ids = [record["id"] for record in stage["regions"]]
     if len(set(ids)) != len(ids):
         raise ValueError("Duplicate region identities")
-    encoded = _snapshot(sample, root)
+    encoded = _snapshot(sample, root, maximum)
     expected_sha = sample.media.sha256
     if not expected_sha:
         raise ValueError("Missing regional source checksum")
-    return _restore(encoded, expected_sha, stage, proposer), ids
+    return _restore(encoded, expected_sha, stage, proposer, maximum), ids
 
 
 def _cached(
@@ -81,6 +90,7 @@ def _cached(
     sha: str | None,
     root: Path,
     proposer: Proposer,
+    maximum: int | None = None,
 ):
     result = _verified_result(output, sha)
     if any(digest({key: result.get(key)}) != digest({key: value}) for key, value in header.items()):
@@ -89,7 +99,7 @@ def _cached(
     if not isinstance(rows, list) or len(rows) != len(samples):
         raise ValueError("Incomplete regional prediction rows")
     for sample, source, row in zip(samples, proposed, rows, strict=True):
-        _restored_photo(sample, source, root, proposer)
+        _restored_photo(sample, source, root, proposer, maximum)
         expected = _identity(sample, header["model_version"])
         if any(row.get(key) != value for key, value in expected.items()):
             raise ValueError("Cached regional asset identity mismatch")
@@ -113,10 +123,10 @@ def validate_region_scores(region: dict, metadata: dict) -> None:
             _check_topk(topk)
 
 
-def _predict(samples, rows, root, model, proposer, version):
+def _predict(samples, rows, root, model, proposer, version, maximum=None):
     result = []
     for sample, row in zip(samples, rows, strict=True):
-        regions, ids = _restored_photo(sample, row, root, proposer)
+        regions, ids = _restored_photo(sample, row, root, proposer, maximum)
         classified = []
         for start in range(0, len(regions), 32):
             part = regions[start : start + 32]
@@ -144,7 +154,9 @@ def _predict(samples, rows, root, model, proposer, version):
     return result
 
 
-def regional_metadata(model: Classifier, provenance: dict, proposer: Proposer) -> dict:
+def regional_metadata(
+    model: Classifier, provenance: dict, proposer: Proposer, *, max_source_bytes: int | None = None
+) -> dict:
     """Share the exact crop policy with workflow preflight without loading a model."""
     metadata = {
         **model.metadata,
@@ -169,7 +181,7 @@ def regional_metadata(model: Classifier, provenance: dict, proposer: Proposer) -
         )
         metadata["views"] = ["tight", "masked", "context"]
         metadata["masked_view_policy"]["transform"] = "recorded WeedScan RGB preprocessing"
-    return json.loads(json.dumps(metadata, allow_nan=False))
+    return json.loads(json.dumps(proposal_metadata(metadata, max_source_bytes), allow_nan=False))
 
 
 def _check_expected_inputs(
@@ -197,8 +209,10 @@ def classify_region_batch(
     verified_existing_sha256: str | None = None,
     expected_manifest_sha256: str | None = None,
     expected_proposals_sha256: str | None = None,
+    max_source_bytes: int | None = None,
 ) -> dict:
     """Classify closed JSONL proposals, preserving source and mask identities on retries."""
+    source_budget(max_source_bytes)
     if proposer not in {"sam2", "sam3"}:
         raise ValueError("Unknown region proposer")
     # Hash and parse exactly the same bounded proposal bytes.
@@ -210,13 +224,13 @@ def classify_region_batch(
     _check_expected_inputs(
         manifest_sha, source_sha, expected_manifest_sha256, expected_proposals_sha256
     )
-    samples, rows = _inputs(manifest, manifest_sha, encoded, media_root)
+    samples, rows = _inputs(manifest, manifest_sha, encoded, media_root, max_source_bytes)
     if file_sha256(proposals) != source_sha or file_sha256(manifest) != manifest_sha:
         raise ValueError("Input provenance changed while reading")
     provenance = rows[0]["segmentation"]["provenance"]
     if any(digest(row["segmentation"]["provenance"]) != digest(provenance) for row in rows):
         raise ValueError("Proposal model provenance differs within the batch")
-    metadata = regional_metadata(model, provenance, proposer)
+    metadata = regional_metadata(model, provenance, proposer, max_source_bytes=max_source_bytes)
     name = model.metadata.get("pipeline_name", "PlantCLEF")
     version = f"{proposer.upper()} + {name} masked · {digest(metadata)[:12]}"
     header = {
@@ -228,9 +242,16 @@ def classify_region_batch(
     }
     if output.exists():
         return _cached(
-            output, header, samples, rows, verified_existing_sha256, media_root, proposer
+            output,
+            header,
+            samples,
+            rows,
+            verified_existing_sha256,
+            media_root,
+            proposer,
+            max_source_bytes,
         )
-    predicted = _predict(samples, rows, media_root, model, proposer, version)
+    predicted = _predict(samples, rows, media_root, model, proposer, version, max_source_bytes)
     body = {**header, "predictions": predicted}
     result = {**body, "result_sha256": digest(body)}
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -238,7 +259,14 @@ def classify_region_batch(
         fcntl.flock(lock, fcntl.LOCK_EX)
         if output.exists():
             return _cached(
-                output, header, samples, rows, verified_existing_sha256, media_root, proposer
+                output,
+                header,
+                samples,
+                rows,
+                verified_existing_sha256,
+                media_root,
+                proposer,
+                max_source_bytes,
             )
         write_atomic(output, _encoded_result(result))
     return result

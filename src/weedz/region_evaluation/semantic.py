@@ -23,6 +23,7 @@ def sparse_report(
     *,
     kind: Literal["sam2", "sam3"],
     budgets: tuple[int, ...] = (1, 10, 100),
+    max_source_bytes: int | None = None,
 ) -> list[dict]:
     """Measure source-labelled support only; label granularity stays semantic/sparse."""
     if not budgets or any(type(value) is not int or not 1 <= value <= 1000 for value in budgets):
@@ -32,7 +33,7 @@ def sparse_report(
     root = assets_root.resolve(strict=True)
     reports = []
     for sample in samples:
-        _snapshot(sample, root)
+        _snapshot(sample, root, max_source_bytes)
         stage = proposed.rows[sample.id]["segmentation"]
         width, height = sample.media.width, sample.media.height
         if width is None or height is None:

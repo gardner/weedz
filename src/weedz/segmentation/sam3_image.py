@@ -171,9 +171,9 @@ def _restore_geometry(image: Image.Image, record: dict, config: Sam3Config) -> R
     )
 
 
-def _decoded_image(encoded: bytes) -> Image.Image:
-    if len(encoded) > MAX_SOURCE_BYTES:
-        raise ValueError("Source exceeds the 20 MB SAM3 profile cap")
+def _decoded_image(encoded: bytes, maximum: int = MAX_SOURCE_BYTES) -> Image.Image:
+    if len(encoded) > maximum:
+        raise ValueError("Source exceeds the configured SAM3 byte cap")
     try:
         with Image.open(io.BytesIO(encoded)) as original:
             if original.width * original.height > MAX_SOURCE_PIXELS:
@@ -199,21 +199,40 @@ def _validate_records(records: list[dict], config: Sam3Config) -> None:
 
 
 def restore_concept_regions(
-    encoded: bytes, records: list[dict], config: Sam3Config, *, expected_sha256: str
+    encoded: bytes,
+    records: list[dict],
+    config: Sam3Config,
+    *,
+    expected_sha256: str,
+    max_source_bytes: int | None = None,
 ) -> list[Region]:
     """Verify the envelope's exact source, decode once, then restore real crop pixels."""
-    if len(encoded) > MAX_SOURCE_BYTES or hashlib.sha256(encoded).hexdigest() != expected_sha256:
+    from weedz.segmentation.ingress import source_budget
+
+    maximum = source_budget(max_source_bytes)
+    if len(encoded) > maximum or hashlib.sha256(encoded).hexdigest() != expected_sha256:
         raise ValueError("SAM3 source checksum or byte cap mismatch")
     _validate_records(records, config)
-    image = _decoded_image(encoded)
+    image = _decoded_image(encoded, maximum)
     return [_restore_geometry(image, record, config) for record in records]
 
 
 def restore_concept_region(
-    encoded: bytes, record: dict, config: Sam3Config, *, expected_sha256: str
+    encoded: bytes,
+    record: dict,
+    config: Sam3Config,
+    *,
+    expected_sha256: str,
+    max_source_bytes: int | None = None,
 ) -> Region:
     """Single-region convenience wrapper; use plural restoration to decode once/photo."""
-    return restore_concept_regions(encoded, [record], config, expected_sha256=expected_sha256)[0]
+    return restore_concept_regions(
+        encoded,
+        [record],
+        config,
+        expected_sha256=expected_sha256,
+        max_source_bytes=max_source_bytes,
+    )[0]
 
 
 class Sam3Image:

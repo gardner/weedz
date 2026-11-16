@@ -8,6 +8,7 @@ from weedz.batches.receipts import write_receipt
 from weedz.manifest import read_manifest
 from weedz.region_evaluation.proposal_inputs import load_proposals
 from weedz.region_evaluation.semantic import sparse_report
+from weedz.segmentation.ingress import proposal_metadata
 
 
 def parser() -> argparse.ArgumentParser:
@@ -18,6 +19,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--proposals-ready", required=True, type=Path)
     command.add_argument("--ready-sha256", required=True)
     command.add_argument("--proposer", required=True, choices=("sam2", "sam3"))
+    command.add_argument("--max-source-bytes", type=int, default=None)
     command.add_argument(
         "--output", required=True, type=Path, help="Existing private artifact directory outside Git"
     )
@@ -28,7 +30,9 @@ def main() -> None:
     args = parser().parse_args()
     samples = read_manifest(args.manifest, args.manifest_sha256)
     batch = load_proposals(args.proposals_ready, args.ready_sha256, samples)
-    cases = sparse_report(samples, args.assets_root, batch, kind=args.proposer)
+    cases = sparse_report(
+        samples, args.assets_root, batch, kind=args.proposer, max_source_bytes=args.max_source_bytes
+    )
     references = []
     for case in cases:
         key = hashlib.sha256(case["sample_id"].encode("utf-8")).hexdigest()
@@ -51,6 +55,7 @@ def main() -> None:
                 "Sparse labelled support only; no full-scene/instance/species accuracy"
             ),
             "human_review": "Source origin retained; no independent NZ review or gold promotion",
+            **proposal_metadata({}, args.max_source_bytes),
         },
     )
     print(reference["sha256"])

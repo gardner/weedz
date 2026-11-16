@@ -27,3 +27,20 @@ def proposal_metadata(metadata: dict, maximum: int | None) -> dict:
             "resize": "none; existing proposal model thumbnail policy unchanged",
         }
     return result
+
+
+def ingress_identity(metadata: dict) -> dict:
+    if "source_ingress" not in metadata:
+        return {}
+    policy = metadata["source_ingress"]
+    if (
+        not isinstance(policy, dict)
+        or type(policy.get("revision")) is not int
+        or type(policy.get("max_source_pixels")) is not int
+        or policy.get("max_source_bytes") is None
+    ):
+        raise ValueError("Invalid source ingress identity")
+    expected = proposal_metadata({}, policy.get("max_source_bytes"))["source_ingress"]
+    if policy != expected:
+        raise ValueError("Invalid or incomplete source ingress identity")
+    return {"source_ingress": deepcopy(policy)}
