@@ -134,3 +134,56 @@ def test_configuration_cli_explicitly_creates_new_revision_two(tmp_path):
         text=True,
     )
     assert output.read_text(encoding="utf-8") == gold_config(("Ulex europaeus",), revision=2)
+
+
+def test_v2_configuration_hash_binds_the_taxon_category_split():
+    names = ("Ulex europaeus", "other plant")
+    variants = [
+        gold_config(names, (), revision=2),
+        gold_config(names[:1], names[1:], revision=2),
+        gold_config((), names, revision=2),
+    ]
+    assert len(set(variants)) == 3
+    scope = ElementTree.fromstring(variants[1]).find("./Choices[@name='completeness_scope']")
+    assert scope is not None
+    assert [row.attrib["hint"] for row in scope] == ["Taxon", "Functional category"]
+
+
+@pytest.mark.parametrize("previous", [False, True])
+def test_same_labels_with_wrong_declared_namespaces_are_refused(tmp_path, previous):
+    request, task, _ = inputs(tmp_path)
+    request = replace(request, taxa=("Ulex europaeus", "other plant"))
+    current = v2(request, task)
+    prior = tmp_path / "prior"
+    if previous:
+        import_reviews(current, prior)
+    wrong = replace(current, taxa=("Ulex europaeus",), categories=("other plant",))
+    with pytest.raises(ValueError, match="configuration|Configuration"):
+        import_reviews(
+            wrong,
+            tmp_path / "refused",
+            previous=prior if previous else None,
+            previous_sha256=hashlib.sha256((prior / "manifest.json").read_bytes()).hexdigest()
+            if previous
+            else None,
+        )
+
+
+def test_replayed_journal_namespaces_must_match_the_archived_config(tmp_path):
+    import json
+
+    request, task, _ = inputs(tmp_path)
+    request = replace(request, taxa=("Ulex europaeus", "other plant"))
+    current = v2(request, task)
+    prior = tmp_path / "prior"
+    receipt = import_reviews(current, prior)
+    receipt["capture_journal"][0].update(taxa=["Ulex europaeus"], categories=["other plant"])
+    raw = json.dumps(receipt).encode()
+    (prior / "manifest.json").write_bytes(raw)
+    with pytest.raises(ValueError, match="configuration|Configuration"):
+        import_reviews(
+            current,
+            tmp_path / "refused",
+            previous=prior,
+            previous_sha256=hashlib.sha256(raw).hexdigest(),
+        )

@@ -48,7 +48,7 @@ def _scope_tags(taxa: tuple[str, ...], categories: tuple[str, ...], revision: in
     scopes = []
     for kind, names in groups:
         if names:
-            choices = "".join(f'<Choice value="{escape(n, quote=True)}"/>' for n in names)
+            choices = "".join(_scope_choice(n, n in taxa, revision) for n in names)
             required = ' required="true"' if revision == 2 else ""
             scopes.append(
                 f'<Choices name="completeness_{kind}" toName="image" '
@@ -65,3 +65,9 @@ def configuration_revision(
         if hashlib.sha256(raw).hexdigest() == checksum:
             return revision
     raise ValueError("Configuration is not the declared canonical human review schema")
+
+
+def _scope_choice(name: str, is_taxon: bool, revision: int) -> str:
+    kind = "Taxon" if is_taxon else "Functional category"
+    hint = f' hint="{kind}"' if revision == 2 else ""
+    return f'<Choice value="{escape(name, quote=True)}"{hint}/>'
