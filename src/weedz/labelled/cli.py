@@ -6,7 +6,7 @@ import tarfile
 import zipfile
 from pathlib import Path
 
-from weedz.labelled import cwfid, imageweeds, nz_review, quality
+from weedz.labelled import cwfid, imageweeds, nz_review, quality, review_package
 from weedz.labelled.audit import audit
 from weedz.labelled.images import FORMATS
 from weedz.labelled.publication import digest, json_bytes, output_namespace, publish
@@ -51,6 +51,10 @@ def main(argv: list[str] | None = None) -> None:
     command.add_argument("--source-dir", type=Path, required=True)
     command.add_argument("--manifest", type=Path, action="append", required=True)
     command.add_argument("--output", type=Path, required=True)
+    command = commands.add_parser("review-package")
+    command.add_argument("--manifest", type=Path, required=True)
+    command.add_argument("--output", type=Path, required=True)
+    command.add_argument("--image-prefix", required=True)
     args = parser.parse_args(argv)
     try:
         sha = _prepare(args)
@@ -61,6 +65,9 @@ def main(argv: list[str] | None = None) -> None:
 
 
 def _prepare(args: argparse.Namespace) -> str:
+    if args.source == "review-package":
+        review_package.prepare(args.manifest, args.output, image_prefix=args.image_prefix)
+        return digest((args.output / "manifest.json").read_bytes())
     if args.source == "imageweeds-primary":
         return quality.prepare(tuple(args.manifest), args.source_dir, args.output)
     if args.source == "audit":

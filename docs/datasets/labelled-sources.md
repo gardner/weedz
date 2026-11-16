@@ -184,3 +184,26 @@ Near duplicates, shared sites and independent encounters remain unassessed.
 uv run main.py labelled-batches audit --manifest "$COHORT_A/samples.jsonl" \
   --manifest "$COHORT_B/samples.jsonl" --output "$ARTIFACTS/source-audit.json"
 ```
+
+## Separate blind review package
+
+`review-package` prepares inference-only CC0/BY iNaturalist images using the existing
+Label Studio blind task/config contract. It refuses existing annotations, review
+history and completeness claims. Tasks contain only opaque image identity, visible
+image/metadata credit and a generic source namespace; source subjects, sampling
+strata, observer groups and locations remain in the private companion. Task order
+is the opaque external-ID order rather than the collector's taxonomic strata.
+
+```sh
+uv run main.py labelled-batches review-package --manifest "$NZ90/samples.jsonl" \
+  --output "$ARTIFACTS/nz90-blind-package" --image-prefix nz90-blind-v1
+```
+
+Keep the package (especially its `private` companion) outside Label Studio's local
+serving root. The existing serialized publication client copies only its manifest-
+pinned image files into that root. A new project must be created explicitly under
+the operator's shared import lock; this command itself makes no API calls. Import
+only into the newly created project. Project1, existing tasks/predictions and all
+human submissions remain untouched. A prepared project is not expert NZ gold.
+Source credit links are retained for licensing; reviewers should not inspect the
+upstream subject labels until their blind answers are locked.

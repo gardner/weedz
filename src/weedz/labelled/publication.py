@@ -40,7 +40,7 @@ def publish(path: Path, raw: bytes) -> None:
             temporary.unlink(missing_ok=True)
 
 
-def json_bytes(record: dict) -> bytes:
+def json_bytes(record: dict | list) -> bytes:
     return json.dumps(record, sort_keys=True, allow_nan=False).encode() + b"\n"
 
 
