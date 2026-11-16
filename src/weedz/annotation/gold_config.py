@@ -30,6 +30,9 @@ def gold_config(taxa: tuple[str, ...], categories: tuple[str, ...] = ()) -> str:
     <Choice value="uncertain"/><Choice value="rejected"/>
   </Choices>
   <Header value="Exhaustive means every visible instance in the selected scope is marked."/>
+  <Choices name="completeness_task" toName="image" choice="single" required="true">
+    <Choice value="detection"/><Choice value="segmentation"/>
+  </Choices>
   <Choices name="completeness_status" toName="image" choice="single" required="true">
     <Choice value="exhaustive"/><Choice value="partial"/><Choice value="unknown"/>
   </Choices>

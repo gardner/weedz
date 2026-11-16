@@ -13,6 +13,7 @@ def choice(name, values):
 
 def test_review_and_scope_are_explicit():
     rows = [
+        choice("completeness_task", ["detection"]),
         choice("review_status", ["accepted"]),
         choice("completeness_status", ["exhaustive"]),
         choice("completeness_taxa", ["Ulex europaeus"]),

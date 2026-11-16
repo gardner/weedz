@@ -5,15 +5,17 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Decisions:
+    task: str
     review: str
     status: str
     taxa: tuple[str, ...]
     categories: tuple[str, ...]
 
 
-def decisions(results: list[dict], taxa: set[str], categories: set[str]) -> Decisions:
+def _values(results: list[dict]) -> dict[str, list[str]]:
     allowed = {
         "review_status",
+        "completeness_task",
         "completeness_status",
         "completeness_taxa",
         "completeness_categories",
@@ -34,6 +36,14 @@ def decisions(results: list[dict], taxa: set[str], categories: set[str]) -> Deci
         ):
             raise ValueError("Invalid, unknown or duplicate human review control")
         values[name] = chosen
+    return values
+
+
+def decisions(results: list[dict], taxa: set[str], categories: set[str]) -> Decisions:
+    values = _values(results)
+    task = values.get("completeness_task", [])
+    if len(task) != 1 or task[0] not in {"detection", "segmentation"}:
+        raise ValueError("Completeness needs an explicit detection/segmentation task")
     review = values.get("review_status", [])
     status = values.get("completeness_status", [])
     if len(review) != 1 or review[0] not in {"unreviewed", "accepted", "rejected", "uncertain"}:
@@ -45,4 +55,4 @@ def decisions(results: list[dict], taxa: set[str], categories: set[str]) -> Deci
         raise ValueError("Completeness requires an explicit named scope")
     if not set(ts) <= taxa or not set(cs) <= categories:
         raise ValueError("Completeness scope differs from the pinned configuration")
-    return Decisions(review[0], status[0], tuple(sorted(ts)), tuple(sorted(cs)))
+    return Decisions(task[0], review[0], status[0], tuple(sorted(ts)), tuple(sorted(cs)))

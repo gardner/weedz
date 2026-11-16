@@ -72,3 +72,21 @@ def test_brush_roundtrip_stays_a_mask():
     from PIL import Image
 
     assert np.array_equal(np.asarray(Image.open(io.BytesIO(decoded.mask))), mask)
+
+
+def test_rle_declared_allocation_is_checked_before_sdk_decode(monkeypatch):
+    import label_studio_sdk.converter.brush as brush
+
+    monkeypatch.setattr(brush, "decode_rle", lambda *_: pytest.fail("unsafe allocation"))
+    row = {
+        "id": "b",
+        "from_name": "regions",
+        "to_name": "image",
+        "type": "brushlabels",
+        "original_width": 4,
+        "original_height": 3,
+        "image_rotation": 0,
+        "value": {"format": "rle", "rle": [255, 255, 255, 255], "brushlabels": ["Ulex"]},
+    }
+    with pytest.raises(ValueError, match="size"):
+        decode_region(row, (4, 3), {"Ulex"})
