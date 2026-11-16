@@ -88,6 +88,7 @@ def test_legacy_receipt_recovers_empty_annotation_task_binding_from_pinned_expor
     path = original / "manifest.json"
     receipt = json.loads(path.read_bytes())
     del receipt["task_bindings"]  # Prior importer format; retained files stay unchanged.
+    receipt.pop("owned_export_sha256", None)
     raw = json.dumps(receipt).encode()
     path.write_bytes(raw)
     first["id"] = 9

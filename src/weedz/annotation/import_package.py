@@ -53,6 +53,8 @@ class Package:
     rights_profile: RightsProfile | None = None
     human_import: bool = False
     task_bindings: dict[str, int] | None = None
+    export_sha256: str | None = None
+    owned_export_sha256: list[str] | None = None
 
 
 def _geometry(media: bytes, sample: Sample) -> None:
@@ -104,7 +106,9 @@ def read_package(root: Path, expected: str) -> Package:
         _tasks(files, samples),
         profile,
         imported,
-        manifest.get("task_bindings"),
+        manifest.get("task_bindings") if imported else None,
+        manifest.get("export_sha256") if imported else None,
+        manifest.get("owned_export_sha256") if imported else None,
     )
 
 

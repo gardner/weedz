@@ -10,6 +10,7 @@ from weedz.annotation.import_apply import apply_claims, has_revision
 from weedz.annotation.import_assets import add_snapshot, check_assets
 from weedz.annotation.import_bindings import task_bindings
 from weedz.annotation.import_claims import DecodeBudget, PreparedClaims, prepare_claims
+from weedz.annotation.import_exports import historical_exports
 from weedz.annotation.import_package import Package, pinned_bytes, read_package
 from weedz.annotation.import_records import HumanRecord, completed_records, positive_id
 from weedz.annotation.import_retractions import retract
@@ -175,11 +176,8 @@ def import_reviews(
         "source_package_sha256": request.package_sha256,
     }
     selected = _human_tasks(exported, base, request.project_id)
-    history = (
-        _historical_tasks(raw, base, request.project_id)
-        for name, raw in prior.files.items()
-        if prior is not base and name.startswith("private/exports/") and name.endswith(".json")
-    )
+    owned = historical_exports(base, prior, request.namespace)
+    history = (_historical_tasks(raw, base, request.project_id) for raw in owned.values())
     bindings = task_bindings(prior, selected, history)
     changed, masks, count = _apply(selected, prior.samples, request, evidence)
     if any(name in prior.files and prior.files[name] != raw for name, raw in masks.items()):
@@ -210,6 +208,7 @@ def import_reviews(
             schema_version=1,
             source_package_sha256=request.package_sha256,
             export_sha256=request.export_sha256,
+            owned_export_sha256=sorted({*owned, request.export_sha256}),
             config_sha256=request.config_sha256,
             project_namespace=request.namespace,
             project_id=request.project_id,
