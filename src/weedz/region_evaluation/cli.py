@@ -10,6 +10,7 @@ from weedz.manifest import read_manifest
 from weedz.region_evaluation.aggregate import aggregate_boxes
 from weedz.region_evaluation.boxes import BUDGETS, THRESHOLDS, box_report
 from weedz.region_evaluation.classifier_inputs import load_classifier
+from weedz.region_evaluation.ingress import validate_source_ingress
 from weedz.region_evaluation.proposal_inputs import load_proposals
 from weedz.region_evaluation.provenance import evaluator_provenance
 from weedz.region_evaluation.semantic import sparse_report
@@ -44,6 +45,7 @@ def _inputs(args):
     batch = load_proposals(
         args.proposals_ready, args.ready_sha256, samples, allow_subset=args.allow_source_subset
     )
+    validate_source_ingress(batch, args.max_source_bytes)
     expected = "SAM2.1" if args.proposer == "sam2" else "SAM3"
     for row in batch.rows.values():
         if proposer_semantic(row["segmentation"]["provenance"])[1] != expected:

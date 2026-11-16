@@ -106,6 +106,10 @@ pixel records block a primary aggregate rather than silently choosing a label se
 An explicit `--max-source-bytes 160000000` supports large lossless canonical PNGs;
 the default remains 20MB and the 40MP bound is unchanged. Explicit ingress is bound
 to SAM2/SAM3 and crop-classifier provenance/cache identity; it never resizes truth.
+The evaluation flag must match the recorded proposal ingress policy exactly before
+source decoding or report publication. Historical absent policy requires the omitted
+flag; an explicit 20MB declaration remains distinct from that historical identity.
+The flag cannot relabel previously generated proposals with another input budget.
 
 ## Initial source-bound development evidence
 
