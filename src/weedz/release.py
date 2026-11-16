@@ -285,10 +285,9 @@ def _evidence(task: Task, members: list[Sample]) -> list[Annotation]:
 def _check_target(task: Task, kept: list[Sample]) -> None:
     """An absent label denies its named taxon/category; a binary task needs one target."""
     targets = {
-        (kind, value)
+        ("taxon", note.taxon) if note.taxon is not None else ("category", note.category)
         for note in _evidence(task, kept)
-        for kind, value in (("taxon", note.taxon), ("category", note.category))
-        if value is not None
+        if note.taxon is not None or note.category is not None
     }
     if task in BINARY_TASKS and len(targets) > 1:
         raise ValueError(f"{task} needs one target taxon or category, found {sorted(targets)}")

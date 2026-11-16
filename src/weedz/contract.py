@@ -219,6 +219,13 @@ class ReviewEvent(ReviewEvidence):
     supersedes: Text | None = None
     payload: Mapping[str, FrozenJson] = Field(default_factory=dict, validate_default=True)
 
+    @field_validator("payload", mode="before")
+    @classmethod
+    def json_values_only(cls, value: object) -> object:
+        # Reject non-JSON Python objects before scalar coercion, while accepting
+        # the readonly mapping/tuple representation of an already validated record.
+        return freeze_json(value)
+
     @field_validator("payload")
     @classmethod
     def finite_json(cls, value: Mapping[str, FrozenJson]) -> Mapping[str, FrozenJson]:

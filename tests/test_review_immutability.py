@@ -64,3 +64,21 @@ def test_default_review_mappings_are_readonly_too():
     )
     with pytest.raises((TypeError, AttributeError)):
         cast(Any, record.payload)["new"] = "changed"
+
+
+def test_readonly_json_does_not_coerce_non_json_bytes_into_review_claims():
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        ReviewEvent.model_validate(
+            dict(
+                id="event",
+                sample_id="s:1",
+                media_sha256=SHA,
+                origin="source",
+                actor="publisher",
+                action="published",
+                dimension="annotation",
+                payload={"value": b"bytes"},
+            )
+        )

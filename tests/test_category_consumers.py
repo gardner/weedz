@@ -43,3 +43,26 @@ def test_reference_examples_and_coverage_keep_categories_separate():
     legacy = collection("legacy", [reference_sample()])
     assert "category_coverage" not in legacy
     assert "category" not in legacy["examples"][0]
+
+
+def test_explicit_mapped_taxon_is_authoritative_over_original_source_categories():
+    records = []
+    for sample in categorical_records(mixed=True):
+        raw = sample.model_dump(mode="json")
+        raw["annotations"][0]["taxon"] = "Euphorbia esula"
+        records.append(Sample.model_validate(raw))
+    release, _ = build_release(records, spec(), recorded_at=WHEN)
+    assert release.counts["fit"].taxa == {"Euphorbia esula": 4}
+    assert release.counts["fit"].categories == {"crop": 2, "weed": 2}
+
+
+def test_unmapped_category_is_not_a_taxon_even_when_text_matches():
+    records = []
+    for index, sample in enumerate(categorical_records()):
+        raw = sample.model_dump(mode="json")
+        raw["annotations"][0].update(
+            taxon="Euphorbia esula" if index % 2 else None, category="Euphorbia esula"
+        )
+        records.append(Sample.model_validate(raw))
+    with pytest.raises(ValueError, match="one target"):
+        build_release(records, spec(), recorded_at=WHEN)
