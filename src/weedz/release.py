@@ -347,7 +347,7 @@ def write_release(
         fields = release.model_dump(mode="json") | {"assets": assets, "release_format": 2}
         release = Release.model_validate(fields)
         release = release.model_copy(update={"id": release.content_id()})
-    with staged_release(directory) as staging:
+    with staged_release(directory, private=release.release_format != 1) as staging:
         if assets_root is not None and assets is not None:
             verify_assets(assets_root, assets, staging)
         if write_manifest(staging / MANIFEST, kept) != release.manifest_sha256:

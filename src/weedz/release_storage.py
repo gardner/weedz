@@ -40,7 +40,7 @@ def require_asset_destination(directory: Path) -> None:
 
 
 @contextmanager
-def staged_release(directory: Path) -> Iterator[Path]:
+def staged_release(directory: Path, *, private: bool = True) -> Iterator[Path]:
     """Keep interrupted writes private; POSIX rename also replaces an empty directory."""
     require_empty(directory)
     directory.parent.mkdir(parents=True, exist_ok=True)
@@ -49,8 +49,26 @@ def staged_release(directory: Path) -> Iterator[Path]:
         yield staging
         _sync_tree(staging)
         require_empty(directory)
+        _publication_metadata(staging, directory, private=private)
+        sync_directory(staging)
         os.rename(staging, directory)
         sync_directory(directory.parent)
     finally:
         if staging.exists():
             shutil.rmtree(staging)
+
+
+def _publication_metadata(staging: Path, directory: Path, *, private: bool) -> None:
+    if directory.exists():
+        # Rename replaces the empty inode; retain the caller's explicit sharing
+        # permissions, group and supported extended metadata (including POSIX ACLs).
+        if staging.stat().st_gid != directory.stat().st_gid:
+            os.chown(staging, -1, directory.stat().st_gid)
+        shutil.copystat(directory, staging, follow_symlinks=False)
+    elif not private:
+        # A normal mkdir observes the actual umask/default ACL without reading or
+        # changing the process-wide umask. Its parent remains private throughout.
+        template = staging / ".publication-permissions"
+        template.mkdir()
+        shutil.copystat(template, staging, follow_symlinks=False)
+        template.rmdir()
