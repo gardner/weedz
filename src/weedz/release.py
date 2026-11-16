@@ -21,6 +21,7 @@ from pydantic import (
     Field,
     SerializerFunctionWrapHandler,
     StringConstraints,
+    field_validator,
     model_serializer,
     model_validator,
 )
@@ -37,6 +38,12 @@ from weedz.contract import (
     require_task,
 )
 from weedz.manifest import manifest_bytes, read_manifest, write_atomic, write_manifest
+from weedz.release_scope import (
+    TargetScope,
+    annotation_target,
+    release_target_scope,
+    task_annotations,
+)
 
 SplitName = Literal["fit", "validation", "test"]
 # Protection order: the test is never trimmed, then validation, then fit.
@@ -154,6 +161,22 @@ class Release(Frozen):
     split: SplitRule
     separate: list[str]
     contract_schema_version: int
+    target_scope: TargetScope | None = None
+
+    @field_validator("target_scope")
+    @classmethod
+    def canonical_scope(cls, value: TargetScope | None) -> TargetScope | None:
+        if value is not None and (not value or len(set(value)) != len(value)):
+            raise ValueError("A release target scope needs unique named targets")
+        return tuple(sorted(value)) if value is not None else None
+
+    @model_serializer(mode="wrap")
+    def without_absent_scope(self, handler: SerializerFunctionWrapHandler) -> dict:
+        data = handler(self)
+        if data.get("target_scope") is None:
+            data.pop("target_scope", None)
+        return data
+
     # Always the sibling file, so an edited record cannot point outside the release.
     manifest: Literal["samples.jsonl"] = MANIFEST
     manifest_sha256: Sha256
@@ -172,6 +195,7 @@ class Release(Frozen):
             raise ValueError("Unsupported release contract schema version")
         if self.release_format == 1 and (
             self.contract_schema_version > 1
+            or self.target_scope is not None
             or any(count.categories for count in self.counts.values())
         ):
             raise ValueError("Release format 1 cannot contain version 2 sample/category extensions")
@@ -279,21 +303,13 @@ def _check_separation(
 
 
 def _evidence(task: Task, members: list[Sample]) -> list[Annotation]:
-    needed = TASK_SUPERVISION[task]
-    return [
-        note
-        for sample in members
-        for note in sample.annotations
-        if note.supervises() and note.supervision in needed
-    ]
+    return [note for sample in members for note in task_annotations(sample, task)]
 
 
 def _check_target(task: Task, kept: list[Sample]) -> None:
     """An absent label denies its named taxon/category; a binary task needs one target."""
     targets = {
-        ("taxon", note.taxon) if note.taxon is not None else ("category", note.category)
-        for note in _evidence(task, kept)
-        if note.taxon is not None or note.category is not None
+        target for note in _evidence(task, kept) if (target := annotation_target(note)) is not None
     }
     if task in BINARY_TASKS and len(targets) > 1:
         raise ValueError(f"{task} needs one target taxon or category, found {sorted(targets)}")
@@ -364,13 +380,15 @@ def build_release(
     keys = list(dict.fromkeys([key, *spec.separate]))
     _check_separation(kept, assigned, keys, _lineage_roots(samples))
     _check_target(spec.task, kept)
+    target_scope = release_target_scope(spec.task, kept)
     by_split = _by_split(kept, assigned, spec)
     snapshots: dict[str, set[str]] = {}
     for sample in kept:
         snapshots.setdefault(sample.source, set()).add(sample.snapshot)
     draft = Release(
         id="",
-        release_format=2 if any(s.schema_version == 2 for s in kept) else 1,
+        release_format=2 if target_scope or any(s.schema_version == 2 for s in kept) else 1,
+        target_scope=target_scope,
         name=spec.name,
         task=spec.task,
         protocol=spec.protocol,
@@ -428,6 +446,8 @@ def read_release(directory: Path) -> tuple[Release, list[Sample]]:
     samples = read_manifest(directory / release.manifest, release.manifest_sha256)
     if max(sample.schema_version for sample in samples) != release.contract_schema_version:
         raise ValueError("Release contract schema version differs from its actual samples")
+    if release_target_scope(release.task, samples) != release.target_scope:
+        raise ValueError("Release target scope differs from its sample evidence")
     listed = sorted(sample for members in release.splits.values() for sample in members.samples)
     if sorted(sample.id for sample in samples) != listed:
         raise ValueError(f"Release {release.id} splits do not list its manifest's samples")

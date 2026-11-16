@@ -26,7 +26,7 @@ def freeze_json(value: object) -> FrozenJson:
 def thaw_json(value: FrozenJson) -> JsonValue:
     """Explicit serialisation avoids leaking runtime proxies or converting arrays to objects."""
     if isinstance(value, Mapping):
-        return {key: thaw_json(item) for key, item in value.items()}
+        return {key: thaw_json(value[key]) for key in sorted(value)}
     if isinstance(value, tuple):
         return [thaw_json(item) for item in value]
     return value
