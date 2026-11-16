@@ -52,7 +52,7 @@ def _mask(value: dict, size: tuple[int, int]) -> bytes:
     return out.getvalue()
 
 
-def decode_region(row: dict, size: tuple[int, int], taxa: set[str]) -> Region:
+def region_geometry(row: dict, size: tuple[int, int], taxa: set[str]) -> tuple[str, str, str, dict]:
     width, height = size
     if not 0 < width * height <= 40_000_000:
         raise ValueError("Human region exceeds geometry cap")
@@ -75,9 +75,16 @@ def decode_region(row: dict, size: tuple[int, int], taxa: set[str]) -> Region:
     labels = value.get(kind)
     if not isinstance(labels, list) or len(labels) != 1 or labels[0] not in taxa:
         raise ValueError("Region needs one declared taxon")
+    if kind == "rectanglelabels":
+        _rectangle(identifier, labels[0], value, size)
+    return kind, identifier, labels[0], value
+
+
+def decode_region(row: dict, size: tuple[int, int], taxa: set[str]) -> Region:
+    kind, identifier, taxon, value = region_geometry(row, size, taxa)
     if kind == "brushlabels":
-        return Region(identifier, labels[0], mask=_mask(value, size))
-    return _rectangle(identifier, labels[0], value, size)
+        return Region(identifier, taxon, mask=_mask(value, size))
+    return _rectangle(identifier, taxon, value, size)
 
 
 def _rectangle(identifier: str, taxon: str, value: dict, size: tuple[int, int]) -> Region:

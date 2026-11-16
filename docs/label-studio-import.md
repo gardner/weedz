@@ -161,3 +161,15 @@ for later review, keep its original raw bytes/history and explicitly validate a
 NEW copy with only `tasks=["inference"]` using `Sample.model_validate`; retain all
 annotations/history and rights, and store the new copy separately. Existing pending
 inference records and legacy source-only v1 serialization remain unchanged.
+
+Human-region work is preflighted across the entire selected export before the first
+brush decode: at most64 region controls per completed annotation,160 million
+canonical source pixels of brush grids per annotation, and400 million brush pixels
+across the import. Each brush counts the complete canonical width×height grid;
+compressed RLE length or foreground area does not reduce this cost. Boxes count
+toward the region limit but require no brush-grid budget. Use smaller brush batches
+for high-resolution images. Exact already-recorded revisions reuse their verified
+history without decoding; attributable cancellations remain available without a
+new decode allowance. All declared geometry and the combined budget must pass first.
+Generated mask paths may reuse retained bytes only if identical; conflicting source
+or historical assets are refused, never silently replaced.

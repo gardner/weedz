@@ -6,11 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from weedz.annotation.gold_config import gold_config
-from weedz.annotation.import_apply import apply_claims
+from weedz.annotation.import_apply import apply_claims, has_revision
 from weedz.annotation.import_bindings import task_bindings
-from weedz.annotation.import_claims import parse_claims
+from weedz.annotation.import_claims import DecodeBudget, PreparedClaims, prepare_claims
 from weedz.annotation.import_package import Package, pinned_bytes, read_package
-from weedz.annotation.import_records import completed_records, positive_id
+from weedz.annotation.import_records import HumanRecord, completed_records, positive_id
 from weedz.annotation.import_retractions import retract
 from weedz.annotation.import_write import json_bytes, write_import
 from weedz.contract import Sample
@@ -88,39 +88,63 @@ def _human_tasks(encoded: bytes, base: Package, project_id: int) -> list[tuple[s
     return selected
 
 
+def _prepare_jobs(
+    tasks: list[tuple[str, dict]],
+    samples: dict[str, Sample],
+    request: ImportInputs,
+) -> list[tuple[str, PreparedClaims | HumanRecord]]:
+    budget = DecodeBudget()
+    jobs: list[tuple[str, PreparedClaims | HumanRecord]] = []
+    for key, task in tasks:
+        sample = samples[key]
+        if sample.media.width is None or sample.media.height is None:
+            raise ValueError("Human review needs original image geometry")
+        known = frozenset(
+            str(event.payload.get("annotation_revision_key")) for event in sample.review_history
+        )
+        for record in completed_records(task, request.namespace, known_cancelled_keys=known):
+            if has_revision(sample, record):
+                continue
+            if record.cancelled:
+                jobs.append((key, record))
+            else:
+                jobs.append(
+                    (
+                        key,
+                        prepare_claims(
+                            record,
+                            (sample.media.width, sample.media.height),
+                            set(request.taxa),
+                            set(request.categories),
+                            budget,
+                        ),
+                    )
+                )
+    return jobs
+
+
 def _apply(
     tasks: list[tuple[str, dict]],
     samples: dict[str, Sample],
     request: ImportInputs,
     evidence: dict[str, str],
 ) -> tuple[dict[str, Sample], dict[str, bytes], int]:
+    # The entire export's geometry/work limits pass before its first brush decode.
+    jobs = _prepare_jobs(tasks, samples, request)
     changed = dict(samples)
     masks = {}
     revisions = 0
-    for key, task in tasks:
+    for key, prepared in jobs:
         sample = changed[key]
-        if sample.media.width is None or sample.media.height is None:
-            raise ValueError("Human review needs original image geometry")
-        size = (sample.media.width, sample.media.height)
-        known = frozenset(
-            str(event.payload.get("annotation_revision_key")) for event in sample.review_history
-        )
-        for record in completed_records(task, request.namespace, known_cancelled_keys=known):
-            before = len(sample.review_history)
-            if record.cancelled:
-                sample = retract(sample, record, evidence)
-                revisions += len(sample.review_history) - before
-                continue
-            claims = parse_claims(
-                record,
-                size,
-                set(request.taxa),
-                set(request.categories),
+        before = len(sample.review_history)
+        if isinstance(prepared, HumanRecord):
+            sample = retract(sample, prepared, evidence)
+        else:
+            sample, new_masks = apply_claims(
+                sample, prepared.decode(), evidence, set(request.categories)
             )
-            before = len(sample.review_history)
-            sample, new_masks = apply_claims(sample, claims, evidence, set(request.categories))
-            revisions += len(sample.review_history) - before
             masks.update(new_masks)
+        revisions += len(sample.review_history) - before
         changed[key] = sample
     return changed, masks, revisions
 
@@ -157,6 +181,8 @@ def import_reviews(
     )
     bindings = task_bindings(prior, selected, history)
     changed, masks, count = _apply(selected, prior.samples, request, evidence)
+    if any(name in prior.files and prior.files[name] != raw for name, raw in masks.items()):
+        raise ValueError("Retained asset path conflicts with a generated human mask")
     files = {**prior.files, **masks}
     original = base.files["private/provenance.json"]
     files[f"private/source-provenance/{hashlib.sha256(original).hexdigest()}.json"] = original
