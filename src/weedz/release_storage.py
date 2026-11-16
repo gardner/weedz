@@ -33,6 +33,12 @@ def require_empty(directory: Path) -> None:
         raise ValueError(f"Release directory must be empty: {directory}")
 
 
+def require_asset_destination(directory: Path) -> None:
+    resolved = directory.resolve()
+    if any((parent / ".git").exists() for parent in (resolved, *resolved.parents)):
+        raise ValueError("Materialized release images and masks must stay outside Git")
+
+
 @contextmanager
 def staged_release(directory: Path) -> Iterator[Path]:
     """Keep interrupted writes private; POSIX rename also replaces an empty directory."""

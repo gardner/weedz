@@ -159,3 +159,13 @@ def test_asset_size_budget_failure_cleans_staging(
         releases.write_release(tmp_path / "release", samples, spec(), assets_root=source)
     assert not (tmp_path / "release").exists()
     assert not list(tmp_path.glob(".release-pending-*"))
+
+
+def test_materialized_release_assets_stay_outside_git(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    samples = materialize(source)
+    repository = tmp_path / "repository"
+    (repository / ".git").mkdir(parents=True)
+    with pytest.raises(ValueError, match="outside Git"):
+        releases.write_release(repository / "release", samples, spec(), assets_root=source)
+    assert not (repository / "release").exists()

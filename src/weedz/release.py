@@ -51,7 +51,7 @@ from weedz.release_scope import (
     release_target_scope,
     task_annotations,
 )
-from weedz.release_storage import require_empty, staged_release
+from weedz.release_storage import require_asset_destination, require_empty, staged_release
 from weedz.rights_profiles import require_rights
 
 __all__ = [
@@ -343,6 +343,7 @@ def write_release(
     release, kept = build_release(snapshots, spec, recorded_at=recorded_at or _now())
     assets = collect_assets(kept) if assets_root is not None else None
     if assets is not None:
+        require_asset_destination(directory)
         fields = release.model_dump(mode="json") | {"assets": assets, "release_format": 2}
         release = Release.model_validate(fields)
         release = release.model_copy(update={"id": release.content_id()})
