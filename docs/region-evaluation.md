@@ -82,3 +82,59 @@ Protocol references: the official [COCO evaluator](https://github.com/cocodatase
 defines its own matching/AP convention; the official [LVIS evaluator](https://github.com/lvis-dataset/lvis-api/blob/master/lvis/eval.py)
 handles explicitly negative and non-exhaustive category scopes. The
 [CWFID source](https://github.com/cwfid/dataset) describes its annotations and use terms.
+
+## Running a closed evaluation
+
+Run `python -m weedz.region_evaluation.cli --help` from the installed environment.
+The command requires SHA-pinned label manifest and proposal-ready receipt, the
+asset root, proposer kind, and a new private output directory. `--mode boxes`
+measures supplied boxes; the default sparse mode measures supplied positive mask
+support. `--truth-origin source` is explicit by default; reviewer mode requires
+accepted standing annotations and uses only reviewer completeness. These modes
+never combine a publisher's old label with a later human correction.
+
+Identification additionally requires all of `--classifier`, `--classifier-sha256`,
+`--taxonomy-map`, `--taxonomy-map-sha256` and `--vocabulary`. The mapping names the
+source namespace and exact checksum-pinned classifier vocabulary. The operating
+view is the stored masked crop and top1 taxon; scoring cannot choose a crop using
+its ground-truth answer. Unknown or contradictory target claims remain unassessed.
+
+`--allow-source-subset` explicitly permits an independently frozen primary cohort
+to reuse a larger original inference receipt by exact sample/pixel identity. Both
+manifest hashes and all excluded inference records remain in the report. Duplicate
+pixel records block a primary aggregate rather than silently choosing a label set.
+An explicit `--max-source-bytes 160000000` supports large lossless canonical PNGs;
+the default remains 20MB and the 40MP bound is unchanged. Explicit ingress is bound
+to SAM2/SAM3 and crop-classifier provenance/cache identity; it never resizes truth.
+
+## Initial source-bound development evidence
+
+The closed ImageWeeds primary cohort contains 138 unique images and 645 manual
+source boxes (57 soybean and 81 maize images). The raw source has 175 records but
+157 unique pixel images. One invalid-geometry record and all 36 records from 18
+ambiguous, divergent-label duplicate pairs are quarantined before primary scoring.
+No labels were unioned, repaired or selected using model outcomes. Original MPO
+primary-frame pixels are preserved in canonical lossless PNGs. Manual box/patch
+units are not verified individual-plant instances, and completeness is partial.
+
+The SAM2.1 tiny baseline (768px, 8×8 grid, at most 12 proposals) matched 8/645 source
+regions at IoU≥0.5, retaining 267 proposals. Fixed masked PlantCLEF top1 was correct
+for 1/8 matched regions; 637 labelled regions were not localised. Unmatched proposals
+are unassessed, not verified false alarms. The single denser development experiment
+was selected after this baseline's geometry diagnostic: 1024px, 16×16 grid,
+batch16, at most 24 proposals, with unchanged weights and filter thresholds. It
+matched 22/645 source regions and retained 838 proposals. Its fourfold grid and
+twofold retention cap are unequal compute budgets, not a held-out winner claim.
+All thresholds/budgets and exact child input/model receipts remain in private
+reports; these figures do not establish NZ weed performance or pretraining exclusion.
+
+The complete CWFID 60 diagnostic measures only manually coloured assessed positive
+support. At all retained baseline proposals, weed coverage was 216,716/4,322,897
+(5.01%) and crop coverage 6,155/1,212,423 (0.51%). These are sparse positive-pixel
+coverage, not full-scene IoU/Dice, negatives, species accuracy or plant recall.
+CWFID inputs and reports remain private under their actual research terms.
+
+Current closed evidence is under the owner-private
+`weedz-evaluation-artifacts/20261116` sibling directory; no source media or model
+outputs belong in Git. A separately prepared 90-image NZ observer-separated cohort
+awaits human review and contributes no independent NZ/background metric here.
