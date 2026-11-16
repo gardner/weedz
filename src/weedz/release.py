@@ -27,7 +27,6 @@ from pydantic import (
 
 from weedz.consent import refusal
 from weedz.contract import (
-    SCHEMA_VERSION,
     TASK_SUPERVISION,
     Annotation,
     Sample,
@@ -147,7 +146,7 @@ class StatusChange(Frozen):
 
 
 class Release(Frozen):
-    release_format: Literal[1] = 1
+    release_format: Literal[1, 2] = 1
     id: str
     name: ReleaseName
     task: Task
@@ -169,6 +168,13 @@ class Release(Frozen):
 
     @model_validator(mode="after")
     def history_only_advances(self) -> "Release":
+        if self.contract_schema_version not in {1, 2}:
+            raise ValueError("Unsupported release contract schema version")
+        if self.release_format == 1 and (
+            self.contract_schema_version > 1
+            or any(count.categories for count in self.counts.values())
+        ):
+            raise ValueError("Release format 1 cannot contain version 2 sample/category extensions")
         for before, after in zip(self.test_history, self.test_history[1:], strict=False):
             _check_advance(before.status, after.status)
         if self.test_history[-1].status != self.test_status:
@@ -359,12 +365,13 @@ def build_release(
         snapshots.setdefault(sample.source, set()).add(sample.snapshot)
     draft = Release(
         id="",
+        release_format=2 if any(s.schema_version == 2 for s in kept) else 1,
         name=spec.name,
         task=spec.task,
         protocol=spec.protocol,
         split=spec.split,
         separate=sorted(set(spec.separate)),
-        contract_schema_version=SCHEMA_VERSION,
+        contract_schema_version=max(sample.schema_version for sample in kept),
         manifest_sha256=hashlib.sha256(manifest_bytes(kept)).hexdigest(),
         source_snapshots={source: sorted(values) for source, values in sorted(snapshots.items())},
         licenses=sorted({sample.rights.media_license for sample in kept}),
@@ -414,6 +421,8 @@ def read_release(directory: Path) -> tuple[Release, list[Sample]]:
     if release.content_id() != release.id:
         raise ValueError(f"Release {release.id} does not match its content")
     samples = read_manifest(directory / release.manifest, release.manifest_sha256)
+    if max(sample.schema_version for sample in samples) != release.contract_schema_version:
+        raise ValueError("Release contract schema version differs from its actual samples")
     listed = sorted(sample for members in release.splits.values() for sample in members.samples)
     if sorted(sample.id for sample in samples) != listed:
         raise ValueError(f"Release {release.id} splits do not list its manifest's samples")
