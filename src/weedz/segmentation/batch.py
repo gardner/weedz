@@ -8,7 +8,6 @@ import os
 import tempfile
 import time
 from collections.abc import Iterator
-from copy import deepcopy
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -23,6 +22,7 @@ from weedz.segmentation.artifacts import (
     durable_mkdir,
     sync_directory,
 )
+from weedz.segmentation.ingress import proposal_metadata, source_budget
 from weedz.segmentation.pipeline import Proposer
 from weedz.segmentation.regions import (
     MAX_SOURCE_BYTES,
@@ -44,17 +44,17 @@ def _bytes(path: Path, limit: int) -> bytes:
     return raw
 
 
-def _image_bytes(sample: Sample, media_root: Path) -> bytes:
+def _image_bytes(sample: Sample, media_root: Path, maximum: int = MAX_SOURCE_BYTES) -> bytes:
     path = (media_root / sample.media.uri).resolve(strict=True)
     if not path.is_relative_to(media_root):
         raise ValueError("Sample image escapes media root")
-    raw = _bytes(path, MAX_SOURCE_BYTES)
+    raw = _bytes(path, maximum)
     if sample.media.sha256 is None or hashlib.sha256(raw).hexdigest() != sample.media.sha256:
         raise ValueError("Sample image checksum mismatch")
     return raw
 
 
-def _samples(raw: bytes, media_root: Path) -> list[Sample]:
+def _samples(raw: bytes, media_root: Path, maximum: int = MAX_SOURCE_BYTES) -> list[Sample]:
     lines = raw.splitlines()
     if not 1 <= len(lines) <= MAX_BATCH_SAMPLES:
         raise ValueError("Batch must contain 1–1000 samples")
@@ -62,13 +62,13 @@ def _samples(raw: bytes, media_root: Path) -> list[Sample]:
     if len({sample.id for sample in samples}) != len(samples):
         raise ValueError("Duplicate canonical sample ID")
     for sample in samples:
-        _image_bytes(sample, media_root)
+        _image_bytes(sample, media_root, maximum)
     return samples
 
 
-def _image(sample: Sample, media_root: Path) -> Image.Image:
+def _image(sample: Sample, media_root: Path, maximum: int = MAX_SOURCE_BYTES) -> Image.Image:
     # Hash and decode the SAME bytes: a concurrent replacement cannot inherit attribution.
-    raw = _image_bytes(sample, media_root)
+    raw = _image_bytes(sample, media_root, maximum)
     try:
         with Image.open(io.BytesIO(raw)) as image:
             if image.width * image.height > MAX_SOURCE_PIXELS:
@@ -94,10 +94,16 @@ def _atomic(path: Path, raw: bytes) -> None:
             temporary.unlink(missing_ok=True)
 
 
-def _result(sample: Sample, root: Path, proposer: Proposer, config: ProposalConfig) -> dict:
+def _result(
+    sample: Sample,
+    root: Path,
+    proposer: Proposer,
+    config: ProposalConfig,
+    maximum: int = MAX_SOURCE_BYTES,
+) -> dict:
     start = time.monotonic()
     try:
-        image = _image(sample, root)
+        image = _image(sample, root, maximum)
         regions = proposals(image, proposer.generate(image), config)
         result = {
             "status": "ok" if regions else "empty",
@@ -134,6 +140,7 @@ def _rows(
     config: ProposalConfig,
     version: str,
     metadata: dict,
+    maximum: int | None = None,
 ) -> Iterator[dict]:
     artifacts = StageArtifacts(output, "real-sam-proposals")
     for sample in samples:
@@ -144,8 +151,8 @@ def _rows(
         }
         result = artifacts.read("proposals", sample.id, inputs)
         if result is None or result["status"] == "failed":
-            computed = _result(sample, root, proposer, config)
-            if proposer.metadata != metadata:
+            computed = _result(sample, root, proposer, config, source_budget(maximum))
+            if proposal_metadata(proposer.metadata, maximum) != metadata:
                 raise ValueError("Proposer metadata changed; complete preflight before the batch")
             result = _publish_sample(artifacts, sample.id, inputs, computed)
         yield {
@@ -208,8 +215,9 @@ def _publish(
     proposer: Proposer,
     config: ProposalConfig,
     manifest_sha: str,
+    maximum: int | None = None,
 ) -> dict[str, Any]:
-    metadata = deepcopy(proposer.metadata)
+    metadata = proposal_metadata(proposer.metadata, maximum)
     version = "canonical-proposals-batch-v1:" + digest(
         {
             "provenance": metadata,
@@ -225,7 +233,7 @@ def _publish(
             raise ValueError("Closed batch provenance changed; use a new output namespace")
     checksum, counts = _stream_rows(
         output / "proposals.jsonl",
-        _rows(samples, root, output, proposer, config, version, metadata),
+        _rows(samples, root, output, proposer, config, version, metadata, maximum),
         ready=ready,
     )
     summary = {
@@ -257,6 +265,7 @@ def propose_batch(
     *,
     expected_manifest_sha256: str | None = None,
     config: ProposalConfig = DEFAULT_CONFIG,
+    max_source_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Resume exact-image/config proposal work, then publish data before its ready marker.
 
@@ -264,6 +273,7 @@ def propose_batch(
     this function does not classify, change source annotations, or publish to Label Studio.
     The caller owns GPU scheduling, model preflight, and retry policy for partial batches.
     """
+    maximum = source_budget(max_source_bytes)
     raw = _bytes(manifest, MAX_MANIFEST_BYTES)
     manifest_sha = hashlib.sha256(raw).hexdigest()
     if expected_manifest_sha256 is not None and expected_manifest_sha256 != manifest_sha:
@@ -278,9 +288,9 @@ def propose_batch(
         raise ValueError("Output must use an independent source/output namespace")
     if any((parent / ".git").exists() for parent in (destination, *destination.parents)):
         raise ValueError("Batch outputs must remain outside Git")
-    samples = _samples(raw, root)
+    samples = _samples(raw, root, maximum)
     _durable_namespace(destination)
     output = destination
     with (output / ".batch.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        return _publish(samples, root, output, proposer, config, manifest_sha)
+        return _publish(samples, root, output, proposer, config, manifest_sha, max_source_bytes)
