@@ -48,14 +48,20 @@ def _previous(sample: Sample, record: HumanRecord) -> ReviewEvent | None:
     return prior[-1] if prior else None
 
 
+def has_revision(sample: Sample, record: HumanRecord) -> bool:
+    existing = next((event for event in sample.review_history if event.id == record.revision), None)
+    if existing is None:
+        return False
+    if existing.payload.get("revision_sha256") != record.sha256:
+        raise ValueError("Conflicting bytes for an existing human revision")
+    return True
+
+
 def apply_claims(
     sample: Sample, claims: Claims, evidence: dict[str, str], categories: set[str]
 ) -> tuple[Sample, dict[str, bytes]]:
     record, decision = claims.record, claims.decision
-    existing = next((event for event in sample.review_history if event.id == record.revision), None)
-    if existing:
-        if existing.payload.get("revision_sha256") != record.sha256:
-            raise ValueError("Conflicting bytes for an existing human revision")
+    if has_revision(sample, record):
         return sample, {}
     prior = _previous(sample, record)
     if prior and datetime.fromisoformat(
