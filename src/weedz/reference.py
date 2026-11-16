@@ -159,6 +159,7 @@ def _rights(sample: Sample) -> dict[str, Any]:
 def _example(sample: Sample, note: Annotation) -> dict[str, Any]:
     verdicts = eligibility(sample, note)
     return {
+        **({"category": note.category} if note.category is not None else {}),
         "sample_id": sample.id,
         "annotation_id": note.id,
         "source": sample.source,
@@ -207,6 +208,11 @@ def collection(name: str, samples: Iterable[Sample], expected: Iterable[str] = (
     covered = coverage(found, USES, expected)
     missing, unknowns = gaps(found, covered)
     return {
+        **(
+            {"category_coverage": coverage(found, USES, target_field="category")}
+            if any(example.get("category") for example in found)
+            else {}
+        ),
         "name": name,
         "meaning": MEANING,
         "examples": found,

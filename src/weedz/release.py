@@ -15,7 +15,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    model_serializer,
+    model_validator,
+)
 
 from weedz.consent import refusal
 from weedz.contract import (
@@ -115,6 +123,14 @@ class Counts(Frozen):
     labels: dict[str, int]
     reviews: dict[str, int]
     taxa: dict[str, int]
+    categories: dict[str, int] = Field(default_factory=dict)
+
+    @model_serializer(mode="wrap")
+    def without_absent_categories(self, handler: SerializerFunctionWrapHandler) -> dict:
+        data = handler(self)
+        if not data.get("categories"):
+            data.pop("categories", None)
+        return data
 
 
 class Buffer(Frozen):
@@ -267,10 +283,14 @@ def _evidence(task: Task, members: list[Sample]) -> list[Annotation]:
 
 
 def _check_target(task: Task, kept: list[Sample]) -> None:
-    """An absent label only denies its own taxon, so a binary task needs one target."""
-    taxa = {note.taxon for note in _evidence(task, kept)}
-    if task in BINARY_TASKS and len(taxa) > 1:
-        raise ValueError(f"{task} needs one target taxon, found {sorted(map(str, taxa))}")
+    """An absent label denies its named taxon/category; a binary task needs one target."""
+    targets = {
+        ("taxon", note.taxon) if note.taxon is not None else ("category", note.category)
+        for note in _evidence(task, kept)
+        if note.taxon is not None or note.category is not None
+    }
+    if task in BINARY_TASKS and len(targets) > 1:
+        raise ValueError(f"{task} needs one target taxon or category, found {sorted(targets)}")
 
 
 def _evidence_gap(task: Task, members: list[Sample]) -> str | None:
@@ -293,6 +313,7 @@ def _counts(members: list[Sample], key: str) -> Counts:
         labels=dict(sorted(Counter(note.label for note in notes).items())),
         reviews=dict(sorted(Counter(note.review for note in notes).items())),
         taxa=dict(sorted(Counter(note.taxon for note in notes if note.taxon).items())),
+        categories=dict(sorted(Counter(note.category for note in notes if note.category).items())),
     )
 
 
