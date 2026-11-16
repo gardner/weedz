@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 from weedz.annotation.export import _output
-from weedz.annotation.import_package import check_output_files, relative_file
+from weedz.annotation.import_package import check_output_files, check_output_manifest, relative_file
 
 
 def json_bytes(value: object) -> bytes:
@@ -19,15 +19,17 @@ def json_bytes(value: object) -> bytes:
 def write_import(source: Path, output: Path, files: dict[str, bytes], details: dict) -> dict:
     check_output_files(files)
     output = _output(source.resolve(), output)
-    output.parent.mkdir(parents=True, exist_ok=True)
     receipt = {
         **details,
         "files": {name: hashlib.sha256(raw).hexdigest() for name, raw in sorted(files.items())},
     }
+    receipt_bytes = json_bytes(receipt)
+    check_output_manifest(receipt_bytes)
+    output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".human-import-", dir=output.parent) as temporary:
         staging = Path(temporary) / "package"
         staging.mkdir(mode=0o700)
-        for name, raw in {**files, "manifest.json": json_bytes(receipt)}.items():
+        for name, raw in {**files, "manifest.json": receipt_bytes}.items():
             path = relative_file(staging, name)
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("xb") as stream:
