@@ -22,7 +22,7 @@ def test_unassigned_vegetation_is_not_assessed_background():
     assert list(result["weed"].get_flattened_data()) == [255, 0, 0, 0]
     assert list(result["crop"].get_flattened_data()) == [0, 255, 0, 0]
     assert list(result["vegetation"].get_flattened_data()) == [255, 255, 255, 0]
-    assert list(result["assessed"].get_flattened_data()) == [255, 255, 0, 255]
+    assert list(result["assessed"].get_flattened_data()) == [255, 255, 0, 0]
 
 
 def test_class_pixels_must_be_vegetation():

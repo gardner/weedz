@@ -49,7 +49,7 @@ def masks(classes: bytes, vegetation: bytes, size: tuple[int, int]) -> dict[str,
         "weed": weed,
         "crop": crop,
         "vegetation": foreground,
-        "assessed": weed | crop | ~foreground,
+        "assessed": weed | crop,
     }
     return {key: Image.fromarray(array.astype("uint8") * 255) for key, array in arrays.items()}
 
@@ -73,17 +73,18 @@ def _sample(source: SourceArchive, prefix: str, number: int, output: Path, split
         mask_raw = png(image)
         mask_uri = f"masks/{name}-{category}.png"
         publish(output / mask_uri, mask_raw)
-        if category != "assessed" and image.getbbox():
+        if category in {"crop", "weed"} and image.getbbox():
             annotations.append(
                 Annotation(
                     id=f"{name}-{category}",
-                    supervision="dense_mask",
+                    supervision="sparse_mask",
                     category=category,
                     label="present",
                     mask_uri=mask_uri,
                     mask_sha256=digest(mask_raw),
                     origin="source",
-                    note="Publisher semantic pixels; no individual plant identity inferred.",
+                    note="Expert polygons intersected with publisher NDVI/Otsu vegetation mask; "
+                    "partial plant/part regions, not manually traced boundaries.",
                 )
             )
     polygon_raw = source.read(f"{prefix}/annotations/{name}_annotation.yaml")
@@ -108,12 +109,16 @@ def _sample(source: SourceArchive, prefix: str, number: int, output: Path, split
         ),
         view="nadir",
         scale="patch",
-        groups={"source_dataset": "cwfid", "source_image": name},
-        tasks=frozenset({"segmentation", "inference"}),
+        groups={"source_dataset": "cwfid", "source_image": f"cwfid:{name}"},
+        tasks=frozenset({"sparse_segmentation", "inference"}),
         annotations=tuple(annotations),
         context={
             "label_space": "cwfid:functional",
-            "annotation_granularity": "semantic",
+            "annotation_granularity": "partial semantic",
+            "sensor_channels": "Red, Near-Infrared, Red (false-colour); not natural RGB",
+            "vegetation_reference_uri": f"masks/{name}-vegetation.png",
+            "vegetation_reference_sha256": digest(png(derived["vegetation"])),
+            "vegetation_reference_method": "NDVI/Otsu threshold fitted on training images",
             "polygon_granularity": "publisher-labelled region; individual identity unverified",
             "source_splits": ",".join(member),
             "heldout_quarantine": str(len(member) != 1).lower(),
@@ -122,8 +127,8 @@ def _sample(source: SourceArchive, prefix: str, number: int, output: Path, split
             "native_polygon_sha256": digest(polygon_raw),
             "assessed_mask_uri": f"masks/{name}-assessed.png",
             "assessed_mask_sha256": digest(png(derived["assessed"])),
-            "assessment_rule": "crop/weed coloured pixels plus native nonvegetation; "
-            "unassigned vegetation excluded",
+            "assessment_rule": "crop/weed coloured pixels only; unlabelled vegetation and "
+            "algorithmically inferred background excluded",
             "decoded_pixel_sha256": digest(clean.tobytes()),
             "source_url": SOURCE,
             "release_scope": "private non-commercial research; not public/LS admission",
@@ -166,8 +171,11 @@ def prepare(archive: Path, output: Path, *, limit: int = 60) -> str:
                 "native_split_memberships": 61,
                 "limit": limit,
                 "terms": TERMS,
-                "annotation_granularity": "semantic",
-                "source_protocol": "manual plant-type annotations and vegetation segmentation",
+                "annotation_granularity": "partial semantic",
+                "sensor_channels": "Red, Near-Infrared, Red (false-colour); not natural RGB",
+                "vegetation_reference_method": "NDVI/Otsu threshold fitted on training images",
+                "source_protocol": "expert plant/part polygons intersected with NDVI/Otsu mask",
+                "paper": "https://doi.org/10.1007/978-3-319-16220-1_8",
                 "instance_completeness": "unknown",
             },
         )

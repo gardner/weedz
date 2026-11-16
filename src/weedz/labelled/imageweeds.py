@@ -43,7 +43,7 @@ def source_boxes(image: dict, rows: list[dict], categories: list[dict]) -> tuple
         if row["image_id"] != image["id"]:
             continue
         native = names.get(row["category_id"], "")
-        key = native.removeprefix("weed:")
+        key = "".join(native.removeprefix("weed:").split())
         if key not in TAXA:
             raise ValueError("Unknown source category; taxonomy mapping must be explicit")
         x, y, width, height = row["bbox"]
@@ -73,13 +73,15 @@ def _sample(source: SourceArchive, image: dict, native: dict, crop: str, output:
     name = image["file_name"]
     raw = source.read(f"images/{name}", maximum_bytes=20_000_000)
     with Image.open(BytesIO(raw)) as pixels:
-        if pixels.format != "JPEG" or pixels.getexif().get(274, 1) != 1:
+        if pixels.format not in {"JPEG", "MPO"} or pixels.getexif().get(274, 1) != 1:
             raise ValueError("Source box frame requires an upright original JPEG")
         if (
             pixels.size != (image["width"], image["height"])
             or pixels.width * pixels.height > 40_000_000
         ):
             raise ValueError("Image dimensions differ from source annotations or exceed budget")
+        encoded_format = pixels.format
+        frames = getattr(pixels, "n_frames", 1)
         pixels.load()
         pixel_sha = digest(pixels.convert("RGB").tobytes())
     uri = f"images/{name}"
@@ -131,6 +133,9 @@ def _sample(source: SourceArchive, image: dict, native: dict, crop: str, output:
             "source_url": f"https://weed-ai.sydney.edu.au/datasets/{uuid}",
             "original_dataset": DOI,
             "native_image_id": str(image["id"]),
+            "encoded_format": str(encoded_format),
+            "source_frame_index": "0",
+            "source_frame_count": str(frames),
             "native_agcontext_id": str(image["agcontext_id"]),
             "annotation_granularity": "publisher manual box; individual identity unverified",
             "native_annotations_sha256": digest(json_bytes(native)),
@@ -144,6 +149,18 @@ def _sample(source: SourceArchive, image: dict, native: dict, crop: str, output:
     )
 
 
+def quarantine(native: dict) -> dict[str, str]:
+    excluded = {}
+    for image in native["images"]:
+        try:
+            source_boxes(image, native["annotations"], native["categories"])
+        except ValueError as error:
+            if str(error) != "Source box outside image bounds":
+                raise
+            excluded[image["file_name"]] = str(error) + "; entire image withheld, no clipping"
+    return excluded
+
+
 def prepare(archive: Path, output: Path, *, crop: str, limit: int) -> str:
     uuid, archive_sha, count = PROFILES[crop]
     if not 1 <= limit <= count:
@@ -155,7 +172,12 @@ def prepare(archive: Path, output: Path, *, crop: str, limit: int) -> str:
         if len(native["images"]) != count:
             raise ValueError("Pinned source image count differs")
         images = sorted(native["images"], key=lambda image: image["id"])[:limit]
-        samples = [_sample(source, image, native, crop, output) for image in images]
+        excluded = quarantine(native)
+        samples = [
+            _sample(source, image, native, crop, output)
+            for image in images
+            if image["file_name"] not in excluded
+        ]
         source.verify()
         publish(output / "native/weedcoco.json", raw)
         return close_batch(
@@ -168,7 +190,9 @@ def prepare(archive: Path, output: Path, *, crop: str, limit: int) -> str:
                 "archive_sha256": archive_sha,
                 "native_annotations_sha256": digest(raw),
                 "licence": LICENCE,
-                "count": limit,
+                "selected_source_images": limit,
+                "retained_images": len(samples),
+                "quarantined_source_images": excluded,
                 "source_family": "ImageWeeds v2; soybean and maize are not independent datasets",
             },
         )
