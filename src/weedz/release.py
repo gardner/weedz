@@ -8,22 +8,10 @@ Whether the test is still a fresh holdout is recorded and can only advance.
 """
 
 import hashlib
-import json
 import math
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Literal
-
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    SerializerFunctionWrapHandler,
-    StringConstraints,
-    model_serializer,
-    model_validator,
-)
 
 from weedz.consent import refusal
 from weedz.contract import (
@@ -31,163 +19,64 @@ from weedz.contract import (
     TASK_SUPERVISION,
     Annotation,
     Sample,
-    Sha256,
-    SourceName,
     Task,
-    Text,
     require_task,
 )
+from weedz.gold import promote_detection
 from weedz.manifest import manifest_bytes, read_manifest, write_atomic, write_manifest
+from weedz.release_evidence import checked_negatives
+from weedz.release_models import (
+    MANIFEST,
+    RELEASE,
+    STATUS_ORDER,
+    Buffer,
+    Counts,
+    ExplicitSplit,
+    Frozen,
+    HashSplit,
+    Members,
+    Release,
+    ReleaseName,
+    ReleaseSpec,
+    SplitName,
+    SplitRule,
+    StatusChange,
+    TestStatus,
+    _check_advance,
+)
+from weedz.rights_profiles import require_rights
 
-SplitName = Literal["fit", "validation", "test"]
+__all__ = [
+    "MANIFEST",
+    "RELEASE",
+    "STATUS_ORDER",
+    "SPLITS",
+    "BINARY_TASKS",
+    "EARTH_RADIUS_M",
+    "Buffer",
+    "Counts",
+    "ExplicitSplit",
+    "Frozen",
+    "HashSplit",
+    "Members",
+    "Release",
+    "ReleaseName",
+    "ReleaseSpec",
+    "SplitName",
+    "SplitRule",
+    "StatusChange",
+    "TestStatus",
+    "build_release",
+    "write_release",
+    "read_release",
+    "record_test_status",
+]
+
 # Protection order: the test is never trimmed, then validation, then fit.
 SPLITS: tuple[SplitName, ...] = ("test", "validation", "fit")
-TestStatus = Literal["fresh", "inspected", "used_for_selection"]
-STATUS_ORDER: tuple[TestStatus, ...] = ("fresh", "inspected", "used_for_selection")
 # Tasks whose evaluation needs both labels in every split.
 BINARY_TASKS = frozenset({"point_classification"})
 EARTH_RADIUS_M = 6_371_000
-MANIFEST = "samples.jsonl"
-RELEASE = "release.json"
-ReleaseName = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9._-]*$")]
-
-
-class Frozen(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, allow_inf_nan=False)
-
-
-class HashSplit(Frozen):
-    """Each group goes to a split by a stable SHA-256 of `seed:group`."""
-
-    kind: Literal["hash"] = "hash"
-    group_key: Text
-    seed: Text
-    fractions: dict[SplitName, Annotated[float, Field(ge=0)]]
-
-    @model_validator(mode="after")
-    def fractions_cover_one(self) -> "HashSplit":
-        if not math.isclose(sum(self.fractions.values()), 1):
-            raise ValueError("Split fractions must sum to 1")
-        return self
-
-    def assign(self, group: str) -> SplitName:
-        digest = hashlib.sha256(f"{self.seed}:{group}".encode()).digest()
-        position = int.from_bytes(digest[:8]) / 2**64
-        cumulative = 0.0
-        for name in ("fit", "validation", "test"):
-            cumulative += self.fractions.get(name, 0)
-            if position < cumulative:
-                return name
-        return "test"  # floating-point remainder at the very top of the range
-
-
-class ExplicitSplit(Frozen):
-    """Each group value is assigned by name; an unassigned group is refused, not guessed."""
-
-    kind: Literal["explicit"] = "explicit"
-    group_key: Text
-    assignment: dict[str, SplitName]
-
-    def assign(self, group: str) -> SplitName:
-        if group not in self.assignment:
-            raise ValueError(f"The split rule has no split for {self.group_key} {group!r}")
-        return self.assignment[group]
-
-
-SplitRule = Annotated[HashSplit | ExplicitSplit, Field(discriminator="kind")]
-
-
-class ReleaseSpec(Frozen):
-    """What a release is for and how it is split. `separate` names further group keys
-    (e.g. a duplicate or encounter group) that must never span splits."""
-
-    name: ReleaseName
-    task: Task
-    protocol: Text
-    split: SplitRule
-    separate: tuple[Text, ...] = ()
-    buffer_m: Annotated[float, Field(ge=0)] | None = None
-    test_status: TestStatus = "fresh"
-
-
-class Members(Frozen):
-    samples: list[str]
-    groups: list[str]
-
-
-class Counts(Frozen):
-    """Samples and groups, and the labels, review states and taxa of their supervision."""
-
-    samples: int
-    groups: int
-    labels: dict[str, int]
-    reviews: dict[str, int]
-    taxa: dict[str, int]
-    categories: dict[str, int] = Field(default_factory=dict)
-
-    @model_serializer(mode="wrap")
-    def without_absent_categories(self, handler: SerializerFunctionWrapHandler) -> dict:
-        data = handler(self)
-        if not data.get("categories"):
-            data.pop("categories", None)
-        return data
-
-
-class Buffer(Frozen):
-    distance_m: float
-    basis: str
-    # Samples without a usable location could not be checked against other splits.
-    unbuffered: list[str]
-
-
-class StatusChange(Frozen):
-    status: TestStatus
-    recorded_at: Text
-    note: str = ""
-
-
-class Release(Frozen):
-    release_format: Literal[1] = 1
-    id: str
-    name: ReleaseName
-    task: Task
-    protocol: Text
-    split: SplitRule
-    separate: list[str]
-    contract_schema_version: int
-    # Always the sibling file, so an edited record cannot point outside the release.
-    manifest: Literal["samples.jsonl"] = MANIFEST
-    manifest_sha256: Sha256
-    source_snapshots: dict[SourceName, list[str]]
-    licenses: list[str]
-    buffer: Buffer | None
-    splits: dict[SplitName, Members]
-    excluded: dict[str, str]
-    counts: dict[SplitName, Counts]
-    test_status: TestStatus
-    test_history: list[StatusChange] = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def history_only_advances(self) -> "Release":
-        for before, after in zip(self.test_history, self.test_history[1:], strict=False):
-            _check_advance(before.status, after.status)
-        if self.test_history[-1].status != self.test_status:
-            raise ValueError("test_status must be the latest test_history entry")
-        return self
-
-    def content_id(self) -> str:
-        """The id implied by the frozen content. Later test status changes do not alter it,
-        but the status at creation does, so an edit cannot restart the history as fresh.
-        (Dropping later entries can only be detected against an outside copy of the record.)"""
-        content = self.model_dump(mode="json", exclude={"id", "test_status", "test_history"})
-        content["created_test_status"] = self.test_history[0].status
-        canonical = json.dumps(content, sort_keys=True, separators=(",", ":"))
-        return f"{self.name}-{hashlib.sha256(canonical.encode()).hexdigest()[:12]}"
-
-
-def _check_advance(current: TestStatus, new: TestStatus) -> None:
-    if STATUS_ORDER.index(new) < STATUS_ORDER.index(current):
-        raise ValueError(f"A test status cannot return from {current} to {new}")
 
 
 def _assign(samples: list[Sample], spec: ReleaseSpec) -> dict[str, SplitName]:
@@ -298,6 +187,8 @@ def _evidence_gap(task: Task, members: list[Sample]) -> str | None:
     if not needed:
         return None
     labels = {note.label for note in _evidence(task, members)}
+    if any(checked_negatives(sample, task) for sample in members):
+        labels.add("absent")
     kinds = " or ".join(sorted(needed))
     missing = sorted({"present", "absent"} - labels) if task in BINARY_TASKS else []
     if not labels or missing:
@@ -305,7 +196,7 @@ def _evidence_gap(task: Task, members: list[Sample]) -> str | None:
     return None
 
 
-def _counts(members: list[Sample], key: str) -> Counts:
+def _counts(members: list[Sample], key: str, task: Task) -> Counts:
     notes = [note for sample in members for note in sample.annotations if note.supervises()]
     return Counts(
         samples=len(members),
@@ -314,6 +205,13 @@ def _counts(members: list[Sample], key: str) -> Counts:
         reviews=dict(sorted(Counter(note.review for note in notes).items())),
         taxa=dict(sorted(Counter(note.taxon for note in notes if note.taxon).items())),
         categories=dict(sorted(Counter(note.category for note in notes if note.category).items())),
+        checked_negatives=dict(
+            sorted(
+                Counter(
+                    target for sample in members for target in checked_negatives(sample, task)
+                ).items()
+            )
+        ),
     )
 
 
@@ -343,14 +241,21 @@ def build_release(
     samples: list[Sample], spec: ReleaseSpec, *, recorded_at: str
 ) -> tuple[Release, list[Sample]]:
     """The release record and its samples (sorted by id), or a refusal."""
+    if spec.review_policy is not None:
+        samples = [promote_detection(sample, spec.review_policy) for sample in samples]
     assigned = _assign(samples, spec)
     buffer, excluded = (None, {})
     if spec.buffer_m is not None:
         buffer, excluded = _buffer(samples, assigned, spec.buffer_m)
     kept = sorted((s for s in samples if s.id not in excluded), key=lambda s: s.id)
     _check_consent(kept)
+    if spec.rights_profile is not None:
+        for sample in kept:
+            require_rights(sample, spec.rights_profile)
     key = spec.split.group_key
-    keys = list(dict.fromkeys([key, *spec.separate]))
+    extra_groups = spec.review_policy.required_groups if spec.review_policy else ()
+    separate = sorted(set(spec.separate) | (set(extra_groups) - {key}))
+    keys = list(dict.fromkeys([key, *separate]))
     _check_separation(kept, assigned, keys, _lineage_roots(samples))
     _check_target(spec.task, kept)
     by_split = _by_split(kept, assigned, spec)
@@ -363,7 +268,7 @@ def build_release(
         task=spec.task,
         protocol=spec.protocol,
         split=spec.split,
-        separate=sorted(set(spec.separate)),
+        separate=separate,
         contract_schema_version=SCHEMA_VERSION,
         manifest_sha256=hashlib.sha256(manifest_bytes(kept)).hexdigest(),
         source_snapshots={source: sorted(values) for source, values in sorted(snapshots.items())},
@@ -377,7 +282,12 @@ def build_release(
             for name, members in by_split.items()
         },
         excluded=dict(sorted(excluded.items())),
-        counts={name: _counts(members, key) for name, members in by_split.items()},
+        counts={name: _counts(members, key, spec.task) for name, members in by_split.items()},
+        review_policy=spec.review_policy,
+        rights_profile=spec.rights_profile,
+        metadata_licenses=sorted({s.rights.metadata_license for s in kept})
+        if spec.rights_profile is not None
+        else None,
         test_status=spec.test_status,
         test_history=[
             StatusChange(status=spec.test_status, recorded_at=recorded_at, note="release created")
