@@ -96,7 +96,7 @@ def test_owned_export_bytes_must_match_the_receipt_hash(tmp_path):
         import_reviews(request, tmp_path / "replay", previous=original, previous_sha256=prior_sha)
 
 
-def test_legacy_complete_table_retains_earlier_ids_without_prefix_inference(tmp_path):
+def test_legacy_table_without_order_cannot_reconstruct_multiple_captures(tmp_path):
     request, first, second = two_samples(tmp_path)
     first["annotations"] = []
     original = tmp_path / "first"
@@ -105,14 +105,17 @@ def test_legacy_complete_table_retains_earlier_ids_without_prefix_inference(tmp_
     import_reviews(
         export(request, [second]), prior, previous=original, previous_sha256=checksum(original)
     )
-    prior_sha = rewrite_receipt(prior, lambda receipt: receipt.pop("owned_export_sha256", None))
-    receipt = import_reviews(
-        export(request, [first]), tmp_path / "replay", previous=prior, previous_sha256=prior_sha
+    prior_sha = rewrite_receipt(
+        prior,
+        lambda receipt: (
+            receipt.pop("owned_export_sha256", None),
+            receipt.pop("capture_journal", None),
+        ),
     )
-    assert receipt["task_bindings"] == {
-        first["meta"]["external_id"]: 1,
-        second["meta"]["external_id"]: 2,
-    }
+    with pytest.raises(ValueError, match="capture order|task bindings"):
+        import_reviews(
+            export(request, [first]), tmp_path / "replay", previous=prior, previous_sha256=prior_sha
+        )
 
 
 def test_legacy_without_table_refuses_unprovable_earlier_zero_human_exports(tmp_path):
@@ -128,6 +131,7 @@ def test_legacy_without_table_refuses_unprovable_earlier_zero_human_exports(tmp_
     def legacy(receipt):
         receipt.pop("owned_export_sha256", None)
         receipt.pop("task_bindings", None)
+        receipt.pop("capture_journal", None)
 
     prior_sha = rewrite_receipt(prior, legacy)
     with pytest.raises(ValueError, match="ownership"):
@@ -152,11 +156,11 @@ def test_declared_owned_history_cannot_contradict_its_complete_task_table(tmp_pa
     prior_sha = rewrite_receipt(
         original, lambda receipt: receipt["owned_export_sha256"].append(phantom_sha)
     )
-    with pytest.raises(ValueError, match="binding"):
+    with pytest.raises(ValueError, match="binding|journal"):
         import_reviews(selected, tmp_path / "replay", previous=original, previous_sha256=prior_sha)
 
 
-def test_before_table_legacy_can_recover_only_proven_importer_event_exports(tmp_path):
+def test_legacy_event_anchors_without_order_cannot_reconstruct_multiple_captures(tmp_path):
     request, first, second = two_samples(tmp_path)
     original = tmp_path / "first"
     first_request = export(request, [first])
@@ -168,16 +172,13 @@ def test_before_table_legacy_can_recover_only_proven_importer_event_exports(tmp_
     def legacy(receipt):
         receipt.pop("owned_export_sha256")
         receipt.pop("task_bindings")
+        receipt.pop("capture_journal", None)
 
     prior_sha = rewrite_receipt(prior, legacy)
-    receipt = import_reviews(
-        second_request, tmp_path / "replay", previous=prior, previous_sha256=prior_sha
-    )
-    assert set(receipt["owned_export_sha256"]) == {
-        first_request.export_sha256,
-        second_request.export_sha256,
-    }
-    assert set(receipt["task_bindings"].values()) == {1, 2}
+    with pytest.raises(ValueError, match="capture order|task bindings"):
+        import_reviews(
+            second_request, tmp_path / "replay", previous=prior, previous_sha256=prior_sha
+        )
 
 
 def test_before_table_legacy_refuses_source_bytes_that_were_also_an_actual_capture(tmp_path):
@@ -197,6 +198,7 @@ def test_before_table_legacy_refuses_source_bytes_that_were_also_an_actual_captu
     def legacy(receipt):
         receipt.pop("owned_export_sha256")
         receipt.pop("task_bindings")
+        receipt.pop("capture_journal", None)
 
     prior_sha = rewrite_receipt(prior, legacy)
     first["id"] = 3

@@ -56,6 +56,8 @@ class Package:
     task_bindings: dict[str, int] | None = None
     export_sha256: str | None = None
     owned_export_sha256: list[str] | None = None
+    capture_journal: list[dict] | None = None
+    config_sha256: str | None = None
 
 
 def _geometry(media: bytes, sample: Sample) -> None:
@@ -110,6 +112,8 @@ def read_package(root: Path, expected: str) -> Package:
         manifest.get("task_bindings") if imported else None,
         manifest.get("export_sha256") if imported else None,
         manifest.get("owned_export_sha256") if imported else None,
+        manifest.get("capture_journal") if imported else None,
+        manifest.get("config_sha256") if imported else None,
     )
 
 

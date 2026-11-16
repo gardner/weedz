@@ -94,8 +94,9 @@ def test_later_invalid_geometry_is_found_before_first_brush_decode(tmp_path, mon
     assert calls == []
 
 
-def test_exact_replay_and_cancellation_need_no_new_decode_budget(tmp_path, monkeypatch):
-    import weedz.annotation.import_claims as claims
+def test_replay_revalidates_history_without_decoding_unchanged_revision_twice(
+    tmp_path, monkeypatch
+):
     from weedz.annotation.import_pipeline import import_reviews
 
     request, task = request_with_masks(tmp_path)
@@ -106,16 +107,16 @@ def test_exact_replay_and_cancellation_need_no_new_decode_budget(tmp_path, monke
     checksum = hashlib.sha256((original / "manifest.json").read_bytes()).hexdigest()
     assert len(calls) == 1
     calls.clear()
-    monkeypatch.setattr(claims, "MAX_IMPORT_BRUSH_PIXELS", 0, raising=False)
     repeated = import_reviews(
         request, tmp_path / "repeat", previous=original, previous_sha256=checksum
     )
-    assert repeated["imported_revisions"] == 0 and calls == []
+    assert repeated["imported_revisions"] == 0 and len(calls) == 1
+    calls.clear()
     task["annotations"][0].update(was_cancelled=True, updated_at="2026-11-16T02:00:00Z", result=[])
     retracted = import_reviews(
         save(request, task), tmp_path / "cancelled", previous=original, previous_sha256=checksum
     )
-    assert retracted["imported_revisions"] == 1 and calls == []
+    assert retracted["imported_revisions"] == 1 and len(calls) == 1
 
 
 def test_export_budget_is_shared_across_different_tasks(tmp_path, monkeypatch):
