@@ -173,3 +173,16 @@ history without decoding; attributable cancellations remain available without a
 new decode allowance. All declared geometry and the combined budget must pass first.
 Generated mask paths may reuse retained bytes only if identical; conflicting source
 or historical assets are refused, never silently replaced.
+
+Before publication the importer rechecks media, current masks, supported historical
+claim/annotation masks and any assessed-mask references against the final closed files.
+Derived metadata may be revised only when doing so does not replace a referenced asset.
+Checksum-addressed source, export and configuration snapshots are immutable: different
+retained bytes at their paths cause refusal; exact byte reuse is allowed.
+
+`completeness_task` scopes whole-image coverage, not every annotation's geometry.
+The explicit review decision applies to the supplied regions in their native form:
+a box stays a box and a brush stays a mask, including mixed annotations. No geometry
+conversion or task promotion is inferred. Exhaustive named coverage still requires
+matching geometry for those targets; partial/unknown coverage establishes no absence
+or completeness for another task. Gold acceptance remains a separate policy.
