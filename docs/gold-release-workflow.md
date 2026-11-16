@@ -26,6 +26,11 @@ names identify recorded accounts; they do not certify botanical expertise. The s
 must have pinned media hashes. This snapshot is an inference-only historical export,
 with original media references, rather than a self-contained gold release.
 
+Namespaces use 1–100 ASCII letters, digits, dots, underscores or hyphens, starting
+with a letter or digit. Colons are reserved identity delimiters. Actual source
+reviewer names retain their original colons and Unicode characters; only the
+operator-supplied namespace is restricted. Keep older snapshots unchanged.
+
 Known iNaturalist observer logins use `inaturalist:login:<login>`, with the original login
 also retained in context. The observation group is preserved. An encounter group is
 added only when the existing grouping rule has sufficient date, observer and public

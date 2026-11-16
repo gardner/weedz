@@ -91,6 +91,48 @@ def test_missing_media_digest_cannot_bind_human_history(tmp_path: Path):
         reviewed_pilot_samples(store, "run", namespace="fixture")
 
 
+@pytest.mark.parametrize(
+    "namespace", ["team:reviewer:alice", "team/reviews", "", " team", "team ", "a" * 101]
+)
+def test_ambiguous_namespace_refuses_before_capture_or_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, namespace: str
+):
+    from weedz import review_snapshot
+
+    def no_capture(*_args):
+        pytest.fail("Invalid namespaces must refuse before reading the source database")
+
+    monkeypatch.setattr(review_snapshot, "_capture", no_capture)
+    output = tmp_path / "snapshot"
+    with pytest.raises(ValueError, match="namespace"):
+        review_snapshot.write_review_snapshot(
+            tmp_path / "missing-source", "run", output, namespace=namespace
+        )
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("actual", ["alice:reviewer:bob", "Māia:reviewer:李"])
+def test_valid_namespaces_keep_actual_reviewer_names_and_separate_stores(
+    tmp_path: Path, actual: str
+):
+    from weedz.review_snapshot import reviewed_pilot_samples
+
+    store, photo_id = pinned_store(tmp_path)
+    store.finding(
+        "run", photo_id, Finding.model_validate(finding(box=[1, 2, 3, 4], reviewer=actual))
+    )
+    store.review("run", photo_id, "confirmed", "Actual source name", actual)
+    actors = set()
+    for namespace in ("team", "team-alice_2.0"):
+        (sample,) = reviewed_pilot_samples(store, "run", namespace=namespace)
+        expected = f"discovery:{namespace}:reviewer:{actual}"
+        assert sample.annotations[-1].author == expected
+        assert sample.annotations[0].reviewers == (expected,)
+        assert {event.actor for event in sample.review_history} == {expected}
+        actors.add(expected)
+    assert len(actors) == 2
+
+
 def test_snapshot_command_reads_an_existing_database_without_opening_a_writer(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):

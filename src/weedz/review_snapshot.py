@@ -7,6 +7,7 @@ source identities, rather than being represented as verified botanical expertise
 
 import hashlib
 import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -141,8 +142,8 @@ def _annotated(sample: Sample, namespace: str) -> tuple[Annotation, ...]:
 
 def reviewed_pilot_samples(store: Store | Path, run_id: str, *, namespace: str) -> list[Sample]:
     """Preserve actual history and typed observer/encounter evidence; keep inference only."""
-    if not namespace.strip() or namespace != namespace.strip():
-        raise ValueError("A stable nonempty review-store namespace is required")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", namespace):
+        raise ValueError("Use a stable ASCII review-store namespace without identity delimiters")
     run, rows, events = _capture(store, run_id)
     raw = json.dumps(
         {"run": run, "photos": rows, "events": events},
