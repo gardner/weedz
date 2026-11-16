@@ -152,3 +152,56 @@ def test_distinct_canonical_keys_cannot_claim_same_numeric_source_task(tmp_path)
     )
     with pytest.raises(ValueError, match="task identity"):
         import_reviews(request, tmp_path / "refused")
+
+
+@pytest.mark.parametrize("kind", ["box", "mask"])
+def test_actual_human_geometry_imports_without_implicit_supervision_conversion(tmp_path, kind):
+    from dataclasses import replace
+
+    import numpy as np
+    from label_studio_sdk.converter.brush import mask2rle
+
+    request, task, _ = inputs(tmp_path)
+    results = task["annotations"][0]["result"]
+    common = dict(
+        id="region-1", to_name="image", original_width=10, original_height=10, image_rotation=0
+    )
+    if kind == "box":
+        row = dict(
+            common,
+            from_name="review_boxes",
+            type="rectanglelabels",
+            value=dict(
+                x=10, y=20, width=50, height=40, rotation=0, rectanglelabels=["Ulex europaeus"]
+            ),
+        )
+    else:
+        mask = np.zeros((10, 10), dtype=np.uint8)
+        mask[2:6, 1:6] = 255
+        row = dict(
+            common,
+            from_name="regions",
+            type="brushlabels",
+            value=dict(format="rle", rle=mask2rle(mask), brushlabels=["Ulex europaeus"]),
+        )
+        next(r for r in results if r["from_name"] == "completeness_task")["value"]["choices"] = [
+            "segmentation"
+        ]
+    results.append(row)
+    request.export.write_text(json.dumps([task]))
+    request = replace(
+        request, export_sha256=hashlib.sha256(request.export.read_bytes()).hexdigest()
+    )
+    output = tmp_path / "geometry"
+    import_reviews(request, output)
+    sample = read_manifest(output / "samples.jsonl")[0]
+    note = sample.annotations[0]
+    assert note.origin == "reviewer" and note.review == "accepted" and note.model is None
+    assert note.supervision == ("box" if kind == "box" else "dense_mask")
+    assert "rle" not in sample.review_history[0].model_dump_json()
+    if kind == "box":
+        assert note.box == (1, 2, 6, 6) and note.mask_uri is None
+    else:
+        assert note.box is None and note.mask_uri is not None
+        assert hashlib.sha256((output / note.mask_uri).read_bytes()).hexdigest() == note.mask_sha256
+    assert (output / "private").stat().st_mode & 0o777 == 0o700

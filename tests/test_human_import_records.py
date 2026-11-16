@@ -45,3 +45,9 @@ def test_incomplete_or_mismatched_human_identity_fails(field, value):
     row = annotation() | {field: value}
     with pytest.raises(ValueError):
         completed_records({"id": 1, "annotations": [row]}, "project-1")
+
+
+def test_revision_timestamp_cannot_precede_creation():
+    row = annotation() | {"updated_at": "2026-11-15T01:00:00Z"}
+    with pytest.raises(ValueError, match="timestamp"):
+        completed_records({"id": 1, "annotations": [row]}, "project-1")

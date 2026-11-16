@@ -53,6 +53,10 @@ def _record(row: dict, task_id: int, namespace: str) -> HumanRecord:
     key = f"label-studio:{namespace}:task:{task_id}:annotation:{positive_id(row.get('id'))}"
     recorded = timestamp(row.get("updated_at"))
     created = timestamp(row.get("created_at"))
+    if datetime.fromisoformat(recorded.replace("Z", "+00:00")) < datetime.fromisoformat(
+        created.replace("Z", "+00:00")
+    ):
+        raise ValueError("Revision timestamp precedes annotation creation")
     results = row.get("result")
     if not isinstance(results, list) or any(not isinstance(item, dict) for item in results):
         raise ValueError("Completed annotation requires result objects")
