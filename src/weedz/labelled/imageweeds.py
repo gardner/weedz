@@ -92,11 +92,15 @@ def _sample(
     output: Path,
     image_format: str,
     native_sha256: str,
+    prepared_images: Path | None = None,
 ) -> Sample:
     rights = source_rights(native, image)
     name = image["file_name"]
     raw = source.read(f"images/{name}", maximum_bytes=20_000_000)
-    prepared = prepare_image(raw, (image["width"], image["height"]), image_format)
+    cached = read_prepared(prepared_images, name) if prepared_images is not None else None
+    prepared = prepare_image(
+        raw, (image["width"], image["height"]), image_format, prepared_png=cached
+    )
     filename = str(Path(name).with_suffix(".png")) if prepared.output_format == "PNG" else name
     uri = f"images/{filename}"
     publish(output / uri, prepared.encoded)
@@ -178,12 +182,20 @@ def quarantine(native: dict) -> dict[str, str]:
 
 
 def prepare(
-    archive: Path, output: Path, *, crop: str, limit: int, image_format: str = "lossless-rgb-png"
+    archive: Path,
+    output: Path,
+    *,
+    crop: str,
+    limit: int,
+    image_format: str = "lossless-rgb-png",
+    prepared_images: Path | None = None,
 ) -> str:
     uuid, archive_sha, count = PROFILES[crop]
     if not 1 <= limit <= count:
         raise ValueError(f"ImageWeeds {crop} limit must be between 1 and {count}")
     output = output_namespace(output, archive.parent)
+    if prepared_images is not None:
+        output_namespace(output, prepared_images)
     with SourceArchive(archive, archive_sha) as source:
         raw = source.read("weedcoco.json", maximum_bytes=10_000_000)
         native = json.loads(raw)
@@ -192,7 +204,7 @@ def prepare(
         images = sorted(native["images"], key=lambda image: image["id"])[:limit]
         excluded = quarantine(native)
         samples = [
-            _sample(source, image, native, crop, output, image_format, digest(raw))
+            _sample(source, image, native, crop, output, image_format, digest(raw), prepared_images)
             for image in images
             if image["file_name"] not in excluded
         ]
@@ -215,3 +227,11 @@ def prepare(
                 "source_family": "ImageWeeds v2; soybean and maize are not independent datasets",
             },
         )
+
+
+def read_prepared(root: Path, name: str) -> bytes:
+    path = (root / Path(name).with_suffix(".png")).resolve()
+    if not path.is_relative_to(root.resolve()):
+        raise ValueError("Prepared PNG must be confined to its explicit cache root")
+    with path.open("rb") as stream:
+        return stream.read(160_000_001)

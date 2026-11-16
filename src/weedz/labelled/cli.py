@@ -23,6 +23,11 @@ def main(argv: list[str] | None = None) -> None:
         if name == "imageweeds":
             command.add_argument("--crop", choices=tuple(imageweeds.PROFILES), required=True)
             command.add_argument("--format", choices=FORMATS, default="lossless-rgb-png")
+            command.add_argument(
+                "--prepared-images",
+                type=Path,
+                help="Optional existing RGB PNG cache, verified against source pixels",
+            )
     command = commands.add_parser("nz-review")
     command.add_argument(
         "--prior-root",
@@ -63,7 +68,12 @@ def _prepare(args: argparse.Namespace) -> str:
         return cwfid.prepare(args.archive, args.output, limit=args.limit)
     if args.source == "imageweeds":
         return imageweeds.prepare(
-            args.archive, args.output, crop=args.crop, limit=args.limit, image_format=args.format
+            args.archive,
+            args.output,
+            crop=args.crop,
+            limit=args.limit,
+            image_format=args.format,
+            prepared_images=args.prepared_images,
         )
     return nz_review.prepare(
         args.prior_root,
