@@ -198,6 +198,62 @@ def test_new_mask_hashes_do_not_turn_masks_into_boxes() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    "kind,geometry",
+    [
+        ("image_class", {}),
+        ("dense_mask", {"mask_uri": "masks/1.png", "mask_sha256": SHA}),
+    ],
+)
+def test_detection_completeness_cannot_call_a_known_unboxed_positive_a_negative(
+    kind: str, geometry: dict[str, Any]
+) -> None:
+    positive = Annotation.model_validate(
+        {
+            "id": "source:positive",
+            "supervision": kind,
+            "taxon": "Ulex europaeus",
+            "label": "present",
+            "origin": "source",
+            **geometry,
+        }
+    )
+    with pytest.raises(ValidationError, match="Completeness.*geometry"):
+        record(tasks=["detection"], annotations=[positive], completeness=[complete()])
+
+
+def test_scoped_completeness_does_not_require_geometry_for_other_taxa() -> None:
+    other = Annotation(
+        id="source:other",
+        supervision="image_class",
+        taxon="Other species",
+        label="present",
+        origin="source",
+    )
+    assert record(tasks=["detection"], annotations=[other], completeness=[complete()])
+
+
+def test_a_real_box_can_coexist_with_its_mask_and_exhaustive_detection_review() -> None:
+    box = Annotation(
+        id="source:box",
+        supervision="box",
+        taxon="Ulex europaeus",
+        label="present",
+        origin="source",
+        box=(1, 1, 4, 4),
+    )
+    mask = Annotation(
+        id="source:mask",
+        supervision="dense_mask",
+        taxon="Ulex europaeus",
+        label="present",
+        origin="source",
+        mask_uri="masks/1.png",
+        mask_sha256=SHA,
+    )
+    assert record(tasks=["detection"], annotations=[box, mask], completeness=[complete()])
+
+
 def test_absent_extensions_preserve_legacy_serialization() -> None:
     sample = record()
     encoded = sample.model_dump_json()
