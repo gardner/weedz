@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from weedz.contract import Completeness, Sample
-from weedz.region_evaluation.truth import TruthOrigin
+from weedz.region_evaluation.truth import TruthOrigin, eligible_positive
 
 type Task = Literal["detection", "segmentation"]
 
@@ -46,6 +46,8 @@ def assess_scope(
     """
     if task not in {"detection", "segmentation"}:
         raise ValueError("Need a detection or segmentation task")
+    if _unresolved(sample, target, origin):
+        return ScopeAssessment(False, (), ())
     eligible = [
         coverage
         for coverage in sample.completeness
@@ -60,3 +62,25 @@ def assess_scope(
         tuple(sorted(coverage.id for coverage in eligible)),
         tuple(sorted({coverage.origin for coverage in eligible})),
     )
+
+
+def _unresolved(sample: Sample, target: Target, origin: TruthOrigin) -> bool:
+    claims = [
+        annotation
+        for annotation in sample.annotations
+        if annotation.origin == origin
+        and annotation.review != "rejected"
+        and (origin == "source" or annotation.review == "accepted")
+        and (
+            annotation.taxon == target.name
+            if target.kind == "taxon"
+            else sample.source == target.source and annotation.category == target.name
+        )
+    ]
+    if any(annotation.label == "unknown" for annotation in claims):
+        return True
+    absent = any(
+        annotation.label == "absent" and annotation.supervision == "image_class"
+        for annotation in claims
+    )
+    return absent and any(eligible_positive(annotation, origin=origin) for annotation in claims)

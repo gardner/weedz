@@ -72,3 +72,47 @@ def test_reviewer_completeness_cannot_supervise_source_label_metrics() -> None:
     target = Target("category", "weed", "cwfid")
     assert not assess_scope(record, task="detection", target=target, origin="source").exhaustive
     assert assess_scope(record, task="detection", target=target, origin="reviewer").exhaustive
+
+
+def test_unknown_target_claim_blocks_negative_scope_without_inventing_absence() -> None:
+    record = sample(
+        completeness=[coverage()],
+        annotations=[
+            {
+                "id": "unresolved",
+                "supervision": "image_class",
+                "category": "weed",
+                "label": "unknown",
+                "origin": "source",
+            }
+        ],
+    )
+    assert not assess_scope(
+        record, task="detection", target=Target("category", "weed", "cwfid")
+    ).exhaustive
+
+
+def test_conflicting_image_absence_and_present_region_are_unassessed() -> None:
+    record = sample(
+        completeness=[coverage()],
+        annotations=[
+            {
+                "id": "absent",
+                "supervision": "image_class",
+                "category": "weed",
+                "label": "absent",
+                "origin": "source",
+            },
+            {
+                "id": "positive",
+                "supervision": "box",
+                "category": "weed",
+                "label": "present",
+                "origin": "source",
+                "box": [1, 1, 3, 3],
+            },
+        ],
+    )
+    assert not assess_scope(
+        record, task="detection", target=Target("category", "weed", "cwfid")
+    ).exhaustive
