@@ -54,6 +54,7 @@ UNCONFIRMED = (
     "A reviewer's label is evaluation evidence only once accepted by someone other than its author"
 )
 UNREVIEWED = "Only original or accepted labels are shared as reference evidence"
+PENDING_REVIEWER = "A pending reviewer label is retained but is not accepted reference evidence"
 NO_LOCATION = "No location was recorded"
 VERSION = re.compile(r"-\d+(\.\d+)*$")
 
@@ -80,6 +81,8 @@ def _set_aside(note: Annotation) -> str:
         return NO_TARGET
     if reason := SET_ASIDE.get(standing(note), ""):
         return reason
+    if note.origin == "reviewer" and note.review != "accepted":
+        return PENDING_REVIEWER
     if note.origin == "model" and note.review != "accepted":
         return PREDICTION
     return ""

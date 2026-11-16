@@ -95,11 +95,11 @@ def test_a_label_accepted_only_by_its_author_is_not_evaluation_evidence() -> Non
     assert "other than its author" in reasons(example)["evaluation"]
 
 
-def test_an_unreviewed_finding_trains_but_is_neither_evaluated_nor_shared() -> None:
+def test_an_unreviewed_finding_is_retained_but_has_no_reference_use() -> None:
     example = only(sample(note(origin="reviewer", author="Carol")))
-    assert eligible(example) == {"training"}
-    assert "accepted" in reasons(example)["evaluation"]
-    assert "original or accepted" in reasons(example)["sharing"]
+    assert example["standing"] == "unreviewed"
+    assert eligible(example) == set()
+    assert all("not accepted" in reason for reason in reasons(example).values())
 
 
 def test_an_accepted_suggestion_trains_and_shares_but_never_evaluates() -> None:
