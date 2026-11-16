@@ -91,3 +91,12 @@ def test_task_image_reference_must_name_its_pinned_media(tmp_path):
     (tmp_path / "manifest.json").write_bytes(encoded)
     with pytest.raises(ValueError, match="image"):
         read_package(tmp_path, hashlib.sha256(encoded).hexdigest())
+
+
+def test_package_total_snapshot_memory_is_bounded(tmp_path, monkeypatch):
+    import weedz.annotation.import_package as module
+
+    checksum, _ = package(tmp_path)
+    monkeypatch.setattr(module, "MAX_PACKAGE_BYTES", 10, raising=False)
+    with pytest.raises(ValueError, match="cap|oversized"):
+        module.read_package(tmp_path, checksum)

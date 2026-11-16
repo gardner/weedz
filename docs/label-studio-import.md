@@ -80,3 +80,8 @@ references rather than raw RLE or arbitrary task data. Keep the whole import pac
 private; share only a deliberately assembled release under its recorded rights.
 The importer preserves rights and task declarations; release promotion and expert
 acceptance happen separately under the release policy.
+
+The offline snapshot is bounded to 1,000 source samples, 10,000 package files,
+512 MiB total package bytes, 256 MiB per asset/export, and 40 megapixels per image.
+Use smaller closed packages when these bounds are exceeded. These are resource
+limits, not claims about annotation quality or independent sampling.

@@ -12,6 +12,7 @@ from PIL import Image
 from weedz.contract import Sample
 
 MAX_BYTES = 256 * 1024 * 1024
+MAX_PACKAGE_BYTES = 512 * 1024 * 1024
 
 
 def pinned_bytes(path: Path, expected: str, maximum: int = MAX_BYTES) -> bytes:
@@ -66,13 +67,10 @@ def read_package(root: Path, expected: str) -> Package:
     manifest = json.loads(raw)
     if not isinstance(manifest.get("files"), dict):
         raise ValueError("Annotation package needs a closed file manifest")
-    files = {
-        name: pinned_bytes(relative_file(root, name), checksum)
-        for name, checksum in manifest["files"].items()
-    }
+    files = _files(root, manifest["files"])
     provenance = json.loads(files["private/provenance.json"])
     records = provenance.get("samples", provenance.get("photos"))
-    if not isinstance(records, list) or not records:
+    if not isinstance(records, list) or not 1 <= len(records) <= 1000:
         raise ValueError("Package has no canonical sample provenance")
     samples = {}
     for record in records:
@@ -106,3 +104,17 @@ def _task_image(task: dict, sample: Sample) -> None:
     expected = sample.media.uri.removeprefix("images/")
     if url.path != "/data/local-files/" or url.fragment or parse_qs(url.query) != {"d": [expected]}:
         raise ValueError("Task image does not identify its canonical media")
+
+
+def _files(root: Path, references: dict[str, str]) -> dict[str, bytes]:
+    if len(references) > 10_000:
+        raise ValueError("Package file count exceeds resource cap")
+    files: dict[str, bytes] = {}
+    total = 0
+    for name, checksum in references.items():
+        raw = pinned_bytes(
+            relative_file(root, name), checksum, min(MAX_BYTES, MAX_PACKAGE_BYTES - total)
+        )
+        files[name] = raw
+        total += len(raw)
+    return files
