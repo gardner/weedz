@@ -179,13 +179,13 @@ def test_real_nc_publisher_preserves_profile_on_import_prediction_repair_and_ret
     service = Service()
     original_humans = deepcopy(service.annotations)
     first = run(service, package, tmp_path)
-    assert first["tasks"] == 1
+    assert first["tasks"] == first["new_tasks"] == 1
     # Exercise the existing-task prediction append and its subsequent idempotent retry.
     service.predictions[1] = []
     repaired = run(service, package, tmp_path)
     repeated = run(service, package, tmp_path)
-    assert repaired["predictions"] == 1
-    assert repeated["tasks"] == repeated["predictions"] == 0
+    assert repaired["new_predictions"] == 1
+    assert repeated["new_tasks"] == repeated["new_predictions"] == 0
     assert service.annotations == original_humans
     assert len(service.tasks) == len(service.predictions[1]) == 1
     assert service.requests.count(("POST", "/api/projects/1/import")) == 1
