@@ -231,3 +231,8 @@ Distinct capture snapshots (including the next export, deduplicated by verified
 SHA) additionally have a shared 64 MiB encoded JSON cap checked before replay
 parsing; each export still has its separate 8 MiB pre-decode cap. These are input
 byte bounds, not promises that decoded Python objects occupy the same memory.
+All original closed-package files must also remain byte-identical in a previous
+import, including task predictions/credits, source configuration and ordinary
+metadata. Only the generated sample manifest and private sample provenance may
+change; existing referenced-asset checks still protect those paths when used as
+media or masks.
