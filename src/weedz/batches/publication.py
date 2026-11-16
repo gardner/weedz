@@ -208,7 +208,9 @@ def publish(
     if type(project) is not int or project <= 0:
         raise ValueError("Choose a positive Label Studio project")
     # Re-read pinned bytes instead of trusting mutable nested dictionaries from a caller.
-    package = validate_package(package.root, package.sha256, heartbeat)
+    package = validate_package(
+        package.root, package.sha256, heartbeat, rights_profile=package.rights_profile
+    )
     with writer_lock(lock, heartbeat):
         legacy = load_legacy_identities(legacy_allowlist, project)
         adopted: set[int] = set()

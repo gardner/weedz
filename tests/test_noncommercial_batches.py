@@ -156,3 +156,47 @@ def test_noncommercial_activity_retry_keeps_its_purpose_without_repeating_models
         rights_profile=NONCOMMERCIAL_PROFILE,
     )
     assert package.rights_profile == NONCOMMERCIAL_PROFILE
+
+
+def test_real_nc_publisher_preserves_profile_on_import_prediction_repair_and_retry(
+    canonical_batch, tmp_path
+):
+    from copy import deepcopy
+
+    from test_batch_publication import Service, run
+
+    manifest, frame, _key = canonical_batch
+    sample = json.loads(manifest.read_bytes())
+    sample["rights"]["metadata_license"] = "cc-by-nc-4.0"
+    manifest.write_text(json.dumps(sample) + "\n", encoding="utf-8")
+    scores = json.loads(frame.read_bytes())
+    scores["manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    frame.write_text(json.dumps(scores), encoding="utf-8")
+    output = tmp_path / "nc-publication"
+    export_samples(manifest, output, frame_results=frame, rights_profile=NONCOMMERCIAL_PROFILE)
+    sha = hashlib.sha256((output / "manifest.json").read_bytes()).hexdigest()
+    package = validate_package(output, sha, rights_profile=NONCOMMERCIAL_PROFILE)
+    service = Service()
+    original_humans = deepcopy(service.annotations)
+    first = run(service, package, tmp_path)
+    assert first["tasks"] == 1
+    # Exercise the existing-task prediction append and its subsequent idempotent retry.
+    service.predictions[1] = []
+    repaired = run(service, package, tmp_path)
+    repeated = run(service, package, tmp_path)
+    assert repaired["predictions"] == 1
+    assert repeated["tasks"] == repeated["predictions"] == 0
+    assert service.annotations == original_humans
+    assert len(service.tasks) == len(service.predictions[1]) == 1
+    assert service.requests.count(("POST", "/api/projects/1/import")) == 1
+    assert service.requests.count(("POST", "/api/projects/1/import/predictions")) == 1
+    assert all("annotations" not in path for _, path in service.requests)
+    assert all("annotations" not in task for task in service.imported)
+    assert (
+        json.loads((output / "manifest.json").read_bytes())["rights_profile"]
+        == NONCOMMERCIAL_PROFILE
+    )
+    assert (
+        validate_package(output, sha, rights_profile=NONCOMMERCIAL_PROFILE).rights_profile
+        == NONCOMMERCIAL_PROFILE
+    )
