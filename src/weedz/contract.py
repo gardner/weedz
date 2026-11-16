@@ -5,15 +5,19 @@ stay `None` or `"unknown"`; validation refuses tasks the evidence cannot support
 than silently weakening labels (an image label never becomes a mask).
 """
 
+import json
+from datetime import datetime
 from typing import Annotated, Literal
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    JsonValue,
     SerializerFunctionWrapHandler,
     StringConstraints,
     field_serializer,
+    field_validator,
     model_serializer,
     model_validator,
 )
@@ -118,6 +122,92 @@ class Ground(Contract):
     gsd_m: float = Field(gt=0)
 
 
+class ReviewEvidence(Contract):
+    """Source claims and human reviews keep their actual provenance and media identity."""
+
+    media_sha256: Sha256
+    origin: Literal["source", "reviewer"]
+    recorded_at: Text | None = None
+    evidence: dict[Text, Text] = {}
+
+    @field_serializer("evidence")
+    def sorted_evidence(self, evidence: dict[str, str]) -> dict[str, str]:
+        return dict(sorted(evidence.items()))
+
+    @model_validator(mode="after")
+    def timestamp_is_attributed(self) -> "ReviewEvidence":
+        if self.recorded_at is None:
+            if self.origin == "reviewer":
+                raise ValueError("A human review needs its actual recorded_at timestamp")
+            return self
+        try:
+            value = datetime.fromisoformat(self.recorded_at.replace("Z", "+00:00"))
+        except ValueError as error:
+            raise ValueError("recorded_at needs an ISO timestamp with timezone") from error
+        if value.utcoffset() is None:
+            raise ValueError("recorded_at needs an ISO timestamp with timezone")
+        return self
+
+
+class Completeness(ReviewEvidence):
+    """Coverage of named targets, never a negative inferred from missing annotations.
+
+    An exhaustive upstream annotation protocol is source evidence, not our own accepted
+    human judgement. Gold policies impose their stricter review requirements separately.
+    """
+
+    id: Text
+    task: Literal["detection", "segmentation"]
+    scope: Literal["whole_image"] = "whole_image"
+    taxa: tuple[Text, ...] = ()
+    categories: tuple[Text, ...] = ()
+    status: Literal["exhaustive", "partial", "unknown"]
+    author: Text | None = None
+    review: Review = "unreviewed"
+    reviewers: tuple[Text, ...] = ()
+
+    @field_validator("taxa", "categories")
+    @classmethod
+    def unique_scope(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        if len(set(values)) != len(values):
+            raise ValueError("Completeness scope cannot repeat a target")
+        return tuple(sorted(values))
+
+    @model_validator(mode="after")
+    def explicit_scope(self) -> "Completeness":
+        if not self.taxa and not self.categories:
+            raise ValueError("Completeness needs named taxa or source categories")
+        if self.origin == "reviewer" and self.author is None:
+            raise ValueError("Reviewer completeness needs its author")
+        return self
+
+    def supervises(self) -> bool:
+        if self.status != "exhaustive" or self.review in {"rejected", "uncertain"}:
+            return False
+        if self.origin == "source":
+            return bool(self.evidence)
+        return self.review == "accepted" and bool(self.reviewers)
+
+
+class ReviewEvent(ReviewEvidence):
+    """An immutable source event or human revision, with evidence snapshots addressed by hash."""
+
+    id: Text
+    sample_id: Text
+    actor: Text
+    action: Text
+    dimension: Text
+    annotation_id: Text | None = None
+    supersedes: Text | None = None
+    payload: dict[str, JsonValue] = {}
+
+    @field_validator("payload")
+    @classmethod
+    def finite_json(cls, value: dict[str, JsonValue]) -> dict[str, JsonValue]:
+        json.dumps(value, allow_nan=False)
+        return value
+
+
 class Annotation(Contract):
     """One typed claim about a sample, with its origin and review state.
 
@@ -127,10 +217,13 @@ class Annotation(Contract):
     id: Text
     supervision: Supervision
     taxon: Text | None = None
+    # A publisher's functional class (e.g. crop/weed) is not a scientific taxon.
+    category: Text | None = None
     label: Literal["present", "absent", "unknown", "ignored"] = "unknown"
     point: tuple[Pixels, Pixels] | None = None
     box: tuple[Pixels, Pixels, Pixels, Pixels] | None = None
     mask_uri: Text | None = None
+    mask_sha256: Sha256 | None = None
     origin: Literal["source", "reviewer", "model"]
     review: Review = "unreviewed"
     # Who made the claim (for reviewer-origin annotations), and who reviewed it: different
@@ -143,6 +236,14 @@ class Annotation(Contract):
     model: Text | None = None
     score: float | None = None
 
+    @model_serializer(mode="wrap")
+    def without_absent_extensions(self, handler: SerializerFunctionWrapHandler) -> dict:
+        data = handler(self)
+        for key in ("category", "mask_sha256"):
+            if data.get(key) is None:
+                data.pop(key, None)
+        return data
+
     @model_validator(mode="after")
     def geometry_fits_supervision(self) -> "Annotation":
         kind = self.supervision
@@ -152,6 +253,8 @@ class Annotation(Contract):
             raise ValueError("A box needs left < right and top < bottom")
         if (self.mask_uri is not None) != (kind in {"dense_mask", "sparse_mask"}):
             raise ValueError(f"Only mask supervision has a mask_uri, and it needs one, not {kind}")
+        if self.mask_sha256 is not None and self.mask_uri is None:
+            raise ValueError("A mask_sha256 needs mask supervision and a mask_uri")
         if (self.point is not None) != (kind == "surveyed_point"):
             raise ValueError(
                 f"Only surveyed_point supervision has a point, and it needs one, not {kind}"
@@ -164,10 +267,12 @@ class Annotation(Contract):
 
     @model_validator(mode="after")
     def label_names_its_taxon(self) -> "Annotation":
-        if self.supervision == "unlabelled" and (self.taxon or self.label != "unknown"):
+        if self.supervision == "unlabelled" and (
+            self.taxon or self.category or self.label != "unknown"
+        ):
             raise ValueError("An unlabelled annotation names no taxon and no label")
-        if self.label in {"present", "absent"} and not self.taxon:
-            raise ValueError("A present or absent label names the taxon it refers to")
+        if self.label in {"present", "absent"} and not (self.taxon or self.category):
+            raise ValueError("A present or absent label names its taxon or source category")
         return self
 
     def supervises(self) -> bool:
@@ -203,6 +308,16 @@ class Sample(Contract):
     context: dict[str, str] = {}
     tasks: frozenset[Task]
     annotations: tuple[Annotation, ...] = ()
+    completeness: tuple[Completeness, ...] = ()
+    review_history: tuple[ReviewEvent, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def without_absent_extensions(self, handler: SerializerFunctionWrapHandler) -> dict:
+        data = handler(self)
+        for key in ("completeness", "review_history"):
+            if not data.get(key):
+                data.pop(key, None)
+        return data
 
     @field_serializer("groups", "context")
     def sorted_mapping(self, mapping: dict[str, str]) -> dict[str, str]:
@@ -222,10 +337,30 @@ class Sample(Contract):
             raise ValueError("Annotation ids must be unique within a sample")
         for note in self.annotations:
             self._check_extent(note)
+        self._check_review_evidence()
         for task in sorted(self.tasks):
             if reason := self._unsupported(task):
                 raise ValueError(reason)
         return self
+
+    def _check_review_evidence(self) -> None:
+        if len({item.id for item in self.completeness}) != len(self.completeness):
+            raise ValueError("Completeness ids must be unique within a sample")
+        for coverage in self.completeness:
+            if coverage.media_sha256 != self.media.sha256:
+                raise ValueError("Completeness media SHA differs from the sample")
+        self._check_history()
+
+    def _check_history(self) -> None:
+        seen: set[str] = set()
+        for event in self.review_history:
+            if event.id in seen or event.sample_id != self.id:
+                raise ValueError("Review history needs unique events for this sample")
+            if event.media_sha256 != self.media.sha256:
+                raise ValueError("Review history media SHA differs from the sample")
+            if event.supersedes is not None and event.supersedes not in seen:
+                raise ValueError("Review history supersedes an unknown or later revision")
+            seen.add(event.id)
 
     def _check_extent(self, note: Annotation) -> None:
         width, height = self.media.width or float("inf"), self.media.height or float("inf")
@@ -240,6 +375,8 @@ class Sample(Contract):
     def _unsupported(self, task: str) -> str | None:
         needed = TASK_SUPERVISION[task]
         evidence = {note.supervision for note in self.annotations if note.supervises()}
+        if any(item.task == task and item.supervises() for item in self.completeness):
+            return None
         if needed and not needed & evidence:
             return f"{task} needs {' or '.join(sorted(needed))} supervision"
         if task == "area_measurement" and self.ground is None:
