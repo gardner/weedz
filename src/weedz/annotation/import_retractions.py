@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 from weedz.annotation.import_records import HumanRecord
-from weedz.contract import ReviewEvent, Sample
+from weedz.contract import ReviewEvent, Sample, revise_sample
 
 
 def retract(sample: Sample, record: HumanRecord, evidence: dict[str, str]) -> Sample:
@@ -54,8 +54,8 @@ def retract(sample: Sample, record: HumanRecord, evidence: dict[str, str]) -> Sa
     event = ReviewEvent.model_validate_json(
         json.dumps(event.model_dump(mode="json"), sort_keys=True)
     )
-    raw = sample.model_dump(mode="json")
-    raw.update(
+    return revise_sample(
+        sample,
         annotations=[
             note for note in sample.annotations if not note.id.startswith(f"{record.key}:region:")
         ],
@@ -64,4 +64,3 @@ def retract(sample: Sample, record: HumanRecord, evidence: dict[str, str]) -> Sa
         ],
         review_history=[*sample.review_history, event],
     )
-    return Sample.model_validate(raw)

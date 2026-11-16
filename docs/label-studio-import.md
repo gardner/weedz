@@ -113,3 +113,18 @@ remains the original annotation author. If the export omits `updated_by`, histor
 explicitly attributes the account to `completed_by` and does not claim that it
 independently identifies the editor/canceller. Account fields are source attribution,
 not proof of a person's identity, independent expert review or authorization.
+
+## Sample wire versions
+
+Source packages may contain supported v1/v2 samples. Adding human completeness or
+history uses `revise_sample()` and writes schema v2 in the **new** sample manifest;
+original v1 source files stay unchanged. The import receipt's
+`contract_schema_version` records the maximum actual sample version. Its separate
+`schema_version` describes the closed-package envelope, not the embedded sample
+contract. Replays allow the validated monotonic source-v1 → reviewed-v2 transition,
+without allowing changes to original media/rights or a sample-version downgrade.
+
+Unpublished prototype rows that declare v1 but contain meaningful v2 fields are
+refused. Preserve those artifacts; regenerate from pinned source records into new
+versioned directories rather than editing their JSONL or model outputs in place.
+See [contract versions](contract-versions.md).

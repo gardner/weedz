@@ -169,6 +169,7 @@ def import_reviews(
             project_namespace=request.namespace,
             project_id=request.project_id,
             imported_revisions=count,
+            contract_schema_version=max(sample.schema_version for sample in changed.values()),
             **rights_profile_fields(request.rights_profile),
             interpretation=(
                 "Completed human declarations; expertise and gold acceptance are separate"
@@ -189,7 +190,9 @@ def _admit(request: ImportInputs, base: Package, prior: Package) -> None:
 def _same_samples(base: Package, prior: Package) -> None:
     if prior.samples.keys() != base.samples.keys():
         raise ValueError("Previous sample set differs")
-    ignored = {"annotations", "completeness", "review_history"}
+    ignored = {"annotations", "completeness", "review_history", "schema_version"}
     for key, sample in base.samples.items():
+        if prior.samples[key].schema_version < sample.schema_version:
+            raise ValueError("Previous import cannot downgrade the source schema version")
         if sample.model_dump(exclude=ignored) != prior.samples[key].model_dump(exclude=ignored):
             raise ValueError("Previous import changed original sample identity or rights")

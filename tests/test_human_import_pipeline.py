@@ -65,6 +65,9 @@ def test_offline_import_freezes_scoped_review_and_exact_reimport(tmp_path):
     receipt = import_reviews(request, output)
     rows = read_manifest(output / "samples.jsonl", receipt["files"]["samples.jsonl"])
     assert len(rows) == 1 and rows[0].annotations == ()
+    assert rows[0].schema_version == receipt["contract_schema_version"] == 2
+    original = json.loads((request.package / "private/provenance.json").read_bytes())
+    assert original["samples"][0]["sample"]["schema_version"] == 1
     assert rows[0].completeness[0].status == "exhaustive"
     assert rows[0].completeness[0].origin == "reviewer"
     repeated = tmp_path / "repeat"

@@ -6,7 +6,7 @@ from datetime import datetime
 
 from weedz.annotation.import_claims import Claims
 from weedz.annotation.import_records import HumanRecord
-from weedz.contract import Annotation, Completeness, ReviewEvent, Sample
+from weedz.contract import Annotation, Completeness, ReviewEvent, Sample, revise_sample
 
 
 def _annotations(claims: Claims, categories: set[str]) -> tuple[list[Annotation], dict[str, bytes]]:
@@ -106,11 +106,11 @@ def apply_claims(
         json.dumps(event.model_dump(mode="json"), sort_keys=True)
     )
     prefix = f"{record.key}:region:"
-    updated = sample.model_dump(mode="json")
-    updated.update(
+    # The original may be v1; review/history extensions require an explicit validated upgrade.
+    updated = revise_sample(
+        sample,
         annotations=[a for a in sample.annotations if not a.id.startswith(prefix)] + annotations,
         completeness=[c for c in sample.completeness if c.id != coverage.id] + [coverage],
         review_history=[*sample.review_history, event],
     )
-    # Revalidate rather than using model_copy, which deliberately bypasses validation.
-    return Sample.model_validate(updated), masks
+    return updated, masks

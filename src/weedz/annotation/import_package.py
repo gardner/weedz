@@ -85,6 +85,9 @@ def read_package(root: Path, expected: str) -> Package:
             raise ValueError("Package sample media does not match its pinned image")
         _geometry(media, sample)
         samples[key] = sample
+    declared = manifest.get("contract_schema_version")
+    if declared is not None and declared != max(s.schema_version for s in samples.values()):
+        raise ValueError("Package contract schema version differs from its actual samples")
     profile = manifest.get("rights_profile")
     if profile is not None:
         rights_profile_fields(profile)
