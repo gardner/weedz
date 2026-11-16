@@ -75,15 +75,18 @@ Account identities remain separate; no adjudication or quorum is inferred.
 
 The result contains `samples.jsonl`, verified image/mask assets and a closed
 `manifest.json`. Raw exports and configuration snapshots are retained under the
-owner-private `private/` directory. History embeds supported claims and checksum
+owner-private `private/` directory. The entire package root is created with mode0700
+before any files are written. History embeds supported claims and checksum
 references rather than raw RLE or arbitrary task data. Keep the whole import package
 private; share only a deliberately assembled release under its recorded rights.
 The importer preserves rights and task declarations; release promotion and expert
 acceptance happen separately under the release policy.
 
 The offline snapshot is bounded to 1,000 source samples, 10,000 package files,
-512 MiB total package bytes, 256 MiB per asset/export, and 40 megapixels per image.
-Use smaller closed packages when these bounds are exceeded. These are resource
+512 MiB total package bytes, 256 MiB per asset, 8 MiB per export, and 40 megapixels per image.
+The smaller export cap bounds JSON/RLE expansion before decoding. Split larger
+exports into smaller task subsets. New outputs are refused before publication if
+they would exceed the same byte/file limits used by the next replay. These are resource
 limits, not claims about annotation quality or independent sampling.
 
 Rights admission defaults to `--rights-profile public-cc0-by`, checking **both**
