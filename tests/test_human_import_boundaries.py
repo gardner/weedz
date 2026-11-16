@@ -161,3 +161,27 @@ def test_output_provenance_must_fit_the_next_structural_decode_cap(tmp_path, mon
     with pytest.raises(ValueError, match="resource cap"):
         import_reviews(request, output)
     assert not output.exists()
+
+
+@pytest.mark.parametrize("field", ["project", "task"])
+@pytest.mark.parametrize("value", [True, 1.0])
+def test_foreign_keys_do_not_alias_numeric_one_with_bool_or_float(tmp_path, field, value):
+    import hashlib
+    import json
+    from dataclasses import replace
+
+    request, task, _ = inputs(tmp_path)
+    request = replace(request, project_id=1)
+    task["project"] = 1
+    if field == "project":
+        task["project"] = value
+    else:
+        task["annotations"][0]["task"] = value
+    request.export.write_text(json.dumps([task]), encoding="utf-8")
+    request = replace(
+        request, export_sha256=hashlib.sha256(request.export.read_bytes()).hexdigest()
+    )
+    output = tmp_path / "bad-foreign-key"
+    with pytest.raises(ValueError):
+        import_reviews(request, output)
+    assert not output.exists()
