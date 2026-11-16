@@ -145,11 +145,13 @@ def reviewed_pilot_samples(store: Store | Path, run_id: str, *, namespace: str) 
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", namespace):
         raise ValueError("Use a stable ASCII review-store namespace without identity delimiters")
     run, rows, events = _capture(store, run_id)
+    # Hash-only bytes retain distinct legacy NaN/Infinity/null values. They are never
+    # published as JSON; canonical annotation and history validation remains strict.
     raw = json.dumps(
         {"run": run, "photos": rows, "events": events},
         sort_keys=True,
         separators=(",", ":"),
-        allow_nan=False,
+        allow_nan=True,
     ).encode()
     digest = hashlib.sha256(raw).hexdigest()
     model = json.loads(run["model"])

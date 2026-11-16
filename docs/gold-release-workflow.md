@@ -31,6 +31,11 @@ with a letter or digit. Colons are reserved identity delimiters. Actual source
 reviewer names retain their original colons and Unicode characters; only the
 operator-supplied namespace is restricted. Keep older snapshots unchanged.
 
+The internal snapshot hash distinguishes unused legacy `NaN`, positive/negative
+infinity and null model-score details. Those hash-input bytes are never published
+as JSON. Canonical annotations still require finite scores, and export leaves the
+source database unchanged.
+
 Known iNaturalist observer logins use `inaturalist:login:<login>`, with the original login
 also retained in context. The observation group is preserved. An encounter group is
 added only when the existing grouping rule has sufficient date, observer and public

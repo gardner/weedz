@@ -133,6 +133,52 @@ def test_valid_namespaces_keep_actual_reviewer_names_and_separate_stores(
     assert len(actors) == 2
 
 
+def test_legacy_nested_nonfinite_scores_keep_distinct_snapshot_hashes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    import json
+
+    from weedz.discovery import store as store_module
+    from weedz.review_snapshot import write_review_snapshot
+
+    # The snapshots differ only in the nested score, not acquisition/review timestamps.
+    monkeypatch.setattr(store_module, "now", lambda: "2026-11-16T00:00:00Z")
+    hashes = set()
+    for index, margin in enumerate([float("nan"), float("inf"), -float("inf"), None]):
+        store, photo_id = pinned_store(tmp_path / f"source-{index}")
+        scores = store.photos("run")[0]["scores"] | {
+            "margin": 0.25,
+            "species": [{"margin": margin}],
+        }
+        store.score("run", photo_id, scores)
+        before = store.database.read_bytes()
+        output = tmp_path / f"snapshot-{index}"
+        receipt = write_review_snapshot(store.root, "run", output, namespace="legacy")
+        assert store.database.read_bytes() == before
+
+        def no_nonfinite(value):
+            pytest.fail(f"Published snapshot must remain strict JSON: {value}")
+
+        sample = json.loads((output / "samples.jsonl").read_text(), parse_constant=no_nonfinite)
+        assert sample["annotations"][0]["score"] == 0.25
+        hashes.add(receipt["source_snapshot_sha256"])
+    assert len(hashes) == 4
+
+
+@pytest.mark.parametrize("margin", [float("nan"), float("inf"), -float("inf")])
+def test_nonfinite_annotation_scores_still_refuse_snapshot_output(tmp_path: Path, margin: float):
+    from weedz.review_snapshot import write_review_snapshot
+
+    store, photo_id = pinned_store(tmp_path / "source")
+    store.score("run", photo_id, store.photos("run")[0]["scores"] | {"margin": margin})
+    before = store.database.read_bytes()
+    output = tmp_path / "snapshot"
+    with pytest.raises(ValueError):
+        write_review_snapshot(store.root, "run", output, namespace="legacy")
+    assert store.database.read_bytes() == before
+    assert not output.exists()
+
+
 def test_snapshot_command_reads_an_existing_database_without_opening_a_writer(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
