@@ -242,7 +242,7 @@ class ReviewEvent(ReviewEvidence):
 
     @field_serializer("payload")
     def json_payload(self, value: Mapping[str, FrozenJson]) -> dict:
-        return {key: thaw_json(item) for key, item in value.items()}
+        return {key: thaw_json(value[key]) for key in sorted(value)}
 
 
 class Annotation(Contract):

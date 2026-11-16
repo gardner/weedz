@@ -40,3 +40,17 @@ directories using the current producer; do not relabel old JSONL in place. Manif
 checksums change with the wire version. Any model-result adoption must still verify
 its original source/media/proposal identities and explicitly record that lineage;
 a new manifest digest does not authorize reusing unrelated cached results.
+
+## Completeness fallback scope
+
+When a release includes images without task geometry, its optional `target_scope`
+records namespaced `taxon`/`category` targets and requires format 2. Each such image
+must have supervising exhaustive coverage for the complete release scope. Separate
+checks may be combined within one image; checks on different images cannot be
+pooled. Without annotated positives, one common exact per-image scope is required.
+Partial, uncertain and unknown coverage does not fill missing targets.
+
+Geometry-backed source examples can still be partial: the recorded scope does not
+turn their unlabelled pixels into negatives. A stronger gold policy can require
+exhaustive coverage on every image. History payload object keys are serialized
+canonically (including nested objects); array order retains its original meaning.
