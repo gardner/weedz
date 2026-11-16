@@ -13,6 +13,7 @@ from weedz.region_evaluation.classifier_inputs import load_classifier
 from weedz.region_evaluation.proposal_inputs import load_proposals
 from weedz.region_evaluation.provenance import evaluator_provenance
 from weedz.region_evaluation.semantic import sparse_report
+from weedz.region_evaluation.sparse_aggregate import aggregate_sparse
 from weedz.region_evaluation.taxonomy import load_taxonomy
 from weedz.segmentation.ingress import proposal_metadata
 
@@ -97,7 +98,7 @@ def main() -> None:
             max_source_bytes=args.max_source_bytes,
             truth_origin=args.truth_origin,
         )
-        aggregate = None
+        aggregate = aggregate_sparse(cases)
     references = []
     for case in cases:
         key = hashlib.sha256(case["sample_id"].encode("utf-8")).hexdigest()
