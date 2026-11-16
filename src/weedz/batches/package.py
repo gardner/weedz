@@ -11,6 +11,12 @@ from urllib.parse import parse_qs, urlsplit
 from weedz.annotation.credits import photo_credit
 from weedz.batches.storage import read_artifact
 from weedz.contract import Sample
+from weedz.rights_profiles import (
+    PUBLIC_PROFILE,
+    RightsProfile,
+    parse_rights_profile,
+    require_rights,
+)
 
 
 @dataclass(frozen=True)
@@ -19,6 +25,7 @@ class Package:
     sha256: str
     tasks: tuple[dict[str, Any], ...]
     images: dict[str, dict[str, str]]
+    rights_profile: RightsProfile = PUBLIC_PROFILE
 
 
 def _predictions(task: dict) -> None:
@@ -100,12 +107,22 @@ def _read_package(
 
 
 def validate_package(
-    root: Path, manifest_sha256: str, heartbeat: Callable[[], None] = lambda: None
+    root: Path,
+    manifest_sha256: str,
+    heartbeat: Callable[[], None] = lambda: None,
+    *,
+    rights_profile: RightsProfile = PUBLIC_PROFILE,
 ) -> Package:
     root = root.resolve()
     manifest, retained = _read_package(root, manifest_sha256, heartbeat)
     files = manifest["files"]
     tasks, provenance = retained["tasks.json"], retained["private/provenance.json"]
+    selected = parse_rights_profile(rights_profile)
+    if any(
+        parse_rights_profile(document.get("rights_profile", PUBLIC_PROFILE)) != selected
+        for document in (manifest, provenance)
+    ):
+        raise ValueError("Publication package rights profile differs from the requested profile")
     if not isinstance(tasks, list) or not 1 <= len(tasks) <= 1000:
         raise ValueError("Publish a bounded nonempty package")
     if type(manifest.get("task_count")) is not int or manifest["task_count"] != len(tasks):
@@ -123,6 +140,7 @@ def validate_package(
         if key in keys or key not in samples:
             raise ValueError("Publication task identities are duplicated or unknown")
         keys.add(key)
+        require_rights(samples[key], selected)
         name, reference = _task(task, samples[key], key, prefix, files)
         images[name] = reference
-    return Package(root, manifest_sha256, tuple(tasks), images)
+    return Package(root, manifest_sha256, tuple(tasks), images, selected)

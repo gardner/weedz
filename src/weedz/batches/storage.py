@@ -11,8 +11,12 @@ from PIL import Image
 
 from weedz.batches.contract import artifact
 from weedz.contract import Sample, require_task
-
-PUBLIC = frozenset({"cc0", "cc0-1.0", "cc-by", "cc-by-3.0", "cc-by-4.0"})
+from weedz.rights_profiles import (
+    PUBLIC_PROFILE,
+    RightsProfile,
+    parse_rights_profile,
+    require_rights,
+)
 
 
 @dataclass(frozen=True)
@@ -20,6 +24,7 @@ class ClosedBatch:
     manifest: Path
     sha256: str
     samples: tuple[Sample, ...]
+    rights_profile: RightsProfile = PUBLIC_PROFILE
 
 
 def read_owned_file(path: Path, root: Path, maximum: int) -> bytes:
@@ -43,15 +48,9 @@ def read_artifact(root: Path, reference: dict, maximum: int) -> bytes:
     return encoded
 
 
-def _media(sample: Sample, folder: Path) -> None:
+def _media(sample: Sample, folder: Path, rights_profile: RightsProfile) -> None:
     require_task(sample, "inference")
-    rights = sample.rights
-    if (
-        rights.consent is not None
-        or rights.media_license.lower() not in PUBLIC
-        or rights.metadata_license.lower() not in PUBLIC
-    ):
-        raise ValueError("Canonical annotation batches require public CC0/CC BY rights")
+    require_rights(sample, rights_profile)
     encoded = read_owned_file(folder / sample.media.uri, folder, 160 * 1024 * 1024)
     if hashlib.sha256(encoded).hexdigest() != sample.media.sha256:
         raise ValueError("Canonical image checksum mismatch")
@@ -75,7 +74,9 @@ def _samples(encoded: bytes) -> tuple[Sample, ...]:
     return rows
 
 
-def validate_closed_batch(root: Path, manifest: dict, ready: dict) -> ClosedBatch:
+def validate_closed_batch(
+    root: Path, manifest: dict, ready: dict, *, rights_profile: RightsProfile = PUBLIC_PROFILE
+) -> ClosedBatch:
     manifest_ref = artifact(manifest)
     encoded = read_artifact(root, manifest_ref, 32 * 1024 * 1024)
     readiness: Any = json.loads(read_artifact(root, ready, 64 * 1024))
@@ -86,9 +87,12 @@ def validate_closed_batch(root: Path, manifest: dict, ready: dict) -> ClosedBatc
     ):
         raise ValueError("Closed batch readiness does not bind this exact manifest")
     samples = _samples(encoded)
+    selected = parse_rights_profile(rights_profile)
+    if parse_rights_profile(readiness.get("rights_profile", PUBLIC_PROFILE)) != selected:
+        raise ValueError("Closed readiness rights profile differs from the requested profile")
     if type(readiness.get("count")) is not int or readiness["count"] != len(samples):
         raise ValueError("Closed readiness count differs from the manifest")
     path = (root / manifest_ref["path"]).resolve()
     for sample in samples:
-        _media(sample, path.parent)
-    return ClosedBatch(path, manifest_ref["sha256"], samples)
+        _media(sample, path.parent, selected)
+    return ClosedBatch(path, manifest_ref["sha256"], samples, selected)

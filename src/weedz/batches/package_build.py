@@ -53,6 +53,7 @@ def build_package(
                         frame_results=snapshots["frame"] if "frame" in inputs else None,
                         regional_results=snapshots["regions"] if "regions" in inputs else None,
                         tiled_results=snapshots["tiles"] if "tiles" in inputs else None,
+                        rights_profile=batch.rights_profile,
                     )
                 for reference in inputs.values():
                     read_artifact(root, reference, 128_000_000)
@@ -68,12 +69,14 @@ def build_package(
         _sync_package(destination)
         manifest = destination / "manifest.json"
         sha = hashlib.sha256(read_owned_file(manifest, root, 1024 * 1024)).hexdigest()
-        validate_package(destination, sha)
+        validate_package(destination, sha, rights_profile=batch.rights_profile)
         return {"path": str(manifest.relative_to(root)), "sha256": sha}
 
 
 def _source_identity(package: Path, batch: ClosedBatch) -> None:
     document = json.loads((package / "private/provenance.json").read_text(encoding="utf-8"))
+    if document.get("rights_profile", "public-cc0-by") != batch.rights_profile:
+        raise ValueError("Package source rights profile changed during export")
     if document["source_manifest_sha256"] != batch.sha256:
         raise ValueError("Package source manifest checksum mismatch")
     records = document["samples"]

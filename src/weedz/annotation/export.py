@@ -16,7 +16,12 @@ from weedz.annotation.label_studio import Mode, label_config, model_version, tas
 from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Annotation, Media, Rights, Sample
 from weedz.discovery.records import Photo
-from weedz.discovery.sharing import refuse_unadmitted
+from weedz.rights_profiles import (
+    PUBLIC_PROFILE,
+    RightsProfile,
+    require_source_rights,
+    rights_profile_fields,
+)
 
 
 def _read(source: Path, run_id: str) -> tuple[dict[str, Any], list[sqlite3.Row]]:
@@ -46,16 +51,24 @@ def _output(source: Path, output: Path) -> Path:
     return output
 
 
-def _photo(source: Path, raw: str, scores: dict[str, Any]) -> tuple[Photo, bytes, tuple[int, int]]:
+def _photo(
+    source: Path, raw: str, scores: dict[str, Any], rights_profile: RightsProfile = PUBLIC_PROFILE
+) -> tuple[Photo, bytes, tuple[int, int]]:
     record = json.loads(raw)
     if record.get("cohort") not in {"incidental", "reference", "lookalike"}:
         raise ValueError(
             "Only licensed public source photos are supported; device reports are excluded"
         )
     photo = Photo.model_validate(record)
-    if photo.photo_license not in {"cc0", "cc-by"}:
-        raise ValueError("This annotation handoff supports CC0 and CC BY photos only")
-    refuse_unadmitted(photo.photo_license, photo.observation_license)
+    require_source_rights(
+        Rights(
+            media_license=photo.photo_license,
+            metadata_license=photo.observation_license,
+            attribution=photo.attribution,
+            license_source=photo.source_url,
+        ),
+        rights_profile,
+    )
     path = (source / photo.image_path).resolve()
     if not path.is_relative_to(source):
         raise ValueError("Source image escapes its experiment directory")
@@ -135,6 +148,7 @@ def export_label_studio(
     *,
     mode: Mode = "assisted",
     image_prefix: str = "corpus",
+    rights_profile: RightsProfile = PUBLIC_PROFILE,
 ) -> dict[str, Any]:
     if mode not in {"assisted", "blind"}:
         raise ValueError("Choose assisted or blind mode")
@@ -154,7 +168,7 @@ def export_label_studio(
     prepared = []
     for row in rows:
         scores = json.loads(row["scores"])
-        photo, encoded, size = _photo(source, row["record"], scores)
+        photo, encoded, size = _photo(source, row["record"], scores, rights_profile)
         imported, masks = task(photo.id, photo.sha256, scores, model, size, mode, image_prefix)
         imported["data"]["photo_credit"] = photo_credit(
             photo.attribution, photo.photo_license, photo.observation_license, photo.source_url
@@ -188,6 +202,7 @@ def export_label_studio(
         )
         (output / "label-config.xml").write_text(label_config(mode), encoding="utf-8")
         document = {
+            **rights_profile_fields(rights_profile),
             "nonfinite_result_policy": NONFINITE_POLICY,
             "schema_version": 1,
             "source_run_id": run_id,
@@ -210,6 +225,7 @@ def export_label_studio(
             if path.is_file()
         }
         receipt = {
+            **rights_profile_fields(rights_profile),
             "schema_version": 1,
             "mode": mode,
             "image_prefix": image_prefix,

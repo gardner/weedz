@@ -20,8 +20,12 @@ from weedz.annotation.semantic import classifier_runtime
 from weedz.annotation.serialization import NONFINITE_POLICY, result_json
 from weedz.contract import Sample
 from weedz.manifest import read_manifest
-
-PUBLIC = {"cc0", "cc0-1.0", "cc-by", "cc-by-3.0", "cc-by-4.0"}
+from weedz.rights_profiles import (
+    PUBLIC_PROFILE,
+    RightsProfile,
+    require_rights,
+    rights_profile_fields,
+)
 
 
 def _inputs(manifest: Path, frame_results: Path | None, proposals: Path | None) -> tuple:
@@ -52,11 +56,10 @@ def _inputs(manifest: Path, frame_results: Path | None, proposals: Path | None) 
     return source_digest, frames, frame_rows, proposal_rows, samples
 
 
-def _media(sample: Sample, root: Path) -> tuple[bytes, str, tuple[int, int]]:
-    if sample.rights.consent is not None or sample.rights.media_license.lower() not in PUBLIC:
-        raise ValueError("Only licensed public CC0/CC BY sample batches are supported")
-    if sample.rights.metadata_license.lower() not in PUBLIC:
-        raise ValueError("Sample metadata licence is outside this public handoff")
+def _media(
+    sample: Sample, root: Path, rights_profile: RightsProfile
+) -> tuple[bytes, str, tuple[int, int]]:
+    require_rights(sample, rights_profile)
     path = (root / sample.media.uri).resolve()
     if not path.is_relative_to(root):
         raise ValueError("Materialized image escapes the source batch")
@@ -116,8 +119,9 @@ def _prepare(
     proposal_rows: dict,
     proposals_required: bool,
     image_prefix: str,
+    rights_profile: RightsProfile,
 ) -> tuple:
-    encoded, digest, size = _media(sample, root)
+    encoded, digest, size = _media(sample, root, rights_profile)
     key = hashlib.sha256(f"{sample.id}:{digest}".encode()).hexdigest()
     proposed, proposal_row, proposal_state = _proposal(
         sample, digest, size, proposal_rows, proposals_required
@@ -159,6 +163,7 @@ def _write(
     source_digest: str,
     image_prefix: str,
     variants: dict,
+    rights_profile: RightsProfile,
 ) -> dict:
     output.mkdir(parents=True, exist_ok=False)
     try:
@@ -181,6 +186,7 @@ def _write(
         )
         (output / "label-config.xml").write_text(label_config("assisted"), encoding="utf-8")
         provenance = {
+            **rights_profile_fields(rights_profile),
             "nonfinite_result_policy": NONFINITE_POLICY,
             "classifier_runtime": {
                 "frame": frame_runtime(frames["model"]) if frames else None,
@@ -210,6 +216,7 @@ def _write(
             if path.is_file()
         }
         receipt = {
+            **rights_profile_fields(rights_profile),
             "schema_version": 1,
             "task_count": len(tasks),
             "source_manifest_sha256": source_digest,
@@ -234,6 +241,7 @@ def export_samples(
     image_prefix: str = "corpus",
     regional_results: Path | None = None,
     tiled_results: Path | None = None,
+    rights_profile: RightsProfile = PUBLIC_PROFILE,
 ) -> dict[str, Any]:
     manifest = manifest.resolve()
     output = _output(manifest.parent, output)
@@ -257,8 +265,9 @@ def export_samples(
             proposal_rows,
             proposals is not None,
             image_prefix,
+            rights_profile,
         )
         for sample in samples
     ]
     add_variants(prepared, variants)
-    return _write(output, prepared, frames, source_digest, image_prefix, variants)
+    return _write(output, prepared, frames, source_digest, image_prefix, variants, rights_profile)

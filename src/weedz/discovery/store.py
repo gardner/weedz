@@ -192,20 +192,24 @@ class Store:
 
     def photos(self, run_id: str) -> list[dict[str, Any]]:
         with self.connect() as db:
-            rows = db.execute(
-                "SELECT * FROM photos WHERE run_id=? ORDER BY id", (run_id,)
-            ).fetchall()
-            events = db.execute(
-                "SELECT photo_id, reviewer, status FROM reviews WHERE run_id=? ORDER BY id",
-                (run_id,),
-            ).fetchall()
-            recorded = db.execute(
-                "SELECT * FROM findings WHERE run_id=? ORDER BY id", (run_id,)
-            ).fetchall()
-            judgements = db.execute(
-                "SELECT * FROM judgements WHERE run_id=? ORDER BY id", (run_id,)
-            ).fetchall()
-            referred = self._referrals(db, run_id)
+            return self._photos(db, run_id)
+
+    @staticmethod
+    def _photos(db: sqlite3.Connection, run_id: str) -> list[dict[str, Any]]:
+        """Read through the caller's transaction, including a read-only export snapshot."""
+        rows = db.execute("SELECT * FROM photos WHERE run_id=? ORDER BY id", (run_id,)).fetchall()
+        events = db.execute(
+            "SELECT photo_id, reviewer, status FROM reviews WHERE run_id=? ORDER BY id",
+            (run_id,),
+        ).fetchall()
+        recorded = db.execute(
+            "SELECT * FROM findings WHERE run_id=? ORDER BY id", (run_id,)
+        ).fetchall()
+        judgements = db.execute(
+            "SELECT * FROM judgements WHERE run_id=? ORDER BY id", (run_id,)
+        ).fetchall()
+        referred = Store._referrals(db, run_id)
+
         referrals: dict[str, list[dict]] = {}
         for item in referred:
             referrals.setdefault(item["photo_id"], []).append(item)
