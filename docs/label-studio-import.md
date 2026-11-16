@@ -252,3 +252,9 @@ import, including task predictions/credits, source configuration and ordinary
 metadata. Only the generated sample manifest and private sample provenance may
 change; existing referenced-asset checks still protect those paths when used as
 media or masks.
+Revision-2 scope choices include explicit Taxon/Functional category hints, so the
+configuration SHA binds each name's namespace as well as its value and order.
+Changing `--taxon` to `--category` therefore requires a different configuration.
+Unhinted pre-release revision-2 prototypes are not an admitted canonical family;
+keep those artifacts unchanged and generate a new configuration before collecting
+review work. They are not silently rehashed or reinterpreted.
