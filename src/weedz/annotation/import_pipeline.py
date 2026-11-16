@@ -7,6 +7,7 @@ from pathlib import Path
 
 from weedz.annotation.gold_config import gold_config
 from weedz.annotation.import_apply import apply_claims, has_revision
+from weedz.annotation.import_assets import add_snapshot, check_assets
 from weedz.annotation.import_bindings import task_bindings
 from weedz.annotation.import_claims import DecodeBudget, PreparedClaims, prepare_claims
 from weedz.annotation.import_package import Package, pinned_bytes, read_package
@@ -185,9 +186,11 @@ def import_reviews(
         raise ValueError("Retained asset path conflicts with a generated human mask")
     files = {**prior.files, **masks}
     original = base.files["private/provenance.json"]
-    files[f"private/source-provenance/{hashlib.sha256(original).hexdigest()}.json"] = original
-    files[f"private/exports/{request.export_sha256}.json"] = exported
-    files[f"private/configs/{request.config_sha256}.xml"] = config
+    add_snapshot(
+        files, f"private/source-provenance/{hashlib.sha256(original).hexdigest()}.json", original
+    )
+    add_snapshot(files, f"private/exports/{request.export_sha256}.json", exported)
+    add_snapshot(files, f"private/configs/{request.config_sha256}.xml", config)
     files["samples.jsonl"] = manifest_bytes(changed.values())
     files["private/provenance.json"] = json_bytes(
         {
@@ -197,6 +200,8 @@ def import_reviews(
             ]
         }
     )
+    check_assets(prior.samples.values(), files, prior.files)
+    check_assets(changed.values(), files)
     return write_import(
         request.package,
         output,
