@@ -207,3 +207,23 @@ Immutable source history does not become import-chain authority by naming a matc
 annotation key or event ID. Selected records that collide with those source-history
 identities refuse before revision replay, replacement or cancellation handling.
 Only events added beyond the pinned original source belong to the import chain.
+
+Previous human state is reconstructed from the immutable source and an ordered
+`capture_journal`, before any previous revision or ownership payload is trusted.
+Each entry binds the captured export, archived configuration and the exact ordered
+taxon/category scope. Empty, zero-human and repeated captures stay in the journal;
+a repeated previously unknown cancellation is reconsidered in its actual position.
+The receipt-owned export set and task bijection must agree with the journal.
+Reconstruction compares complete typed samples/history and regenerated mask bytes.
+A mismatch may indicate changed evidence or a different SDK/Pillow codec runtime;
+it refuses without rewriting prior artifacts. Keep the locked import runtime.
+
+Historical validation permits at most 10,000 captures, 100,000 total task/annotation
+visits (including zero-human tasks), and 2 billion decoded brush-grid pixels across
+distinct revisions, in addition to the existing per-record and per-capture caps.
+The next capture is included in these limits before publication. Identical already
+applied revisions are decoded once during reconstruction, not once per capture.
+Large or long-running chains need smaller closed batches. Legacy receipts without
+a journal are accepted only when a single capture and its exact current declared
+configuration are provable; ambiguous multi-capture prototypes remain unchanged
+and are refused, rather than guessing order from human history or SHA sorting.

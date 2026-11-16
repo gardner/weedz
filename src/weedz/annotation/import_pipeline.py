@@ -13,6 +13,7 @@ from weedz.annotation.import_claims import DecodeBudget, PreparedClaims, prepare
 from weedz.annotation.import_exports import historical_exports
 from weedz.annotation.import_package import Package, pinned_bytes, read_package
 from weedz.annotation.import_records import HumanRecord, completed_records, positive_id
+from weedz.annotation.import_replay import ReplayBudget, capture, validate_prior
 from weedz.annotation.import_retractions import retract
 from weedz.annotation.import_write import json_bytes, write_import
 from weedz.contract import Sample
@@ -142,9 +143,12 @@ def _apply(
     request: ImportInputs,
     evidence: dict[str, str],
     source_samples: dict[str, Sample],
+    replay_budget: ReplayBudget | None = None,
 ) -> tuple[dict[str, Sample], dict[str, bytes], int]:
     # The entire export's geometry/work limits pass before its first brush decode.
     jobs = _prepare_jobs(tasks, samples, request, source_samples)
+    if replay_budget is not None:
+        replay_budget.reserve(jobs)
     changed = dict(samples)
     masks = {}
     revisions = 0
@@ -189,9 +193,12 @@ def import_reviews(
     }
     selected = _human_tasks(exported, base, request.project_id)
     owned = historical_exports(base, prior, request.namespace)
+    journal, replay_budget = validate_prior(base, prior, request, owned, exported, config)
     history = (_historical_tasks(raw, base, request.project_id) for raw in owned.values())
     bindings = task_bindings(prior, selected, history)
-    changed, masks, count = _apply(selected, prior.samples, request, evidence, base.samples)
+    changed, masks, count = _apply(
+        selected, prior.samples, request, evidence, base.samples, replay_budget
+    )
     if any(name in prior.files and prior.files[name] != raw for name, raw in masks.items()):
         raise ValueError("Retained asset path conflicts with a generated human mask")
     files = {**prior.files, **masks}
@@ -221,6 +228,7 @@ def import_reviews(
             source_package_sha256=request.package_sha256,
             export_sha256=request.export_sha256,
             owned_export_sha256=sorted({*owned, request.export_sha256}),
+            capture_journal=[*journal, capture(request)],
             config_sha256=request.config_sha256,
             project_namespace=request.namespace,
             project_id=request.project_id,
