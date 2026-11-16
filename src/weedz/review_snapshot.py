@@ -8,12 +8,16 @@ source identities, rather than being represented as verified botanical expertise
 import hashlib
 import json
 import sqlite3
+from pathlib import Path
 from typing import Any
 
 from weedz.adapters import _pilot_sample
+from weedz.annotation.export import _output
 from weedz.contract import Annotation, ReviewEvent, Sample, revise_sample
 from weedz.discovery.encounters import with_encounters
 from weedz.discovery.store import Store
+from weedz.manifest import write_manifest
+from weedz.release_storage import staged_release
 
 TABLES = ("reviews", "audits", "findings", "judgements", "referrals", "lead_selections")
 ACTOR_FIELDS = {"referrals": "referrer", "lead_selections": "selector", "referral_events": "actor"}
@@ -34,9 +38,11 @@ ACTION_FIELDS = {
 }
 
 
-def _capture(store: Store, run_id: str) -> tuple[dict[str, Any], list[dict], list[dict]]:
+def _capture(store: Store | Path, run_id: str) -> tuple[dict[str, Any], list[dict], list[dict]]:
     # Opening a URI in mode=ro avoids Store.connect's write-oriented journal pragmas.
-    db = sqlite3.connect(store.database.as_uri() + "?mode=ro", uri=True, timeout=30)
+    database = store.database if isinstance(store, Store) else store.resolve() / "discovery.sqlite3"
+    read_photos = store._photos if isinstance(store, Store) else Store._photos
+    db = sqlite3.connect(database.as_uri() + "?mode=ro", uri=True, timeout=30)
     db.row_factory = sqlite3.Row
     try:
         db.execute("PRAGMA query_only=ON")
@@ -44,7 +50,7 @@ def _capture(store: Store, run_id: str) -> tuple[dict[str, Any], list[dict], lis
         run = db.execute("SELECT * FROM runs WHERE id=?", (run_id,)).fetchone()
         if run is None:
             raise KeyError(run_id)
-        photos = store._photos(db, run_id)
+        photos = read_photos(db, run_id)
         events = [
             dict(row, source_table=table)
             for table in TABLES
@@ -133,7 +139,7 @@ def _annotated(sample: Sample, namespace: str) -> tuple[Annotation, ...]:
     )
 
 
-def reviewed_pilot_samples(store: Store, run_id: str, *, namespace: str) -> list[Sample]:
+def reviewed_pilot_samples(store: Store | Path, run_id: str, *, namespace: str) -> list[Sample]:
     """Preserve actual history and typed observer/encounter evidence; keep inference only."""
     if not namespace.strip() or namespace != namespace.strip():
         raise ValueError("A stable nonempty review-store namespace is required")
@@ -173,3 +179,30 @@ def reviewed_pilot_samples(store: Store, run_id: str, *, namespace: str) -> list
             )
         )
     return samples
+
+
+def write_review_snapshot(source: Path, run_id: str, output: Path, *, namespace: str) -> dict:
+    """Export history and groups without opening a writer or copying private source exports."""
+    source = source.resolve()
+    output = _output(source, output)
+    samples = reviewed_pilot_samples(source, run_id, namespace=namespace)
+    if not samples:
+        raise ValueError("A review snapshot requires at least one source sample")
+    with staged_release(output) as staging:
+        sha = write_manifest(staging / "samples.jsonl", samples)
+        receipt = {
+            "schema_version": 1,
+            "contract_schema_version": max(s.schema_version for s in samples),
+            "source_run_id": run_id,
+            "namespace": namespace,
+            "count": len(samples),
+            "manifest_sha256": sha,
+            "source_snapshot_sha256": samples[0].context["review_snapshot_sha256"],
+            "interpretation": (
+                "Historical inference-only records; no completeness or gold status asserted"
+            ),
+        }
+        (staging / "snapshot.json").write_text(
+            json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+        )
+    return receipt

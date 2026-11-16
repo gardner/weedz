@@ -5,7 +5,16 @@ import json
 from pathlib import Path
 
 from weedz.baseline_release import write_leafy_spurge_release
-from weedz.release import STATUS_ORDER, Release, read_release, record_test_status
+from weedz.manifest import read_manifest
+from weedz.release import (
+    STATUS_ORDER,
+    Release,
+    ReleaseSpec,
+    read_release,
+    record_test_status,
+    write_release,
+)
+from weedz.review_snapshot import write_review_snapshot
 
 
 def _summary(release: Release, directory: Path) -> str:
@@ -21,6 +30,21 @@ def _summary(release: Release, directory: Path) -> str:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="weedz release", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    freeze = commands.add_parser(
+        "freeze", help="Freeze a pinned reviewed manifest with an explicit release spec"
+    )
+    freeze.add_argument("--manifest", type=Path, required=True)
+    freeze.add_argument("--manifest-sha256", required=True)
+    freeze.add_argument("--spec", type=Path, required=True)
+    freeze.add_argument("--assets-root", type=Path)
+    freeze.add_argument("--output-dir", type=Path, required=True)
+    snapshot = commands.add_parser(
+        "review-snapshot", help="Export an existing review store read-only"
+    )
+    snapshot.add_argument("--source", type=Path, required=True)
+    snapshot.add_argument("--run", required=True)
+    snapshot.add_argument("--namespace", required=True)
+    snapshot.add_argument("--output-dir", type=Path, required=True)
     leafy = commands.add_parser(
         "leafy-spurge", help="Freeze the baseline split from verified local data (no download)"
     )
@@ -39,6 +63,16 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _run(args: argparse.Namespace) -> str:
+    if args.command == "review-snapshot":
+        receipt = write_review_snapshot(
+            args.source, args.run, args.output_dir, namespace=args.namespace
+        )
+        return f"Review snapshot: {receipt['count']} samples\n{args.output_dir.resolve()}"
+    if args.command == "freeze":
+        samples = read_manifest(args.manifest, args.manifest_sha256)
+        spec = ReleaseSpec.model_validate_json(args.spec.read_bytes())
+        release = write_release(args.output_dir, samples, spec, assets_root=args.assets_root)
+        return _summary(release, args.output_dir)
     if args.command == "leafy-spurge":
         expected = None
         if args.check_run:

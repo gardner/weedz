@@ -89,3 +89,41 @@ def test_missing_media_digest_cannot_bind_human_history(tmp_path: Path):
     store, _photo_id = store_with_photo(tmp_path)
     with pytest.raises(ValueError, match="media SHA"):
         reviewed_pilot_samples(store, "run", namespace="fixture")
+
+
+def test_snapshot_command_reads_an_existing_database_without_opening_a_writer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    import json
+
+    from weedz.discovery.store import Store
+    from weedz.manifest import read_manifest
+    from weedz.release_cli import main
+
+    store, photo_id = pinned_store(tmp_path / "source")
+    store.review("run", photo_id, "confirmed", "actual fixture review", "Ana")
+    before = store.database.read_bytes()
+
+    def no_migrations(*_args):
+        pytest.fail("A historical review export must not initialize or migrate its store")
+
+    monkeypatch.setattr(Store, "__init__", no_migrations)
+    output = tmp_path / "snapshot"
+    main(
+        [
+            "review-snapshot",
+            "--source",
+            str(store.root),
+            "--run",
+            "run",
+            "--namespace",
+            "fixture",
+            "--output-dir",
+            str(output),
+        ]
+    )
+    receipt = json.loads((output / "snapshot.json").read_text())
+    samples = read_manifest(output / "samples.jsonl", receipt["manifest_sha256"])
+    assert len(samples) == receipt["count"] == 1
+    assert samples[0].review_history[0].actor == "discovery:fixture:reviewer:Ana"
+    assert store.database.read_bytes() == before

@@ -194,7 +194,8 @@ class Store:
         with self.connect() as db:
             return self._photos(db, run_id)
 
-    def _photos(self, db: sqlite3.Connection, run_id: str) -> list[dict[str, Any]]:
+    @staticmethod
+    def _photos(db: sqlite3.Connection, run_id: str) -> list[dict[str, Any]]:
         """Read through the caller's transaction, including a read-only export snapshot."""
         rows = db.execute("SELECT * FROM photos WHERE run_id=? ORDER BY id", (run_id,)).fetchall()
         events = db.execute(
@@ -207,7 +208,7 @@ class Store:
         judgements = db.execute(
             "SELECT * FROM judgements WHERE run_id=? ORDER BY id", (run_id,)
         ).fetchall()
-        referred = self._referrals(db, run_id)
+        referred = Store._referrals(db, run_id)
 
         referrals: dict[str, list[dict]] = {}
         for item in referred:
