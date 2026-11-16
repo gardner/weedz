@@ -249,10 +249,22 @@ def _same_samples(base: Package, prior: Package) -> None:
         raise ValueError("Previous sample set differs")
     ignored = {"annotations", "completeness", "review_history", "schema_version"}
     for key, sample in base.samples.items():
+        _same_source_evidence(sample, prior.samples[key])
         if prior.samples[key].schema_version < sample.schema_version:
             raise ValueError("Previous import cannot downgrade the source schema version")
         if sample.model_dump(exclude=ignored) != prior.samples[key].model_dump(exclude=ignored):
             raise ValueError("Previous import changed original sample identity or rights")
+
+
+def _same_source_evidence(base: Sample, prior: Sample) -> None:
+    for field in ("annotations", "completeness", "review_history"):
+        original = getattr(base, field)
+        original_ids = {item.id for item in original}
+        retained = tuple(item for item in getattr(prior, field) if item.id in original_ids)
+        if [item.model_dump(mode="json") for item in retained] != [
+            item.model_dump(mode="json") for item in original
+        ]:
+            raise ValueError("Previous import changed immutable source evidence")
 
 
 def _historical_tasks(raw: bytes, base: Package, project_id: int) -> list[tuple[str, dict]]:
