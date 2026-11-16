@@ -38,6 +38,8 @@ def eligible(
 
 
 def prior_exposure(root: Path) -> tuple[set[int], set[str], set[str]]:
+    if not all(path.is_dir() for path in (root, root / "runs", root / "images")):
+        raise ValueError("Prior pilot root must contain runs/ and images/ directories")
     observations: set[int] = set()
     observers: set[str] = set()
     pixels: set[str] = set()
@@ -51,6 +53,8 @@ def prior_exposure(root: Path) -> tuple[set[int], set[str], set[str]]:
             continue
         with Image.open(path) as image:
             pixels.add(pixel_sha256(ImageOps.exif_transpose(image)))
+    if not observations or not pixels:
+        raise ValueError("Prior pilot needs recognized observation queries and supported images")
     return observations, observers, pixels
 
 

@@ -1,5 +1,7 @@
 """Review preparation does not turn source subjects into human-labelled gold."""
 
+import pytest
+
 from weedz.labelled.nz_review import eligible
 
 
@@ -135,3 +137,24 @@ def test_decoded_duplicate_never_publishes_an_unmanifested_canonical_png(tmp_pat
     assert {str(p.relative_to(output)) for p in (output / "images").glob("*.png")} == {
         accepted[0].media.uri
     }
+
+
+@pytest.mark.parametrize("layout", ["missing", "wrong", "empty"])
+def test_invalid_prior_root_refuses_before_output_or_network(tmp_path, monkeypatch, layout):
+    import weedz.labelled.nz_review as module
+
+    root = tmp_path / "prior"
+    if layout != "missing":
+        root.mkdir()
+    if layout == "empty":
+        (root / "runs").mkdir()
+        (root / "images").mkdir()
+
+    def no_network(*args, **kwargs):
+        raise AssertionError("must not create a network client for invalid prior evidence")
+
+    monkeypatch.setattr(module, "Inaturalist", no_network)
+    output = tmp_path / "new-cohort"
+    with pytest.raises(ValueError, match="Prior"):
+        module.prepare(root, output, per_stratum=1)
+    assert not output.exists()
