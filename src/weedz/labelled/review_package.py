@@ -135,6 +135,10 @@ def _prepare(sample: Sample, root: Path, prefix: str) -> tuple[dict, Sample, byt
 
 
 def _unreviewed(sample: Sample) -> None:
+    if sample.rights.consent is not None:
+        raise ValueError(
+            "Public source review preparation excludes consent-backed contributor media"
+        )
     if sample.source != "inaturalist":
         raise ValueError("This blind preparation profile requires iNaturalist source identities")
     if sample.tasks != frozenset({"inference"}) or sample.annotations or sample.review_history:

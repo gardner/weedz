@@ -85,3 +85,28 @@ def test_blind_profile_refuses_model_hints_and_nondefault_rights_before_output(t
     )
     with pytest.raises(ValueError, match="without annotations"):
         _unreviewed(sample)
+
+
+def test_public_source_blind_profile_refuses_consent_backed_contributor_media():
+    import pytest
+
+    from weedz.contract import ContributorConsent
+    from weedz.labelled.review_package import _unreviewed
+
+    sample = Sample(
+        id="inaturalist:12/34",
+        source="inaturalist",
+        source_id="12/34",
+        snapshot="query",
+        rights=Rights(
+            media_license="cc0",
+            metadata_license="cc0",
+            attribution="Contributor",
+            license_source="https://example.org",
+            consent=ContributorConsent(version="2026-11-15", uses=frozenset({"public"})),
+        ),
+        media=Media(uri="one.png", sha256="a" * 64, width=3, height=2),
+        tasks=frozenset({"inference"}),
+    )
+    with pytest.raises(ValueError, match="consent"):
+        _unreviewed(sample)
