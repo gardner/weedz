@@ -59,7 +59,15 @@ such; human review time requires actual measured human work.
 ## External data and NZ preparation
 
 CWFID provides functional crop/weed annotations and vegetation masks, under its
-non-commercial research terms. Its source split has 40 train and 21 test memberships
+non-commercial research terms. Its images are false-colour R/NIR/R. The vegetation
+mask comes from an NDVI/Otsu procedure; it is not a manually drawn plant boundary.
+Human crop/weed regions leave heavily overlapping vegetation unassigned. Canonical
+category masks therefore retain sparse supervision and explicit assessed support.
+Their diagnostic is coverage of labelled positive pixels, not full-scene pixel
+accuracy, foreground precision, instance recall or species correctness. Algorithmic
+vegetation-mask agreement must remain separately named and attributed.
+
+Its source split has 40 train and 21 test memberships
 but only 60 unique images: image 28 occurs in both lists at source commit
 `36290d0912a032f0bd1a5678ed55457ddafde217`. Preserve this defect and quarantine the
 overlap for held-out claims. Neither these source labels nor later NZ review proves
