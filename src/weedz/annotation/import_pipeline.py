@@ -5,6 +5,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from weedz.annotation.export import _output
 from weedz.annotation.gold_config import gold_config
 from weedz.annotation.import_apply import apply_claims, has_revision
 from weedz.annotation.import_assets import add_snapshot, check_assets
@@ -174,6 +175,8 @@ def import_reviews(
     previous: Path | None = None,
     previous_sha256: str | None = None,
 ) -> dict:
+    if previous is not None:
+        _output(previous.resolve(), output)
     base = read_package(request.package, request.package_sha256)
     if base.human_import:
         raise ValueError(
