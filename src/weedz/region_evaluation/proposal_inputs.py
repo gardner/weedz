@@ -75,6 +75,13 @@ def _source_rows(encoded: bytes, header: dict) -> tuple[list[dict], list[str]]:
         raise ValueError("Invalid or duplicate source proposal identities")
     if any(row.get("model_version") != header["model_version"] for row in rows):
         raise ValueError("Proposal model identity differs within the closed source batch")
+    profiles = [row.get("segmentation", {}).get("provenance") for row in rows]
+    if any(not isinstance(profile, dict) or not profile for profile in profiles):
+        raise ValueError("Missing proposal provenance")
+    if any(profile != profiles[0] for profile in profiles):
+        raise ValueError("Mixed proposal provenance within closed batch")
+    for row in rows:
+        proposal_status(row["segmentation"])
     return rows, keys
 
 
@@ -95,3 +102,16 @@ def _join(rows: list[dict], samples: dict[str, Sample], version: str) -> dict[st
             raise ValueError("Missing proposal regions")
         selected[key] = row
     return selected
+
+
+def proposal_status(stage: dict) -> str:
+    """Generation status is independent from downstream crop-classifier failure."""
+    status = stage.get("proposal_status", stage.get("status"))
+    if status not in {"ok", "empty", "partial", "failed"}:
+        raise ValueError("Unknown proposal generation status")
+    regions = stage.get("regions")
+    if not isinstance(regions, list):
+        raise ValueError("Missing proposal regions")
+    if (status == "ok" and not regions) or (status in {"empty", "failed"} and regions):
+        raise ValueError("Proposal generation status and regions disagree")
+    return status

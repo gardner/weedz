@@ -17,6 +17,8 @@ from weedz.region_evaluation.sparse_aggregate import aggregate_sparse
 from weedz.region_evaluation.taxonomy import load_taxonomy
 from weedz.segmentation.ingress import proposal_metadata
 
+CASE_RECEIPT_BYTES = 16 * 1024 * 1024
+
 
 def parser() -> argparse.ArgumentParser:
     command = argparse.ArgumentParser(description=__doc__)
@@ -102,7 +104,9 @@ def main() -> None:
     references = []
     for case in cases:
         key = hashlib.sha256(case["sample_id"].encode("utf-8")).hexdigest()
-        references.append(write_receipt(args.output, f"cases/{key}.json", case))
+        references.append(
+            write_receipt(args.output, f"cases/{key}.json", case, maximum_bytes=CASE_RECEIPT_BYTES)
+        )
     document = {
         "schema": 2,
         "label_manifest_sha256": args.manifest_sha256,
@@ -133,7 +137,9 @@ def main() -> None:
             "source_sample_count": classifier.source_sample_count,
             "excluded_source_sample_ids": classifier.excluded_sample_ids,
         }
-    reference = write_receipt(args.output, "report.json", document)
+    reference = write_receipt(
+        args.output, "report.json", document, maximum_bytes=CASE_RECEIPT_BYTES
+    )
     print(reference["sha256"])
 
 

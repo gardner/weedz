@@ -11,7 +11,8 @@ from weedz.classification.batch import _snapshot
 from weedz.contract import Sample
 from weedz.region_evaluation.assets import read_binary_mask
 from weedz.region_evaluation.coverage import sparse_coverage
-from weedz.region_evaluation.proposal_inputs import ProposalBatch
+from weedz.region_evaluation.pixels import pixel_sha256
+from weedz.region_evaluation.proposal_inputs import ProposalBatch, proposal_status
 from weedz.region_evaluation.proposal_masks import proposal_mask
 from weedz.region_evaluation.truth import TruthOrigin, eligible_positive
 
@@ -34,7 +35,7 @@ def sparse_report(
     root = assets_root.resolve(strict=True)
     reports = []
     for sample in samples:
-        _snapshot(sample, root, max_source_bytes)
+        encoded = _snapshot(sample, root, max_source_bytes)
         stage = proposed.rows[sample.id]["segmentation"]
         width, height = sample.media.width, sample.media.height
         if width is None or height is None:
@@ -52,10 +53,11 @@ def sparse_report(
             {
                 "sample_id": sample.id,
                 "image_sha256": sample.media.sha256,
+                "decoded_pixel_sha256": pixel_sha256(encoded),
                 "source": sample.source,
                 "source_context": dict(sample.context),
                 "source_groups": dict(sample.groups),
-                "proposal_status": stage["status"],
+                "proposal_status": proposal_status(stage),
                 "proposal_count": len(stage["regions"]),
                 "labels": labels,
             }

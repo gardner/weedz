@@ -66,6 +66,19 @@ def _header(document: dict, proposals: ProposalBatch) -> None:
         raise ValueError("Unsupported regional classifier evidence")
     if document.get("proposals_sha256") != proposals.proposals_sha256:
         raise ValueError("Classifier proposal checksum differs from selected localisation evidence")
+    metadata = document["model"]
+    kind = metadata.get("proposer_kind")
+    name = metadata.get("pipeline_name", "PlantCLEF")
+    expected = f"{str(kind).upper()} + {name} masked · {digest(metadata)[:12]}"
+    if kind not in {"sam2", "sam3"} or document.get("model_version") != expected:
+        raise ValueError("Classifier model version does not bind its declared profile")
+    if metadata.get("primary_view") != "masked" or metadata.get("crop_geometry_revision") != 2:
+        raise ValueError("Unsupported regional classifier crop policy")
+    if any(
+        row["segmentation"].get("provenance") != metadata.get("proposer")
+        for row in proposals.rows.values()
+    ):
+        raise ValueError("Classifier proposer profile differs from localisation evidence")
     if "result_sha256" in document:
         body = {key: value for key, value in document.items() if key != "result_sha256"}
         if digest(body) != document["result_sha256"]:

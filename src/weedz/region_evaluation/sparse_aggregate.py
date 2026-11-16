@@ -9,7 +9,7 @@ def aggregate_sparse(cases: list[dict]) -> dict:
     images: dict[str, list[str]] = defaultdict(list)
     grouped: dict[tuple, list[dict]] = defaultdict(list)
     for case in cases:
-        images[case["image_sha256"]].append(case["sample_id"])
+        images[case["decoded_pixel_sha256"]].append(case["sample_id"])
         seen = set()
         for label in case["labels"]:
             target = (case["source"], label["category"], label["taxon"])

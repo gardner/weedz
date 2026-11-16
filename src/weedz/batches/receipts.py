@@ -59,12 +59,16 @@ def _publish(path: Path, encoded: bytes) -> None:
             temporary.unlink(missing_ok=True)
 
 
-def write_receipt(root: Path, relative: str, document: dict[str, Any]) -> dict[str, str]:
+def write_receipt(
+    root: Path, relative: str, document: dict[str, Any], *, maximum_bytes: int = 1024 * 1024
+) -> dict[str, str]:
+    if type(maximum_bytes) is not int or not 1 <= maximum_bytes <= 32 * 1024 * 1024:
+        raise ValueError("Receipt resource cap must be within 32 MiB")
     root = root.resolve()
     if not root.is_dir() or any((p / ".git").exists() for p in (root, *root.parents)):
         raise ValueError("Choose existing artifact storage outside Git")
     encoded = (json.dumps(document, sort_keys=True, allow_nan=False) + "\n").encode()
-    if len(encoded) > 1024 * 1024:
+    if len(encoded) > maximum_bytes:
         raise ValueError("Completion receipt exceeds its resource cap")
     reference = artifact({"path": relative, "sha256": hashlib.sha256(encoded).hexdigest()})
     path = root / relative

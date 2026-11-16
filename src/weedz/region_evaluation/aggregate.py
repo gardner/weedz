@@ -8,7 +8,7 @@ def aggregate_boxes(cases: list[dict]) -> dict:
         raise ValueError("Use a bounded nonempty collection of evaluated images")
     groups: dict[str, list[str]] = defaultdict(list)
     for case in cases:
-        groups[case["image_sha256"]].append(case["sample_id"])
+        groups[case["decoded_pixel_sha256"]].append(case["sample_id"])
     aliases = [identities for identities in groups.values() if len(identities) > 1]
     grid = [(row["budget"], row["iou_threshold"]) for row in cases[0]["measurements"]]
     if not grid or len(set(grid)) != len(grid):

@@ -8,6 +8,7 @@ def case(identity, pixels, covered, *, source="cwfid", digest=None):
         "sample_id": identity,
         "source": source,
         "image_sha256": digest or identity,
+        "decoded_pixel_sha256": digest or identity,
         "proposal_status": "ok",
         "labels": [
             {

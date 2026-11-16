@@ -7,6 +7,7 @@ def case(identity: str, sha: str, labelled: int, matched: int) -> dict:
     return {
         "sample_id": identity,
         "image_sha256": sha,
+        "decoded_pixel_sha256": sha,
         "proposal_status": "ok",
         "measurements": [
             {

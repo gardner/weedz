@@ -11,7 +11,8 @@ from weedz.region_evaluation.classifier_inputs import RegionalClassifications
 from weedz.region_evaluation.geometry import Box, box_iou
 from weedz.region_evaluation.identification import score_identification
 from weedz.region_evaluation.matching import match_regions
-from weedz.region_evaluation.proposal_inputs import ProposalBatch
+from weedz.region_evaluation.pixels import pixel_sha256
+from weedz.region_evaluation.proposal_inputs import ProposalBatch, proposal_status
 from weedz.region_evaluation.taxonomy import TaxonomyMapping
 from weedz.region_evaluation.truth import TruthOrigin, labelled_boxes
 
@@ -39,7 +40,7 @@ def box_report(
     root = assets_root.resolve(strict=True)
     reports = []
     for sample in samples:
-        _snapshot(sample, root, max_source_bytes)
+        encoded = _snapshot(sample, root, max_source_bytes)
         width, height = sample.media.width, sample.media.height
         if width is None or height is None:
             raise ValueError("Box evaluation requires source geometry")
@@ -94,11 +95,12 @@ def box_report(
             {
                 "sample_id": sample.id,
                 "image_sha256": sample.media.sha256,
+                "decoded_pixel_sha256": pixel_sha256(encoded),
                 "source": sample.source,
                 "rights": sample.rights.model_dump(mode="json"),
                 "source_context": dict(sample.context),
                 "source_groups": dict(sample.groups),
-                "proposal_status": stage["status"],
+                "proposal_status": proposal_status(stage),
                 "proposal_count": len(regions),
                 "truth_boxes": [asdict(label) for label in truth],
                 "measurements": measurements,

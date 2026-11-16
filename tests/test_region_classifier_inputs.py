@@ -18,7 +18,11 @@ def inputs(root: Path):
         "b" * 64,
         "c" * 64,
         "sam:v1",
-        {record.id: {"segmentation": {"regions": [{"id": "region:1"}]}}},
+        {
+            record.id: {
+                "segmentation": {"regions": [{"id": "region:1"}], "provenance": {"model": "sam"}}
+            }
+        },
     )
     topk = [{"taxon": "Example species", "score": 0.5, "score_kind": "uncalibrated_share"}]
     row = {
@@ -36,6 +40,16 @@ def inputs(root: Path):
         "model_version": "classifier:v1",
         "predictions": [row],
     }
+    from weedz.segmentation.artifacts import digest
+
+    document["model"].update(
+        proposer={"model": "sam"},
+        proposer_kind="sam2",
+        primary_view="masked",
+        crop_geometry_revision=2,
+    )
+    document["model_version"] = f"SAM2 + PlantCLEF masked · {digest(document['model'])[:12]}"
+    row["model_version"] = document["model_version"]
     path = root / "classifier.json"
     path.write_text(json.dumps(document))
     return record, proposed, path, document
@@ -77,3 +91,22 @@ def test_internal_digest_does_not_override_requested_external_sha(tmp_path: Path
     path.write_text(json.dumps(document))
     with pytest.raises(ValueError, match="checksum"):
         load_classifier(path, expected, [record], proposed)
+
+
+@pytest.mark.parametrize("damage", ["model", "proposer", "view"])
+def test_classifier_profile_must_match_its_version_and_localisation(tmp_path, damage):
+    from weedz.segmentation.artifacts import digest
+
+    record, proposed, path, document = inputs(tmp_path)
+    if damage == "model":
+        document["model"]["labels_sha256"] = "f" * 64
+    elif damage == "proposer":
+        document["model"]["proposer"] = {"model": "other"}
+    else:
+        document["model"]["primary_view"] = "tight"
+    if damage != "model":
+        document["model_version"] = f"SAM2 + PlantCLEF masked · {digest(document['model'])[:12]}"
+        document["predictions"][0]["model_version"] = document["model_version"]
+    path.write_text(json.dumps(document))
+    with pytest.raises(ValueError):
+        load_classifier(path, hashlib.sha256(path.read_bytes()).hexdigest(), [record], proposed)

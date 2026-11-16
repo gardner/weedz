@@ -90,3 +90,29 @@ def test_primary_subset_is_explicit_and_retains_original_source_count(tmp_path: 
     assert selected.excluded_sample_ids == ("cwfid:2",)
     assert selected.manifest_sha256 == "b" * 64
     assert list(selected.rows) == ["cwfid:1"]
+
+
+@pytest.mark.parametrize("damage", ["profile", "empty", "failed"])
+def test_closed_rows_require_uniform_profile_and_consistent_generation(tmp_path, damage):
+    source(tmp_path)
+    first = json.loads((tmp_path / "proposals.jsonl").read_text())
+    second = {**first, "sample_id": "cwfid:2", "segmentation": dict(first["segmentation"])}
+    if damage == "profile":
+        second["segmentation"]["provenance"] = {"model": "another model"}
+    else:
+        second["segmentation"].update(status=damage, regions=[{"id": "retained"}])
+    checksum = source(tmp_path, [first, second])
+    with pytest.raises(ValueError):
+        load_proposals(
+            tmp_path / "ready.json", checksum, [sample(), sample(id="cwfid:2", source_id="2")]
+        )
+
+
+def test_failed_crop_classification_keeps_successful_proposal_status(tmp_path):
+    source(tmp_path)
+    row = json.loads((tmp_path / "proposals.jsonl").read_text())
+    row["segmentation"].update(
+        status="failed", proposal_status="ok", view_status="failed", regions=[{"id": "retained"}]
+    )
+    checksum = source(tmp_path, [row])
+    assert load_proposals(tmp_path / "ready.json", checksum, [sample()]).rows
