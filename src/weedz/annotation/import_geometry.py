@@ -92,10 +92,22 @@ def _rectangle(identifier: str, taxon: str, value: dict, size: tuple[int, int]) 
     if value.get("rotation") != 0:
         raise ValueError("Rotated rectangles are not supported")
     x, y, w, h = (_number(value.get(key)) for key in ("x", "y", "width", "height"))
-    if not (0 <= x < x + w <= 100 and 0 <= y < y + h <= 100):
-        raise ValueError("Rectangle must have positive area inside original image")
+    right, bottom = _percentage_end(x, w), _percentage_end(y, h)
     return Region(
         identifier,
         taxon,
-        (x * width / 100, y * height / 100, (x + w) * width / 100, (y + h) * height / 100),
+        (
+            x * width / 100,
+            y * height / 100,
+            min(width, right * width / 100),
+            min(height, bottom * height / 100),
+        ),
     )
+
+
+def _percentage_end(start: float, extent: float) -> float:
+    end = start + extent
+    # Separately rounded export percentages can exceed the exact edge by a few ulps.
+    if not (0 <= start < 100 and start < end <= 100 + 1e-9):
+        raise ValueError("Rectangle must have positive area inside original image")
+    return min(100, end)
