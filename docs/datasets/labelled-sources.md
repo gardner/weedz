@@ -121,8 +121,13 @@ retained without inventing a licence version. Observed/uploaded dates, observer 
 observation groups, source locations/uncertainty/privacy and exact source responses
 are preserved. No site or encounter independence is inferred from uncertain points.
 
-Previously inventoried pilot observation IDs, observers and decoded RGB pixels are
-excluded; duplicates within the new cohort are excluded too. This is an explicit
+Previously inventoried pilot observation IDs, stable observer IDs/logins and decoded
+RGB pixels are excluded; duplicates within the new cohort are excluded too. Repeatable
+`--prior-evidence` inputs extend this ledger with existing local canonical JSONL
+cohorts and original source-provenance JSON. Their exact bytes are SHA-pinned; local
+prior media is confined and verified before pixel comparison. Prior model predictions
+are never imported. Obscured coordinates retain their displaced-point privacy flag,
+with no GPS-accuracy claim attached to the displaced point. This is an explicit
 inventory scope, not a claim that every image on the internet was checked. Images
 are EXIF-upright metadata-free RGB PNGs with original encoded and decoded hashes.
 All annotations/predictions remain absent; source subject labels stay context.
@@ -131,7 +136,9 @@ in the review presentation. Do not reuse old 33/133 as a fresh blind cohort.
 
 ```sh
 uv run main.py labelled-batches nz-review --prior-root "$PREVIOUS_PILOT" \
-  --output "$ARTIFACTS/nz-review" --per-stratum 20
+  --output "$ARTIFACTS/nz-review" --per-stratum 20 \
+  --prior-evidence "$PREVIOUS_133/samples.jsonl" \
+  --prior-evidence "$PREVIOUS_33/private/provenance.json"
 ```
 
 No command writes source stores,

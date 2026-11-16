@@ -7,8 +7,10 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 from weedz.contract import Geography, Media, Rights, Sample
+from weedz.discovery.records import Photo
 from weedz.discovery.source import Inaturalist, photo_from_observation
 from weedz.labelled.cwfid import png
+from weedz.labelled.exposure import additional, observer_tokens
 from weedz.labelled.pixels import pixel_sha256
 from weedz.labelled.publication import close_batch, digest, json_bytes, output_namespace, publish
 
@@ -30,9 +32,8 @@ def eligible(
     selected_ids: set[int],
     selected_observers: set[str],
 ) -> bool:
-    return (
-        raw["id"] not in old_ids | selected_ids
-        and str(raw["user"]["id"]) not in old_observers | selected_observers
+    return raw["id"] not in old_ids | selected_ids and observer_tokens(raw).isdisjoint(
+        old_observers | selected_observers
     )
 
 
@@ -44,13 +45,21 @@ def prior_exposure(root: Path) -> tuple[set[int], set[str], set[str]]:
         record = json.loads(path.read_bytes())
         for row in record.get("response", {}).get("results", []):
             observations.add(row["id"])
-            observers.add(str(row["user"]["id"]))
+            observers.update(observer_tokens(row))
     for path in sorted((root / "images").glob("*")):
         if path.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
             continue
         with Image.open(path) as image:
             pixels.add(pixel_sha256(ImageOps.exif_transpose(image)))
     return observations, observers, pixels
+
+
+def downloaded_bytes(client: Inaturalist, photo: Photo) -> bytes:
+    acquired = client.image(photo)
+    raw = (client.root / acquired.image_path).read_bytes()
+    if digest(raw) != acquired.sha256:
+        raise ValueError("Downloaded source bytes changed before conversion")
+    return raw
 
 
 def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: Path) -> Sample:
@@ -72,7 +81,9 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
         geography = Geography(
             latitude=photo.latitude,
             longitude=photo.longitude,
-            uncertainty_m=photo.positional_accuracy_m,
+            uncertainty_m=(
+                None if photo.coordinate_status == "obscured" else photo.positional_accuracy_m
+            ),
             privacy="obscured" if photo.coordinate_status == "obscured" else "public",
         )
     return Sample(
@@ -115,60 +126,29 @@ def _sample(raw: dict, image_raw: bytes, query_sha: str, stratum: str, output: P
     )
 
 
-def prepare(prior_root: Path, output: Path, *, per_stratum: int = 20) -> str:
+def prepare(
+    prior_root: Path, output: Path, *, per_stratum: int = 20, prior_evidence: tuple[Path, ...] = ()
+) -> str:
     if not 1 <= per_stratum <= 20:
         raise ValueError("NZ review budget is 1–20 per stratum (maximum120)")
     output = output_namespace(output, prior_root)
+    for evidence in prior_evidence:
+        output_namespace(output, evidence.parent)
     old_ids, old_observers, old_pixels = prior_exposure(prior_root)
+    extra_ids, extra_observers, extra_pixels, pins = additional(prior_evidence)
+    old_ids.update(extra_ids)
+    old_observers.update(extra_observers)
+    old_pixels.update(extra_pixels)
     exclusions = {
         "observations": sorted(old_ids),
+        "additional_evidence": pins,
         "observers": sorted(old_observers),
         "decoded_pixel_sha256": sorted(old_pixels),
     }
     publish(output / "prior-exposure.json", json_bytes(exclusions))
     client = Inaturalist(output / "source", allowed_photo_licences=frozenset(LICENCES))
-    ids: set[int] = set()
-    observers: set[str] = set()
-    pixels = set(old_pixels)
-    samples = []
     try:
-        for stratum, query in STRATA:
-            params = {
-                "place_id": 6803,
-                "photos": "true",
-                "quality_grade": "research",
-                "license": "cc0,cc-by",
-                "photo_license": "cc0,cc-by",
-                "per_page": 100,
-                "order_by": "observed_on",
-                "order": "desc",
-                **query,
-            }
-            record = client.query(output / f"source/queries/{stratum}.json", params)
-            query_sha = digest(json_bytes(record))
-            count = 0
-            for raw in record["response"]["results"]:
-                if not eligible(raw, old_ids, old_observers, ids, observers):
-                    continue
-                photo = photo_from_observation(
-                    raw, "New Zealand", "incidental", allowed_licences=frozenset(LICENCES)
-                )
-                if photo is None:
-                    continue
-                photo = client.image(photo)
-                sample = _sample(
-                    raw, (client.root / photo.image_path).read_bytes(), query_sha, stratum, output
-                )
-                pixel_sha = sample.context["decoded_pixel_sha256"]
-                if pixel_sha in pixels:
-                    continue
-                samples.append(sample)
-                ids.add(raw["id"])
-                observers.add(str(raw["user"]["id"]))
-                pixels.add(pixel_sha)
-                count += 1
-                if count == per_stratum:
-                    break
+        samples = _collect(client, output, per_stratum, (old_ids, old_observers, old_pixels))
     finally:
         client.close()
     return close_batch(
@@ -185,3 +165,51 @@ def prepare(prior_root: Path, output: Path, *, per_stratum: int = 20) -> str:
             "human_annotation_count": 0,
         },
     )
+
+
+def _collect(
+    client: Inaturalist,
+    output: Path,
+    per_stratum: int,
+    excluded: tuple[set[int], set[str], set[str]],
+) -> list[Sample]:
+    old_ids, old_observers, old_pixels = excluded
+    ids: set[int] = set()
+    observers: set[str] = set()
+    pixels = set(old_pixels)
+    samples = []
+    for stratum, query in STRATA:
+        params = {
+            "place_id": 6803,
+            "photos": "true",
+            "quality_grade": "research",
+            "license": "cc0,cc-by",
+            "photo_license": "cc0,cc-by",
+            "per_page": 100,
+            "order_by": "observed_on",
+            "order": "desc",
+            **query,
+        }
+        record = client.query(output / f"source/queries/{stratum}.json", params)
+        query_sha = digest(json_bytes(record))
+        count = 0
+        for raw in record["response"]["results"]:
+            if not eligible(raw, old_ids, old_observers, ids, observers):
+                continue
+            photo = photo_from_observation(
+                raw, "New Zealand", "incidental", allowed_licences=frozenset(LICENCES)
+            )
+            if photo is None:
+                continue
+            sample = _sample(raw, downloaded_bytes(client, photo), query_sha, stratum, output)
+            pixel_sha = sample.context["decoded_pixel_sha256"]
+            if pixel_sha in pixels:
+                continue
+            samples.append(sample)
+            ids.add(raw["id"])
+            observers.update(observer_tokens(raw))
+            pixels.add(pixel_sha)
+            count += 1
+            if count == per_stratum:
+                break
+    return samples

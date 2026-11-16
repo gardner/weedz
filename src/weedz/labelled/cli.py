@@ -30,6 +30,13 @@ def main(argv: list[str] | None = None) -> None:
     )
     command.add_argument("--output", type=Path, required=True)
     command.add_argument("--per-stratum", type=int, default=20)
+    command.add_argument(
+        "--prior-evidence",
+        type=Path,
+        action="append",
+        default=[],
+        help="Prior local canonical JSONL or source provenance JSON; repeatable",
+    )
     args = parser.parse_args(argv)
     try:
         sha = _prepare(args)
@@ -45,4 +52,9 @@ def _prepare(args: argparse.Namespace) -> str:
         return imageweeds.prepare(
             args.archive, args.output, crop=args.crop, limit=args.limit, image_format=args.format
         )
-    return nz_review.prepare(args.prior_root, args.output, per_stratum=args.per_stratum)
+    return nz_review.prepare(
+        args.prior_root,
+        args.output,
+        per_stratum=args.per_stratum,
+        prior_evidence=tuple(args.prior_evidence),
+    )
