@@ -14,6 +14,7 @@ from weedz.rights_profiles import RightsProfile, rights_profile_fields
 
 MAX_BYTES = 256 * 1024 * 1024
 MAX_PACKAGE_BYTES = 512 * 1024 * 1024
+MAX_FILES = 10_000
 
 
 def pinned_bytes(path: Path, expected: str, maximum: int = MAX_BYTES) -> bytes:
@@ -115,7 +116,7 @@ def _task_image(task: dict, sample: Sample) -> None:
 
 
 def _files(root: Path, references: dict[str, str]) -> dict[str, bytes]:
-    if len(references) > 10_000:
+    if len(references) > MAX_FILES:
         raise ValueError("Package file count exceeds resource cap")
     files: dict[str, bytes] = {}
     total = 0
@@ -126,3 +127,13 @@ def _files(root: Path, references: dict[str, str]) -> dict[str, bytes]:
         files[name] = raw
         total += len(raw)
     return files
+
+
+def check_output_files(files: dict[str, bytes]) -> None:
+    """Published packages must fit the same bounds as subsequent replay."""
+    if (
+        len(files) > MAX_FILES
+        or sum(map(len, files.values())) > MAX_PACKAGE_BYTES
+        or any(len(raw) > MAX_BYTES for raw in files.values())
+    ):
+        raise ValueError("Import output exceeds replay resource cap")

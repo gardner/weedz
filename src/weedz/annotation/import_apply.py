@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 
 from weedz.annotation.import_claims import Claims
+from weedz.annotation.import_ownership import owned_ids
 from weedz.annotation.import_records import HumanRecord
 from weedz.contract import Annotation, Completeness, ReviewEvent, Sample, revise_sample
 
@@ -105,12 +106,18 @@ def apply_claims(
     event = ReviewEvent.model_validate_json(
         json.dumps(event.model_dump(mode="json"), sort_keys=True)
     )
-    prefix = f"{record.key}:region:"
+    annotation_ids, coverage_ids = owned_ids(prior)
+    retained = [a for a in sample.annotations if a.id not in annotation_ids]
+    retained_coverage = [c for c in sample.completeness if c.id not in coverage_ids]
+    if {a.id for a in retained} & {a.id for a in annotations} or coverage.id in {
+        c.id for c in retained_coverage
+    }:
+        raise ValueError("Generated human claim identity collides with an existing claim")
     # The original may be v1; review/history extensions require an explicit validated upgrade.
     updated = revise_sample(
         sample,
-        annotations=[a for a in sample.annotations if not a.id.startswith(prefix)] + annotations,
-        completeness=[c for c in sample.completeness if c.id != coverage.id] + [coverage],
+        annotations=retained + annotations,
+        completeness=retained_coverage + [coverage],
         review_history=[*sample.review_history, event],
     )
     return updated, masks

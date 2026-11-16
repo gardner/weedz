@@ -21,6 +21,9 @@ from weedz.rights_profiles import (
     rights_profile_fields,
 )
 
+# Integer RLE arrays expand substantially in the standard JSON decoder.
+MAX_EXPORT_BYTES = 8 * 1024 * 1024
+
 
 @dataclass(frozen=True)
 class ImportInputs:
@@ -134,7 +137,7 @@ def import_reviews(
     config = pinned_bytes(request.config, request.config_sha256, 1024 * 1024)
     if config != gold_config(request.taxa, request.categories).encode("utf-8"):
         raise ValueError("Configuration is not the declared opt-in human review schema")
-    exported = pinned_bytes(request.export, request.export_sha256)
+    exported = pinned_bytes(request.export, request.export_sha256, MAX_EXPORT_BYTES)
     evidence = {
         "export_sha256": request.export_sha256,
         "config_sha256": request.config_sha256,
