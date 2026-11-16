@@ -94,6 +94,7 @@ def _prepare_jobs(
     tasks: list[tuple[str, dict]],
     samples: dict[str, Sample],
     request: ImportInputs,
+    source_samples: dict[str, Sample],
 ) -> list[tuple[str, PreparedClaims | HumanRecord]]:
     budget = DecodeBudget()
     jobs: list[tuple[str, PreparedClaims | HumanRecord]] = []
@@ -104,7 +105,17 @@ def _prepare_jobs(
         known = frozenset(
             str(event.payload.get("annotation_revision_key")) for event in sample.review_history
         )
-        for record in completed_records(task, request.namespace, known_cancelled_keys=known):
+        source_history = source_samples[key].review_history
+        records = completed_records(
+            task,
+            request.namespace,
+            known_cancelled_keys=known,
+            source_keys=frozenset(
+                str(event.payload.get("annotation_revision_key")) for event in source_history
+            ),
+            source_revision_ids=frozenset(event.id for event in source_history),
+        )
+        for record in records:
             if has_revision(sample, record):
                 continue
             if record.cancelled:
@@ -130,9 +141,10 @@ def _apply(
     samples: dict[str, Sample],
     request: ImportInputs,
     evidence: dict[str, str],
+    source_samples: dict[str, Sample],
 ) -> tuple[dict[str, Sample], dict[str, bytes], int]:
     # The entire export's geometry/work limits pass before its first brush decode.
-    jobs = _prepare_jobs(tasks, samples, request)
+    jobs = _prepare_jobs(tasks, samples, request, source_samples)
     changed = dict(samples)
     masks = {}
     revisions = 0
@@ -179,7 +191,7 @@ def import_reviews(
     owned = historical_exports(base, prior, request.namespace)
     history = (_historical_tasks(raw, base, request.project_id) for raw in owned.values())
     bindings = task_bindings(prior, selected, history)
-    changed, masks, count = _apply(selected, prior.samples, request, evidence)
+    changed, masks, count = _apply(selected, prior.samples, request, evidence, base.samples)
     if any(name in prior.files and prior.files[name] != raw for name, raw in masks.items()):
         raise ValueError("Retained asset path conflicts with a generated human mask")
     files = {**prior.files, **masks}

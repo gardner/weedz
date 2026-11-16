@@ -202,3 +202,8 @@ it may also have been an actual zero-human capture. Without a recorded table or
 owned lineage, any such unproven retained capture causes refusal; original bytes
 are left untouched. New receipts do not have this ambiguity and keep unrelated
 source JSON inert, regardless of its filename or task-shaped content.
+
+Immutable source history does not become import-chain authority by naming a matching
+annotation key or event ID. Selected records that collide with those source-history
+identities refuse before revision replay, replacement or cancellation handling.
+Only events added beyond the pinned original source belong to the import chain.
