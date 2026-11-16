@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from weedz.contract import Completeness, Sample
+from weedz.region_evaluation.truth import TruthOrigin
 
 type Task = Literal["detection", "segmentation"]
 
@@ -35,7 +36,9 @@ class ScopeAssessment:
     origins: tuple[str, ...]
 
 
-def assess_scope(sample: Sample, *, task: Task, target: Target) -> ScopeAssessment:
+def assess_scope(
+    sample: Sample, *, task: Task, target: Target, origin: TruthOrigin = "source"
+) -> ScopeAssessment:
     """Documented source coverage may supervise without claiming accepted gold.
 
     The manifest validates each coverage claim's media identity. No annotation count,
@@ -47,6 +50,7 @@ def assess_scope(sample: Sample, *, task: Task, target: Target) -> ScopeAssessme
         coverage
         for coverage in sample.completeness
         if coverage.task == task
+        and coverage.origin == origin
         and coverage.media_sha256 == sample.media.sha256
         and target.covered_by(coverage, sample)
         and coverage.supervises()

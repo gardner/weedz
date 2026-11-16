@@ -13,7 +13,7 @@ from weedz.region_evaluation.assets import read_binary_mask
 from weedz.region_evaluation.coverage import sparse_coverage
 from weedz.region_evaluation.proposal_inputs import ProposalBatch
 from weedz.region_evaluation.proposal_masks import proposal_mask
-from weedz.region_evaluation.truth import eligible_positive
+from weedz.region_evaluation.truth import TruthOrigin, eligible_positive
 
 
 def sparse_report(
@@ -24,6 +24,7 @@ def sparse_report(
     kind: Literal["sam2", "sam3"],
     budgets: tuple[int, ...] = (1, 10, 100),
     max_source_bytes: int | None = None,
+    truth_origin: TruthOrigin = "source",
 ) -> list[dict]:
     """Measure source-labelled support only; label granularity stays semantic/sparse."""
     if not budgets or any(type(value) is not int or not 1 <= value <= 1000 for value in budgets):
@@ -46,7 +47,7 @@ def sparse_report(
             size=size,
         )
         unions = _unions(stage["regions"], size, kind, budgets)
-        labels = _labels(sample, root, size, assessed, unions)
+        labels = _labels(sample, root, size, assessed, unions, truth_origin)
         reports.append(
             {
                 "sample_id": sample.id,
@@ -76,10 +77,12 @@ def _unions(records: list[dict], size, kind, budgets: tuple[int, ...]) -> dict[i
     return results
 
 
-def _labels(sample: Sample, root: Path, size, assessed: np.ndarray, unions: dict) -> list[dict]:
+def _labels(
+    sample: Sample, root: Path, size, assessed: np.ndarray, unions: dict, origin: TruthOrigin
+) -> list[dict]:
     labels = []
     for label in sample.annotations:
-        if label.supervision != "sparse_mask" or not eligible_positive(label):
+        if label.supervision != "sparse_mask" or not eligible_positive(label, origin=origin):
             continue
         if not label.mask_uri or not label.mask_sha256:
             raise ValueError("Sparse truth requires a pinned mask")

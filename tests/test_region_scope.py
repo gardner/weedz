@@ -55,3 +55,20 @@ def test_partial_and_rejected_coverage_do_not_establish_negatives() -> None:
             target=Target("category", "weed", "cwfid"),
         )
         assert not result.exhaustive
+
+
+def test_reviewer_completeness_cannot_supervise_source_label_metrics() -> None:
+    record = sample(
+        completeness=[
+            coverage(
+                origin="reviewer",
+                author="reviewer:a",
+                reviewers=["reviewer:a"],
+                review="accepted",
+                recorded_at="2026-11-16T00:00:00Z",
+            )
+        ]
+    )
+    target = Target("category", "weed", "cwfid")
+    assert not assess_scope(record, task="detection", target=target, origin="source").exhaustive
+    assert assess_scope(record, task="detection", target=target, origin="reviewer").exhaustive

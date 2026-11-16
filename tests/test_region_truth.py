@@ -60,6 +60,6 @@ def test_mask_requires_explicit_separate_mask_evaluation() -> None:
 
 def test_reviewer_drafts_are_not_evaluation_truth_before_acceptance() -> None:
     draft = annotation(origin="reviewer", author="reviewer:a")
-    assert labelled_boxes([draft], size=(10, 10)) == ()
+    assert labelled_boxes([draft], size=(10, 10), origin="reviewer") == ()
     accepted = annotation(origin="reviewer", author="reviewer:a", review="accepted")
-    assert len(labelled_boxes([accepted], size=(10, 10))) == 1
+    assert len(labelled_boxes([accepted], size=(10, 10), origin="reviewer")) == 1

@@ -6,7 +6,7 @@ from weedz.contract import Sample
 from weedz.region_evaluation.matching import Matching
 from weedz.region_evaluation.scope import Target, assess_scope
 from weedz.region_evaluation.taxonomy import TaxonomyMapping
-from weedz.region_evaluation.truth import LabelledBox
+from weedz.region_evaluation.truth import LabelledBox, TruthOrigin
 
 
 def score_identification(
@@ -16,6 +16,8 @@ def score_identification(
     names: Mapping[str, dict],
     taxonomy: TaxonomyMapping,
     matching: Matching,
+    *,
+    truth_origin: TruthOrigin = "source",
 ) -> dict:
     if sample.source != taxonomy.source:
         raise ValueError("Taxonomy mapping belongs to a different source namespace")
@@ -30,7 +32,7 @@ def score_identification(
             names[proposed[pair.proposal]["id"]]["taxon"] == taxonomy.mapping[source_taxon]
         ):
             correct.add(pair.proposal)
-    false_alarms = _false_alarms(sample, truth, proposed, names, taxonomy, correct)
+    false_alarms = _false_alarms(sample, truth, proposed, names, taxonomy, correct, truth_origin)
     return {
         "supported_labelled_regions": len(supported),
         "unsupported_labelled_regions": len(truth) - len(supported),
@@ -46,9 +48,13 @@ def score_identification(
     }
 
 
-def _false_alarms(sample, truth, proposed, names, taxonomy, correct: set[int]) -> dict:
+def _false_alarms(
+    sample, truth, proposed, names, taxonomy, correct: set[int], origin: TruthOrigin
+) -> dict:
     scopes = {
-        target: assess_scope(sample, task="detection", target=Target("taxon", target))
+        target: assess_scope(
+            sample, task="detection", target=Target("taxon", target), origin=origin
+        )
         for target in taxonomy.mapping
     }
     inverse = {model: source for source, model in taxonomy.mapping.items()}
@@ -76,4 +82,9 @@ def _false_alarms(sample, truth, proposed, names, taxonomy, correct: set[int]) -
         "assessed_prediction_regions": len(assessed),
         "unassessed_false_alarm_regions": len(unassessed),
         "verified_negative_targets": negative,
+        "exhaustively_assessed_targets": [
+            {"target": target, "completeness_ids": scope.completeness_ids, "origins": scope.origins}
+            for target, scope in scopes.items()
+            if scope.exhaustive
+        ],
     }
