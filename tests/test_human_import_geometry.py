@@ -90,3 +90,35 @@ def test_rle_declared_allocation_is_checked_before_sdk_decode(monkeypatch):
     }
     with pytest.raises(ValueError, match="size"):
         decode_region(row, (4, 3), {"Ulex"})
+
+
+@pytest.mark.parametrize("edge", ["right", "bottom", "both"])
+def test_edge_clamped_percentages_allow_only_float_roundoff(edge):
+    import copy
+
+    row = rectangle()
+    row.update(original_width=1536, original_height=1536)
+    start, extent = 7 / 1536 * 100, (1536 - 7) / 1536 * 100
+    assert start + extent > 100  # Actual separately computed Label Studio percentages.
+    if edge in {"right", "both"}:
+        row["value"].update(x=start, width=extent)
+    if edge in {"bottom", "both"}:
+        row["value"].update(y=start, height=extent)
+    original = copy.deepcopy(row)
+    region = decode_region(row, (1536, 1536), {"Ulex europaeus"})
+    assert region.box is not None
+    if edge in {"right", "both"}:
+        assert region.box[0] == pytest.approx(7)
+        assert region.box[2] == 1536
+    if edge in {"bottom", "both"}:
+        assert region.box[1] == pytest.approx(7)
+        assert region.box[3] == 1536
+    assert row == original  # Revision identity still binds the original export values.
+
+
+@pytest.mark.parametrize("x,width", [(0.4557291666666667, 99.544272), (100, 1e-12)])
+def test_edge_tolerance_does_not_admit_outside_or_empty_boxes(x, width):
+    row = rectangle()
+    row["value"].update(x=x, width=width)
+    with pytest.raises(ValueError, match="inside original image"):
+        decode_region(row, (200, 100), {"Ulex europaeus"})
