@@ -188,6 +188,17 @@ class Completeness(ReviewEvidence):
             return bool(self.evidence)
         return self.review == "accepted" and bool(self.reviewers)
 
+    def targets(self, note: "Annotation") -> set[tuple[str, str]]:
+        """Keep functional categories separate from taxa when comparing target scopes."""
+        return {
+            (kind, value)
+            for kind, value, scope in (
+                ("taxon", note.taxon, self.taxa),
+                ("category", note.category, self.categories),
+            )
+            if value is not None and value in scope
+        }
+
 
 class ReviewEvent(ReviewEvidence):
     """An immutable source event or human revision, with evidence snapshots addressed by hash."""
@@ -349,7 +360,23 @@ class Sample(Contract):
         for coverage in self.completeness:
             if coverage.media_sha256 != self.media.sha256:
                 raise ValueError("Completeness media SHA differs from the sample")
+            self._check_complete_geometry(coverage)
         self._check_history()
+
+    def _check_complete_geometry(self, coverage: Completeness) -> None:
+        if not coverage.supervises():
+            return
+        required: set[tuple[str, str]] = set()
+        represented: set[tuple[str, str]] = set()
+        for note in self.annotations:
+            if note.label != "present" or not note.supervises():
+                continue
+            targets = coverage.targets(note)
+            required.update(targets)
+            if note.supervision in TASK_SUPERVISION[coverage.task]:
+                represented.update(targets)
+        if not required <= represented:
+            raise ValueError("Completeness contradicts known positive labels missing task geometry")
 
     def _check_history(self) -> None:
         seen: set[str] = set()
