@@ -6,7 +6,7 @@ import tarfile
 import zipfile
 from pathlib import Path
 
-from weedz.labelled import cwfid, imageweeds, nz_review
+from weedz.labelled import cwfid, imageweeds, nz_review, quality
 from weedz.labelled.audit import audit
 from weedz.labelled.images import FORMATS
 from weedz.labelled.publication import digest, json_bytes, output_namespace, publish
@@ -47,6 +47,10 @@ def main(argv: list[str] | None = None) -> None:
     command = commands.add_parser("audit")
     command.add_argument("--manifest", type=Path, action="append", required=True)
     command.add_argument("--output", type=Path, required=True)
+    command = commands.add_parser("imageweeds-primary")
+    command.add_argument("--source-dir", type=Path, required=True)
+    command.add_argument("--manifest", type=Path, action="append", required=True)
+    command.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         sha = _prepare(args)
@@ -57,6 +61,8 @@ def main(argv: list[str] | None = None) -> None:
 
 
 def _prepare(args: argparse.Namespace) -> str:
+    if args.source == "imageweeds-primary":
+        return quality.prepare(tuple(args.manifest), args.source_dir, args.output)
     if args.source == "audit":
         output = args.output
         for manifest in args.manifest:

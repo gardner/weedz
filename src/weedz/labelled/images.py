@@ -55,7 +55,7 @@ def _png(clean: Image.Image, cached: bytes | None, expected_pixels: str) -> byte
         output = BytesIO()
         clean.save(output, format="PNG")
         return output.getvalue()
-    _minimal_png(cached)
+    validate_rgb_png(cached)
     with Image.open(BytesIO(cached)) as image:
         if image.mode != "RGB" or image.size != clean.size or image.info:
             raise ValueError("Prepared PNG geometry, mode or metadata differs from profile")
@@ -64,7 +64,7 @@ def _png(clean: Image.Image, cached: bytes | None, expected_pixels: str) -> byte
     return cached
 
 
-def _minimal_png(raw: bytes) -> None:
+def validate_rgb_png(raw: bytes) -> None:
     header = b"\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR"
     if len(raw) > 160_000_000 or (raw[:16], raw[24:29]) != (header, b"\x08\x02\x00\x00\x00"):
         raise ValueError("Prepared PNG byte budget, header or RGB layout mismatch")

@@ -14,7 +14,7 @@ conversions resume; conflicting existing bytes are refused rather than replaced.
 | DeepWeeds, already cached | 17,509 images | Original eight weed classes plus negative image class | Negative means no named target, not no plants. Weed-AI repackaging is not another independent dataset. Prior pipeline exposure. |
 | CWFID, newly acquired | 60 unique images | Expert crop/weed plant/part polygons intersected with algorithmic vegetation mask | Functional classes, not scientific taxa; false-colour multispectral sensor. Partial labels and split overlap. |
 | ImageWeeds v2, newly acquired | 81 soybean + 94 maize images; 735 native boxes | Publisher manual species boxes, five taxa | Two mirror contexts are ONE dataset origin. One invalid maize image is quarantined, not clipped. No documented independent-site split. |
-| NZ review cohort | Explicit maximum 120 | No gold annotations or model predictions | Source subjects are context only; later human review remains necessary. |
+| NZ review cohort | 90 prepared source-observer accounts; explicit maximum 120 | No gold annotations or model predictions | Source subjects are context only; later human review remains necessary. |
 
 Leafy Spurge is [mpg-ranch/leafy_spurge](https://huggingface.co/datasets/mpg-ranch/leafy_spurge),
 pinned at `ede1689fa8d424bcaea2c02157e791d97e4eba04`, CC BY4, DOI
@@ -94,10 +94,28 @@ bytes and metadata privately for a standalone comparison. Both profiles refuse
 rotated/ambiguous annotation frames and mismatched dimensions, retain source SHA
 and share decoded identity; they never overwrite each other's closed outputs.
 
-Maize `UASs_355.jpg`, annotation 273, has x 5366 +width 107 =5473 beyond width 5472. The
-whole image is withheld from canonical labelled evaluation with its native record
-and reason retained; no box is silently clipped. All 175 source images remain
-acquired. Completeness is unknown, so missing boxes are not assessed negatives.
+Maize `UASs_355.jpg`, annotation 273, has x5366 +width107 =5473 beyond width5472.
+The whole image is withheld from geometry-eligible conversion; no box is clipped.
+All 175 original source records remain acquired. The remaining 174 records have 731
+boxes but only 156 distinct decoded images. There are 18 duplicate pairs (12 soybean,
+6 maize), all with divergent box geometry/counts; there are no cross-crop pairs.
+These are ambiguous annotation aliases, not proven semantic contradictions under
+partial labelling. The invalid 175th image has no encoded or decoded alias among 174.
+
+The primary quality gate independently rechecks BOTH pinned archives, rights,
+source labels and canonical pixels. It preserves every geometry-eligible record
+and annotation in `all-records.jsonl`, adds exact decoded-asset groups, and withholds
+all alias groups from primary scoring. It never unions annotation sets or picks a
+model-favourable representative. Current primary cohort: **138 unique images / 645
+source boxes** (57 soybean +81 maize). Native invalid records and every withheld alias
+are listed in `quarantine.json`; `provenance.json` records raw/unique/primary counts
+and all input-manifest SHAs. `samples.jsonl` and `ready.json` close the primary cohort.
+Source completeness remains unknown; missing boxes are not assessed negatives.
+
+Contract extensions are written as schema 2. Old unpublished v1 prototypes remain
+unchanged, with their original inference receipts. Regeneration uses NEW namespaces.
+`--prepared-images` can reuse old lossless PNG bytes only after exact source-pixel,
+geometry, RGB-layout and metadata-free PNG verification; it never imports old labels.
 
 ```sh
 aria2c -x4 -s4 -j4 --dir "$SOURCE" --out imageweeds-soybean.zip \
@@ -108,6 +126,16 @@ uv run main.py labelled-batches imageweeds --crop soybean \
 
 Reuse cached verified archives; fresh
 large downloads use the requested aria2c four-connection/four-job settings.
+
+```sh
+aria2c -x4 -s4 -j4 --dir "$SOURCE" --out imageweeds-maize.zip \
+  https://weed-ai.sydney.edu.au/code/download/1a9e04c8-80c3-41f1-a7af-a9d3f39d0feb.zip
+uv run main.py labelled-batches imageweeds --crop maize \
+  --archive "$SOURCE/imageweeds-maize.zip" --output "$ARTIFACTS/maize-schema2" --limit 94
+uv run main.py labelled-batches imageweeds-primary --source-dir "$SOURCE" \
+  --manifest "$ARTIFACTS/soybean-schema2/samples.jsonl" \
+  --manifest "$ARTIFACTS/maize-schema2/samples.jsonl" --output "$ARTIFACTS/primary-schema2"
+```
 
 ## NZ review cohort
 
@@ -130,6 +158,7 @@ with no GPS-accuracy claim attached to the displaced point. This is an explicit
 inventory scope, not a claim that every image on the internet was checked. Images
 are EXIF-upright metadata-free RGB PNGs with original encoded and decoded hashes.
 All annotations/predictions remain absent; source subject labels stay context.
+Targeted strata are not a random prevalence sample or verified incidental-weed labels.
 Keep a later blind-review subset free of predictions and hide its source taxonomy
 in the review presentation. Do not reuse old 33/133 as a fresh blind cohort.
 

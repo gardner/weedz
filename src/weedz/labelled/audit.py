@@ -23,7 +23,7 @@ def audit(manifests: tuple[Path, ...]) -> dict:
         pins.append({"manifest": str(manifest.resolve()), "sha256": digest(raw)})
         for line in raw.splitlines():
             sample = Sample.model_validate_json(line)
-            encoded_sha, pixel_sha = _asset(sample, manifest.parent)
+            encoded_sha, pixel_sha = verified_asset(sample, manifest.parent)
             encoded[encoded_sha].append(sample.id)
             pixels[pixel_sha].append(sample.id)
             sources[sample.source] += 1
@@ -49,7 +49,7 @@ def audit(manifests: tuple[Path, ...]) -> dict:
     }
 
 
-def _asset(sample: Sample, root: Path) -> tuple[str, str]:
+def verified_asset(sample: Sample, root: Path) -> tuple[str, str]:
     path = (root / sample.media.uri).resolve()
     if not path.is_relative_to(root.resolve()):
         raise ValueError("Audit media must be confined to its explicit manifest root")
