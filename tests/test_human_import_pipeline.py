@@ -234,3 +234,18 @@ def test_metadata_nc_requires_explicit_profile_and_is_preserved_on_reimport(tmp_
     )
     with pytest.raises(ValueError, match="profile"):
         import_reviews(request, tmp_path / "downgrade", previous=output, previous_sha256=checksum)
+
+
+def test_recorded_noncommercial_scope_cannot_disappear_when_licences_are_public(tmp_path):
+    from dataclasses import replace
+
+    request, _, _ = inputs(tmp_path)
+    research = replace(request, rights_profile="noncommercial-cc0-by-nc")
+    output = tmp_path / "research"
+    import_reviews(research, output)
+    checksum = hashlib.sha256((output / "manifest.json").read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="Previous.*profile"):
+        import_reviews(request, tmp_path / "downgrade", previous=output, previous_sha256=checksum)
+    source = replace(request, package=output, package_sha256=checksum)
+    with pytest.raises(ValueError, match="Source.*profile"):
+        import_reviews(source, tmp_path / "source-downgrade")
