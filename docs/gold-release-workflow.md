@@ -39,6 +39,13 @@ predictions and model-evidence text do not become human annotations. Completed h
 declarations preserve actual creator/editor identities and revision history, but do
 not by themselves establish expertise, independent review or gold eligibility.
 
+A single completed Label Studio submission declares its own completeness. Its editor
+is the author of that declaration, so it cannot satisfy independent review of
+completeness merely because the annotation's original creator was someone else. Use an
+explicit non-independent policy for that workflow, or record a separate, attributable
+review before requiring independence. The offline end-to-end fixture uses the former
+and is never represented as independently reviewed NZ data.
+
 The importer produces `samples.jsonl` and pinned local images/masks. Keep raw exports
 and configuration snapshots private. A frozen release carries canonical history and
 their hashes; it does not publish arbitrary private export files.

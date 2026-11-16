@@ -9,6 +9,7 @@ from collections.abc import Mapping
 from pydantic import Field, field_validator, model_validator
 
 from weedz.contract import Annotation, Completeness, Contract, ReviewEvent, Sample, Text
+from weedz.review_values import thaw_json
 
 
 class ReviewPolicy(Contract):
@@ -65,6 +66,8 @@ def _revision_state(event: ReviewEvent, claim: Claim) -> str | None:
         rows = data if isinstance(data, tuple) else ()
     for row in rows:
         if isinstance(row, Mapping) and row.get("id") == claim.id:
+            if thaw_json(row) != claim.model_dump(mode="json"):
+                return None
             state = row.get("review")
             return state if isinstance(state, str) else None
     return None
