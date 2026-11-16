@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from weedz.annotation.credits import photo_credit
-from weedz.batches.storage import PUBLIC
 from weedz.contract import Sample, require_task
+from weedz.rights_profiles import PUBLIC
 from weedz.segmentation.artifacts import digest
 
 SHA256 = re.compile(r"[0-9a-f]{64}")

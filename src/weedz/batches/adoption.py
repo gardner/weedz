@@ -11,6 +11,7 @@ from weedz.batches.profiles import Kind, ModelProfile
 from weedz.batches.proposal_compute import proposal_rows
 from weedz.batches.regional_compute import regions
 from weedz.batches.storage import read_artifact, validate_closed_batch
+from weedz.rights_profiles import PUBLIC_PROFILE, parse_rights_profile
 
 
 def _no_inference():
@@ -45,7 +46,12 @@ def prepare_adoption(root: Path, value: dict, *, proposer_kind: str = "sam2") ->
     if set(request["cached"]) != {"proposals", *request["variants"]}:
         raise ValueError("Cache-only adoption requires every requested model artifact")
     root = root.resolve()
-    batch = validate_closed_batch(root, request["manifest"], request["ready"])
+    batch = validate_closed_batch(
+        root,
+        request["manifest"],
+        request["ready"],
+        rights_profile=parse_rights_profile(request.get("rights_profile", PUBLIC_PROFILE)),
+    )
     proposal_ref = request["cached"]["proposals"]
     proposal_data = read_artifact(root, proposal_ref, 128_000_000)
     try:

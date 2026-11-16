@@ -2,7 +2,9 @@
 
 from typing import Literal
 
-from weedz.contract import Sample
+from pydantic import TypeAdapter, ValidationError
+
+from weedz.contract import Rights, Sample
 
 RightsProfile = Literal["public-cc0-by", "noncommercial-cc0-by-nc"]
 PUBLIC_PROFILE: RightsProfile = "public-cc0-by"
@@ -15,6 +17,13 @@ PROFILES: dict[RightsProfile, frozenset[str]] = {
 }
 
 
+def parse_rights_profile(value: object = PUBLIC_PROFILE) -> RightsProfile:
+    try:
+        return TypeAdapter(RightsProfile).validate_python(value)
+    except ValidationError as error:
+        raise ValueError("Unknown rights profile") from error
+
+
 def require_rights(sample: Sample, profile: RightsProfile = PUBLIC_PROFILE) -> None:
     """Check both licences under a named profile, without replacing contributor consent.
 
@@ -22,8 +31,12 @@ def require_rights(sample: Sample, profile: RightsProfile = PUBLIC_PROFILE) -> N
     its separate consent workflow; a noncommercial flag is not permission to publish it.
     Custom publisher licences are not aliases for Creative Commons licences.
     """
+    require_source_rights(sample.rights, profile)
+
+
+def require_source_rights(rights: Rights, profile: RightsProfile = PUBLIC_PROFILE) -> None:
+    """Check source rights before media has been wrapped in a canonical sample."""
     allowed = _licences(profile)
-    rights = sample.rights
     if rights.consent is not None:
         raise ValueError("Source dataset profiles cannot replace contributor consent")
     if (

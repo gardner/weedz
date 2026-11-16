@@ -20,6 +20,7 @@ from weedz.batches.receipts import seal_file, write_receipt
 from weedz.batches.regional_compute import regions
 from weedz.batches.storage import ClosedBatch, read_artifact, read_owned_file, validate_closed_batch
 from weedz.discovery.activities import while_heartbeating
+from weedz.rights_profiles import PUBLIC_PROFILE, parse_rights_profile
 
 
 @dataclass(frozen=True)
@@ -66,7 +67,12 @@ class BatchActivities:
 
     def _context(self, payload: dict) -> Context:
         request = batch_request(payload["request"])
-        batch = validate_closed_batch(self.root, request["manifest"], request["ready"])
+        batch = validate_closed_batch(
+            self.root,
+            request["manifest"],
+            request["ready"],
+            rights_profile=parse_rights_profile(request.get("rights_profile", PUBLIC_PROFILE)),
+        )
         pins = self.registry.pins(request)
         identity = hashlib.sha256(
             json.dumps(
@@ -100,6 +106,7 @@ class BatchActivities:
                 validate_package(
                     (self.root / previous["artifact"]["path"]).parent,
                     previous["artifact"]["sha256"],
+                    rights_profile=context.batch.rights_profile,
                 )
             return {"path": path, "sha256": hashlib.sha256(encoded).hexdigest()}
         result = self._dispatch(stage, context)
@@ -186,6 +193,7 @@ class BatchActivities:
             (self.root / reference["path"]).parent,
             reference["sha256"],
             heartbeat=lambda: activity.heartbeat("verifying publication"),
+            rights_profile=context.batch.rights_profile,
         )
         relative = f"{context.namespace}/publication.json"
         target = self.root / relative

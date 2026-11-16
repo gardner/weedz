@@ -3,6 +3,8 @@
 import re
 from typing import Any
 
+from weedz.rights_profiles import parse_rights_profile
+
 DIGEST = re.compile(r"[0-9a-f]{64}")
 PROFILE = re.compile(r"[a-z0-9][a-z0-9.-]{0,79}")
 VARIANTS = ("frame", "tiles", "regions")
@@ -38,7 +40,7 @@ def batch_request(value: Any) -> dict[str, Any]:
     if (
         not isinstance(value, dict)
         or not fields.issubset(value)
-        or set(value) - fields - {"cached"}
+        or set(value) - fields - {"cached", "rights_profile"}
     ):
         raise ValueError("Unknown or incomplete batch request")
     profiles = (value["segmentation_profile"], value["classifier_profile"])
@@ -55,6 +57,8 @@ def batch_request(value: Any) -> dict[str, Any]:
     project = value["project_id"]
     if type(project) is not int or not 1 <= project <= 2**31 - 1:
         raise ValueError("Choose a positive Label Studio project ID")
+    if "rights_profile" in value:
+        parse_rights_profile(value["rights_profile"])
     return {
         **value,
         "manifest": artifact(value["manifest"]),

@@ -6,11 +6,16 @@ NAMES = {
     "cc-by": "CC BY",
     "cc-by-3.0": "CC BY 3.0",
     "cc-by-4.0": "CC BY 4.0",
+    "cc-by-nc": "CC BY-NC",
+    "cc-by-nc-3.0": "CC BY-NC 3.0",
+    "cc-by-nc-4.0": "CC BY-NC 4.0",
 }
 LICENCE_URIS = {
     "cc0-1.0": "https://creativecommons.org/publicdomain/zero/1.0/",
     "cc-by-3.0": "https://creativecommons.org/licenses/by/3.0/",
     "cc-by-4.0": "https://creativecommons.org/licenses/by/4.0/",
+    "cc-by-nc-3.0": "https://creativecommons.org/licenses/by-nc/3.0/",
+    "cc-by-nc-4.0": "https://creativecommons.org/licenses/by-nc/4.0/",
 }
 
 
