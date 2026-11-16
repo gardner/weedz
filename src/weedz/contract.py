@@ -9,7 +9,7 @@ import json
 from collections.abc import Mapping
 from datetime import datetime
 from types import MappingProxyType
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -24,9 +24,16 @@ from pydantic import (
 )
 
 from weedz.consent import Permission
+from weedz.contract_versions import (
+    LEGACY_SCHEMA_VERSION,
+    materialize_sample_fields,
+    required_sample_version,
+    sample_version_fields,
+)
+from weedz.contract_versions import (
+    SCHEMA_VERSION as SCHEMA_VERSION,
+)
 from weedz.review_values import FrozenJson, freeze_json, thaw_json
-
-SCHEMA_VERSION = 1
 
 Supervision = Literal[
     "surveyed_point", "image_class", "box", "dense_mask", "sparse_mask", "occurrence", "unlabelled"
@@ -317,7 +324,13 @@ class Annotation(Contract):
 
 
 class Sample(Contract):
-    schema_version: Literal[1] = SCHEMA_VERSION
+    schema_version: Literal[1, 2] = LEGACY_SCHEMA_VERSION
+
+    @model_validator(mode="before")
+    @classmethod
+    def declared_version(cls, data: object) -> object:
+        return sample_version_fields(data)
+
     # Namespaced "<source>:<source_id>" so IDs never collide across sources.
     id: Text
     source: SourceName
@@ -439,3 +452,16 @@ def require_task(sample: Sample, task: Task) -> Sample:
     if task not in sample.tasks:
         raise UnsupportedTask(f"{sample.id} does not support {task}")
     return sample
+
+
+def revise_sample(sample: Sample, **updates: Any) -> Sample:
+    """Validate a revision and explicitly upgrade its wire version, never downgrade it."""
+    fields = sample.model_dump(mode="python")
+    fields.update(updates)
+    fields = materialize_sample_fields(fields)
+    minimum = max(sample.schema_version, required_sample_version(fields))
+    requested = updates.get("schema_version", minimum)
+    if type(requested) is not int or requested < minimum:
+        raise ValueError("A sample revision cannot lower its required schema version")
+    fields["schema_version"] = requested
+    return Sample.model_validate(fields)
