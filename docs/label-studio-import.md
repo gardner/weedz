@@ -85,3 +85,13 @@ The offline snapshot is bounded to 1,000 source samples, 10,000 package files,
 512 MiB total package bytes, 256 MiB per asset/export, and 40 megapixels per image.
 Use smaller closed packages when these bounds are exceeded. These are resource
 limits, not claims about annotation quality or independent sampling.
+
+Rights admission defaults to `--rights-profile public-cc0-by`, checking **both**
+media and metadata licences through the shared source-rights policy. Use
+`--rights-profile noncommercial-cc0-by-nc` explicitly for admitted CC BY-NC material.
+This does not rewrite licences, authorize contributor images, admit custom publisher
+terms as Creative Commons, or publish anything. The noncommercial profile is named
+in the new receipt and must remain selected on later imports. A source package
+with an explicitly recorded profile cannot silently change profiles. Historical
+packages without a profile still require every source licence to pass the selected
+policy; an explicit noncommercial choice is needed for legacy NC metadata too.

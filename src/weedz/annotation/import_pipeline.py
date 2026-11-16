@@ -13,6 +13,12 @@ from weedz.annotation.import_records import completed_records, positive_id
 from weedz.annotation.import_write import json_bytes, write_import
 from weedz.contract import Sample
 from weedz.manifest import manifest_bytes
+from weedz.rights_profiles import (
+    PUBLIC_PROFILE,
+    RightsProfile,
+    require_rights,
+    rights_profile_fields,
+)
 
 
 @dataclass(frozen=True)
@@ -27,6 +33,7 @@ class ImportInputs:
     project_id: int
     taxa: tuple[str, ...]
     categories: tuple[str, ...] = ()
+    rights_profile: RightsProfile = PUBLIC_PROFILE
 
 
 def _prior(
@@ -114,6 +121,7 @@ def import_reviews(
 ) -> dict:
     base = read_package(request.package, request.package_sha256)
     prior = _prior(request, base, previous, previous_sha256)
+    _admit(request, base, prior)
     config = pinned_bytes(request.config, request.config_sha256, 1024 * 1024)
     if config != gold_config(request.taxa, request.categories).encode("utf-8"):
         raise ValueError("Configuration is not the declared opt-in human review schema")
@@ -152,8 +160,18 @@ def import_reviews(
             project_namespace=request.namespace,
             project_id=request.project_id,
             imported_revisions=count,
+            **rights_profile_fields(request.rights_profile),
             interpretation=(
                 "Completed human declarations; expertise and gold acceptance are separate"
             ),
         ),
     )
+
+
+def _admit(request: ImportInputs, base: Package, prior: Package) -> None:
+    for sample in base.samples.values():
+        require_rights(sample, request.rights_profile)
+    if base.rights_profile is not None and base.rights_profile != request.rights_profile:
+        raise ValueError("Source package rights profile must be preserved")
+    if prior is not base and (prior.rights_profile or PUBLIC_PROFILE) != request.rights_profile:
+        raise ValueError("Previous import rights profile must be preserved")

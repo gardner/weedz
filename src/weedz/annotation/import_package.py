@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlsplit
 from PIL import Image
 
 from weedz.contract import Sample
+from weedz.rights_profiles import RightsProfile, rights_profile_fields
 
 MAX_BYTES = 256 * 1024 * 1024
 MAX_PACKAGE_BYTES = 512 * 1024 * 1024
@@ -46,6 +47,7 @@ class Package:
     files: dict[str, bytes]
     samples: dict[str, Sample]
     tasks: dict[str, dict]
+    rights_profile: RightsProfile | None = None
 
 
 def _geometry(media: bytes, sample: Sample) -> None:
@@ -83,7 +85,10 @@ def read_package(root: Path, expected: str) -> Package:
             raise ValueError("Package sample media does not match its pinned image")
         _geometry(media, sample)
         samples[key] = sample
-    return Package(expected, files, samples, _tasks(files, samples))
+    profile = manifest.get("rights_profile")
+    if profile is not None:
+        rights_profile_fields(profile)
+    return Package(expected, files, samples, _tasks(files, samples), profile)
 
 
 def _tasks(files: dict[str, bytes], samples: dict[str, Sample]) -> dict[str, dict]:

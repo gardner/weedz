@@ -205,3 +205,32 @@ def test_actual_human_geometry_imports_without_implicit_supervision_conversion(t
         assert note.box is None and note.mask_uri is not None
         assert hashlib.sha256((output / note.mask_uri).read_bytes()).hexdigest() == note.mask_sha256
     assert (output / "private").stat().st_mode & 0o777 == 0o700
+
+
+def test_metadata_nc_requires_explicit_profile_and_is_preserved_on_reimport(tmp_path):
+    from dataclasses import replace
+
+    request, _, _ = inputs(tmp_path)
+    root = request.package
+    provenance = json.loads((root / "private/provenance.json").read_bytes())
+    provenance["samples"][0]["sample"]["rights"]["metadata_license"] = "cc-by-nc"
+    encoded = json.dumps(provenance).encode()
+    (root / "private/provenance.json").write_bytes(encoded)
+    manifest = json.loads((root / "manifest.json").read_bytes())
+    manifest["files"]["private/provenance.json"] = hashlib.sha256(encoded).hexdigest()
+    encoded = json.dumps(manifest).encode()
+    (root / "manifest.json").write_bytes(encoded)
+    request = replace(request, package_sha256=hashlib.sha256(encoded).hexdigest())
+    with pytest.raises(ValueError, match="profile"):
+        import_reviews(request, tmp_path / "public-refused")
+    research = replace(request, rights_profile="noncommercial-cc0-by-nc")
+    output = tmp_path / "research"
+    receipt = import_reviews(research, output)
+    assert receipt["rights_profile"] == "noncommercial-cc0-by-nc"
+    assert read_manifest(output / "samples.jsonl")[0].rights.metadata_license == "cc-by-nc"
+    checksum = hashlib.sha256((output / "manifest.json").read_bytes()).hexdigest()
+    import_reviews(
+        research, tmp_path / "research-replay", previous=output, previous_sha256=checksum
+    )
+    with pytest.raises(ValueError, match="profile"):
+        import_reviews(request, tmp_path / "downgrade", previous=output, previous_sha256=checksum)

@@ -7,6 +7,7 @@ from demo_paths import new_output
 
 from weedz.annotation.gold_config import gold_config
 from weedz.annotation.import_pipeline import ImportInputs, import_reviews
+from weedz.rights_profiles import PROFILES, PUBLIC_PROFILE
 
 
 def parser() -> argparse.ArgumentParser:
@@ -25,6 +26,7 @@ def parser() -> argparse.ArgumentParser:
         imported.add_argument(f"--{name}-sha256", required=True)
     imported.add_argument("--project", required=True, help="Stable source project namespace")
     imported.add_argument("--project-id", required=True, type=int)
+    imported.add_argument("--rights-profile", choices=tuple(PROFILES), default=PUBLIC_PROFILE)
     imported.add_argument("--previous", type=Path)
     imported.add_argument("--previous-sha256")
     return root
@@ -53,6 +55,7 @@ def main() -> None:
                 args.project_id,
                 taxa,
                 categories,
+                args.rights_profile,
             )
             receipt = import_reviews(
                 request, args.output, previous=args.previous, previous_sha256=args.previous_sha256
