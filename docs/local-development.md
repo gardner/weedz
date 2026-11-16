@@ -747,9 +747,10 @@ It has a **standing**:
 
 Its eligibility is stated per use, with the reason whenever it is not eligible:
 
-- **Training:** a present or absent label that was not rejected or left
-  unresolved. This is the contract's `supervises()` rule, plus a suggestion that
-  reviewers accepted.
+- **Training:** an original present/absent source label that was not rejected
+  or left unresolved, or an explicitly accepted reviewer finding or suggestion.
+  Pending reviewer labels remain visible with their history but are eligible for
+  no reference use, matching the contract's supervision rule.
 - **Evaluation:** a source's original label, or a reviewer's label that someone
   *other than its author* accepted. An accepted suggestion never counts, because
   reviewers saw the suggestion.
