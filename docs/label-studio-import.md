@@ -83,7 +83,7 @@ The importer preserves rights and task declarations; release promotion and exper
 acceptance happen separately under the release policy.
 
 The offline snapshot is bounded to 1,000 source samples, 10,000 package files,
-512 MiB total package bytes, 256 MiB per asset, 8 MiB per export/tasks/provenance JSON, and 40 megapixels per image.
+512 MiB total package bytes, 256 MiB per asset, 8 MiB per human export, and 64 MiB per tasks/provenance JSON, and 40 megapixels per image.
 The smaller export cap bounds JSON/RLE expansion before decoding. Split larger
 exports into smaller task subsets. New outputs are refused before publication if
 they would exceed the same byte/file limits used by the next replay. These are resource
@@ -135,6 +135,29 @@ See [contract versions](contract-versions.md).
 A prior human-import output is never a fresh source package. Keep the original
 source package in `--package` and pass the pinned prior output through `--previous`,
 so its project namespace and numeric project identity remain checked. Structural
-`tasks.json` and `private/provenance.json` share the pre-decode 8 MiB JSON cap;
+`tasks.json` and `private/provenance.json` have a separate pre-decode 64 MiB JSON cap;
 new outputs must fit those structural limits too, so revision history cannot grow
 into a package that the next replay would reject.
+
+The receipt retains a canonical external-ID to numeric task-ID bijection across
+all exported subsets, including tasks without completed annotations. Reusing a task
+ID for a different sample or renumbering an already seen sample refuses. Older
+import receipts without the table recover it from their retained pinned human
+exports; original package/project checks still apply.
+
+These byte limits bound encoded snapshots, not decoded Python RAM. JSON/RLE and
+model objects can use substantially more memory. The 64 MiB structural allowance
+supports normal 1,000-sample review histories; image-heavy or large-mask packages
+may need smaller subsets even below the sample limit. The overall closed package
+remains limited to512 MiB and output uses identical replay limits. No existing
+provenance is compacted or rewritten just to fit.
+
+Pending reviewer-origin regions remain recorded but do not supervise any task
+until accepted. Upstream unreviewed source labels remain usable. This intentionally
+changes behavior for an old v1/v2 record declaring detection with only pending human
+regions: that unsupported task claim now refuses validation. It is never silently
+granted acceptance, downgraded or rewritten. If such a record needs preservation
+for later review, keep its original raw bytes/history and explicitly validate a
+NEW copy with only `tasks=["inference"]` using `Sample.model_validate`; retain all
+annotations/history and rights, and store the new copy separately. Existing pending
+inference records and legacy source-only v1 serialization remain unchanged.

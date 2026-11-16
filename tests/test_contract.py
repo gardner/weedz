@@ -187,8 +187,8 @@ def test_a_reviewer_annotation_names_its_author() -> None:
 
 
 def test_reviewer_names_stay_distinct_even_with_separators_in_them() -> None:
-    one = annotation(origin="reviewer", author="Carol", reviewers=["Ana; Ben"])
-    two = annotation(origin="reviewer", author="Carol", reviewers=["Ana", "Ben"])
+    one = annotation(origin="reviewer", review="accepted", author="Carol", reviewers=["Ana; Ben"])
+    two = annotation(origin="reviewer", review="accepted", author="Carol", reviewers=["Ana", "Ben"])
     first = Sample.model_validate(sample(annotations=[one])).annotations[0].reviewers
     second = Sample.model_validate(sample(annotations=[two])).annotations[0].reviewers
     assert first != second
