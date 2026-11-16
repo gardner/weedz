@@ -132,6 +132,11 @@ def import_reviews(
     previous_sha256: str | None = None,
 ) -> dict:
     base = read_package(request.package, request.package_sha256)
+    if base.human_import:
+        raise ValueError(
+            "A reviewed import cannot be a fresh source; "
+            "retain the original package and use --previous"
+        )
     prior = _prior(request, base, previous, previous_sha256)
     _admit(request, base, prior)
     config = pinned_bytes(request.config, request.config_sha256, 1024 * 1024)

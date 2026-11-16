@@ -83,7 +83,7 @@ The importer preserves rights and task declarations; release promotion and exper
 acceptance happen separately under the release policy.
 
 The offline snapshot is bounded to 1,000 source samples, 10,000 package files,
-512 MiB total package bytes, 256 MiB per asset, 8 MiB per export, and 40 megapixels per image.
+512 MiB total package bytes, 256 MiB per asset, 8 MiB per export/tasks/provenance JSON, and 40 megapixels per image.
 The smaller export cap bounds JSON/RLE expansion before decoding. Split larger
 exports into smaller task subsets. New outputs are refused before publication if
 they would exceed the same byte/file limits used by the next replay. These are resource
@@ -131,3 +131,10 @@ Unpublished prototype rows that declare v1 but contain meaningful v2 fields are
 refused. Preserve those artifacts; regenerate from pinned source records into new
 versioned directories rather than editing their JSONL or model outputs in place.
 See [contract versions](contract-versions.md).
+
+A prior human-import output is never a fresh source package. Keep the original
+source package in `--package` and pass the pinned prior output through `--previous`,
+so its project namespace and numeric project identity remain checked. Structural
+`tasks.json` and `private/provenance.json` share the pre-decode 8 MiB JSON cap;
+new outputs must fit those structural limits too, so revision history cannot grow
+into a package that the next replay would reject.

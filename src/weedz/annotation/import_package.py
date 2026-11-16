@@ -15,6 +15,8 @@ from weedz.rights_profiles import RightsProfile, rights_profile_fields
 MAX_BYTES = 256 * 1024 * 1024
 MAX_PACKAGE_BYTES = 512 * 1024 * 1024
 MAX_FILES = 10_000
+MAX_STRUCTURE_BYTES = 8 * 1024 * 1024
+STRUCTURAL_FILES = frozenset({"tasks.json", "private/provenance.json"})
 
 
 def pinned_bytes(path: Path, expected: str, maximum: int = MAX_BYTES) -> bytes:
@@ -49,6 +51,7 @@ class Package:
     samples: dict[str, Sample]
     tasks: dict[str, dict]
     rights_profile: RightsProfile | None = None
+    human_import: bool = False
 
 
 def _geometry(media: bytes, sample: Sample) -> None:
@@ -92,7 +95,8 @@ def read_package(root: Path, expected: str) -> Package:
     profile = manifest.get("rights_profile")
     if profile is not None:
         rights_profile_fields(profile)
-    return Package(expected, files, samples, _tasks(files, samples), profile)
+    imported = {"project_namespace", "project_id", "source_package_sha256"} <= manifest.keys()
+    return Package(expected, files, samples, _tasks(files, samples), profile, imported)
 
 
 def _tasks(files: dict[str, bytes], samples: dict[str, Sample]) -> dict[str, dict]:
@@ -122,7 +126,7 @@ def _files(root: Path, references: dict[str, str]) -> dict[str, bytes]:
     total = 0
     for name, checksum in references.items():
         raw = pinned_bytes(
-            relative_file(root, name), checksum, min(MAX_BYTES, MAX_PACKAGE_BYTES - total)
+            relative_file(root, name), checksum, min(_file_limit(name), MAX_PACKAGE_BYTES - total)
         )
         files[name] = raw
         total += len(raw)
@@ -134,6 +138,10 @@ def check_output_files(files: dict[str, bytes]) -> None:
     if (
         len(files) > MAX_FILES
         or sum(map(len, files.values())) > MAX_PACKAGE_BYTES
-        or any(len(raw) > MAX_BYTES for raw in files.values())
+        or any(len(raw) > _file_limit(name) for name, raw in files.items())
     ):
         raise ValueError("Import output exceeds replay resource cap")
+
+
+def _file_limit(name: str) -> int:
+    return min(MAX_BYTES, MAX_STRUCTURE_BYTES) if name in STRUCTURAL_FILES else MAX_BYTES
