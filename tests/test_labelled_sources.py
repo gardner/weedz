@@ -70,3 +70,11 @@ def test_zip_symlink_refused_without_touching_target(tmp_path):
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     with pytest.raises(ValueError, match="symlink"), SourceArchive(path, digest):
         pass
+
+
+def test_zip_original_nul_name_is_not_silently_normalized(tmp_path):
+    path, _ = archive(tmp_path, [("goodXevil", b"payload")])
+    path.write_bytes(path.read_bytes().replace(b"goodXevil", b"good\x00evil"))
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="Unsafe"), SourceArchive(path, sha):
+        pass

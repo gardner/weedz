@@ -41,7 +41,7 @@ class SourceArchive:
         if len(entries) > self.maximum_members:
             raise ValueError("Archive member budget exceeded")
         for entry in entries:
-            name = entry.filename if isinstance(entry, zipfile.ZipInfo) else entry.name
+            name = entry.orig_filename if isinstance(entry, zipfile.ZipInfo) else entry.name
             parts = PurePosixPath(name).parts
             if "\\" in name or "\x00" in name or name.startswith("/") or ".." in parts:
                 raise ValueError(f"Unsafe archive member: {name!r}")
