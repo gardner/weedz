@@ -15,11 +15,18 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    model_serializer,
+    model_validator,
+)
 
 from weedz.consent import refusal
 from weedz.contract import (
-    SCHEMA_VERSION,
     TASK_SUPERVISION,
     Annotation,
     Sample,
@@ -115,6 +122,14 @@ class Counts(Frozen):
     labels: dict[str, int]
     reviews: dict[str, int]
     taxa: dict[str, int]
+    categories: dict[str, int] = Field(default_factory=dict)
+
+    @model_serializer(mode="wrap")
+    def without_absent_categories(self, handler: SerializerFunctionWrapHandler) -> dict:
+        data = handler(self)
+        if not data.get("categories"):
+            data.pop("categories", None)
+        return data
 
 
 class Buffer(Frozen):
@@ -131,7 +146,7 @@ class StatusChange(Frozen):
 
 
 class Release(Frozen):
-    release_format: Literal[1] = 1
+    release_format: Literal[1, 2] = 1
     id: str
     name: ReleaseName
     task: Task
@@ -153,6 +168,13 @@ class Release(Frozen):
 
     @model_validator(mode="after")
     def history_only_advances(self) -> "Release":
+        if self.contract_schema_version not in {1, 2}:
+            raise ValueError("Unsupported release contract schema version")
+        if self.release_format == 1 and (
+            self.contract_schema_version > 1
+            or any(count.categories for count in self.counts.values())
+        ):
+            raise ValueError("Release format 1 cannot contain version 2 sample/category extensions")
         for before, after in zip(self.test_history, self.test_history[1:], strict=False):
             _check_advance(before.status, after.status)
         if self.test_history[-1].status != self.test_status:
@@ -267,10 +289,14 @@ def _evidence(task: Task, members: list[Sample]) -> list[Annotation]:
 
 
 def _check_target(task: Task, kept: list[Sample]) -> None:
-    """An absent label only denies its own taxon, so a binary task needs one target."""
-    taxa = {note.taxon for note in _evidence(task, kept)}
-    if task in BINARY_TASKS and len(taxa) > 1:
-        raise ValueError(f"{task} needs one target taxon, found {sorted(map(str, taxa))}")
+    """An absent label denies its named taxon/category; a binary task needs one target."""
+    targets = {
+        ("taxon", note.taxon) if note.taxon is not None else ("category", note.category)
+        for note in _evidence(task, kept)
+        if note.taxon is not None or note.category is not None
+    }
+    if task in BINARY_TASKS and len(targets) > 1:
+        raise ValueError(f"{task} needs one target taxon or category, found {sorted(targets)}")
 
 
 def _evidence_gap(task: Task, members: list[Sample]) -> str | None:
@@ -280,7 +306,12 @@ def _evidence_gap(task: Task, members: list[Sample]) -> str | None:
     labels = {note.label for note in _evidence(task, members)}
     kinds = " or ".join(sorted(needed))
     missing = sorted({"present", "absent"} - labels) if task in BINARY_TASKS else []
-    if not labels or missing:
+    checked = any(
+        coverage.task == task and coverage.supervises()
+        for sample in members
+        for coverage in sample.completeness
+    )
+    if (not labels and not checked) or missing:
         return f"{' '.join(missing[:1] + [kinds])} evidence"
     return None
 
@@ -293,6 +324,7 @@ def _counts(members: list[Sample], key: str) -> Counts:
         labels=dict(sorted(Counter(note.label for note in notes).items())),
         reviews=dict(sorted(Counter(note.review for note in notes).items())),
         taxa=dict(sorted(Counter(note.taxon for note in notes if note.taxon).items())),
+        categories=dict(sorted(Counter(note.category for note in notes if note.category).items())),
     )
 
 
@@ -338,12 +370,13 @@ def build_release(
         snapshots.setdefault(sample.source, set()).add(sample.snapshot)
     draft = Release(
         id="",
+        release_format=2 if any(s.schema_version == 2 for s in kept) else 1,
         name=spec.name,
         task=spec.task,
         protocol=spec.protocol,
         split=spec.split,
         separate=sorted(set(spec.separate)),
-        contract_schema_version=SCHEMA_VERSION,
+        contract_schema_version=max(sample.schema_version for sample in kept),
         manifest_sha256=hashlib.sha256(manifest_bytes(kept)).hexdigest(),
         source_snapshots={source: sorted(values) for source, values in sorted(snapshots.items())},
         licenses=sorted({sample.rights.media_license for sample in kept}),
@@ -393,6 +426,8 @@ def read_release(directory: Path) -> tuple[Release, list[Sample]]:
     if release.content_id() != release.id:
         raise ValueError(f"Release {release.id} does not match its content")
     samples = read_manifest(directory / release.manifest, release.manifest_sha256)
+    if max(sample.schema_version for sample in samples) != release.contract_schema_version:
+        raise ValueError("Release contract schema version differs from its actual samples")
     listed = sorted(sample for members in release.splits.values() for sample in members.samples)
     if sorted(sample.id for sample in samples) != listed:
         raise ValueError(f"Release {release.id} splits do not list its manifest's samples")

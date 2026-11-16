@@ -6,14 +6,15 @@ than silently weakening labels (an image label never becomes a mask).
 """
 
 import json
+from collections.abc import Mapping
 from datetime import datetime
-from typing import Annotated, Literal
+from types import MappingProxyType
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    JsonValue,
     SerializerFunctionWrapHandler,
     StringConstraints,
     field_serializer,
@@ -23,8 +24,16 @@ from pydantic import (
 )
 
 from weedz.consent import Permission
-
-SCHEMA_VERSION = 1
+from weedz.contract_versions import (
+    LEGACY_SCHEMA_VERSION,
+    materialize_sample_fields,
+    required_sample_version,
+    sample_version_fields,
+)
+from weedz.contract_versions import (
+    SCHEMA_VERSION as SCHEMA_VERSION,
+)
+from weedz.review_values import FrozenJson, freeze_json, thaw_json
 
 Supervision = Literal[
     "surveyed_point", "image_class", "box", "dense_mask", "sparse_mask", "occurrence", "unlabelled"
@@ -128,10 +137,15 @@ class ReviewEvidence(Contract):
     media_sha256: Sha256
     origin: Literal["source", "reviewer"]
     recorded_at: Text | None = None
-    evidence: dict[Text, Text] = {}
+    evidence: Mapping[Text, Text] = Field(default_factory=dict, validate_default=True)
+
+    @field_validator("evidence")
+    @classmethod
+    def readonly_evidence(cls, value: Mapping[str, str]) -> Mapping[str, str]:
+        return MappingProxyType(dict(value))
 
     @field_serializer("evidence")
-    def sorted_evidence(self, evidence: dict[str, str]) -> dict[str, str]:
+    def sorted_evidence(self, evidence: Mapping[str, str]) -> dict[str, str]:
         return dict(sorted(evidence.items()))
 
     @model_validator(mode="after")
@@ -210,13 +224,25 @@ class ReviewEvent(ReviewEvidence):
     dimension: Text
     annotation_id: Text | None = None
     supersedes: Text | None = None
-    payload: dict[str, JsonValue] = {}
+    payload: Mapping[str, FrozenJson] = Field(default_factory=dict, validate_default=True)
+
+    @field_validator("payload", mode="before")
+    @classmethod
+    def json_values_only(cls, value: object) -> object:
+        # Reject non-JSON Python objects before scalar coercion, while accepting
+        # the readonly mapping/tuple representation of an already validated record.
+        return freeze_json(value)
 
     @field_validator("payload")
     @classmethod
-    def finite_json(cls, value: dict[str, JsonValue]) -> dict[str, JsonValue]:
-        json.dumps(value, allow_nan=False)
-        return value
+    def finite_json(cls, value: Mapping[str, FrozenJson]) -> Mapping[str, FrozenJson]:
+        frozen = {key: freeze_json(item) for key, item in value.items()}
+        json.dumps({key: thaw_json(item) for key, item in frozen.items()}, allow_nan=False)
+        return MappingProxyType(frozen)
+
+    @field_serializer("payload")
+    def json_payload(self, value: Mapping[str, FrozenJson]) -> dict:
+        return {key: thaw_json(item) for key, item in value.items()}
 
 
 class Annotation(Contract):
@@ -298,7 +324,13 @@ class Annotation(Contract):
 
 
 class Sample(Contract):
-    schema_version: Literal[1] = SCHEMA_VERSION
+    schema_version: Literal[1, 2] = LEGACY_SCHEMA_VERSION
+
+    @model_validator(mode="before")
+    @classmethod
+    def declared_version(cls, data: object) -> object:
+        return sample_version_fields(data)
+
     # Namespaced "<source>:<source_id>" so IDs never collide across sources.
     id: Text
     source: SourceName
@@ -420,3 +452,16 @@ def require_task(sample: Sample, task: Task) -> Sample:
     if task not in sample.tasks:
         raise UnsupportedTask(f"{sample.id} does not support {task}")
     return sample
+
+
+def revise_sample(sample: Sample, **updates: Any) -> Sample:
+    """Validate a revision and explicitly upgrade its wire version, never downgrade it."""
+    fields = sample.model_dump(mode="python")
+    fields.update(updates)
+    fields = materialize_sample_fields(fields)
+    minimum = max(sample.schema_version, required_sample_version(fields))
+    requested = updates.get("schema_version", minimum)
+    if type(requested) is not int or requested < minimum:
+        raise ValueError("A sample revision cannot lower its required schema version")
+    fields["schema_version"] = requested
+    return Sample.model_validate(fields)

@@ -5,7 +5,13 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from weedz.contract import SCHEMA_VERSION, Sample, UnsupportedTask, require_task
+from weedz.contract import (
+    LEGACY_SCHEMA_VERSION,
+    SCHEMA_VERSION,
+    Sample,
+    UnsupportedTask,
+    require_task,
+)
 
 SHA = "a" * 64
 
@@ -41,7 +47,8 @@ def sample(**fields: Any) -> dict[str, Any]:
 
 def test_a_sample_records_its_schema_version_and_explicit_unknowns() -> None:
     record = Sample.model_validate(sample())
-    assert record.schema_version == SCHEMA_VERSION == 1
+    assert record.schema_version == LEGACY_SCHEMA_VERSION == 1
+    assert SCHEMA_VERSION == 2
     assert (record.view, record.scale) == ("unknown", "unknown")
     assert record.geography is None and record.ground is None and record.captured_on is None
     assert record.annotations[0].review == "unreviewed"
@@ -147,7 +154,7 @@ def test_a_box_may_reach_the_far_image_edges() -> None:
 
 def test_a_sample_rejects_unknown_schema_versions_and_unnamespaced_ids() -> None:
     with pytest.raises(ValidationError):
-        Sample.model_validate(sample(schema_version=2))
+        Sample.model_validate(sample(schema_version=3))
     with pytest.raises(ValidationError, match="source"):
         Sample.model_validate(sample(id="other:1"))
 

@@ -8,7 +8,7 @@ records growth stage or habitat.
 
 from collections import Counter
 from collections.abc import Iterable, Sequence
-from typing import Any
+from typing import Any, Literal
 
 from weedz.discovery.sampling import SEASONS
 
@@ -48,17 +48,23 @@ def _cell(examples: list[Example]) -> Cell:
 
 
 def coverage(
-    examples: list[Example], uses: Sequence[str], expected: Iterable[str] = ()
+    examples: list[Example],
+    uses: Sequence[str],
+    expected: Iterable[str] = (),
+    *,
+    target_field: Literal["taxon", "category"] = "taxon",
 ) -> dict[str, dict[str, Cell]]:
     """Per species (declared or seen) and use, the photos with an eligible example."""
-    species = sorted({*expected, *(item["taxon"] for item in examples if item["taxon"])})
+    species = sorted(
+        {*expected, *(item[target_field] for item in examples if item.get(target_field))}
+    )
     return {
         taxon: {
             use: _cell(
                 [
                     item
                     for item in examples
-                    if item["taxon"] == taxon and item["uses"][use]["eligible"]
+                    if item.get(target_field) == taxon and item["uses"][use]["eligible"]
                 ]
             )
             for use in uses

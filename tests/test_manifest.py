@@ -54,7 +54,7 @@ def test_a_manifest_rejects_duplicate_ids_and_unknown_versions(tmp_path: Path) -
     path = tmp_path / "samples.jsonl"
     with pytest.raises(ValueError, match="Duplicate"):
         write_manifest(path, [samples()[0], samples()[0]])
-    line = json.dumps(sample(schema_version=2))
+    line = json.dumps(sample(schema_version=3))
     path.write_text(line + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="line 1"):
         read_manifest(path)
