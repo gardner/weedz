@@ -26,6 +26,11 @@ reliable improvement on incidental weed discovery.
 The [Product Requirements Document](docs/prd.md) defines the intended users,
 discovery workflow, pilot scope, and product success criteria.
 
+The [Weedz problem statement](docs/problem-statement.md) defines background-plant
+discovery, its current scope and how success must be measured. The
+[prior-art investigation](docs/background-plant-prior-art.md) identifies released
+roadside and multi-species vegetation implementations to reuse and compare.
+
 The [dataset problem statement](docs/problem-dataset.md) explains the first of
 the project's three problems: no dataset shows where weeds appear in real NZ photos.
 The [pipeline problem statement](docs/problem-pipeline.md) covers the second: turning

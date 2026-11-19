@@ -8,6 +8,12 @@ Written 15 November 2026. Weedz has three problems to solve, in order:
 
 The pipeline depends on the dataset: without human-checked labels it can't be tuned or measured. Problem 3 depends on the pipeline, because a find is only worth sending if a person can trust it.
 
+The implementation status below is a 15 November snapshot. For the current
+server/CVAT research scope and the 19 November run, see the
+[Weedz problem statement](problem-statement.md). The
+[prior-art investigation](background-plant-prior-art.md) evaluates segmentation
+alongside existing multi-species recognition methods.
+
 ## The problem
 
 Give Weedz thousands of photos of birds, insects and landscapes. It should hand back a short list:
