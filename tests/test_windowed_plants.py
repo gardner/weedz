@@ -67,3 +67,37 @@ def test_view_projection_matches_pillow_at_many_rounding_boundaries():
 def test_extreme_crop_has_bounded_padding_memory():
     padded = whole_crop(Image.new("RGB", (10000, 2)))
     assert max(padded.size) <= 1112
+
+
+@pytest.mark.parametrize("vertical", [False, True])
+def test_extreme_source_preview_uses_bounded_memory(vertical):
+    import tracemalloc
+
+    size = (1, 40_000_000) if vertical else (40_000_000, 1)
+    preview = (1, 4) if vertical else (4, 1)
+    box = (0, 5_000_000, 1, 5_000_001) if vertical else (5_000_000, 0, 5_000_001, 1)
+    mask = np.ones((1, 1), dtype=bool)
+    tracemalloc.start()
+    try:
+        projected = viewing_mask(mask, box, size, preview)
+        _, peak_bytes = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    expected = np.array([[True, False, False, False]])
+    assert np.array_equal(projected, expected.T if vertical else expected)
+    assert peak_bytes < 1_000_000
+
+
+@pytest.mark.parametrize("vertical", [False, True])
+def test_preview_preserves_pillow_incremental_rounding_tie(vertical):
+    mask = np.array([[True, False]])
+    size, preview = (2, 1), (7, 1)
+    if vertical:
+        mask, size, preview = mask.T, (1, 2), (1, 7)
+    # Pillow's incremental additions sample source zero at the central pixel;
+    # computing each coordinate independently would incorrectly sample source one.
+    expected = np.array([[True, True, True, True, False, False, False]])
+    assert np.array_equal(
+        viewing_mask(mask, (0, 0, size[0], size[1]), size, preview),
+        expected.T if vertical else expected,
+    )

@@ -41,6 +41,19 @@ def source_mask(mask: np.ndarray, window: Box) -> tuple[Box, np.ndarray]:
     return (left + x1, top + y1, left + x2, top + y2), np.array(source.crop(box), dtype=bool)
 
 
+def _nearest_coordinates(source_length: int, view_length: int) -> np.ndarray:
+    """Match Pillow's affine NEAREST sampling using only preview-sized storage."""
+    # Pillow first stores the source extent in a C float, then scales in double.
+    step = float(np.float32(source_length)) / view_length
+    position = step * 0.5
+    coordinates = np.empty(view_length, dtype=np.int64)
+    for index in range(view_length):
+        coordinates[index] = int(position)
+        # Incremental addition preserves Pillow's floating-point rounding ties.
+        position += step
+    return coordinates
+
+
 def viewing_mask(mask: np.ndarray, box: Box, source_size: Size, view_size: Size) -> np.ndarray:
     """Project an ROI exactly as a full source canvas resized with nearest filtering."""
     _size(source_size)
@@ -51,11 +64,8 @@ def viewing_mask(mask: np.ndarray, box: Box, source_size: Size, view_size: Size)
         raise ValueError("Mask ROI is outside the source image")
     if mask.dtype != bool or mask.shape != (bottom - top, right - left):
         raise ValueError("Mask pixels disagree with the source ROI")
-    # Use Pillow's own sampling coordinates to avoid floating-point tie differences.
-    x_grid = Image.fromarray(np.arange(width, dtype=np.int32).reshape(1, -1))
-    y_grid = Image.fromarray(np.arange(height, dtype=np.int32).reshape(-1, 1))
-    xs = np.array(x_grid.resize((view_size[0], 1), Image.Resampling.NEAREST))[0]
-    ys = np.array(y_grid.resize((1, view_size[1]), Image.Resampling.NEAREST))[:, 0]
+    xs = _nearest_coordinates(width, view_size[0])
+    ys = _nearest_coordinates(height, view_size[1])
     columns = np.flatnonzero((xs >= left) & (xs < right))
     rows = np.flatnonzero((ys >= top) & (ys < bottom))
     result = np.zeros((view_size[1], view_size[0]), dtype=bool)
