@@ -184,6 +184,13 @@ The [dataset plan](docs/datasets.md) reflects this project's non-commercial
 research purpose. Preserve source attribution and the applicable terms for
 photos, reviewed annotations, and model weights when analysing or sharing them.
 
+## Related project: Great Walks fungi seasons
+
+The separate [Great Walks fungi project](projects/great-walks-fungi/README.md)
+provides a repeatable iNaturalist/GIS pipeline and a standalone interactive map
+of monthly recording patterns near all 11 Great Walks. It does not use weed
+identification models or change the Weedz review application.
+
 ## Development
 
 Tests use synthetic local imagery and never need the downloaded dataset or
