@@ -1,0 +1,15 @@
+[Unit]
+Description=Great Walks fungi map (static files alongside CVAT)
+Requires=podman.socket
+After=podman.socket network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/podman run --rm --name great-walks-fungi-map --network weedz-cvat --read-only --cap-drop=all --security-opt=no-new-privileges --label=traefik.enable=true --label=traefik.docker.network=weedz-cvat --label=traefik.http.routers.fungi-map.entrypoints=web --label=traefik.http.routers.fungi-map.priority=100 --label="traefik.http.routers.fungi-map.rule=Host(`cvat.llm.nz`) && (Path(`/map`) || PathPrefix(`/map/`))" --label=traefik.http.routers.fungi-map.service=fungi-map --label=traefik.http.services.fungi-map.loadbalancer.server.port=8080 --volume=%h/.local/share/great-walks-fungi/public:/srv:ro docker.io/library/python@sha256:cfe2e24a75302a15934d37c2d86412893c0aa934dc3a97cbb439d04c01890ca9 python3 -m http.server 8080 --bind 0.0.0.0 --directory /srv
+ExecStop=/usr/bin/podman stop --time 10 great-walks-fungi-map
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
