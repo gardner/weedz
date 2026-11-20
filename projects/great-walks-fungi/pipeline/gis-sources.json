@@ -1,0 +1,75 @@
+[
+  {
+    "name": "Heaphy Track",
+    "source": "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks_Open_Data/FeatureServer/0",
+    "source_feature_id": [
+      3972785,
+      3976653,
+      3982400,
+      3985703,
+      3995365,
+      3996140,
+      3998824,
+      4002537,
+      4010469
+    ],
+    "source_license": "Department of Conservation, \u00a9 Crown, CC BY 4.0; source metadata cached",
+    "url": "https://www.doc.govt.nz/heaphytrack",
+    "mode": "Walking",
+    "selector": {
+      "FlocID": [
+        "HEAPHYTK-TK06",
+        "HEAPHYTK-TK02",
+        "HEAPHYTK-TK08",
+        "HEAPHYTK-TK05",
+        "HEAPHYTK-TK04",
+        "HEAPHYTK-TK07",
+        "HEAPHYTK-TK09",
+        "HEAPHYTK-TK01",
+        "HEAPHYTK-TK03"
+      ]
+    }
+  },
+  {
+    "name": "Milford Track",
+    "source": "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_Tracks_Open_Data/FeatureServer/0",
+    "source_feature_id": [
+      3976532,
+      3980811,
+      3981519,
+      3984354,
+      3989481,
+      4001849,
+      4008677,
+      4012047
+    ],
+    "source_license": "Department of Conservation, \u00a9 Crown, CC BY 4.0; source metadata cached",
+    "url": "https://www.doc.govt.nz/milfordtrack",
+    "mode": "Walking",
+    "selector": {
+      "FlocID": [
+        "MILFRDTK-TK08",
+        "MILFRDTK-TK07",
+        "MILFRDTK-TK02",
+        "MILFRDTK-TK05",
+        "MILFRDTK-TK04",
+        "MILFRDTK-TK10",
+        "MILFRDTK-TK01",
+        "MILFRDTK-TK09"
+      ]
+    }
+  },
+  {
+    "name": "Whanganui Journey",
+    "source": "https://services1.arcgis.com/3JjYDyG3oajxU6HO/arcgis/rest/services/DOC_WhanganuiJourneyLine_DTO/FeatureServer/0",
+    "source_feature_id": 3,
+    "source_license": "Department of Conservation, \u00a9 Crown, CC BY 4.0; source metadata cached",
+    "url": "https://www.doc.govt.nz/whanganuijourney",
+    "mode": "Paddling",
+    "selector": {
+      "OBJECTID": [
+        3
+      ]
+    }
+  }
+]

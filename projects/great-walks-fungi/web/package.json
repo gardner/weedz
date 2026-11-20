@@ -1,0 +1,17 @@
+{
+  "name": "great-walks-fungi-map",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild map.js --bundle --format=iife --outfile=bundle.js"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.2",
+    "d3-selection": "^3.0.1",
+    "d3-zoom": "^3.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "esbuild": "^0.28.2"
+  }
+}
