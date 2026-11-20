@@ -92,7 +92,8 @@ def build(snapshot: Path, extra: Path, output: Path) -> dict[str, Any]:
     html = template.replace("__STYLES__", (PROJECT / "web/styles.css").read_text())
     html = html.replace("__DATA__", payload.replace("<", "\\u003c"))
     html = html.replace("__SCRIPT__", (PROJECT / "web/bundle.js").read_text())
-    if any(marker in html for marker in ("__STYLES__", "__DATA__", "__SCRIPT__")):
+    html = html.replace("__LICENSES__", (PROJECT / "web/runtime-licenses.txt").read_text())
+    if any(marker in html for marker in ("__STYLES__", "__DATA__", "__SCRIPT__", "__LICENSES__")):
         raise ValueError("Unreplaced template marker")
     output.mkdir(parents=True, exist_ok=True)
     temporary = output / "index.tmp.html"
