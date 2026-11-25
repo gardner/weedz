@@ -459,3 +459,22 @@ The grouped-source, decision-rule and packet results are indexed in the
    evidence supports them. Recheck all independence and source bindings.
 5. Run a small human usability pilot to measure actual effort. Specialist NZ
    verification remains necessary before claims about background discovery.
+
+## Frozen classifier adaptation experiment
+
+Evaluate a session-balanced nearest-centroid classifier on the five reserved
+CropAndWeed sessions. Fit prototypes from the eight development sessions
+using frozen PlantCLEF embeddings of tight source box crops. Include a class
+only if two or more development sessions carry it. Normalize crop embeddings,
+average crops within each session and class, normalize those means, then
+average the session means per class and normalize the resulting prototypes.
+This gives each eligible session equal weight within a class.
+
+Use the same candidate vocabulary for both the adapted classifier and the
+unmodified PlantCLEF head. Report coverage of the reserved labels by the
+development vocabulary, top-one accuracy on covered boxes, and per-class
+results. Keep out-of-vocabulary cases visible and report correct assignments
+over all reserved boxes. A ten-percentage-point increase in covered-box
+top-one accuracy is the development gate. Inference is limited to one tight
+crop per frozen source box and at most six crops per image. Hold crop policy
+and model weights fixed for this comparison.
