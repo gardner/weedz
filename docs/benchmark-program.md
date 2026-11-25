@@ -553,6 +553,28 @@ and review effort remain unmeasured.
 5. Run a small human usability pilot to measure actual effort. Specialist NZ
    verification remains necessary before claims about background discovery.
 
+## Separate NZ botanical discovery pool
+
+Screen plant-subject photographs near the same 12 public target neighborhoods
+used for the animal-subject habitat search. Plant-subject scenes may offer
+more visible habitat, especially when the foreground is a different plant.
+Use the first 100 ID-descending research observations from 2023–2025 within
+two kilometres of each anchor along each coordinate axis. Keep CC0 or CC BY
+originals with public coordinates and declared accuracy of at most 100 m.
+Exclude observations in all three target genera and records identified only
+above genus. This keeps the source identification distinct from the three
+target hints. Geography and subject labels are sampling cues for background
+discovery.
+
+Use the existing seeded acquisition order and admit up to three originals per
+neighborhood, considering at most 90 eligible rows per neighborhood. Apply the
+prior-pool observer, observation, pixel and encounter checks, plus the same
+checks within the discovery pool. Record source receipts before inference.
+Keep the blind and assisted pilot packages fixed during screening. Report
+fitness for a new assisted stratum against the frozen threshold and agreement
+rule. Incidental presence remains unverified until reviewed. This enriched
+sample cannot estimate incidental prevalence.
+
 ## Frozen classifier adaptation experiment
 
 Evaluate a session-balanced nearest-centroid classifier on the five reserved
