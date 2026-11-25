@@ -750,6 +750,48 @@ for gate behavior on real mixed vegetation, and its thresholds and error
 rates do not transfer automatically to the NZ pilot. Keep the NZ policy
 and reviewer packages fixed.
 
+All 15 newly scored frames passed the pixel checks. They carry 30
+publisher positives, two per image. The 100 m grouping resolves just four
+spatial components with 10, 2, 2 and 1 frames. Every frame is within 100 m of
+an image in the publisher's monolabel test partition. This proxy separates
+the fresh pixels from the project's inspected images and from publisher
+training and validation by the filename-coordinate rule. It has correlated
+scenes and unknown classifier pretraining exposure.
+
+At the 0.00545144 validation floor, the results were:
+
+| Rule | Mixed positives / suggestions | Monolabel reserve positives / suggestions |
+| --- | ---: | ---: |
+| Tile score only | 5 / 6 | 13 / 13 |
+| Tile and whole-photo PlantCLEF agreement | 2 / 3 | 7 / 7 |
+| Tile and whole-photo native-model agreement | 0 / 0 | 2 / 2 |
+| Tile and winning-crop native-model agreement | 0 / 0 | 0 / 0 |
+| Both whole-photo checks | 0 / 0 | 1 / 1 |
+| Whole-photo PlantCLEF and winning-crop native-model agreement | 0 / 0 | 0 / 0 |
+
+The one-suggestion budget caps mixed recovery at 15 of 30 positives. Crossing
+the floor without an agreement check recovered five. Removing the floor
+raised tile-only recovery to ten, while both native view rules still returned
+zero on the mixed scenes. The four monolabel no-species controls received no
+suggestions from any rule at the fixed floor. The small control set leaves
+precision unresolved. Tile-plus-whole PlantCLEF processed 17 views in about
+0.33 seconds per frame. The single native whole and tile checks averaged
+0.046–0.049 and 0.012–0.013 seconds per frame including preprocessing.
+
+The NZ model suppresses known Danish positives even on localized crops. Its
+vocabulary contains a member of every declared group and omits *Solidago
+gigantea*. None of the mixed images had an explicit *Solidago* label. The
+results explain a failure mode of the veto on this external proxy. A change
+to the NZ priority rule requires assessable local outcomes.
+
+A post hoc native rank audit of the five labeled, above-floor tile wins
+found zero in the full-vocabulary top five on either view. If restricted to
+the six target groups, the native head ranked the proposed target first on
+one of those five tiles and zero full photos. Broad vocabulary competition
+accounts for only a small part of the observed disagreement. Three of the
+five recoveries came from the largest spatial component and two from one
+other component. [Evaluation receipts and rank audit](../benchmarks/roadside-agreement-20261125.json)
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3

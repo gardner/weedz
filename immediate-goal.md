@@ -129,7 +129,10 @@ labeled image-species pairs at five suggestions per image. On the held-out
 Danish roadside subset, tiled PlantCLEF recovered 16 of 21 labeled positives at
 top one versus 10 for whole-photo classification. The released XP4 thresholds
 recovered 15 of 21 positives on that same subset using a variable number of
-suggestions. Incidental species recovery in NZ remains unmeasured.
+suggestions. On a separate Danish mixed-scene proxy, the native agreement
+check suppressed all five above-floor tile recoveries with explicit labels.
+Using the winning crop for that check recovered none of them. Incidental
+species recovery in NZ remains unmeasured.
 
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
