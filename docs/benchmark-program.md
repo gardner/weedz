@@ -673,3 +673,21 @@ The pilot comparison requires at least three eligible classes and a
 ten-percentage-point macro top-one gain on the reserve to merit a larger
 evaluation. Keep inference at one crop per image and report coverage,
 per-species results and paired gains or losses.
+
+The publisher ranges yielded 343 complete JPEGs. Of those, 109 had
+usable boxes under the declared taxonomy. Three classes met the independent
+session quota: white goosefoot, creeping thistle and field milk thistle.
+Five additional classes had mapped boxes but insufficient unassigned sessions,
+and two had no usable boxes in the downloaded ranges. The closed manifest
+contains 21 photos from 21 sessions, distributed as nine development,
+six validation and six reserve images. The earlier benchmark's sessions and
+decoded image identities were excluded. These are recording-session groups.
+Site independence remains unaudited.
+
+Validation chose C=0.1. On the six reserve boxes, the original restricted
+head and the fitted head each recovered 4/6. The fitted head gained a milk
+thistle match and lost a goosefoot match. Its zero-point macro change did
+not meet the frozen improvement gate. The result does not support carrying
+this head into the NZ workflow. The selected range receipts, split and
+comparison are indexed in
+[the balanced crop benchmark](../benchmarks/cropandweed-balanced-source-20261125.json).
