@@ -603,6 +603,22 @@ Run the unchanged NZ policy and report all outcomes separately from the
 handheld NZ pilot. Any candidate must be reviewed before a plant label or
 occurrence can be claimed.
 
+All 48 source originals were acquired and passed the site, pixel and
+perceptual checks. The frozen policy classified 47 as below-floor uncertain
+and one as a model disagreement. The strongest tile scored 0.39786 for
+*Cortaderia selloana* against the 0.13647 floor. Whole-photo PlantCLEF
+favored the same watchlist taxon, while the broad NZ model ranked song
+thrush first. The search crop contains grasslike foliage. It lacks enough
+reviewed evidence to assign a plant name. This is a real example of the
+agreement gate deferring a high-scoring background hint. Its correctness
+and the other frames' plant labels remain unmeasured.
+
+The separate one-task archive contains its full 2592×1944 source image,
+an exact source-pixel search crop, and the unverified hint. The archive
+passed checksum and task-payload verification. The case stays outside both
+handheld pilot arms and their analysis. No camera photo met the complete
+priority rule. [Camera evidence and bundle hashes](../benchmarks/nz-trailcam-discovery-20261125.json)
+
 ## Frozen classifier adaptation experiment
 
 Evaluate a session-balanced nearest-centroid classifier on the five reserved

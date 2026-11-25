@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "publisher": "https://lila.science/datasets/nz-trailcams",
+  "protocol_commit": "13c65d5",
+  "policy_commit": "aa4db4a",
+  "selected_sites": 48,
+  "screened_sites": 48,
+  "screened_projects": 12,
+  "acquisition": {
+    "accepted": 48
+  },
+  "exact_monochrome": 0,
+  "floor": 0.13646656274795532,
+  "elapsed_scoring_seconds": 22.630505078996066,
+  "decisions": {
+    "low_score_uncertain": 47,
+    "model_disagreement": 1
+  },
+  "max_tile_strength": 0.3978608548641205,
+  "label_scope": "Source animal subjects only. All weeds unreviewed. Site tokens have no coordinates.",
+  "artifacts": {
+    "nz-trailcam-discovery/collect.py": "04704a699e59a3ab6b63022b22359f46a24ae088d3b2d6149ea0e81ef2d1bec1",
+    "nz-trailcam-discovery/screen.py": "4c629fa3da9edb0b1599b53d584e4ea4d779cfb3eaf26874cdc7ff53e6f54a73",
+    "nz-trailcam-discovery/audit.py": "af5246813acdc349755ab4064966f0e88ab025b746d5330f0447c1009c8500a0",
+    "nz-trailcam-discovery/metadata-download.zip": "2592477c63db6b785427e32bae62bb0870fe67e7d4e56012ae880c8808d1baa0",
+    "nz-trailcam-discovery/source-frame.json": "7f1de11e2cd0f7549dd65cb1f60edbd01666d45b63eefd869fb553f146bcb5e4",
+    "nz-trailcam-discovery/pool-ready.json": "61c74870fe35592f68324a8c366cba9107b407d9ccdf9d135684fbf4de2901cc",
+    "nz-trailcam-discovery/assisted_pool.jsonl": "16b74e62dc2ba993a6bc420e27a5e3197917e9a0b2ac164630ab34ad4c479f8b",
+    "nz-trailcam-discovery/assisted-scores.json": "64f20926e9965fe3d6cf9399dc2bda496edce0fe58da2af25c80bb5187b63697",
+    "nz-trailcam-discovery/package_candidate.py": "bbc7d2e264adab71684e58efb3c1e0632442f15b4199be4a0b27c0701b44242c",
+    "nz-trailcam-discovery/nz-trailcam-disagreement-v1.zip": "032578556bd0fe43ccd94d5cf27a63ca6dd84526ce4ba45dce26b97967392601",
+    "nz-trailcam-discovery/review-candidate-package-v1/manifest.json": "d0c446e2e99f4a1a2147b3193d021184888d0dda5e60eba4a3718950a6961280",
+    "nz-trailcam-discovery/review-candidate-package-v1/tasks.json": "cde0a6f8b36b1f1eb1e7572569dde01d5c1203263a349bfef80dc6b48235e223"
+  },
+  "frozen_review_pins": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29",
+    "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
+    "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  },
+  "candidate": {
+    "proposed": "Cortaderia selloana",
+    "whole_photo_watchlist": "Cortaderia selloana",
+    "whole_photo_native_classifier": "Turdus philomelos",
+    "tile_strength": 0.3978608548641205,
+    "stratum": "model_disagreement",
+    "annotation_status": "unreviewed",
+    "reviewer_tasks": 1,
+    "archive": "nz-trailcam-discovery/nz-trailcam-disagreement-v1.zip",
+    "archive_sha256": "032578556bd0fe43ccd94d5cf27a63ca6dd84526ce4ba45dce26b97967392601"
+  }
+}

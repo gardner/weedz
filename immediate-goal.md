@@ -134,8 +134,10 @@ suggestions. Incidental species recovery in NZ remains unmeasured.
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
 target-subject controls. All package images and search crops passed a local
-review-interface check. Real incidental candidates above the priority threshold
-are still missing, and no human submissions or measured review times exist.
+review-interface check. No incidental frame has passed the full priority rule.
+A separate trail-camera case exceeded the tile score floor and was packaged
+for review as a model disagreement. No human submissions or measured review
+times exist.
 
 1. Keep the blind NZ sample and its sealed outputs fixed. Use a separate
    discovery pool for any additional independently sourced candidate positives
