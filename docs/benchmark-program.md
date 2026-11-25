@@ -960,6 +960,34 @@ controls and verify zero prompts on the nine already screened fresh photos
 before applying it to the incidental pools. This follow-up is exploratory
 because the fixed-margin comparison already exposed aggregate results.
 
+Both fixed-margin BioCLIP rules missed the review gate. The 309 control
+photos required 190 crops at or above the lower score floor. Inference and
+source verification took 12.55 seconds after loading the encoder.
+
+| Rule | Known targets recovered, out of 150 | Comparison prompts, out of 150 | Fresh comparison prompts, out of 9 |
+| --- | ---: | ---: | ---: |
+| Frozen whole-photo policy | 69 | 0 | 0 |
+| Tile score alone, frozen floor | 75 | 13 | 2 |
+| Tile score alone, lower floor | 141 | 45 | 3 |
+| Local BioCLIP, frozen floor, positive margin | 71 | 4 | 0 |
+| Local BioCLIP, lower floor, positive margin | 133 | 9 | 1 |
+
+The stronger fitted margin recovered **105/150** photographed targets in
+the omitted folds and added three comparison prompts, meeting the exploratory
+gate. The final refit used a 0.02411 cosine margin, recovered 95 photographed
+targets with two comparison prompts on the development fit, and prompted on
+zero of the nine fresh comparison photos. These are the same previously
+inspected subject controls and a small fresh comparison set.
+
+Of the 89 incidental photos, two handheld and ten camera frames reached the
+lower tile-score floor. Applying the fitted margin retained one handheld
+gorse suggestion and zero camera suggestions. The gorse photo already sits
+in assisted v3, so no additional reviewer task was created. Its identity
+remains unverified. This crop-local test produced an exploratory cue on a
+photo withheld by the whole-photo policy. The pilot tasks, original priority
+rule and sealed blind scores all stayed fixed.
+[Control, margin and incidental receipts](../benchmarks/nz-local-bioclip-20261125.json)
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3

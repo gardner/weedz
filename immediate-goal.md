@@ -145,6 +145,11 @@ score floor, up from 69, and added one prompt on a toetoe-subject photo.
 In the 89 unreviewed handheld and camera photos, the full-photo native
 check agreed with zero tile suggestions even with the score floor removed.
 
+An exploratory BioCLIP check on the winning tile recovered 105 of 150
+photographed targets across the grouped folds, with three comparison
+prompts. The refit surfaced one possible gorse case among the 89 incidental
+photos. That case is already in the assisted pilot and awaits human review.
+
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
 target-subject controls. All package images and search crops passed a local
