@@ -859,6 +859,35 @@ only check how often the rules generate review prompts on comparison
 photos. Local incidental recall still needs human evidence.
 [Frozen inputs and paired result counts](../benchmarks/nz-fresh-agreement-20261125.json)
 
+## Score floor replay with both NZ classifiers
+
+Compare the frozen score floor, no floor, a fitted shared floor and fitted
+taxon-specific floors. Require both whole-photo agreement checks for every
+suggestion. Reuse the cached PlantCLEF and native predictions. The proposal
+budget remains one per image. This tests a less restrictive review threshold
+without weakening the agreement condition.
+
+Group the 300 already inspected subject controls by observer, exact or
+perceptual image copies and public location proximity. Connect any two
+photos within 100 m plus their reported location uncertainties when both
+uncertainties are at most 100 m. Keep unsupported locations visible in the
+audit. Assign whole groups to five fixed stratified folds before loading
+model outputs. Fit each floor on four folds and report paired results on
+the omitted fold. Consider only floors at or below the frozen value. Pick
+the highest floor among those with maximum photographed-target recovery
+and no newly prompted comparison-subject photos. Comparison subjects
+include both native lookalikes and broom. In the taxon-specific variant,
+retain the original floor for a group with no additional recoveries.
+
+A variant needs at least three additional pooled out-of-fold subject
+recoveries and zero new comparison-subject prompts to advance. Fit the
+advancing rule once on all 300 development controls and replay it on the
+nine 2026 comparison photos and the separately screened, unreviewed NZ
+incidental pools. Require zero new prompts on the 2026 photos. Report new
+incidental suggestions as candidates for review. Photographed subject
+labels and cached, previously used model outputs limit the claims to
+development evidence. Keep the pilot rule and sealed blind decisions fixed.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
