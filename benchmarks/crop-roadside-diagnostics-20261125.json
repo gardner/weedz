@@ -11,7 +11,11 @@
     "roadside-source/xp4-smoke-report.json": "90a6ca9b79630c31fe4c7c1008993efdcf4bc70b2db14cb0405a925965e846cb",
     "roadside-source/membership.json": "c7edb615e5f0afce922cc17078fd61761a606fef4e8dd7e356f32595bf4fd3a1",
     "roadside-source/features-ready.json": "a90ca5203c92209ec1acea1833519c26f3a4e74ce87e0be6e6f478d6789a7a70",
-    "roadside-source/upstream-check-and-reserve.json": "6ccceaa56887d6372028109b3e8c97f6af6bc4c2cb6a82ff5a6890f17a433441"
+    "roadside-source/upstream-check-and-reserve.json": "6ccceaa56887d6372028109b3e8c97f6af6bc4c2cb6a82ff5a6890f17a433441",
+    "roadside-source/acquire_pixels.py": "759b3f7f2464cda19dc002fbdf51c92c2809f9453d11580f39ca6a93907496e7",
+    "roadside-source/compare_pixels.py": "fd0cc561d4c76f9fe4f679757da7f50ca5e29486e8d6980af08136a6965df9d1",
+    "roadside-source/pixels-ready.json": "7e59cd20da038a09ac3b2503dcdcc6ca8129c1f865f5526f08e9591ed6edabcd",
+    "roadside-source/plantclef-pixel-smoke-report.json": "1d5a51a19f9f41ead56f0af995d077b266d376fe6553de2ab3424cfc1c04f12a"
   },
   "imageweeds_crop_context": {
     "images": 138,
@@ -254,5 +258,73 @@
     },
     "geometry": "100 m separation by publisher filename coordinates",
     "status": "Reserved by filename and source class; pixels not fetched and no predictions computed"
+  },
+  "roadside_pixels": {
+    "acquired": 71,
+    "reserved_admitted": 25,
+    "reserved_quarantined": 0,
+    "scope": "Exact decoded copies and dHash distance <=4 vs acquired smoke and admitted frames"
+  },
+  "roadside_plantclef": {
+    "summary": {
+      "val_16": {
+        "positive_pairs": 13,
+        "whole": {
+          "1": 6,
+          "3": 9
+        },
+        "tiled": {
+          "1": 9,
+          "3": 13
+        }
+      },
+      "test_14": {
+        "positive_pairs": 12,
+        "whole": {
+          "1": 5,
+          "3": 10
+        },
+        "tiled": {
+          "1": 9,
+          "3": 11
+        }
+      },
+      "multilabel": {
+        "positive_pairs": 32,
+        "whole": {
+          "1": 8,
+          "3": 24
+        },
+        "tiled": {
+          "1": 14,
+          "3": 29
+        }
+      }
+    },
+    "mapping": [
+      [
+        "Solidago canadensis L.",
+        "Solidago gigantea Aiton"
+      ],
+      [
+        "Cytisus scoparius (L.) Link"
+      ],
+      [
+        "Rosa rugosa Thunb."
+      ],
+      [
+        "Lupinus polyphyllus Lindl."
+      ],
+      [
+        "Pastinaca sativa L."
+      ],
+      [
+        "Reynoutria japonica Houtt.",
+        "Reynoutria sachalinensis (F.Schmidt) Nakai"
+      ]
+    ],
+    "measured_seconds": 18.900776586000575,
+    "forward_images": 782,
+    "scope": "Rank six declared targets using full-softmax scores. Tile max uses 16 crops. Smoke fixture only."
   }
 }

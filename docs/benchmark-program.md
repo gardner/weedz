@@ -172,6 +172,29 @@ frame. The four-frame cap per folder left two classes short under the distance
 rule. All four source dates remain shared. Training exposure outside the publisher
 split and independent acquisition sites remain unknown.
 
+The 46 smoke images and 25 reserved originals were downloaded and checksum
+verified. The reserved frames passed exact decoded RGB matching and a 64-bit
+dHash check at Hamming distance <=4 against the acquired smoke images and one
+another. This image check covers those 71 files. The broader source-split audit
+uses filenames and coordinates. The reserved images remain unscored.
+
+A PlantCLEF pixel baseline screened the same 46 smoke frames for the six
+declared roadside targets. It retained the full softmax denominator, took the
+maximum score across mapped species for each grouped target and compared one
+whole-image crop with the maximum over 16 equal-grid crops. The table uses the
+same one- and three-target budgets as the XP4 smoke check.
+
+| Smoke split | XP4 top 1 / top 3 | PlantCLEF whole top 1 / top 3 | PlantCLEF tiles top 1 / top 3 |
+| --- | ---: | ---: | ---: |
+| Validation, 13 positive pairs | 2 / 13 | 6 / 9 | 9 / 13 |
+| Test, 12 positive pairs | 3 / 11 | 5 / 10 | 9 / 11 |
+| Multilabel, 32 positive pairs | 1 / 19 | 8 / 24 | 14 / 29 |
+
+The PlantCLEF run processed 782 crops in 18.90 seconds on an RTX 5090, including
+image loading. Use the tiled variant as the stronger pixel baseline for the next
+development comparison. The smoke fixture is bounded and spatially exposed,
+and positive-pair recovery does not measure false alarms or reviewer effort.
+
 The private reports and producer scripts are indexed in
 [the tracked aggregate summary](../benchmarks/crop-roadside-diagnostics-20261125.json).
 
@@ -180,10 +203,10 @@ The private reports and producer scripts are indexed in
 1. Expand the split audit to another species-box source with documented capture
    groups. Compare eligible domain-suited classifiers against the measured
    ImageWeeds crop baseline and preserve a fresh evaluation cohort.
-2. Compare image-based whole-photo, tile and region models on the roadside smoke
-   fixture using an explicit taxon mapping and equal final output budgets. Use
-   the reserved cohort after freezing the policies. Report the XP4 score and
-   feature costs separately from those of models that run from pixels.
+2. Add the region model to the whole-photo and tile comparisons on the roadside
+   smoke fixture using the same target mapping and output budgets. Use the
+   reserved cohort after freezing the policies. Report the XP4 score and feature
+   costs separately from those of models that run from pixels.
 3. Obtain or recreate the official validation thresholds before claiming
    reproduction of XP4's published operating point. Add usable PlantCLEF plot
    labels if available and preserve domain-specific reports.
