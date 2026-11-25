@@ -652,3 +652,24 @@ Four extra model input frames cost an average of 0.85 seconds per source photo,
 including window preparation and proposal handling. The small net gain does not
 justify switching the frozen NZ workflow. The development-only results are
 indexed in [the mask localization summary](../benchmarks/phenobench-mask-errors-20261125.json).
+
+## Balanced crop adaptation protocol
+
+Use 32 fixed 16 MiB ranges spread across the four CropAndWeed image
+archives. Admit complete JPEG records with verified source boxes and
+exclude sessions from the earlier adaptation experiment. Within these
+ranges, admit a class only when seven distinct sessions can be assigned
+without reuse across classes or splits. Select one source box per session,
+with three development, two validation and two reserve sessions per class.
+Record the classes skipped by this rule and keep the sample scope explicit.
+
+Freeze tight source box crops and the existing PlantCLEF backbone for both
+models. Fit L2-regularized multinomial logistic regression on normalized
+development embeddings. Test C values 0.1, 1 and 10 on validation. Select the
+highest macro top-one score with smaller C breaking ties. Compare the
+selected head with the original head restricted to the same classes on a
+single reserve pass. Fit and select using development and validation only.
+The pilot comparison requires at least three eligible classes and a
+ten-percentage-point macro top-one gain on the reserve to merit a larger
+evaluation. Keep inference at one crop per image and report coverage,
+per-species results and paired gains or losses.
