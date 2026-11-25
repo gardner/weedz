@@ -827,6 +827,38 @@ under any rule, so they need no new inference. Keep the fresh and development
 denominators separate. The development controls can explain trade-offs when
 fresh strata are sparse and can motivate future validation.
 
+The 2026 source frame returned 206 eligible observations. The observer or
+observation exclusion removed 197, including all 101 for the three watchlist
+taxa. The remaining originals comprised five native clematis, two toetoe and
+two broom subjects. All nine passed source and pixel rechecks. The score-only
+rule suggested a watchlist species on two photos. The original agreement
+rule and both winning-tile variants withheld both suggestions. The source
+labels identify the photographed lookalike or broom. Plants elsewhere in the
+same image remain unassessed. Since there was no target stratum and two
+control strata fell below four images, the advancement gate was unevaluable.
+
+On the 300 previously inspected subjects, the replay reproduced the existing
+69 recoveries and zero suggestions on comparison subjects. The target and
+comparison columns each contain 150 photos.
+
+| Rule | Watchlist subject recoveries | Suggestions on lookalike or broom photos |
+| --- | ---: | ---: |
+| Tile score only | 75 | 13 |
+| Frozen whole-photo agreement | 69 | 0 |
+| Native winning-tile agreement | 60 | 2 |
+| Whole-photo PlantCLEF and native winning-tile agreement | 60 | 2 |
+
+Both tile agreement variants recovered five targets the original rule missed
+and lost 14 it had recovered. The five net losses among pampas subjects and
+four among gorse subjects explain the total decline. The variants also added
+one suggestion each on a native clematis and a toetoe photo. New inference
+was limited to 88 above-floor crops and averaged 0.013 seconds per crop for
+native preprocessing and forward inference. These development results favor
+keeping the original agreement as the pilot baseline. The fresh cohort can
+only check how often the rules generate review prompts on comparison
+photos. Local incidental recall still needs human evidence.
+[Frozen inputs and paired result counts](../benchmarks/nz-fresh-agreement-20261125.json)
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3

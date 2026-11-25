@@ -134,6 +134,12 @@ check suppressed all five above-floor tile recoveries with explicit labels.
 Using the winning crop for that check recovered none of them. Incidental
 species recovery in NZ remains unmeasured.
 
+On the existing NZ subject controls, changing the native check to the
+winning crop reduced watchlist-subject recovery from 69 to 60 of 150 and
+added two suggestions on lookalike photos. The separate 2026 acquisition
+supplied nine comparison photos and zero target-subject photos after the
+overlap checks. Neither result supports changing the frozen pilot rule.
+
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
 target-subject controls. All package images and search crops passed a local

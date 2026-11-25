@@ -1,0 +1,649 @@
+{
+  "schema": 1,
+  "protocol_commit": "066148d",
+  "policy_commit": "aa4db4a",
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "sources": {
+    "Clematis vitalba": 32,
+    "Cortaderia selloana": 37,
+    "Ulex europaeus": 32,
+    "Clematis paniculata": 49,
+    "Austroderia fulvida": 12,
+    "Cytisus scoparius": 44
+  },
+  "acquired": {
+    "Clematis vitalba": 0,
+    "Cortaderia selloana": 0,
+    "Ulex europaeus": 0,
+    "Clematis paniculata": 5,
+    "Austroderia fulvida": 2,
+    "Cytisus scoparius": 2
+  },
+  "exclusions": {
+    "observation_or_observer": 197
+  },
+  "score_floor": 0.13646656274795532,
+  "advance_gate_eligible": false,
+  "mean_local_seconds": 0.06486628343635756,
+  "elapsed_seconds": 3.4384395249944646,
+  "results": {
+    "tile_score_only": {
+      "images": 9,
+      "suggestions": 2,
+      "target_subject_hits": 0,
+      "wrong_target_subject_suggestions": 0,
+      "other_subject_suggestions": 2,
+      "paired_gained_subject_hits": 0,
+      "paired_lost_subject_hits": 0,
+      "new_other_subject_suggestions": 2,
+      "conditions_met": false,
+      "advance_gate": null,
+      "by_taxon": {
+        "Clematis vitalba": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Cortaderia selloana": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Ulex europaeus": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Clematis paniculata": {
+          "images": 5,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Austroderia fulvida": {
+          "images": 2,
+          "suggestions": 2,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 2,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 2
+        },
+        "Cytisus scoparius": {
+          "images": 2,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        }
+      }
+    },
+    "frozen_both_whole": {
+      "images": 9,
+      "suggestions": 0,
+      "target_subject_hits": 0,
+      "wrong_target_subject_suggestions": 0,
+      "other_subject_suggestions": 0,
+      "paired_gained_subject_hits": 0,
+      "paired_lost_subject_hits": 0,
+      "new_other_subject_suggestions": 0,
+      "conditions_met": false,
+      "advance_gate": null,
+      "by_taxon": {
+        "Clematis vitalba": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Cortaderia selloana": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Ulex europaeus": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Clematis paniculata": {
+          "images": 5,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Austroderia fulvida": {
+          "images": 2,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Cytisus scoparius": {
+          "images": 2,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        }
+      }
+    },
+    "native_tile_only": {
+      "images": 9,
+      "suggestions": 0,
+      "target_subject_hits": 0,
+      "wrong_target_subject_suggestions": 0,
+      "other_subject_suggestions": 0,
+      "paired_gained_subject_hits": 0,
+      "paired_lost_subject_hits": 0,
+      "new_other_subject_suggestions": 0,
+      "conditions_met": false,
+      "advance_gate": null,
+      "by_taxon": {
+        "Clematis vitalba": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Cortaderia selloana": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Ulex europaeus": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Clematis paniculata": {
+          "images": 5,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Austroderia fulvida": {
+          "images": 2,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Cytisus scoparius": {
+          "images": 2,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        }
+      }
+    },
+    "plantclef_whole_plus_native_tile": {
+      "images": 9,
+      "suggestions": 0,
+      "target_subject_hits": 0,
+      "wrong_target_subject_suggestions": 0,
+      "other_subject_suggestions": 0,
+      "paired_gained_subject_hits": 0,
+      "paired_lost_subject_hits": 0,
+      "new_other_subject_suggestions": 0,
+      "conditions_met": false,
+      "advance_gate": null,
+      "by_taxon": {
+        "Clematis vitalba": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Cortaderia selloana": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Ulex europaeus": {
+          "images": 0,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Clematis paniculata": {
+          "images": 5,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Austroderia fulvida": {
+          "images": 2,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        },
+        "Cytisus scoparius": {
+          "images": 2,
+          "suggestions": 0,
+          "target_subject_hits": 0,
+          "wrong_target_subject_suggestions": 0,
+          "other_subject_suggestions": 0,
+          "paired_gained_subject_hits": 0,
+          "paired_lost_subject_hits": 0,
+          "new_other_subject_suggestions": 0
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "nz-fresh-agreement/collect.py": "1cb1f4fbcf2bfec138f775e230248a3efbe9d986882a1e66800ab0b0567c0f71",
+    "nz-fresh-agreement/screen.py": "62947a2339b8bf08146f5fd7abde8f434efca45c83b01f214b898c7488f2283a",
+    "nz-fresh-agreement/evaluate.py": "bcac5ca92b4a802e70d386178e6857676fb9567d79bc64dbd72d00ea2146798b",
+    "nz-fresh-agreement/source-frame.json": "d4100379df89328ece7c1e866710eca84854cef404d158a52510d4cda922a7ae",
+    "nz-fresh-agreement/pool-ready.json": "06477ce128bc03f54981f1c30712d30a0f4a6da54db49715582f18e9660fb0ce",
+    "nz-fresh-agreement/assisted_pool.jsonl": "86297229cfcab1c0115366ee0c1a5446ab74548b45917d39d62c44581dc8313b",
+    "nz-fresh-agreement/raw-predictions.json": "52791265036c8617c67097e6d8d1fb0a4339c983814d504ffb605081a768656f",
+    "nz-fresh-agreement/development-native-tile-predictions.json": "c696d626e0e529c0755304712ee7681f50b21ff3bc3fe1e17c93bb64c900e5a6",
+    "nz-fresh-agreement/development-agreement-report.json": "56bad65fa9ce31151d78ffa1ad45d8e93fab12674351eceece7c05c8c6acbf39",
+    "nz-fresh-agreement/replay_development.py": "2022eee21b6955081086290d7ea9867c7be97633d9ed6f2ebcdc73288a0f4113"
+  },
+  "scope": "Research-grade photographed subjects only. Lookalike suggestions remain unassessed for plant presence elsewhere in the photo.",
+  "frozen_review_pins": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29",
+    "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
+    "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  },
+  "development_replay": {
+    "protocol_commit": "1814df6",
+    "predictions_sha256": "c696d626e0e529c0755304712ee7681f50b21ff3bc3fe1e17c93bb64c900e5a6",
+    "labels_sha256": "ef2f1b931544e4bd4ab784fd0fbab2b1cc5480579281243c2b34b20617b7703e",
+    "results": {
+      "tile_score_only": {
+        "images": 300,
+        "suggestions": 88,
+        "target_subject_hits": 75,
+        "wrong_target_subject_suggestions": 0,
+        "other_subject_suggestions": 13,
+        "paired_gained_subject_hits": 6,
+        "paired_lost_subject_hits": 0,
+        "new_other_subject_suggestions": 13,
+        "by_taxon": {
+          "Clematis vitalba": {
+            "images": 50,
+            "suggestions": 27,
+            "target_subject_hits": 27,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 2,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Cortaderia selloana": {
+            "images": 50,
+            "suggestions": 33,
+            "target_subject_hits": 33,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 2,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Ulex europaeus": {
+            "images": 50,
+            "suggestions": 15,
+            "target_subject_hits": 15,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 2,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Clematis paniculata": {
+            "images": 50,
+            "suggestions": 1,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 1,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 1
+          },
+          "Austroderia fulvida": {
+            "images": 50,
+            "suggestions": 12,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 12,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 12
+          },
+          "Cytisus scoparius": {
+            "images": 50,
+            "suggestions": 0,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          }
+        }
+      },
+      "frozen_both_whole": {
+        "images": 300,
+        "suggestions": 69,
+        "target_subject_hits": 69,
+        "wrong_target_subject_suggestions": 0,
+        "other_subject_suggestions": 0,
+        "paired_gained_subject_hits": 0,
+        "paired_lost_subject_hits": 0,
+        "new_other_subject_suggestions": 0,
+        "by_taxon": {
+          "Clematis vitalba": {
+            "images": 50,
+            "suggestions": 25,
+            "target_subject_hits": 25,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Cortaderia selloana": {
+            "images": 50,
+            "suggestions": 31,
+            "target_subject_hits": 31,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Ulex europaeus": {
+            "images": 50,
+            "suggestions": 13,
+            "target_subject_hits": 13,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Clematis paniculata": {
+            "images": 50,
+            "suggestions": 0,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Austroderia fulvida": {
+            "images": 50,
+            "suggestions": 0,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          },
+          "Cytisus scoparius": {
+            "images": 50,
+            "suggestions": 0,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          }
+        }
+      },
+      "native_tile_only": {
+        "images": 300,
+        "suggestions": 62,
+        "target_subject_hits": 60,
+        "wrong_target_subject_suggestions": 0,
+        "other_subject_suggestions": 2,
+        "paired_gained_subject_hits": 5,
+        "paired_lost_subject_hits": 14,
+        "new_other_subject_suggestions": 2,
+        "by_taxon": {
+          "Clematis vitalba": {
+            "images": 50,
+            "suggestions": 25,
+            "target_subject_hits": 25,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 2,
+            "paired_lost_subject_hits": 2,
+            "new_other_subject_suggestions": 0
+          },
+          "Cortaderia selloana": {
+            "images": 50,
+            "suggestions": 26,
+            "target_subject_hits": 26,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 2,
+            "paired_lost_subject_hits": 7,
+            "new_other_subject_suggestions": 0
+          },
+          "Ulex europaeus": {
+            "images": 50,
+            "suggestions": 9,
+            "target_subject_hits": 9,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 1,
+            "paired_lost_subject_hits": 5,
+            "new_other_subject_suggestions": 0
+          },
+          "Clematis paniculata": {
+            "images": 50,
+            "suggestions": 1,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 1,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 1
+          },
+          "Austroderia fulvida": {
+            "images": 50,
+            "suggestions": 1,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 1,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 1
+          },
+          "Cytisus scoparius": {
+            "images": 50,
+            "suggestions": 0,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          }
+        }
+      },
+      "plantclef_whole_plus_native_tile": {
+        "images": 300,
+        "suggestions": 62,
+        "target_subject_hits": 60,
+        "wrong_target_subject_suggestions": 0,
+        "other_subject_suggestions": 2,
+        "paired_gained_subject_hits": 5,
+        "paired_lost_subject_hits": 14,
+        "new_other_subject_suggestions": 2,
+        "by_taxon": {
+          "Clematis vitalba": {
+            "images": 50,
+            "suggestions": 25,
+            "target_subject_hits": 25,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 2,
+            "paired_lost_subject_hits": 2,
+            "new_other_subject_suggestions": 0
+          },
+          "Cortaderia selloana": {
+            "images": 50,
+            "suggestions": 26,
+            "target_subject_hits": 26,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 2,
+            "paired_lost_subject_hits": 7,
+            "new_other_subject_suggestions": 0
+          },
+          "Ulex europaeus": {
+            "images": 50,
+            "suggestions": 9,
+            "target_subject_hits": 9,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 1,
+            "paired_lost_subject_hits": 5,
+            "new_other_subject_suggestions": 0
+          },
+          "Clematis paniculata": {
+            "images": 50,
+            "suggestions": 1,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 1,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 1
+          },
+          "Austroderia fulvida": {
+            "images": 50,
+            "suggestions": 1,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 1,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 1
+          },
+          "Cytisus scoparius": {
+            "images": 50,
+            "suggestions": 0,
+            "target_subject_hits": 0,
+            "wrong_target_subject_suggestions": 0,
+            "other_subject_suggestions": 0,
+            "paired_gained_subject_hits": 0,
+            "paired_lost_subject_hits": 0,
+            "new_other_subject_suggestions": 0
+          }
+        }
+      }
+    },
+    "local_native_inferences": 88,
+    "mean_local_forward_seconds": 0.012642056102115683,
+    "source_images": 300,
+    "scope": "Previously inspected development controls, not fresh held-out data or scene-level precision."
+  }
+}
