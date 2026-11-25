@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "protocol": "a42ace9",
+  "projects_excluded": 20,
+  "eligible_projects": 14,
+  "sampled_sites": 112,
+  "screened_sites": 112,
+  "screened_projects": 14,
+  "acquisition": {
+    "accepted": 112
+  },
+  "resumed_source_downloads": 77,
+  "outcomes": {
+    "photos": 112,
+    "above_local_floor": 11,
+    "positive_matching_margins": 2,
+    "exploratory_suggestions": 2,
+    "pilot_priority": 0,
+    "pilot_model_disagreement": 1,
+    "pilot_low_score_uncertain": 111
+  },
+  "local_inference_seconds": 1.0595869199896697,
+  "reviewer_tasks": 2,
+  "archive": "nz-trailcam-transfer/nz-camera-transfer-cues-v1.zip",
+  "review_cues": [
+    {
+      "taxon_prompt": "Ulex europaeus",
+      "size": [
+        3712,
+        2088
+      ],
+      "bounds": [
+        928,
+        0,
+        1856,
+        522
+      ],
+      "tile_score": 0.14602293074131012,
+      "bioclip_margin": 0.062083,
+      "biologically_unreviewed": true
+    },
+    {
+      "taxon_prompt": "Clematis vitalba",
+      "size": [
+        1920,
+        1080
+      ],
+      "bounds": [
+        0,
+        540,
+        480,
+        810
+      ],
+      "tile_score": 0.06125436723232269,
+      "bioclip_margin": 0.031841,
+      "biologically_unreviewed": true
+    }
+  ],
+  "artifacts": {
+    "nz-trailcam-transfer/collect.py": "03398969d8e015f07bf95ff69aef4d28945b85cf88018e8d9360709287c374aa",
+    "nz-trailcam-transfer/collect_selection_original.py": "28d7b3bddc7eaad5638781e601746a7d86bb3a8d3a155c704ec22231cb0844eb",
+    "nz-trailcam-transfer/score_pilot.py": "624b43db9266ca3116b6da9de3fa9d860d90c3b862401cf81972c90a870154ad",
+    "nz-trailcam-transfer/score_local.py": "bc764d8b61e539b40e24c9105f13526dc8f1188b9b7aa78019e11700408c4d87",
+    "nz-trailcam-transfer/audit_transfer.py": "0454836e3e7210b22f9f2f9d5da480d699ebd374581d5bf051992a52c03024c8",
+    "nz-trailcam-transfer/source-frame.json": "3b827c6fb4aa1d4136e7266a0c01bcc42181f028f7f552e69474b40c28403e1d",
+    "nz-trailcam-transfer/pool-ready.json": "67ecef5fe7be62f30075ebf36f8844e9eb1738e3759cc88a568f2b994b745148",
+    "nz-trailcam-transfer/assisted_pool.jsonl": "5c1a6f5248b8c0bd55c568cffa65a244a2cde91fbe2f8e7e04fe37a8a68dc139",
+    "nz-trailcam-transfer/assisted-scores.json": "18f7a3a7046f7134e66b5a4d3aade3229cf65b17f63aa3d21b27587a88c9758e",
+    "nz-trailcam-transfer/local-tile-scores.json": "dc7d23842d5c37a8bfbab5a0eed95936def25cd150b17e32ea71b91585245dab",
+    "nz-trailcam-transfer/nz-camera-transfer-cues-v1.zip": "0d534329b53e50916144214b9ef45189a3b682bf553d979fcfe81d5e9d293980",
+    "nz-trailcam-transfer/exploratory-package-v1/manifest.json": "6021bcc19c1e2593dcc590d39b19baec4500bb803d1f989fc653aa58582e72ed",
+    "nz-trailcam-transfer/exploratory-package-v1/tasks.json": "6bc1ab464ad783d8fa4171819c446f88848e9597f5dbd1e63cffca1994543680"
+  },
+  "frozen_review_pins": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29",
+    "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
+    "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  }
+}

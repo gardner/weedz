@@ -1010,6 +1010,25 @@ Select by descending BioCLIP margin, then PlantCLEF score and source ID.
 Full images and exact search tiles remain unreviewed. No supplemental case
 enters the handheld pilot or the blind outcome analysis.
 
+Fourteen projects met the eight-site minimum after excluding 20 exposed
+projects. All 112 selected sites supplied an original, with no exact or
+near-pixel duplicates admitted. Acquisition resumed from 77 saved originals
+after widening the loader to accept a nested publisher image path. The
+source selection stayed fixed.
+
+The pilot rule returned zero priority suggestions, one model disagreement
+and 111 low-score outcomes. Eleven tiles reached the local score floor.
+BioCLIP produced two matching margins above 0.02411, on frames from different
+projects. One suggests gorse in a color frame and one suggests old man's
+beard in a monochrome frame. The crops contain visible vegetation and match
+their source geometry. Both identities remain unreviewed.
+
+The separate two-task archive uses full source images, exact search crops
+and standard watchlist choices, including uncertainty. The cases exercise
+the crop-local rule on fresh camera projects. They cannot establish plant
+presence, recall or precision. The pilot packages and sealed hashes still
+match their receipts. [Camera transfer and packet evidence](../benchmarks/nz-camera-transfer-20261125.json)
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3

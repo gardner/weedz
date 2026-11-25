@@ -149,6 +149,9 @@ An exploratory BioCLIP check on the winning tile recovered 105 of 150
 photographed targets across the grouped folds, with three comparison
 prompts. The refit surfaced one possible gorse case among the 89 incidental
 photos. That case is already in the assisted pilot and awaits human review.
+The same fixed rule surfaced two more cues on 112 frames from new camera
+projects. They are in a separate supplemental review bundle, with no
+botanical label assigned.
 
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
