@@ -4,6 +4,18 @@ We’re checking whether ordinary New Zealand photos contain identifiable weeds,
 including plants in the background. We’re also testing how easy the review
 tool is to use. Base each submission on what you can see in the photo.
 
+## Open your assigned review
+
+This pilot uses **Label Studio**. Ask the pilot coordinator for your project
+link. The current handoff consists of offline ZIPs for the coordinator to
+import into separate Label Studio projects. These download links work from the
+project workspace.
+
+- [Handheld blind review, 16 photos](../../weedz-evaluation-artifacts/20261125/pilot-reviewer-handoff/nz-pilot-blind-v1.zip)
+- [Handheld assisted review, 21 photos](../../weedz-evaluation-artifacts/20261125/pilot-reviewer-handoff/nz-pilot-assisted-v3.zip)
+- [Optional camera review, 1 photo](../../weedz-evaluation-artifacts/20261125/nz-trailcam-discovery/nz-trailcam-disagreement-v1.zip)
+- [Optional camera review, 2 photos](../../weedz-evaluation-artifacts/20261125/nz-trailcam-transfer/nz-camera-transfer-cues-v1.zip)
+
 ## What to look for
 
 | Common name | Name in Label Studio |
