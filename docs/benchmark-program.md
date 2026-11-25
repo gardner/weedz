@@ -715,6 +715,40 @@ the next source of scene-level evidence.
 These experiments and the local review checks are indexed in the
 [follow-up summary](../benchmarks/nz-readiness-followup-20261125.json).
 
+## Whole-photo and local agreement on labeled roadside scenes
+
+Use the 206-image Danish publisher multilabel frame to find a fresh paired
+proxy for background discovery. Exclude filenames or frames within 100 m
+of publisher training, publisher validation, the inspected smoke sets and
+the previously scored 25-frame reserve. Keep the remaining multilabel
+frames, audit proximity to the publisher mono-label test partition, and
+screen for exact decoded copies and dHash distance at most four against
+the 71 previously acquired source pixels. Within the new cohort collapse
+the same types of pixel duplicates in seeded filename order. Keep all
+remaining labels, including frames with several positive targets. This
+selection is independent of model scores. Run the 25 already scored
+monolabel frames as a separate comparison.
+
+Freeze the six PlantCLEF target groups and their pinned native-model
+synonyms. Rank one maximum-scoring 4×4 tile target per image using the
+full softmax denominator. Compare the original proposal, whole-photo
+PlantCLEF agreement alone, the two-model whole-photo agreement rule,
+and broad native-model agreement on the winning tile alone. Run at a
+ceiling of one suggestion per image. Apply the same checked tile-score
+floor to every rule, the median maximum tile score among the 13 explicitly
+positive quick validation frames. Also report the floor-free comparison
+to separate the gate from threshold coverage. Keep both native branches
+to one view per image, and time them separately.
+
+Join source positives after saving scores. Report recovery of annotated
+pairs, losses and gains on the same proposals, accepted suggestions without
+an explicit source label, and calls on the four monolabel no-species
+controls. No unlabeled target contributes a false-positive count. The
+Danish scene labels have no within-image plant locations. This is a proxy
+for gate behavior on real mixed vegetation, and its thresholds and error
+rates do not transfer automatically to the NZ pilot. Keep the NZ policy
+and reviewer packages fixed.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
