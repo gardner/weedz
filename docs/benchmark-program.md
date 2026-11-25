@@ -367,14 +367,91 @@ No timing or botanist review outcome has been collected.
 The first acquisition and bundle verification are indexed in the
 [pilot acquisition summary](../benchmarks/nz-paired-pilot-20261125.json).
 
+## Incidental agreement and habitat diagnostics
+
+Agreement with a whole-photo classifier penalizes incidental detections when
+the photographed subject dominates the image. A controlled stress test pasted
+24 source-labeled watchlist photo crops into separate animal-subject frames in
+known tiles. Each was tested at two sizes. The model received image pixels and
+the same three-target watchlist. The planted images stay outside both review
+arms and serve as a diagnostic of the decision rule.
+
+| Planted crop size | Correct target and tile | Retained by whole-photo rule | Retained by local agreement at frozen floor | Local agreement before the floor |
+| --- | ---: | ---: | ---: | ---: |
+| Full tile | 19/24 | 0 | 4 | 14 |
+| Half tile width and height | 18/24 | 0 | 1 | 13 |
+
+The local check classifies the selected tile with native EfficientNet. It agreed
+with zero PlantCLEF target suggestions on the 26 real incidental controls.
+The pasted crop sizes and source subjects are known. Their realism, botanical
+visibility within each crop, and performance in real background scenes remain
+unverified. Preserve the frozen priority rule and retain local agreement as a
+development comparison.
+
+A separate habitat search queried 12 public watchlist neighborhoods using
+1.2 km axis-aligned bounds from each anchor. It returned 648 records before
+eligibility, overlap and image checks. Ten original bird, mammal or reptile
+photos passed acquisition and separation checks. All ten fell below the floor.
+Proximity to a watchlist observation is an acquisition cue. Species presence
+in a returned image needs image evidence and human review.
+
+Assisted package v2 preserves the 15 v1 tasks and adds four below-floor
+challenge cases. Two have the highest remaining incidental scores from the
+previous pools, and two have the highest scores in the habitat pool. All
+four retain their uncertain priority status. The first of the old-pool
+examples shows small yellow flowers in distant shrubbery, a visual cue worth
+checking without treating the model's species suggestion as verified. The
+latest package pairs **19 assisted** with the original **16 blind** tasks,
+with observer, observation, image and encounter separation rechecked.
+
+## External source-box benchmark with recording sessions
+
+The [CropAndWeed authors' release](https://github.com/cropandweed/cropandweed-dataset)
+provides source boxes and identifies acquisition sessions in filenames. The
+full annotation archive has 8,034 image records and 929 session keys. The
+[dataset paper](https://openaccess.thecvf.com/content/WACV2023/papers/Steininger_The_CropAndWeed_Dataset_A_Multi-Modal_Learning_Approach_for_Efficient_Crop_and_Weed_Manipulation_WACV_2023_paper.pdf)
+describes sessions as site or experimental plot at a capture time. The
+downloaded annotation parameters contain capture conditions. They do not
+prove that different sessions use distinct physical sites.
+
+Acquisition was bounded to the first 40 MiB of each of the four official
+image archives. After checking complete JPEG records, decoded duplicates and
+boxes mapped to the pinned classifier vocabularies, the bounded fixture covered
+13 sessions. Eight development sessions supplied 14 images and 49 sampled
+boxes. Five reserve sessions contain ten images and remain unscored.
+Results apply to the selected prefixes, rather than estimating population
+performance across the archive. The terms permit noncommercial research
+and restrict distribution. Images and annotations stay private.
+
+| Box crop | PlantCLEF top 1 / top 5 | NZ EfficientNet top 1 / top 5 |
+| --- | ---: | ---: |
+| Tight | 1 / 1 | 0 / 1 |
+| Square with 25% context | 0 / 2 | 1 / 2 |
+
+Each model's full vocabulary covers the taxon for every scored box. The
+crops represent five supported taxa. Low accuracy persists with source box geometry,
+and neither preprocessing nor substituting the NZ model provides a useful
+improvement here. Keep this fixture for classifier and domain diagnostics.
+It says nothing about nameable plants missed by a proposal stage or NZ field
+accuracy.
+
+The [PlantCLEF 2024](https://www.imageclef.org/PlantCLEF2024) and
+[2025](https://www.imageclef.org/PlantCLEF2025) publisher archives exposed test
+image headers and metadata CSVs through HTTP range requests. The 2024 CSV has
+1,695 entries and the 2025 CSV has 2,105. Both contain plot identities, author,
+date and license. These CSVs provide provenance. Row-level species truth
+remains unverified in the public download, so no official plot scores were computed.
+
+The grouped-source, decision-rule and packet results are indexed in the
+[latest diagnostic summary](../benchmarks/nz-context-and-grouped-source-20261125.json).
+
 ## Remaining work and next experiment
 
-1. Expand the split audit to another species-box source with documented capture
-   groups. Compare eligible domain-suited classifiers against the measured
-   ImageWeeds crop baseline and preserve a fresh evaluation cohort.
-2. Expand the incidental search pool for high priority and disagreement
-   cases. Preserve the bounded and original frozen selection as evidence of
-   the measured shortfall.
+1. Use the development CropAndWeed sessions to test a classifier adapted to
+   agricultural seedling views. Retain the reserved sessions for verification.
+2. Test a development policy that avoids vetoing visible incidental targets
+   based on foreground identity. Verify the candidate quality on real photos
+   with human outcomes before selecting a revised operating point.
 3. Obtain or recreate the official validation thresholds before claiming
    reproduction of XP4's published operating point. Add usable PlantCLEF plot
    labels if available and preserve domain-specific reports.

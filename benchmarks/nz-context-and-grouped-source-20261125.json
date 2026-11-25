@@ -1,0 +1,236 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "artifacts": {
+    "grouped-source-audit/audit.py": "538558065266ba28937eba7760e7bbedd54c69aff5db9f897ed62a29ad7d9451",
+    "grouped-source-audit/classify.py": "776749cd58b9fab44d542c3fe1e3a525afee982c14deb10ebdbc9f83ac4c0168",
+    "grouped-source-audit/classify_context.py": "1ce048f4ca9906cb72563a3c5cef236d13e2ac3a3dececbf4775d8bd9581d30b",
+    "grouped-source-audit/grouped-ready.json": "7f1e42912592aca6215fcec4fca31e291ff8e3fbd060f3495f272e9f4211f954",
+    "grouped-source-audit/development-report.json": "52cadef16658d5204e5b2c35ce34b8e113ba13b92d8c906a1ca4049d03fcfa9b",
+    "grouped-source-audit/context-development-report.json": "5642c645f6a0e17008acdc83908f193a37a86fd545b71dfdd17c4b822af3a163",
+    "grouped-source-audit/plantclef2024-tail.bin": "2eb2c3052642e7ade5dfb9d3f81ed113bade3b702886b55ffd116295f92c2437",
+    "grouped-source-audit/plantclef2025-tail.bin": "72c64c0f09d189fa8231a8623ebaa42e33ea1a053b70456ec4b3cba38cb45b66",
+    "grouped-source-audit/plantclef2024-prefix.tar": "0a6aae5baaff31e1a1806bba9980be73d8eafb61a922d4c1cbf3a1790f0569b7",
+    "grouped-source-audit/plantclef2025-prefix.tar": "ddc2916dfefa4d70952515d58a3c653e435945a72aa38b58cace815d173d2159",
+    "nz-habitat-enrichment/query.py": "7abd7be29642fc1d4a73ad5db1f4fa8628a6eba8d9159e15228b0b3450082586",
+    "nz-habitat-enrichment/source-frame.json": "bbe552384c8df4ec0517ecec1504c30b7a6c2fe243d42ab09714849f9cf4e014",
+    "nz-habitat-enrichment/acquire.py": "681982eb66f0a78d4454ba27bd28828c3b00b4c0ab0b138d6be3d85112ea1de5",
+    "nz-habitat-enrichment/pool-ready.json": "bcb768a2add91f5d621205ebb13d147c37ce72805f67183cf295c923ee1499ff",
+    "nz-habitat-enrichment/assisted_pool.jsonl": "f9eb9cdde8a83f0623e282c9311810bcb67f8d40692a6f961cadadb5fcc8a8f8",
+    "nz-habitat-enrichment/screen.py": "3624e94cda47e4cf52ceecf4c8a11367f566650167c0705aefe0bbef56dc8f51",
+    "nz-habitat-enrichment/assisted-scores.json": "11cbff0edc869685538deca65ac9545b77b63dd4b95aacf464f8c59d67c94dd3",
+    "nz-habitat-enrichment/build_v2.py": "504d6bcdfe16cb2cd2880380cbd7d4b2bbc43ddc4a093c9460f1d58ba497de33",
+    "nz-local-agreement/run.py": "23b8ac91d076ca6a4b3687cbf8d33cda431ebd25fa50f201b0e12f6a8ad92fb1",
+    "nz-local-agreement/report.json": "c617e530a615c4cdafef1ad84bba248e79386ea3e4afd826c881c6c9a04a31fe",
+    "nz-paired-pilot-assisted-package-v1/manifest.json": "fe37b92ae55a3f1ec19048900ef7ccd09bba729471e2c123902bffe5cb2adc3e",
+    "nz-paired-pilot-assisted-package-v2/manifest.json": "76ef0495fe12e4b0d9b47f228e23330afb5366f81fb706c4df66737dcb5fd2b4",
+    "nz-paired-pilot-assisted-package-v2/private/assisted-cues.json": "dc2b3911665593f8d31de808072432402485c159e041cf726b91343e730c9500",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515"
+  },
+  "synthetic_control": {
+    "summary": {
+      "1": {
+        "images": 24,
+        "correct_target_and_tile": 19,
+        "frozen_whole_gate": 0,
+        "local_agreement_at_frozen_floor": 4,
+        "local_agreement_unthresholded": 14
+      },
+      "0.5": {
+        "images": 24,
+        "correct_target_and_tile": 18,
+        "frozen_whole_gate": 0,
+        "local_agreement_at_frozen_floor": 1,
+        "local_agreement_unthresholded": 13
+      }
+    },
+    "real_incidental": {
+      "images": 26,
+      "whole_gate": 0,
+      "local_agreement_at_frozen_floor": 0,
+      "any_local_agreement": 0
+    },
+    "floor": 0.13646656274795532,
+    "scope": "Development-only planted image patches. A source subject is not exhaustive truth; no images or labels flow into reviewer tasks."
+  },
+  "habitat": {
+    "quadrants": 12,
+    "returned": 648,
+    "acquired": 10,
+    "categories": {
+      "low_score_uncertain": 10
+    }
+  },
+  "assisted_v2": {
+    "tasks": 19,
+    "blind_tasks": 16,
+    "groups": {
+      "habitat_below_floor_challenge": 2,
+      "incidental_uncertain": 6,
+      "lookalike:Austroderia fulvida": 2,
+      "target_reference:Clematis vitalba": 2,
+      "lookalike:Clematis paniculata": 2,
+      "lookalike:Cytisus scoparius": 1,
+      "target_reference:Cortaderia selloana": 2,
+      "incidental_below_floor_challenge": 2
+    },
+    "priority_floor_changed": false
+  },
+  "grouped_source": {
+    "source_recording_sessions": 929,
+    "source_images_with_annotations": 8034,
+    "available_prefix_sessions": 13,
+    "sampled_boxes": 49,
+    "dev_frames": 14,
+    "dev_sessions": 8,
+    "reserved_frames": 10,
+    "reserved_sessions": 5,
+    "source_sha256": "52444898ff142e95051c40073121fd509f2dee9e7766eadd8608b52785584041",
+    "prefixes": {
+      "images-prefix4.tar": "71ad7e7e332758d467c6db25502df3dff692dc5d5fd74968b0be822181ddb80d",
+      "images-prefix.tar": "e4a6adb9e9dc93037a1780c5ac641243d8d846c673eac3ce30f917b9cfe13487",
+      "images-prefix2.tar": "575e9b5ec6c45cfb71051708790f9e2d8b1efd6065ec64f42feeef3ae168b754",
+      "images-prefix3.tar": "2b1e43cd67bb07ff82652987b0ce340b79c359ed69ea9a15e7c2a36a2acd7a90"
+    },
+    "protocol": "First 40 MiB of each official image archive. Keep complete JPEG records. Freeze session groups by stable hash before model scoring.",
+    "producer_sha256": "538558065266ba28937eba7760e7bbedd54c69aff5db9f897ed62a29ad7d9451"
+  },
+  "crop_accuracy": {
+    "development-report.json": {
+      "paired": {
+        "boxes": 49,
+        "plantclef_top1": 1,
+        "plantclef_top5": 1,
+        "native_top1": 0,
+        "native_top5": 1
+      },
+      "by_taxon": {
+        "Amaranthus retroflexus L.": {
+          "boxes": 18,
+          "plantclef_top1": 0,
+          "plantclef_top5": 0,
+          "native_top1": 0,
+          "native_top5": 0
+        },
+        "Chenopodium album L.": {
+          "boxes": 8,
+          "plantclef_top1": 0,
+          "plantclef_top5": 0,
+          "native_top1": 0,
+          "native_top5": 0
+        },
+        "Cirsium arvense (L.) Scop.": {
+          "boxes": 14,
+          "plantclef_top1": 1,
+          "plantclef_top5": 1,
+          "native_top1": 0,
+          "native_top5": 1
+        },
+        "Datura stramonium L.": {
+          "boxes": 8,
+          "plantclef_top1": 0,
+          "plantclef_top5": 0,
+          "native_top1": 0,
+          "native_top5": 0
+        },
+        "Sonchus arvensis L.": {
+          "boxes": 1,
+          "plantclef_top1": 0,
+          "plantclef_top5": 0,
+          "native_top1": 0,
+          "native_top5": 0
+        }
+      },
+      "label_eligibility": {
+        "True:True": 49
+      },
+      "all_plantclef_eligible": {
+        "boxes": 49,
+        "plantclef_top1": 1,
+        "plantclef_top5": 1,
+        "native_top1": 0,
+        "native_top5": 1
+      },
+      "elapsed_seconds": 1.1009903899976052
+    },
+    "context-development-report.json": {
+      "paired": {
+        "boxes": 49,
+        "plantclef_top1": 0,
+        "plantclef_top5": 2,
+        "native_top1": 1,
+        "native_top5": 2
+      },
+      "by_taxon": {
+        "Amaranthus retroflexus L.": {
+          "boxes": 18,
+          "plantclef_top1": 0,
+          "plantclef_top5": 1,
+          "native_top1": 0,
+          "native_top5": 0
+        },
+        "Chenopodium album L.": {
+          "boxes": 8,
+          "plantclef_top1": 0,
+          "plantclef_top5": 0,
+          "native_top1": 0,
+          "native_top5": 1
+        },
+        "Cirsium arvense (L.) Scop.": {
+          "boxes": 14,
+          "plantclef_top1": 0,
+          "plantclef_top5": 1,
+          "native_top1": 1,
+          "native_top5": 1
+        },
+        "Datura stramonium L.": {
+          "boxes": 8,
+          "plantclef_top1": 0,
+          "plantclef_top5": 0,
+          "native_top1": 0,
+          "native_top5": 0
+        },
+        "Sonchus arvensis L.": {
+          "boxes": 1,
+          "plantclef_top1": 0,
+          "plantclef_top5": 0,
+          "native_top1": 0,
+          "native_top5": 0
+        }
+      },
+      "label_eligibility": {
+        "True:True": 49
+      },
+      "all_plantclef_eligible": {
+        "boxes": 49,
+        "plantclef_top1": 0,
+        "plantclef_top5": 2,
+        "native_top1": 1,
+        "native_top5": 2
+      },
+      "elapsed_seconds": 1.1069496250129305
+    }
+  },
+  "plantclef_metadata": {
+    "2024": {
+      "path": "licenses.csv",
+      "columns": [
+        "plot_id",
+        "author",
+        "date",
+        "license"
+      ],
+      "rows": 1695
+    },
+    "2025": {
+      "path": "data/PlantCLEF/PlantCLEF2025/DataOut/test/package/PlantCLEF2025_test.csv",
+      "columns": [
+        "quadrat_id",
+        "author",
+        "date",
+        "license"
+      ],
+      "rows": 2105
+    }
+  }
+}
