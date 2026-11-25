@@ -888,6 +888,16 @@ incidental suggestions as candidates for review. Photographed subject
 labels and cached, previously used model outputs limit the claims to
 development evidence. Keep the pilot rule and sealed blind decisions fixed.
 
+As a separate diagnostic, count how many unreviewed incidental photos would
+still be withheld if scoring used agreement alone. Use the already acquired
+89 incidental photos from the handheld, habitat, botanical and camera pools.
+Keep the 48 camera frames separate from the 41 handheld frames. Do not apply
+the fitted floors to these pools unless their advancement gate passes. For
+the floor-free count, report each agreement check separately and the joint
+count. Any joint-agreement case below the pilot floor remains an exploratory
+review candidate, with no new priority verdict. The blind arm is outside
+this diagnostic.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
