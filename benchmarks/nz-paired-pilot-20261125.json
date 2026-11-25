@@ -10,7 +10,19 @@
     "nz-paired-pilot/assisted_pool.jsonl": "fa5439181bdf5baed08e341958ccf4dd5c231f85800fbf2b5bf67d0fcd0f0a91",
     "nz-paired-pilot/screen.py": "3624e94cda47e4cf52ceecf4c8a11367f566650167c0705aefe0bbef56dc8f51",
     "nz-paired-pilot/assisted-scores.json": "f26a1b183c28a2c3e0f09c1cfcd7436eb4a8c0469ce532bc564274226eacfc43",
-    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515"
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-supplement/source_frame.py": "6001d8b901eccf9b56f5a0d50921da7ad79dad91b3815229a2331fbf6f177256",
+    "nz-paired-pilot-supplement/source-frame.json": "0fb64b4461272401a9302ebf4f9df42c9be8e754ba7adfc684c7172a6885dfc9",
+    "nz-paired-pilot-supplement/acquire_supplement.py": "b46b11e6d9d02bb09626b86718f549e149bffbc7eb09cfc6a1e761ce8dd3d3d2",
+    "nz-paired-pilot-supplement/pool-ready.json": "6daf45db1016bdbcc5b16c4788081c558c9b901dd36d1eb5cff35460dad5c9ce",
+    "nz-paired-pilot-supplement/screen.py": "3624e94cda47e4cf52ceecf4c8a11367f566650167c0705aefe0bbef56dc8f51",
+    "nz-paired-pilot-supplement/assisted-scores.json": "2b9405717eb0a4e760e9e33540c1509e459efaa75e95333c855ff423fddfd4ef",
+    "nz-paired-pilot-supplement/assisted_pool.jsonl": "20fe271931291708447349dd76610ab480fa8ee7a68444c592f077aa309848d4",
+    "nz-paired-pilot-supplement/build_assisted.py": "d3d889127666fe95c31189a8a5ed66524e12aabd7d09ca597fa00aea52df91bd",
+    "nz-paired-pilot-assisted-package-v1/manifest.json": "fe37b92ae55a3f1ec19048900ef7ccd09bba729471e2c123902bffe5cb2adc3e",
+    "nz-paired-pilot-assisted-package-v1/tasks.json": "2803a0b0f535f1470c33e63f3879db547fb58e22f62fc3e72e8a3c4654bceba6",
+    "nz-paired-pilot-assisted-package-v1/label-config.xml": "ac99c296619532fe2f9d6eeff23278e5d66ce8eb32203bae64261260cad8cbb1",
+    "nz-paired-pilot-assisted-package-v1/private/assisted-cues.json": "5af71a1050baa1c2d72de8cd941e8aa343e99a74c3fb0532e7be765c5adfb391"
   },
   "source_frame": {
     "eligible": 368,
@@ -47,5 +59,59 @@
     "low_score_uncertain": 8
   },
   "policy_commit": "aa4db4a",
-  "follow_up": "Extend assisted-only source sampling to fill the priority, disagreement and botanical lookalike strata."
+  "follow_up": "Human pilot plus stronger enrichment of incidental priority and disagreement cases. Gorse target-reference, incidental priority and above-floor disagreement strata are empty.",
+  "supplement": {
+    "scored": 30,
+    "counts": {
+      "known_observation_or_observer": 495,
+      "2025-01-01": 4,
+      "2025-04-01": 5,
+      "2025-07-01": 6,
+      "2025-10-01": 3,
+      "Austroderia fulvida": 3,
+      "Clematis paniculata": 3,
+      "Clematis vitalba": 3,
+      "Cortaderia selloana": 2,
+      "Cytisus scoparius": 1,
+      "Ulex europaeus": 0
+    },
+    "model_verdicts": {
+      "low_score_uncertain": 27,
+      "priority": 2,
+      "model_disagreement": 1
+    },
+    "eligible_incidental": 682,
+    "eligible_enriched": 243
+  },
+  "assisted_package": {
+    "task_count": 15,
+    "groups": {
+      "incidental_uncertain": 6,
+      "lookalike:Austroderia fulvida": 2,
+      "target_reference:Clematis vitalba": 2,
+      "lookalike:Clematis paniculata": 2,
+      "lookalike:Cytisus scoparius": 1,
+      "target_reference:Cortaderia selloana": 2
+    },
+    "quota": {
+      "incidental_priority": 4,
+      "incidental_disagreement": 4,
+      "incidental_uncertain": 6
+    },
+    "task_payload_policy": "Model hint and exact source-pixel search crop. Plant labels require human input."
+  },
+  "combined_pilot_verification": {
+    "total": 31,
+    "blind": 16,
+    "assisted": 15,
+    "checksum_and_config_binding_verified": true,
+    "independence_checks": [
+      "observation ID",
+      "observer ID",
+      "decoded pixels",
+      "dHash > 4",
+      "two days and 100 m plus coordinate uncertainty"
+    ],
+    "confirmed_review_outcomes": 0
+  }
 }

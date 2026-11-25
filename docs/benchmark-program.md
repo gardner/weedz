@@ -333,6 +333,37 @@ the assisted source using later incidental pages and distinct botanical
 lookalike and target-subject strata. The expanded source changes the assisted
 sampling frame and leaves the blind sample frozen.
 
+The assisted-only supplement acquired 30 photos from later incidental pages
+and separate botanical queries. Eighteen are incidental and 12 are labeled
+botanical subjects. Observer, observation, pixel and encounter checks included
+both original arms. The illustrated package selects 15 photos: six uncertain
+incidental cases, five lookalikes and four target-subject references.
+All 26 screened incidental photos were below the priority floor. The two
+priority verdicts and one above-floor disagreement came from botanical
+subjects. The separate gorse reference query yielded zero eligible originals
+within its acquisition cap. These shortfalls limit the pilot's usefulness for
+testing candidate discovery. The existing tasks can test annotation usability.
+
+The assisted bundle shows each model hint and an exact source-pixel crop.
+The full source image remains the annotation target. Each search crop's
+pixel bounds, dimensions and checksum are bound to its source image in the
+private receipt. The package creates zero annotations and zero seeded
+predictions. Both task sets offer an unsure outcome. The audit rechecked
+31 task checksums, source bindings, policy version and zero shared pixels,
+observations or observers. The pairwise proximity and dHash checks cover
+all selected frames.
+
+The two offline bundles live under the private evidence root as
+`nz-paired-pilot-blind-package-v1` and `nz-paired-pilot-assisted-package-v1`.
+For a human usability pilot, have reviewers inspect the whole image for each
+watchlist species, draw regions where identities are resolvable, and record
+an unsure outcome for inadequate evidence. Use image credits for attribution
+and defer opening linked source observations until the task is submitted.
+Record task duration, uncertain outcomes and problems with the instructions,
+image zoom or geometry. Keep times by arm. These are different sets of
+photos, so their effort difference alone cannot isolate the effect of hints.
+No timing or botanist review outcome has been collected.
+
 The first acquisition and bundle verification are indexed in the
 [pilot acquisition summary](../benchmarks/nz-paired-pilot-20261125.json).
 
@@ -341,13 +372,13 @@ The first acquisition and bundle verification are indexed in the
 1. Expand the split audit to another species-box source with documented capture
    groups. Compare eligible domain-suited classifiers against the measured
    ImageWeeds crop baseline and preserve a fresh evaluation cohort.
-2. Apply the frozen NZ pilot policy to eligible images. Separate model
-   disagreement, lookalike and hard-case selection from probability sampling.
+2. Expand the incidental search pool for high priority and disagreement
+   cases. Preserve the bounded and original frozen selection as evidence of
+   the measured shortfall.
 3. Obtain or recreate the official validation thresholds before claiming
    reproduction of XP4's published operating point. Add usable PlantCLEF plot
    labels if available and preserve domain-specific reports.
-4. Prepare and validate NZ candidate and blind-review packages. Verify no
-   observation, photographer, exact decoded image, near duplicate or known
-   encounter crosses the two sets, and record the coverage of the encounter audit.
+4. Extend the verified pilot packages with the missing assisted strata where
+   evidence supports them. Recheck all independence and source bindings.
 5. Run a small human usability pilot to measure actual effort. Specialist NZ
    verification remains necessary before claims about background discovery.
