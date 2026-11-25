@@ -471,16 +471,27 @@ to timing. Keep the report with the reviewer notes. The two arms use different
 images, which limits what a timing difference can establish. The report
 describes submissions and does not adjudicate biological observations.
 
+A loopback-only Label Studio 1.23.2 smoke test imported copies of both packages
+into separate temporary projects. It verified HTTP-served bytes for all 35
+originals and all 19 assisted crops. A headless browser opened one task in
+each arm and clicked a watchlist choice. The assisted search preview loaded
+only in the assisted project. Two explicitly synthetic submissions were
+exported and summarized through the command above, recovering their 12.5
+second test values. The original bundles still contain no submitted labels.
+The smoke test supplies technical workflow evidence. Human usability findings
+and review effort remain unmeasured.
+
 ## Remaining work and next experiment
 
-1. Use the development CropAndWeed sessions to test a classifier adapted to
-   agricultural seedling views. Retain the reserved sessions for verification.
-2. Test a development policy that avoids vetoing visible incidental targets
-   based on foreground identity. Verify the candidate quality on real photos
-   with human outcomes before selecting a revised operating point.
-3. Obtain or recreate the official validation thresholds before claiming
-   reproduction of XP4's published operating point. Add usable PlantCLEF plot
-   labels if available and preserve domain-specific reports.
+1. Acquire additional independent, class-balanced crop sessions before pursuing
+   another seedling classifier. The first fixed prototype experiment failed
+   its improvement gate.
+2. Verify candidate quality on real incidental photos with human outcomes
+   before selecting a revised operating point. The controlled multiscale
+   comparison gave similar recovery at about twice the runtime.
+3. Finish the full XP4 validation reconstruction before claiming reproduction
+   of XP4's published operating point. The quick validation mode is reproduced
+   below. Add usable PlantCLEF plot labels if available.
 4. Extend the verified pilot packages with the missing assisted strata where
    evidence supports them. Recheck all independence and source bindings.
 5. Run a small human usability pilot to measure actual effort. Specialist NZ
@@ -504,3 +515,50 @@ over all reserved boxes. A ten-percentage-point increase in covered-box
 top-one accuracy is the development gate. Inference is limited to one tight
 crop per frozen source box and at most six crops per image. Hold crop policy
 and model weights fixed for this comparison.
+
+The reserve has 28 boxes, of which 27 are covered by the development vocabulary.
+The original restricted head recovered 20/27 and the prototypes recovered
+19/27. Prototypes lost one correct thistle assignment and tied on goosefoot.
+The covered-box change was −3.7 percentage points and missed the frozen
+improvement gate. This paired comparison used known source boxes and a small
+training vocabulary. It does not measure localization or identification of
+unseen taxa.
+
+## XP4 quick-validation cutoffs
+
+The release includes a quick-validation configuration for 16 publisher
+frames. Replaying it computes the first maximum of Youden's J on validation
+and applies the upstream strict score cutoff. One positive per taxon lies
+exactly on its validation cutoff. The rule retained 7/13 validation positive
+pairs. An inclusive comparison retained 13/13 and serves here only to
+illustrate the difference at the boundary.
+
+The frozen quick cutoffs recovered 6/12 labeled positives on the separate
+14-frame test set and 22/32 on the 16-frame multilabel smoke set. They selected
+8 and 27 pairs, respectively. The extra selections disagree with the supplied
+row labels and do not establish false alarms for incompletely labeled scenes.
+The full published validation path uses 2,160 frames. Its exact operating
+point remains pending.
+
+## Bounded multiscale incidental screening
+
+The development comparison added a second pass of 16 child tiles to the
+fixed 4×4 grid by subdividing the four highest-scoring parent tiles. The
+winner was the highest watchlist score across both scales. Geometry was
+scored using a minimum 25% coverage of the planted patch and 20% coverage
+of the selected tile. Both methods checked local EfficientNet agreement at
+the frozen subject-derived score floor.
+
+| Fixture | 4×4 correct target and overlap | Two-scale correct target and overlap | Above-floor agreements with correct overlap, 4×4 / two-scale |
+| --- | ---: | ---: | ---: |
+| 24 planted full-tile crops | 19 | 18 | 4 / 6 |
+| 24 planted quarter-area crops | 18 | 17 | 1 / 1 |
+
+On the 36 intact incidental photos, neither method produced an above-floor
+local agreement. The largest score rose from 0.0380 to 0.0585. Mean tile
+processing time increased from 0.189 to 0.367 seconds per photo. The smaller
+crops did not earn a policy change. Human review of the uncertain cases is
+the next source of scene-level evidence.
+
+These experiments and the local review checks are indexed in the
+[follow-up summary](../benchmarks/nz-readiness-followup-20261125.json).

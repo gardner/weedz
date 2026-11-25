@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "artifacts": {
+    "grouped-source-audit/fit_prototypes.py": "66bd094648b281647186d022ebc35e080757fbc45534e92691b2984f5ba2ff39",
+    "grouped-source-audit/prototypes-v1.json": "25dce8972bfa8fd914a837d64255de438e02d8d683fd3bfa92cf86d9394c797f",
+    "grouped-source-audit/reserved-prototypes-report.json": "667020f7f4fd4b9c9b2bab7a6d8e1767260986a4ca3409c3e5dc3f9fdb267806",
+    "roadside-source/calibrate_quick.py": "284928cfd69510bc356ddf729a1d5b239fb083d9409a41b3c4687b5a2441f036",
+    "roadside-source/calibrate_full_validation.py": "e06d7a5fb5196a7c33c96757825462d7947aeffe6153086f1d6133b5bf029a4f",
+    "roadside-source/xp4-quick-thresholds.json": "46fdf2e919a9e560671341c50673562109952ee0e1268772dc3940193864fecd",
+    "roadside-source/xp4-quick-threshold-report.json": "9e5a96fabbbc7bcfcf59b9811f5bcb39053b79d48b306c2c141798668f1d5385",
+    "nz-multiscale-triage/run.py": "9221f57f2cffd98a919d9b1c75a091284fe8a94e8a69a96faa09c9c7fcd30ec6",
+    "nz-multiscale-triage/report.json": "60ab565c61d65e86bab4eba2946e9ee0dc39dde8551f941b1b57c9bf8b6740e5",
+    "pilot-effort-check/check_local.py": "6f15ee4f3ef69cc42d823521bdb32470343fae63cfe2326bccf668b0689d584a",
+    "pilot-effort-check/check-browser.mjs": "94cb7dc42a54481a0ea03fc7f46301cdb8543b0591a4480c91bf007ffb050586",
+    "pilot-effort-check/local-api-check.json": "9ea0627d7ba17a5dfe8cf160fbbd716cb45e5c234ea7db05e4ffa4c1f45b7725",
+    "pilot-effort-check/local-browser-verified.json": "9b2334052c8131ee733aed7b5b2456e2ef3fd9cb95a88e296473200482d57e06",
+    "pilot-effort-check/blind-browser.png": "c5a7dcffcbc7d491b1fbcc779cb9b99f116c1c789a6839813dd9264b63ee56b2",
+    "pilot-effort-check/assisted-browser.png": "67385580a4f25819cf001afd02d6931472f536562a5345a2be33d26deedf8a1b",
+    "pilot-effort-check/empty-report.json": "c31f0872e5d5b38ed1a6b8ec9974e555a9390f919c9757567e3e8819fffa043d",
+    "pilot-effort-check/synthetic-effort-report.json": "9c64df17acd42c8988c61fae54ad01053804f71bac184edc1d16d3d6f5ae2d65"
+  },
+  "grouped_crop_adaptation": {
+    "boxes": 28,
+    "covered_boxes": 27,
+    "baseline_correct": 20,
+    "prototype_correct": 19,
+    "covered_accuracy_delta": -0.037037037037037035,
+    "improvement_gate": false,
+    "by_taxon": {
+      "Cirsium arvense (L.) Scop.": {
+        "items": 23,
+        "baseline_correct": 17,
+        "prototype_correct": 16
+      },
+      "Chenopodium album L.": {
+        "items": 4,
+        "baseline_correct": 3,
+        "prototype_correct": 3
+      }
+    }
+  },
+  "xp4_quick": {
+    "val_16": {
+      "images": 16,
+      "labeled_pairs": 13,
+      "recovered_pairs": 7,
+      "selected_pairs": 9,
+      "row_label_disagreements": 2,
+      "empty_images": 8,
+      "inclusive_diagnostic": {
+        "selected_pairs": 15,
+        "recovered_pairs": 13
+      }
+    },
+    "test_14": {
+      "images": 14,
+      "labeled_pairs": 12,
+      "recovered_pairs": 6,
+      "selected_pairs": 8,
+      "row_label_disagreements": 2,
+      "empty_images": 7,
+      "inclusive_diagnostic": {
+        "selected_pairs": 8,
+        "recovered_pairs": 6
+      }
+    },
+    "multilabel": {
+      "images": 16,
+      "labeled_pairs": 32,
+      "recovered_pairs": 22,
+      "selected_pairs": 27,
+      "row_label_disagreements": 5,
+      "empty_images": 0,
+      "inclusive_diagnostic": {
+        "selected_pairs": 27,
+        "recovered_pairs": 22
+      }
+    }
+  },
+  "multiscale": {
+    "all_real": {
+      "single": {
+        "images": 36,
+        "agrees_above_subject_floor": 0,
+        "max_score": 0.03801483288407326,
+        "mean_seconds": 0.18902444219485107,
+        "correct_species_and_overlap": null,
+        "correct_species_overlap_and_agreement": null
+      },
+      "multiscale": {
+        "images": 36,
+        "agrees_above_subject_floor": 0,
+        "max_score": 0.058478858321905136,
+        "mean_seconds": 0.36671703330729444,
+        "correct_species_and_overlap": null,
+        "correct_species_overlap_and_agreement": null
+      }
+    },
+    "full_tile": {
+      "single": {
+        "images": 24,
+        "agrees_above_subject_floor": 4,
+        "max_score": 0.36586421728134155,
+        "mean_seconds": 0.18511167766700964,
+        "correct_species_and_overlap": 19,
+        "correct_species_overlap_and_agreement": 4
+      },
+      "multiscale": {
+        "images": 24,
+        "agrees_above_subject_floor": 6,
+        "max_score": 0.4005468487739563,
+        "mean_seconds": 0.3623287665783816,
+        "correct_species_and_overlap": 18,
+        "correct_species_overlap_and_agreement": 6
+      }
+    },
+    "quarter_tile_area": {
+      "single": {
+        "images": 24,
+        "agrees_above_subject_floor": 1,
+        "max_score": 0.30087119340896606,
+        "mean_seconds": 0.18412453970934925,
+        "correct_species_and_overlap": 18,
+        "correct_species_overlap_and_agreement": 1
+      },
+      "multiscale": {
+        "images": 24,
+        "agrees_above_subject_floor": 1,
+        "max_score": 0.30087119340896606,
+        "mean_seconds": 0.36183703216617386,
+        "correct_species_and_overlap": 17,
+        "correct_species_overlap_and_agreement": 1
+      }
+    }
+  },
+  "loopback_label_studio": {
+    "version": "1.23.2",
+    "api": {
+      "blind": {
+        "project": 1,
+        "storage": 1,
+        "task_count": 16,
+        "first_task": 1,
+        "source_images_verified": 16,
+        "search_crops_verified": 0
+      },
+      "assisted": {
+        "project": 2,
+        "storage": 2,
+        "task_count": 19,
+        "first_task": 17,
+        "source_images_verified": 19,
+        "search_crops_verified": 19
+      }
+    },
+    "browser": {
+      "blind": {
+        "taskRendered": true,
+        "watchlistChoiceClickable": true,
+        "visibleSearchHint": false,
+        "servedImageTypes": [
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original"
+        ]
+      },
+      "assisted": {
+        "taskRendered": true,
+        "watchlistChoiceClickable": true,
+        "visibleSearchHint": true,
+        "servedImageTypes": [
+          "search crop",
+          "search crop",
+          "original",
+          "original",
+          "search crop",
+          "search crop",
+          "search crop",
+          "original",
+          "search crop",
+          "search crop",
+          "search crop",
+          "original",
+          "original",
+          "original",
+          "original",
+          "search crop",
+          "search crop",
+          "search crop",
+          "original",
+          "original",
+          "search crop",
+          "original",
+          "original",
+          "original",
+          "search crop",
+          "original",
+          "original",
+          "search crop",
+          "search crop",
+          "original",
+          "search crop",
+          "original",
+          "search crop",
+          "original",
+          "search crop",
+          "original",
+          "original",
+          "search crop"
+        ]
+      }
+    },
+    "human_review_submissions": 0,
+    "synthetic_integration_submissions": 2
+  }
+}
