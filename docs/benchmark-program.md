@@ -538,6 +538,9 @@ second test values. The original bundles still contain no submitted labels.
 The smoke test supplies technical workflow evidence. Human usability findings
 and review effort remain unmeasured.
 
+The [review handoff](nz-pilot-handoff.md) lists the exact packages for
+reviewers and the commands for separate handheld and camera exports.
+
 ## Remaining work and next experiment
 
 1. Acquire additional independent, class-balanced crop sessions before pursuing

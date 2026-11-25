@@ -172,6 +172,7 @@ times exist.
 
 ## Supporting documents
 
+- [Reviewer handoff and export instructions](docs/nz-pilot-handoff.md)
 - [Benchmark program, verified inventory and current results](docs/benchmark-program.md)
 - [Overall goal](goal.md)
 - [Region evaluation protocol and existing diagnostics](docs/region-evaluation.md)
