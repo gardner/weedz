@@ -949,6 +949,17 @@ incidental photos only for a rule that passes. Any admitted candidate stays
 outside both main pilot arms, with a full source image and a search crop for
 independent human review.
 
+If the lower fixed floor misses the prompt budget, run one follow-up on
+the saved scores. Fit a shared positive BioCLIP margin using the earlier
+five observer and location folds. At each fit, allow at most two prompts
+on the training comparison subjects. Choose the highest margin that
+maximizes known-target recoveries with that limit. Report omitted-fold
+results and hold the same pooled development gate. If the fitted variant
+passes, refit once with the same two-prompt budget on all 300 development
+controls and verify zero prompts on the nine already screened fresh photos
+before applying it to the incidental pools. This follow-up is exploratory
+because the fixed-margin comparison already exposed aggregate results.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
