@@ -925,6 +925,30 @@ these pools is limited by the native whole-photo check. The pilot baseline
 and sealed blind hashes were verified after both runs.
 [Fold results and source receipts](../benchmarks/nz-score-floor-20261125.json)
 
+## Local BioCLIP verification for an exploratory NZ queue
+
+Use the pinned BioCLIP 2 model to check the winning PlantCLEF tile, with
+one new image view per photo. Keep the existing fixed watchlist, native
+lookalikes and scene prompts. Fill all prompts identically for every image
+and omit the photographed subject. Use the original tile bounds and square
+padding. Calculate the tile's BioCLIP target-minus-best-comparison cosine
+margin. Ask for a positive margin and agreement with PlantCLEF's tile
+taxon, independent of whole-photo classifiers. The review budget remains
+at most one suggestion per photo.
+
+Compare the frozen tile score floor and 0.01173484418541193, the shared
+development floor found in four of the five earlier grouped folds. Fixed
+floor tests use the 300 previously inspected controls and the separate nine
+2026 comparison photos. Run both floors without further fitting. For an
+exploratory queue, require at least 72 photographed-target recoveries out
+of 150, at most three new prompts among the 150 comparison subjects, and
+zero on the nine fresh photos. Score-only and existing-policy counts are
+comparators. This small prompt allowance is for review workload. It does
+not establish scene precision or change pilot priority. Evaluate the 89
+incidental photos only for a rule that passes. Any admitted candidate stays
+outside both main pilot arms, with a full source image and a search crop for
+independent human review.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
