@@ -1,0 +1,223 @@
+{
+  "schema": 1,
+  "date": "2026-11-25",
+  "status": "development diagnostics; not ready for main NZ labeling",
+  "code_commit": "0d106bcb039291636a25d0b2e14cd15cebe943ab",
+  "source_inventory": [
+    {
+      "name": "ImageWeeds138",
+      "root": "/home/gardner/src/weedz-dataset-artifacts/20261116/imageweeds/primary-schema2-v1",
+      "manifest_sha256": "a38eca9ffb9570da46040033564540c1af5fd1432dc6f2fcde4f869b12da1089",
+      "ready_sha256": "c19e1bb00f6b97cd55afca2765d56178642083712be365d0d31931b8000b1bbd",
+      "samples": 138,
+      "verified_assets": 138,
+      "annotations": {
+        "box": 645
+      },
+      "source_taxa": {
+        "Erigeron canadensis": 108,
+        "Bassia scoparia": 142,
+        "Amaranthus retroflexus": 101,
+        "Ambrosia artemisiifolia": 176,
+        "Amaranthus tuberculatus": 118
+      },
+      "group_kinds": [
+        "agcontext",
+        "decoded_asset",
+        "source_dataset",
+        "source_image"
+      ]
+    },
+    {
+      "name": "CWFID60",
+      "root": "/home/gardner/src/weedz-dataset-artifacts/20261116/cwfid/canonical-schema2-60",
+      "manifest_sha256": "aaa375df1edc24660216815870cba8708ca83d00277e535da75e69d33037bebd",
+      "ready_sha256": "11f15e01110cb90bf4c42094c78ea76b3267b6c037eaecdc3972920c13b24e01",
+      "samples": 60,
+      "verified_assets": 179,
+      "annotations": {
+        "sparse_mask": 119
+      },
+      "source_taxa": {},
+      "group_kinds": [
+        "source_dataset",
+        "source_image"
+      ]
+    },
+    {
+      "name": "NZ90",
+      "root": "/home/gardner/src/weedz-dataset-artifacts/20261116/nz-review/canonical-fresh-review-v4",
+      "manifest_sha256": "f6987fe9b72cb676cf4364994e8fcc2f26a4c1a3543152578ebffd463a771d89",
+      "ready_sha256": "362e7892ef9227b7084c6787430a3bdefc8cc2c4aeafd68c6389d477522c06eb",
+      "samples": 90,
+      "verified_assets": 90,
+      "annotations": {},
+      "source_taxa": {},
+      "group_kinds": [
+        "observation",
+        "observer"
+      ]
+    },
+    {
+      "name": "PhenoBench64",
+      "root": "/home/gardner/src/weedz-dataset-artifacts/20261117/phenobench/development64-v1",
+      "ready_sha256": "a1baae80ab1a1b6c578334c6ef73d30fe9c8cadfb760ad80b05e5ee6203f09bf",
+      "manifest_sha256": "c3c77b3e0e29f1abf66f7e516c32ccc11907a26178467c5bb7d2442588c49aaa",
+      "samples": 64,
+      "source_instances": 853,
+      "verified_raw_assets": 192
+    }
+  ],
+  "evidence": {
+    "private_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+    "inventory_sha256": "9311f61de5df9820f582b69e257100fdd0e5d258ea5ba3685738680e3e19a9c4",
+    "region_report": {
+      "path": "imageweeds138-sam3-replay-v1/report.json",
+      "sha256": "13ea87845051ff3f6a7957c44b9ac0559cfb671bcb0c7b4dcd2772881389ea5e",
+      "aggregate_matches_predecessor": true
+    },
+    "aggregation_report": {
+      "path": "imageweeds138-aggregation-v2/report.json",
+      "sha256": "b79fbad58b1df2fb9c0d6cac98f43f0b3f883a67da85e522e1b748c4facff701",
+      "comparison_matches_initial_run": true,
+      "completed_output_overwrite_refused": true
+    }
+  },
+  "region_localization_and_identification": {
+    "actual_proposals": 5590,
+    "budget": 100,
+    "identification": {
+      "conditional_top1_accuracy": 0.13793103448275862,
+      "conditional_top1_correct": 48,
+      "conditional_top1_count": 348,
+      "correct_negative_target_count": 0,
+      "correctly_identified_labelled_recall": 0.07441860465116279,
+      "false_alarm_assessment": {
+        "assessed_predictions": 0,
+        "assessed_target_precision": null,
+        "eligible_target_scopes": 0,
+        "false_alarm_regions": null,
+        "unassessed_predictions": 5590
+      },
+      "misidentified_localised_labels": 300,
+      "supported_labelled_regions": 645,
+      "unlocalised_supported_labels": 297,
+      "unsupported_labelled_regions": 0,
+      "verified_negative_target_count": 0
+    },
+    "images_with_labelled_regions": 138,
+    "iou_threshold": 0.5,
+    "labelled_region_recall": 0.5395348837209303,
+    "labelled_regions": 645,
+    "macro_image_labelled_recall": 0.6467796802515473,
+    "matched_labelled_regions": 348,
+    "missed_labelled_regions": 297,
+    "unmatched_proposals": 5242
+  },
+  "species_aggregation": {
+    "by_source_taxon": {
+      "Amaranthus retroflexus": {
+        "positive_images": 48,
+        "recovered": {
+          "regions_frequency": 0,
+          "regions_max_score": 6,
+          "tiles_frequency": 0,
+          "tiles_max_score": 0,
+          "whole_frame": 0
+        }
+      },
+      "Amaranthus tuberculatus": {
+        "positive_images": 50,
+        "recovered": {
+          "regions_frequency": 0,
+          "regions_max_score": 0,
+          "tiles_frequency": 0,
+          "tiles_max_score": 5,
+          "whole_frame": 0
+        }
+      },
+      "Ambrosia artemisiifolia": {
+        "positive_images": 72,
+        "recovered": {
+          "regions_frequency": 3,
+          "regions_max_score": 9,
+          "tiles_frequency": 0,
+          "tiles_max_score": 0,
+          "whole_frame": 0
+        }
+      },
+      "Bassia scoparia": {
+        "positive_images": 68,
+        "recovered": {
+          "regions_frequency": 2,
+          "regions_max_score": 6,
+          "tiles_frequency": 0,
+          "tiles_max_score": 0,
+          "whole_frame": 0
+        }
+      },
+      "Erigeron canadensis": {
+        "positive_images": 65,
+        "recovered": {
+          "regions_frequency": 0,
+          "regions_max_score": 2,
+          "tiles_frequency": 0,
+          "tiles_max_score": 0,
+          "whole_frame": 0
+        }
+      }
+    },
+    "candidate_coverage": {
+      "regions": {
+        "actual_crops": 5590,
+        "available_positive_pairs": 178
+      },
+      "tiles": {
+        "actual_crops": 2208,
+        "available_positive_pairs": 35
+      }
+    },
+    "final_taxon_budget_per_image": 5,
+    "images": 138,
+    "methods": {
+      "regions_frequency": {
+        "images_with_any_hit": 5,
+        "positive_pair_recall": 0.0165016501650165,
+        "recovered_positive_pairs": 5
+      },
+      "regions_max_score": {
+        "images_with_any_hit": 23,
+        "positive_pair_recall": 0.07590759075907591,
+        "recovered_positive_pairs": 23
+      },
+      "tiles_frequency": {
+        "images_with_any_hit": 0,
+        "positive_pair_recall": 0.0,
+        "recovered_positive_pairs": 0
+      },
+      "tiles_max_score": {
+        "images_with_any_hit": 5,
+        "positive_pair_recall": 0.0165016501650165,
+        "recovered_positive_pairs": 5
+      },
+      "whole_frame": {
+        "images_with_any_hit": 0,
+        "positive_pair_recall": 0.0,
+        "recovered_positive_pairs": 0
+      }
+    },
+    "positive_image_taxon_pairs": 303
+  },
+  "new_inference_calls": 0,
+  "limitations": [
+    "Previously inspected development cohort; no fresh holdout or NZ performance claim",
+    "Partial source labels: positive recall only; no precision, F1 or negative accuracy",
+    "Same checkpoint and vocabulary; crop policies, compute and recorded runtimes differ",
+    "Max-score uses cached top-five lists; scores are not calibrated presence confidence",
+    "Image-level hits do not establish correct plant localization",
+    "Unbounded candidate union is coverage diagnostic only, not a final output method",
+    "All original classifier taxa remain eligible; no ground-truth vocabulary restriction",
+    "No source media decoded here; use closed region evaluation to verify actual pixels"
+  ],
+  "next_action": "Audit a new source evaluation selection and compare source-box/context identification with suitable classifiers; retain roadside replication as a separate source benchmark."
+}

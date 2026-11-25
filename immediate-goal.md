@@ -130,6 +130,7 @@ improvement experiment. Include the roadside replication in this program.
 
 ## Supporting documents
 
+- [Benchmark program, verified inventory and current results](docs/benchmark-program.md)
 - [Overall goal](goal.md)
 - [Region evaluation protocol and existing diagnostics](docs/region-evaluation.md)
 - [Labeled-source preparation](docs/datasets/labelled-sources.md)
