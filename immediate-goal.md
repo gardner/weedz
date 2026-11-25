@@ -120,13 +120,31 @@ A small human pilot must still check annotation usability and actual reviewer
 effort. Specialist NZ review establishes transfer, confirms species and reveals
 remaining domain-specific failures; external benchmark success cannot replace it.
 
-## Next work slice
+## Current status and next steps
 
-Inventory existing source datasets, adapters and saved evaluations. Produce a
-benchmark matrix showing available supervision, eligible claims, split/exposure
-status and missing evaluation coverage. Run a bounded diagnostic baseline using
-the existing tools, then select the largest measured failure for the first
-improvement experiment. Include the roadside replication in this program.
+The [benchmark program](docs/benchmark-program.md) records the source inventory,
+split and label limits, reproducible baselines, and improvement experiments.
+On ImageWeeds, maximum-score aggregation raised recall from 5 to 23 of 303
+labeled image-species pairs at five suggestions per image. On the held-out
+Danish roadside subset, tiled PlantCLEF recovered 16 of 21 labeled positives at
+top one versus 10 for whole-photo classification. Neither result establishes
+incidental species recovery in NZ.
+
+The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
+tasks. The assisted set includes uncertain incidental scenes, lookalikes and
+target-subject controls. All package images and search crops passed a local
+review-interface check. Real incidental candidates above the priority threshold
+are still missing, and no human submissions or measured review times exist.
+
+1. Finish the full Danish roadside cutoff reconstruction and apply the fixed
+   cutoffs to the reserved comparisons. Record source and label limits.
+2. Keep the blind NZ sample and its sealed outputs fixed. Use a separate
+   discovery pool for any additional independently sourced candidate positives
+   and record the inclusion criteria.
+3. Run the small NZ usability pilot with independent human submissions. Measure
+   completion, time and uncertainty in both arms. Compare frozen predictions
+   against agreed, assessable blind outcomes before deciding whether to widen
+   labeling or revise the policy.
 
 ## Supporting documents
 
