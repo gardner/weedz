@@ -1,0 +1,258 @@
+{
+  "schema": 1,
+  "date": "2026-11-25",
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "artifacts": {
+    "imageweeds138-crop-context-v1/run.py": "e65d0d934718101d6d87a84d5c0374b05c5f7ca354eeee72f39c2fc9775beb8d",
+    "imageweeds138-crop-context-v1/report.json": "c9e0a8de4664dfb4c2bcf971931a593c9b4620e9d6615c151681ccf2117ee4a4",
+    "roadside-source/acquire.py": "d8d647525671576e36533e66294d076fa28938b0c7aa732026d295333e921a57",
+    "roadside-source/score.py": "e0fc6fefd4c1823c74d1490858cee734955c461f5801f2aa09ebf4eca0d2a934",
+    "roadside-source/verify_and_reserve.py": "e5de5019ae8c4b621e93fb993ed93c1eebc768284781f4da1467ea5ab68cd5db",
+    "roadside-source/xp4-smoke-report.json": "90a6ca9b79630c31fe4c7c1008993efdcf4bc70b2db14cb0405a925965e846cb",
+    "roadside-source/membership.json": "c7edb615e5f0afce922cc17078fd61761a606fef4e8dd7e356f32595bf4fd3a1",
+    "roadside-source/features-ready.json": "a90ca5203c92209ec1acea1833519c26f3a4e74ce87e0be6e6f478d6789a7a70",
+    "roadside-source/upstream-check-and-reserve.json": "6ccceaa56887d6372028109b3e8c97f6af6bc4c2cb6a82ff5a6890f17a433441"
+  },
+  "imageweeds_crop_context": {
+    "images": 138,
+    "boxes": 645,
+    "counts": {
+      "legacy_tight": {
+        "boxes": 645,
+        "top1": 74,
+        "top5": 297
+      },
+      "square_tight": {
+        "boxes": 645,
+        "top1": 60,
+        "top5": 278
+      },
+      "square_context25": {
+        "boxes": 645,
+        "top1": 42,
+        "top5": 264
+      }
+    },
+    "per_taxon": {
+      "Amaranthus retroflexus L.": {
+        "legacy_tight": {
+          "boxes": 101,
+          "top1": 17,
+          "top5": 65
+        },
+        "square_tight": {
+          "boxes": 101,
+          "top1": 10,
+          "top5": 56
+        },
+        "square_context25": {
+          "boxes": 101,
+          "top1": 7,
+          "top5": 56
+        }
+      },
+      "Amaranthus tuberculatus (Moq.) J.D.Sauer": {
+        "legacy_tight": {
+          "boxes": 118,
+          "top1": 2,
+          "top5": 63
+        },
+        "square_tight": {
+          "boxes": 118,
+          "top1": 3,
+          "top5": 70
+        },
+        "square_context25": {
+          "boxes": 118,
+          "top1": 2,
+          "top5": 76
+        }
+      },
+      "Ambrosia artemisiifolia L.": {
+        "legacy_tight": {
+          "boxes": 176,
+          "top1": 39,
+          "top5": 111
+        },
+        "square_tight": {
+          "boxes": 176,
+          "top1": 31,
+          "top5": 96
+        },
+        "square_context25": {
+          "boxes": 176,
+          "top1": 25,
+          "top5": 90
+        }
+      },
+      "Bassia scoparia (L.) A.J.Scott": {
+        "legacy_tight": {
+          "boxes": 142,
+          "top1": 7,
+          "top5": 33
+        },
+        "square_tight": {
+          "boxes": 142,
+          "top1": 9,
+          "top5": 33
+        },
+        "square_context25": {
+          "boxes": 142,
+          "top1": 2,
+          "top5": 25
+        }
+      },
+      "Erigeron canadensis L.": {
+        "legacy_tight": {
+          "boxes": 108,
+          "top1": 9,
+          "top5": 25
+        },
+        "square_tight": {
+          "boxes": 108,
+          "top1": 7,
+          "top5": 23
+        },
+        "square_context25": {
+          "boxes": 108,
+          "top1": 6,
+          "top5": 17
+        }
+      }
+    },
+    "paired_top1": {
+      "square_tight_vs_legacy_tight": {
+        "neither": 556,
+        "both": 45,
+        "loss": 29,
+        "gain": 15
+      },
+      "square_context25_vs_square_tight": {
+        "neither": 569,
+        "loss": 34,
+        "gain": 16,
+        "both": 26
+      }
+    },
+    "elapsed_seconds": 69.34952120800153,
+    "forward_images": 1935,
+    "manifest_sha256": "a38eca9ffb9570da46040033564540c1af5fd1432dc6f2fcde4f869b12da1089",
+    "mapping_sha256": "0be438551efe900f0263bb948ffc436faf7cc1713881d8f10d0bdac946e8c694",
+    "scope": "Previously inspected publisher-box crop diagnostic"
+  },
+  "roadside_xp4": {
+    "summary": {
+      "val_16": {
+        "images": 16,
+        "labeled_pairs": 13,
+        "recovered_pairs": {
+          "1": 2,
+          "3": 13
+        }
+      },
+      "test_14": {
+        "images": 14,
+        "labeled_pairs": 12,
+        "recovered_pairs": {
+          "1": 3,
+          "3": 11
+        }
+      },
+      "multilabel": {
+        "images": 16,
+        "labeled_pairs": 32,
+        "recovered_pairs": {
+          "1": 1,
+          "3": 19
+        }
+      }
+    },
+    "split_counts": {
+      "train": 10302,
+      "val": 2160,
+      "test": 2140,
+      "multilabel": 206,
+      "val_16": 16,
+      "test_14": 14
+    },
+    "audit": {
+      "val_vs_train": {
+        "exact_filenames": 0,
+        "left_locatable": 2160,
+        "right_locatable": 10302,
+        "left_within_100m_of_right": 218,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      },
+      "test_vs_train": {
+        "exact_filenames": 0,
+        "left_locatable": 2140,
+        "right_locatable": 10302,
+        "left_within_100m_of_right": 129,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      },
+      "test_vs_val": {
+        "exact_filenames": 0,
+        "left_locatable": 2140,
+        "right_locatable": 2160,
+        "left_within_100m_of_right": 29,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      },
+      "multilabel_vs_train": {
+        "exact_filenames": 0,
+        "left_locatable": 206,
+        "right_locatable": 10302,
+        "left_within_100m_of_right": 153,
+        "left_exact_coordinate_in_right": 128,
+        "shared_dates": 3
+      },
+      "multilabel_vs_test": {
+        "exact_filenames": 0,
+        "left_locatable": 206,
+        "right_locatable": 2140,
+        "left_within_100m_of_right": 17,
+        "left_exact_coordinate_in_right": 17,
+        "shared_dates": 3
+      },
+      "test_14_vs_val_16": {
+        "exact_filenames": 0,
+        "left_locatable": 14,
+        "right_locatable": 16,
+        "left_within_100m_of_right": 0,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      }
+    },
+    "weights_sha256": "8dc2b8cf0975f5beab7139cd76593ca1045135f3175ab44b20bd0aafc4c11df4",
+    "source_csv_sha256": "4f120a7195e800d9729a9c5f193a3be719a6f0d929740a347d0da9611de9680a",
+    "operating_point": "Top-k positive-pair recovery on publisher tensor smoke fixture. Official per-taxon thresholds unavailable in acquired release assets."
+  },
+  "upstream_score_check": {
+    "images": 46,
+    "max_absolute_error": 0.0
+  },
+  "reserved_source_test": {
+    "images": 25,
+    "per_class": {
+      "1_solidago": 4,
+      "7_no_species": 4,
+      "6_reynoutria": 2,
+      "3_rosa_rugosa": 4,
+      "4_lupinus_polyphyllus": 3,
+      "5_pastinaca_sativa": 4,
+      "2_cytisus_scoparius": 4
+    },
+    "overlap_audit": {
+      "exact_filenames": 0,
+      "left_locatable": 25,
+      "right_locatable": 12682,
+      "left_within_100m_of_right": 0,
+      "left_exact_coordinate_in_right": 0,
+      "shared_dates": 4
+    },
+    "geometry": "100 m separation by publisher filename coordinates",
+    "status": "Reserved by filename and source class; pixels not fetched and no predictions computed"
+  }
+}

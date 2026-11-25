@@ -1,6 +1,6 @@
 # Pipeline benchmark program
 
-Status: 25 November 2026. This implements the first work slice in
+Status: 25 November 2026. This tracks the work in
 [the immediate goal](../immediate-goal.md). The pipeline is not ready for the main
 NZ labeling effort. Existing labels reveal substantial localization,
 identification and aggregation failures; reviewed NZ negatives and incidental
@@ -25,7 +25,7 @@ or training independence. All acquisition and inference artifacts stay outside G
 | CWFID | 60 images, 119 sparse category masks; 179 media/mask assets and manifest/provenance verified | Coverage of assessed crop/weed positive pixels | Already inspected. Multispectral false-color imagery and partial human support. Source image 028 overlaps train/test; exclude from held-out claims. Algorithmic vegetation boundaries are separate evidence. |
 | NZ90 review preparation | 90 media assets and manifest/provenance verified; zero annotations | Review preparation only | Observation/observer groups exist, but site independence and botanical labels are not established. No predictions added during this audit. Recheck all prior exposure before assigning a blind holdout. |
 | NZ300 subject controls | Prior cohort receipt and experiment documentation available; not re-audited by this source inventory | Existing subject-recovery diagnostic only | Already inspected six-species development cohort. Subject labels do not exhaustively label scenes. Neither incidental discovery nor fresh holdout evidence. |
-| Danish roadside | Repository/Zenodo metadata retained in research artifacts | Intended species-presence benchmark and released-method replication | No locally closed dataset/inference receipt identified in the inspected inventory. Acquire and audit CSV completeness, duplicates, taxa and source splits before evaluation. |
+| Danish roadside | Published split indexes, multilabel CSV, XP4 checkpoint and 46 score-checked publisher tensors | Positive species recovery on a bounded replication fixture | Route proximity crosses source splits. A separate 25-frame test selection meets the filename-coordinate distance rule. Full threshold replication and cross-method image comparisons remain open. |
 | PlantCLEF | Released classifier checkpoint and cached ImageWeeds outputs available | Same-classifier whole-frame/tile/region comparisons on ImageWeeds | This is not an official PlantCLEF plot evaluation. Usable plot truth and a closed source split still need verification/acquisition. |
 
 Leafy Spurge and DeepWeeds remain supporting point-classification and image-class
@@ -119,18 +119,74 @@ The command reads cached rankings and canonical source annotations; it does not
 invoke models, change source data or upload tasks. A separate closed region replay
 verifies original media and proposal geometry. Always use a new output namespace.
 
+## Crop context and roadside replication
+
+The paired ImageWeeds run varied crop geometry on all 645 publisher boxes using
+the pinned PlantCLEF checkpoint and full vocabulary. Each box ran through raw
+tight cropping with the original center-crop preprocessing, neutral square
+padding of the tight crop, and neutral square padding of a crop extended by
+25% of the longer box side on each edge. The same box and checkpoint were used
+for all three views. Inference processed 1,935 crops in 69.35 seconds on an
+RTX 5090, including per-image decoding and checksum verification.
+
+| Crop view | Top one | Top five |
+| --- | ---: | ---: |
+| Legacy tight | 74/645 | 297/645 |
+| Square tight | 60/645 | 278/645 |
+| Square with context | 42/645 | 264/645 |
+
+On square crops, context added 16 top-one hits and lost 34. Keep tight cropping
+as the comparison baseline and prioritize a better classifier. The crop test
+uses publisher geometry on previously inspected agricultural images, so its
+decision scope is the next development experiment.
+
+The [roadside publisher](https://zenodo.org/records/14013930) serves individual
+feature tensors and the multilabel CSV from its
+[original-data directory](https://lab.plantnet.org/DanishRoadsData/). The
+directory audit reproduced all 10,302 train, 2,160 validation and 2,140 test
+memberships, and matched all 206 multilabel tensor names to CSV rows. The
+`val_16` and `test_14` quick checks are subsets of their respective main splits.
+CSV taxon cells contain `1` or blank. Score the explicit positives while
+completeness for each target remains unverified.
+
+There are zero exact filename matches between the main train and test splits.
+Filename coordinates place 129 test frames within 100 m of a training frame.
+In the multilabel cohort, 153 of 206 frames meet that proximity condition, and
+128 share a training frame's coordinates. These counts describe spatial
+proximity and cannot establish whether pixels overlap or depict the same plant.
+
+The XP4 smoke test ran the checksum-verified released six-output head over the
+publisher's 926-by-768 BEiT features for each of 46 frames. A direct CPU FP32
+linear, max and sigmoid calculation matched the upstream model's scores exactly.
+The quick test recovered 3/12 positive pairs with one output and 11/12 with three.
+The deterministically sampled 16 multilabel frames recovered 1/32 and 19/32
+respectively. The run used ranked outputs because the official validation
+threshold file was unavailable in the acquired assets. Image feature extraction,
+official threshold metrics and false-alarm claims remain outside this run.
+
+The reserved source-test selection has 25 frames across seven source folders,
+including four from the publisher's no-species folder. The deterministic selection
+uses filename and class, with a 100 m minimum distance from the published train,
+validation and multilabel frames, the test smoke fixture and every other reserved
+frame. The four-frame cap per folder left two classes short under the distance
+rule. All four source dates remain shared. Training exposure outside the publisher
+split and independent acquisition sites remain unknown.
+
+The private reports and producer scripts are indexed in
+[the tracked aggregate summary](../benchmarks/crop-roadside-diagnostics-20261125.json).
+
 ## Remaining work and next experiment
 
-1. Audit a new source development/validation/evaluation selection before running
-   more policies. The 138-image cohort is already exposed and cannot become a
-   fresh held-out test merely by splitting it now. Check overlapping source sites,
-   dates and decoded pixels, and document unknown foundation-model training overlap.
-2. Compare source-box tight/context crops and eligible domain-suited classifiers.
-   Audit vocabulary first. Use source truth only for crop construction/scoring,
-   never to limit candidate species. Train only on declared training partitions.
-3. Reproduce the released roadside baseline, then compare whole-photo, tiled and
-   region methods on common evaluable taxa. Add usable PlantCLEF plot labels if
-   available; preserve domain-specific reports.
+1. Expand the split audit to another species-box source with documented capture
+   groups. Compare eligible domain-suited classifiers against the measured
+   ImageWeeds crop baseline and preserve a fresh evaluation cohort.
+2. Compare image-based whole-photo, tile and region models on the roadside smoke
+   fixture using an explicit taxon mapping and equal final output budgets. Use
+   the reserved cohort after freezing the policies. Report the XP4 score and
+   feature costs separately from those of models that run from pixels.
+3. Obtain or recreate the official validation thresholds before claiming
+   reproduction of XP4's published operating point. Add usable PlantCLEF plot
+   labels if available and preserve domain-specific reports.
 4. Declare numerical quality/cost gates and a bounded experiment budget before
    final held-out evaluation. Neither this development gain nor a candidate union
    satisfies the readiness gate in the immediate goal.
