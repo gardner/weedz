@@ -562,3 +562,49 @@ the next source of scene-level evidence.
 
 These experiments and the local review checks are indexed in the
 [follow-up summary](../benchmarks/nz-readiness-followup-20261125.json).
+
+## Instance localization errors and proposal windows
+
+A replay of the cached PhenoBench development masks reproduced all 535 SAM3
+and 452 Weeds Are Weird matches across the same 853 source instances.
+One-to-one matching still uses mask IoU ≥0.5. For this diagnostic, a duplicate
+is an unmatched proposal with sufficient IoU to an already matched instance.
+A fragment case has no sufficient individual proposal. It needs at least two
+masks that each cover ≥10% of that instance and place ≥80% of their pixels
+inside it. Their union must cover ≥50% and add ≥20 percentage points over the
+best piece. A merge covers ≥20% of each of at least two source instances.
+
+| Proposer, saved proposal order | Cap per image | Actual proposals | Matched instances | Repeat proposals | Fragmented instances | Merged proposals |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| SAM3 | 16 | 658 | 527 | 5 | 0 | 89 |
+| SAM3 | all | 676 | 535 | 8 | 0 | 98 |
+| Weeds Are Weird | 16 | 837 | 181 | 8 | 40 | 18 |
+| Weeds Are Weird | all | 2,412 | 452 | 81 | 69 | 100 |
+
+At the uncapped setting, SAM3 recovered 127/344 source instances below
+512 pixels and 277/337 instances at 2,048 pixels or larger. Weeds Are Weird
+recovered 85/344 and 249/337. Its fragment criterion was mostly met by crops
+(68 of 69), consistent with pieces of large plants being proposed separately.
+Ranks across the two methods use their own saved proposal order, so truncation
+does not establish an equal-compute ranking. The counts describe morphology
+on the source mask grid. Unmatched regions remain unassessed.
+
+On a fixed 16-image development subset, the whole-image control was compared
+with four new overlapping SAM3 windows at the same 16-proposal cap. Scores
+were sorted globally for the first windowed comparison. The follow-up retained
+up to 12 whole-image proposals and suppressed window candidates with IoU ≥0.5
+against a retained proposal. It reused the same window predictions.
+
+| Selection | Matches among 207 source instances | Matches among 87 under 512 pixels | Repeat proposals |
+| --- | ---: | ---: | ---: |
+| Whole image | 133 | 36 | 1 |
+| Global rank across whole image and windows | 114 | 38 | 101 |
+| Whole-image reservation with window suppression | 134 | 37 | 2 |
+
+Global score ordering allowed repeats to displace usable masks. Reserving
+whole-image candidates and suppressing overlaps recovered that loss. The
+follow-up gained six matches and lost five relative to the whole-image control.
+Four extra model input frames cost an average of 0.85 seconds per source photo,
+including window preparation and proposal handling. The small net gain does not
+justify switching the frozen NZ workflow. The development-only results are
+indexed in [the mask localization summary](../benchmarks/phenobench-mask-errors-20261125.json).

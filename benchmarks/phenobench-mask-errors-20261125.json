@@ -1,0 +1,454 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125/phenobench-mask-errors",
+  "artifacts": {
+    "replay.py": "898dfc02bc6ace466bf1944775ccdc96ce138c08de7917661fce92f67de38beb",
+    "report.json": "4cf6adcdc44e5514e5c861f7a7c3d338b96692d69024467e7f4c037f159d88e9",
+    "windowed.py": "339d3a1c9d3e29f0de10ecd10d229ba65f7e8caa3e15608e28e2e7bdb7fc3eb5",
+    "windowed16/frozen-plan.json": "1cdb54f8f90f10ac072f5122d31e004f049db489c6bb1e72c546c39d7340f997",
+    "windowed16/report.json": "03ede05db3e5d884aa9fa6d181434c95a5334865e88917fe9a400713bbc9547e",
+    "coverage_reserve.py": "375c7350069b248b3484cee63243101e81f9ce90639dbfd9357716b75e3a0d3b",
+    "windowed16/coverage-reserve-report.json": "90dfcd65307ada672b40dc858638ef836692dfefb457cd32d5c0499e67f3ddb2"
+  },
+  "replay": {
+    "summary": {
+      "sam3": {
+        "16": {
+          "all": {
+            "ground_truth": 853,
+            "proposals": 658,
+            "matched": 527,
+            "fragmented_truth": 0,
+            "duplicate_proposals": 5,
+            "merged_proposals": 89
+          },
+          "crop": {
+            "ground_truth": 519,
+            "matched": 358,
+            "fragmented_truth": 0
+          },
+          "under_512_pixels": {
+            "ground_truth": 344,
+            "matched": 126,
+            "fragmented_truth": 0
+          },
+          "partial_source_instance": {
+            "ground_truth": 156,
+            "matched": 85,
+            "fragmented_truth": 0
+          },
+          "2048_pixels_and_above": {
+            "ground_truth": 337,
+            "matched": 272,
+            "fragmented_truth": 0
+          },
+          "other_source_instance": {
+            "ground_truth": 697,
+            "matched": 442,
+            "fragmented_truth": 0
+          },
+          "weed": {
+            "ground_truth": 334,
+            "matched": 169,
+            "fragmented_truth": 0
+          },
+          "512_to_2047_pixels": {
+            "ground_truth": 172,
+            "matched": 129,
+            "fragmented_truth": 0
+          }
+        },
+        "32": {
+          "all": {
+            "ground_truth": 853,
+            "proposals": 676,
+            "matched": 535,
+            "fragmented_truth": 0,
+            "duplicate_proposals": 8,
+            "merged_proposals": 98
+          },
+          "crop": {
+            "ground_truth": 519,
+            "matched": 364,
+            "fragmented_truth": 0
+          },
+          "under_512_pixels": {
+            "ground_truth": 344,
+            "matched": 127,
+            "fragmented_truth": 0
+          },
+          "partial_source_instance": {
+            "ground_truth": 156,
+            "matched": 89,
+            "fragmented_truth": 0
+          },
+          "2048_pixels_and_above": {
+            "ground_truth": 337,
+            "matched": 277,
+            "fragmented_truth": 0
+          },
+          "other_source_instance": {
+            "ground_truth": 697,
+            "matched": 446,
+            "fragmented_truth": 0
+          },
+          "weed": {
+            "ground_truth": 334,
+            "matched": 171,
+            "fragmented_truth": 0
+          },
+          "512_to_2047_pixels": {
+            "ground_truth": 172,
+            "matched": 131,
+            "fragmented_truth": 0
+          }
+        },
+        "all": {
+          "all": {
+            "ground_truth": 853,
+            "proposals": 676,
+            "matched": 535,
+            "fragmented_truth": 0,
+            "duplicate_proposals": 8,
+            "merged_proposals": 98
+          },
+          "crop": {
+            "ground_truth": 519,
+            "matched": 364,
+            "fragmented_truth": 0
+          },
+          "under_512_pixels": {
+            "ground_truth": 344,
+            "matched": 127,
+            "fragmented_truth": 0
+          },
+          "partial_source_instance": {
+            "ground_truth": 156,
+            "matched": 89,
+            "fragmented_truth": 0
+          },
+          "2048_pixels_and_above": {
+            "ground_truth": 337,
+            "matched": 277,
+            "fragmented_truth": 0
+          },
+          "other_source_instance": {
+            "ground_truth": 697,
+            "matched": 446,
+            "fragmented_truth": 0
+          },
+          "weed": {
+            "ground_truth": 334,
+            "matched": 171,
+            "fragmented_truth": 0
+          },
+          "512_to_2047_pixels": {
+            "ground_truth": 172,
+            "matched": 131,
+            "fragmented_truth": 0
+          }
+        }
+      },
+      "waw": {
+        "16": {
+          "all": {
+            "ground_truth": 853,
+            "proposals": 837,
+            "matched": 181,
+            "fragmented_truth": 40,
+            "duplicate_proposals": 8,
+            "merged_proposals": 18
+          },
+          "crop": {
+            "ground_truth": 519,
+            "matched": 133,
+            "fragmented_truth": 39
+          },
+          "under_512_pixels": {
+            "ground_truth": 344,
+            "matched": 48,
+            "fragmented_truth": 0
+          },
+          "partial_source_instance": {
+            "ground_truth": 156,
+            "matched": 41,
+            "fragmented_truth": 3
+          },
+          "2048_pixels_and_above": {
+            "ground_truth": 337,
+            "matched": 88,
+            "fragmented_truth": 39
+          },
+          "other_source_instance": {
+            "ground_truth": 697,
+            "matched": 140,
+            "fragmented_truth": 37
+          },
+          "weed": {
+            "ground_truth": 334,
+            "matched": 48,
+            "fragmented_truth": 1
+          },
+          "512_to_2047_pixels": {
+            "ground_truth": 172,
+            "matched": 45,
+            "fragmented_truth": 1
+          }
+        },
+        "32": {
+          "all": {
+            "ground_truth": 853,
+            "proposals": 1427,
+            "matched": 295,
+            "fragmented_truth": 67,
+            "duplicate_proposals": 27,
+            "merged_proposals": 31
+          },
+          "crop": {
+            "ground_truth": 519,
+            "matched": 219,
+            "fragmented_truth": 66
+          },
+          "under_512_pixels": {
+            "ground_truth": 344,
+            "matched": 71,
+            "fragmented_truth": 0
+          },
+          "partial_source_instance": {
+            "ground_truth": 156,
+            "matched": 61,
+            "fragmented_truth": 12
+          },
+          "2048_pixels_and_above": {
+            "ground_truth": 337,
+            "matched": 153,
+            "fragmented_truth": 66
+          },
+          "other_source_instance": {
+            "ground_truth": 697,
+            "matched": 234,
+            "fragmented_truth": 55
+          },
+          "weed": {
+            "ground_truth": 334,
+            "matched": 76,
+            "fragmented_truth": 1
+          },
+          "512_to_2047_pixels": {
+            "ground_truth": 172,
+            "matched": 71,
+            "fragmented_truth": 1
+          }
+        },
+        "all": {
+          "all": {
+            "ground_truth": 853,
+            "proposals": 2412,
+            "matched": 452,
+            "fragmented_truth": 69,
+            "duplicate_proposals": 81,
+            "merged_proposals": 100
+          },
+          "crop": {
+            "ground_truth": 519,
+            "matched": 313,
+            "fragmented_truth": 68
+          },
+          "under_512_pixels": {
+            "ground_truth": 344,
+            "matched": 85,
+            "fragmented_truth": 0
+          },
+          "partial_source_instance": {
+            "ground_truth": 156,
+            "matched": 98,
+            "fragmented_truth": 12
+          },
+          "2048_pixels_and_above": {
+            "ground_truth": 337,
+            "matched": 249,
+            "fragmented_truth": 68
+          },
+          "other_source_instance": {
+            "ground_truth": 697,
+            "matched": 354,
+            "fragmented_truth": 57
+          },
+          "weed": {
+            "ground_truth": 334,
+            "matched": 139,
+            "fragmented_truth": 1
+          },
+          "512_to_2047_pixels": {
+            "ground_truth": 172,
+            "matched": 118,
+            "fragmented_truth": 1
+          }
+        }
+      }
+    },
+    "images": 64,
+    "source_truth_receipt_sha256": "a1baae80ab1a1b6c578334c6ef73d30fe9c8cadfb760ad80b05e5ee6203f09bf",
+    "sam3_predictions_sha256": "5886bbc304118240a7ec235054a386f10f3b349bd9537cd124883a087c355292",
+    "waw_receipt_sha256": "43efb6d5fecabc776db3c29bef28546c1e0cc776cb162920a7b1053a0c569b38",
+    "producer_sha256": "898dfc02bc6ace466bf1944775ccdc96ce138c08de7917661fce92f67de38beb",
+    "scope": "Same 64 developer-exposed source images. Prefix caps follow saved proposal order, without ranking calibration; no false-positive or NZ claims."
+  },
+  "windowed": {
+    "metrics": {
+      "whole": {
+        "all": {
+          "ground_truth": 207,
+          "proposals": 170,
+          "matched": 133,
+          "fragmented_truth": 0,
+          "duplicate_proposals": 1,
+          "merged_proposals": 17
+        },
+        "crop": {
+          "ground_truth": 123,
+          "matched": 83,
+          "fragmented_truth": 0
+        },
+        "under_512_pixels": {
+          "ground_truth": 87,
+          "matched": 36,
+          "fragmented_truth": 0
+        },
+        "other_source_instance": {
+          "ground_truth": 171,
+          "matched": 112,
+          "fragmented_truth": 0
+        },
+        "2048_pixels_and_above": {
+          "ground_truth": 79,
+          "matched": 65,
+          "fragmented_truth": 0
+        },
+        "partial_source_instance": {
+          "ground_truth": 36,
+          "matched": 21,
+          "fragmented_truth": 0
+        },
+        "512_to_2047_pixels": {
+          "ground_truth": 41,
+          "matched": 32,
+          "fragmented_truth": 0
+        },
+        "weed": {
+          "ground_truth": 84,
+          "matched": 50,
+          "fragmented_truth": 0
+        }
+      },
+      "windowed": {
+        "all": {
+          "ground_truth": 207,
+          "proposals": 249,
+          "matched": 114,
+          "fragmented_truth": 0,
+          "duplicate_proposals": 101,
+          "merged_proposals": 24
+        },
+        "crop": {
+          "ground_truth": 123,
+          "matched": 78,
+          "fragmented_truth": 0
+        },
+        "under_512_pixels": {
+          "ground_truth": 87,
+          "matched": 38,
+          "fragmented_truth": 0
+        },
+        "other_source_instance": {
+          "ground_truth": 171,
+          "matched": 107,
+          "fragmented_truth": 0
+        },
+        "2048_pixels_and_above": {
+          "ground_truth": 79,
+          "matched": 56,
+          "fragmented_truth": 0
+        },
+        "partial_source_instance": {
+          "ground_truth": 36,
+          "matched": 7,
+          "fragmented_truth": 0
+        },
+        "512_to_2047_pixels": {
+          "ground_truth": 41,
+          "matched": 20,
+          "fragmented_truth": 0
+        },
+        "weed": {
+          "ground_truth": 84,
+          "matched": 36,
+          "fragmented_truth": 0
+        }
+      }
+    },
+    "additional_model_frames": 64,
+    "additional_window_seconds": 13.56403826395399,
+    "mean_additional_seconds": 0.8477523914971243,
+    "proposer_version": "sam3-image-concept-v1:e1771ac0dfbdb86b1eabc2293685e6dab38e4d8cffa26eddb16361a6616d4f82",
+    "baseline_sha256": "5886bbc304118240a7ec235054a386f10f3b349bd9537cd124883a087c355292",
+    "plan_sha256": "1cdb54f8f90f10ac072f5122d31e004f049db489c6bb1e72c546c39d7340f997",
+    "producer_sha256": "339d3a1c9d3e29f0de10ecd10d229ba65f7e8caa3e15608e28e2e7bdb7fc3eb5",
+    "scope": "Same 16 fixed, developer-exposed frames. Costs exclude model initialization."
+  },
+  "coverage_reserve": {
+    "metrics": {
+      "all": {
+        "ground_truth": 207,
+        "proposals": 202,
+        "matched": 134,
+        "fragmented_truth": 0,
+        "duplicate_proposals": 2,
+        "merged_proposals": 19
+      },
+      "crop": {
+        "ground_truth": 123,
+        "matched": 84,
+        "fragmented_truth": 0
+      },
+      "under_512_pixels": {
+        "ground_truth": 87,
+        "matched": 37,
+        "fragmented_truth": 0
+      },
+      "other_source_instance": {
+        "ground_truth": 171,
+        "matched": 116,
+        "fragmented_truth": 0
+      },
+      "2048_pixels_and_above": {
+        "ground_truth": 79,
+        "matched": 67,
+        "fragmented_truth": 0
+      },
+      "partial_source_instance": {
+        "ground_truth": 36,
+        "matched": 18,
+        "fragmented_truth": 0
+      },
+      "512_to_2047_pixels": {
+        "ground_truth": 41,
+        "matched": 30,
+        "fragmented_truth": 0
+      },
+      "weed": {
+        "ground_truth": 84,
+        "matched": 50,
+        "fragmented_truth": 0
+      }
+    },
+    "retained_whole_slots": 12,
+    "overlap_suppression": 0.5,
+    "max_proposals": 16,
+    "paired_gain": 6,
+    "paired_loss": 5,
+    "producer_sha256": "375c7350069b248b3484cee63243101e81f9ce90639dbfd9357716b75e3a0d3b",
+    "windowed_report_sha256": "03ede05db3e5d884aa9fa6d181434c95a5334865e88917fe9a400713bbc9547e",
+    "scope": "Development follow-up chosen after the initial ranked windows comparison; same existing masks and development images."
+  }
+}
