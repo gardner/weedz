@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "protocol_commit": "16a326b",
+  "policy_commit": "aa4db4a",
+  "sources": 12,
+  "source_records": 820,
+  "source_eligible_unique": 425,
+  "other_observation_or_observer_exclusions": 420,
+  "selected_from_neighborhoods": 3,
+  "selected": 5,
+  "decisions": {
+    "low_score_uncertain": 5
+  },
+  "floor": 0.13646656274795532,
+  "max_tile_strength": 0.0017717628506943583,
+  "target_suggestions": {
+    "Cortaderia selloana": 1,
+    "Ulex europaeus": 1,
+    "Clematis vitalba": 3
+  },
+  "artifacts": {
+    "nz-botanical-discovery/collect.py": "0626a673b3e0e7987cb2793a0e0e52659d60bf89db71213edb66566872106ebf",
+    "nz-botanical-discovery/screen.py": "f5de32d36253f5723de4385526478e77df653bd08fcf3fc0a910259aca8947aa",
+    "nz-botanical-discovery/source-frame.json": "0673906b4dbf52a4412003c221f1294b24db006a7e8019450a37dd9ce14d0c09",
+    "nz-botanical-discovery/pool-ready.json": "0d74235ea543014c9bf120babdd4ef279ad23dd272f1dce5ef8ad50df3084297",
+    "nz-botanical-discovery/assisted_pool.jsonl": "6db941ce17e2a5fc55faec65d97ff56f9f8d42959c0622341c65e2ca9c890191",
+    "nz-botanical-discovery/assisted-scores.json": "771929f2dbf42500bc7e6eb77570d47ea6b5d9a1f2fbafe01043879262acdb25",
+    "nz-botanical-discovery/source/ulex-europaeus-0.json": "6e9506f19a59bd8caa719e3a57745eb052cbb4ef57c279416000948fea2369f7",
+    "nz-botanical-discovery/source/ulex-europaeus-1.json": "f6feaaa7121d82e4f550c047e5fd096542686a6e95df50bf7d30cb8bedcb30fb",
+    "nz-botanical-discovery/source/ulex-europaeus-2.json": "66d6fca0a23a18745445c0a49e13c799fd550a0fdb0822104bd88aa16d88ddb3",
+    "nz-botanical-discovery/source/ulex-europaeus-3.json": "0e9e663121760b0c909470efcb151fa73846652a8e6fb2c6b6ebb0f1fbaadd5e",
+    "nz-botanical-discovery/source/clematis-vitalba-0.json": "1e9d62f7c69e315cb55a1651f5fca94a5a17b896a713daa66a37c2d29a701571",
+    "nz-botanical-discovery/source/clematis-vitalba-1.json": "dcb713e94aec5568f13826946d39f15c2d7b87373b6a0746f6c5d858f01c474c",
+    "nz-botanical-discovery/source/clematis-vitalba-2.json": "abdc958e53e5a89b59123c2b4bd4210db3f360f6c8c788814f3b298a361dd66d",
+    "nz-botanical-discovery/source/clematis-vitalba-3.json": "c369b3099811821f295c3181d9ba90c6be9f2a221a049dac6fdbba15dbb5d5cd",
+    "nz-botanical-discovery/source/cortaderia-selloana-0.json": "3b58e7d38d2a9a69590eee3fd04ae5afa926875c23ea3d80663eae69521721cf",
+    "nz-botanical-discovery/source/cortaderia-selloana-1.json": "0328995b844a99c042b98cda5a433ed7d067fc69df897ed23a66ae036aca4663",
+    "nz-botanical-discovery/source/cortaderia-selloana-2.json": "a00d6474d58c1bf9a727c6ae888fdb09aded2e495178854276502125ca04d2a4",
+    "nz-botanical-discovery/source/cortaderia-selloana-3.json": "4e7bedc0393939fd365da402a702221a2542e4126ef357239d161da7e9b71f3d"
+  },
+  "frozen_review_pins": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29",
+    "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
+    "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  },
+  "actual_human_outcomes": 0
+}

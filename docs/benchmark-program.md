@@ -575,6 +575,34 @@ fitness for a new assisted stratum against the frozen threshold and agreement
 rule. Incidental presence remains unverified until reviewed. This enriched
 sample cannot estimate incidental prevalence.
 
+The 12 queries returned 820 records before source filtering. Of 425 unique
+eligible records, 420 were excluded by the prior or within-pool observation
+and observer rules. Five originals from three neighborhoods passed the
+checks. All five were below the frozen threshold. The highest tile score
+was 0.00177 against a floor of 0.13647. This source yielded no new priority
+stratum. The pilot package and seal hashes still match their release receipts.
+[Botanical pool evidence](../benchmarks/nz-botanical-discovery-20261125.json)
+
+## NZ trail-camera discovery protocol
+
+Use the [public LILA NZ trail-camera release](https://lila.science/datasets/nz-trailcams)
+as a separate source. The release supplies animal tags and camera identifiers.
+It has no plant labels or usable coordinates for these frames. Compare plant
+hints on the cached pixels and retain the site as the sampling unit.
+
+Exclude the camera sites of the 12 previously inspected images from the
+[source assessment](../benchmarks/nz-trailcams-assessment.json). Select 12 projects
+with at least four remaining midday sites, four sites per project and one
+frame per site, using SHA-256 order with the fixed `weedz-lila-site-v1` seed
+and separate project, site and frame keys. Midday means camera timestamp
+09:00 to before 16:00. No replacement is made for a failed media download
+or duplicate. Verify source dimensions, bytes, distinct sites, and exact and
+perceptual uniqueness against the prior pilot pools and within the set. Keep
+mono or infrared images visible in the audit if the timestamps select them.
+Run the unchanged NZ policy and report all outcomes separately from the
+handheld NZ pilot. Any candidate must be reviewed before a plant label or
+occurrence can be claimed.
+
 ## Frozen classifier adaptation experiment
 
 Evaluate a session-balanced nearest-centroid classifier on the five reserved
