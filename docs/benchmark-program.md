@@ -227,23 +227,53 @@ reported separately. These thresholds are provisional development gates.
 NZ precision, missed plants and reviewer benefit require the blind and assisted
 NZ review packages and human review.
 
+## Reserved roadside results
+
+Tiled PlantCLEF passed all three provisional gates on the reserved cohort.
+Each method scored 25 frozen images with 21 explicit positive pairs and four
+separate no-species controls. The top-one counts compare paired outcomes on the
+same positives. Runtime covers local image loading for the pixel branches and
+preserved uncached SAM3 proposal durations for the region branch.
+
+| Method | Top one | Top three | Top-one gains / losses vs. whole | Mean / p95 seconds | Empty frames |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PlantCLEF whole photo | 10/21 | 17/21 | — | 0.171 / 0.174 | 0 |
+| PlantCLEF 4×4 grid | 16/21 | 21/21 | 8 / 2 | 0.349 / 0.362 | 0 |
+| SAM3 masked regions + PlantCLEF | 1/21 | 3/21 | 0 / 9 | 0.576 / 1.160 | 17 |
+| XP4 publisher-feature head | 5/21 | 16/21 | 2 / 7 | 0.003 / 0.003 | 0 |
+
+The XP4 row covers cached-feature loading and CPU head inference. PlantCLEF
+and XP4 model initialization together took 1.55 seconds. The existing SAM3
+proposal script recorded runtime after initialization, so separate SAM3 load
+duration remains unavailable. The SAM3 smoke comparison similarly had 24
+empty frames out of 46 and recovered 6/32 positive multilabel pairs at rank
+three. The profile often loses the plant before species identification starts.
+
+Freeze PlantCLEF 4×4 as the first NZ transfer candidate with fixed crop geometry,
+full-softmax scores, and per-target maximum across tiles. Preserve the winning
+tile's source bounds for any assisted task. A NZ abstention policy still needs
+an explicit development choice. Rankings by themselves force a target even
+when all scores are weak, so the four no-species control scores remain
+descriptive and do not establish a false-alarm rate.
+
+The reserved results mainly measure recognition of the publisher's labeled
+roadside subjects. They support choosing a cheaper crop policy and rejecting
+the tested SAM3 profile for this fixture. NZ background localization,
+lookalike behavior, calibrated operating thresholds, and reviewer effort
+need separate evidence.
+
 ## Remaining work and next experiment
 
 1. Expand the split audit to another species-box source with documented capture
    groups. Compare eligible domain-suited classifiers against the measured
    ImageWeeds crop baseline and preserve a fresh evaluation cohort.
-2. Add the region model to the whole-photo and tile comparisons on the roadside
-   smoke fixture using the same target mapping and output budgets. Use the
-   reserved cohort after freezing the policies. Report the XP4 score and feature
-   costs separately from those of models that run from pixels.
+2. Check the frozen tile policy on the existing NZ source-subject controls,
+   including native lookalikes and an audit of missing classifier taxa. Then
+   freeze a candidate selection and abstention policy for assisted preparation.
 3. Obtain or recreate the official validation thresholds before claiming
    reproduction of XP4's published operating point. Add usable PlantCLEF plot
    labels if available and preserve domain-specific reports.
-4. Declare numerical quality/cost gates and a bounded experiment budget before
-   final held-out evaluation. Neither this development gain nor a candidate union
-   satisfies the readiness gate in the immediate goal.
-5. Freeze a justified model/crop/aggregation policy only after comparisons. Then
-   prepare diverse NZ candidate and blind-review packages, preserving random
+4. Prepare diverse NZ candidate and blind-review packages, preserving random
    unflagged photos, lookalikes, uncertainty, provenance and encounter separation.
-6. Run a small human usability pilot to measure actual effort. Specialist NZ
+5. Run a small human usability pilot to measure actual effort. Specialist NZ
    verification remains necessary before claims about background discovery.

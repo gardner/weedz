@@ -15,7 +15,16 @@
     "roadside-source/acquire_pixels.py": "759b3f7f2464cda19dc002fbdf51c92c2809f9453d11580f39ca6a93907496e7",
     "roadside-source/compare_pixels.py": "fd0cc561d4c76f9fe4f679757da7f50ca5e29486e8d6980af08136a6965df9d1",
     "roadside-source/pixels-ready.json": "7e59cd20da038a09ac3b2503dcdcc6ca8129c1f865f5526f08e9591ed6edabcd",
-    "roadside-source/plantclef-pixel-smoke-report.json": "1d5a51a19f9f41ead56f0af995d077b266d376fe6553de2ab3424cfc1c04f12a"
+    "roadside-source/plantclef-pixel-smoke-report.json": "1d5a51a19f9f41ead56f0af995d077b266d376fe6553de2ab3424cfc1c04f12a",
+    "roadside-source/propose_regions.py": "c532a9aa8f34f7cff82b3d73608c282d13a66b67bbbc74bf732c688fff95d563",
+    "roadside-source/propose_reserved_regions.py": "57d2992331a89eca21b7be89b5070bbb64828aaac5cfd1cf3209513a550bd6cd",
+    "roadside-source/compare_regions.py": "348d854247f02b8e35a4808095a49f5f5ca2ae283bc1aee4c059108cc5840305",
+    "roadside-source/evaluate_reserved.py": "771eac20c3c64d888449a60816bc50506368b8db4cfa5a2069c3910dce01b11a",
+    "roadside-source/sam3-smoke/ready.json": "5e5f086fcef99293acce6e0b8dd9a872c835715ecf3ce52b9b248e43ceb78f62",
+    "roadside-source/sam3-reserved/ready.json": "1de7a4d2616bdd43a9cebd0a8bb374b70e8ea8e4d3b730c4a6051c1a86eed0fb",
+    "roadside-source/sam3-plantclef-smoke-report.json": "a5c8dd8ed5fb05bc1c54bfad39fa303474b780b99df94a4e4c7037753b9c6f73",
+    "roadside-source/reserved-roadside-report.json": "7828e78d7a3e72559d00e25cea43fa32e4d06150f3c6ba5828c239ec4a884c0b",
+    "roadside-source/reserved-features-ready.json": "48143f1fd266d640ef3e8c7290ce8f5fd6b4739ef01c30595e293c10c614e1cf"
   },
   "imageweeds_crop_context": {
     "images": 138,
@@ -326,5 +335,252 @@
     "measured_seconds": 18.900776586000575,
     "forward_images": 782,
     "scope": "Rank six declared targets using full-softmax scores. Tile max uses 16 crops. Smoke fixture only."
+  },
+  "roadside_sam3_smoke": {
+    "summary": {
+      "val_16": {
+        "positive_pairs": 13,
+        "recovered": {
+          "1": 5,
+          "3": 7
+        },
+        "empty_images": 7
+      },
+      "test_14": {
+        "positive_pairs": 12,
+        "recovered": {
+          "1": 3,
+          "3": 4
+        },
+        "empty_images": 7
+      },
+      "multilabel": {
+        "positive_pairs": 32,
+        "recovered": {
+          "1": 4,
+          "3": 6
+        },
+        "empty_images": 10
+      }
+    },
+    "proposal_seconds": 18.72803050701623,
+    "classification_seconds": 7.881409694004105,
+    "forward_images": 58,
+    "policy": "Top 16 by concept score, with exact mask deduplication across generic prompts. Same masked crop scores and target max as pixel comparison."
+  },
+  "roadside_reserved_evaluation": {
+    "summary": {
+      "images": 25,
+      "positive_pairs": 21,
+      "no_species_controls": 4,
+      "methods": {
+        "whole": {
+          "top1": 10,
+          "top3": 17,
+          "paired_gain": 0,
+          "paired_loss": 0,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 2,
+              "top3": 4
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 2,
+              "top3": 2
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 2,
+              "top3": 4
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 1,
+              "top3": 2
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 1,
+              "top3": 3
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 2,
+              "top3": 2
+            }
+          },
+          "empty": 0,
+          "mean_seconds": 0.17065541980322452,
+          "p95_seconds": 0.17436089779948816,
+          "total_views": 25,
+          "quality_gate": false,
+          "improvement_gate": null,
+          "cost_gate": true,
+          "no_species_control_max_scores": [
+            0.00025078037288039923,
+            0.00011764765076804906,
+            0.00028939906042069197,
+            0.00017237852443940938
+          ]
+        },
+        "tiles": {
+          "top1": 16,
+          "top3": 21,
+          "paired_gain": 8,
+          "paired_loss": 2,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 3,
+              "top3": 4
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 4,
+              "top3": 4
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 4,
+              "top3": 4
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 1,
+              "top3": 3
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 2,
+              "top3": 4
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 2,
+              "top3": 2
+            }
+          },
+          "empty": 0,
+          "mean_seconds": 0.34921869152225554,
+          "p95_seconds": 0.36188656379817985,
+          "total_views": 400,
+          "quality_gate": true,
+          "improvement_gate": true,
+          "cost_gate": true,
+          "no_species_control_max_scores": [
+            0.001543751684948802,
+            0.0010991089511662722,
+            0.0030424771830439568,
+            0.0005331106949597597
+          ]
+        },
+        "regions": {
+          "top1": 1,
+          "top3": 3,
+          "paired_gain": 0,
+          "paired_loss": 9,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 0,
+              "top3": 1
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 0,
+              "top3": 0
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 1,
+              "top3": 2
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 0,
+              "top3": 0
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 0,
+              "top3": 0
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 0,
+              "top3": 0
+            }
+          },
+          "empty": 17,
+          "mean_seconds": 0.5760493611986749,
+          "p95_seconds": 1.1603800939803472,
+          "total_views": 39,
+          "quality_gate": false,
+          "improvement_gate": false,
+          "cost_gate": true,
+          "no_species_control_max_scores": [
+            null,
+            0.0001760454470058903,
+            null,
+            0.0001337860885541886
+          ]
+        },
+        "xp4_head": {
+          "top1": 5,
+          "top3": 16,
+          "paired_gain": 2,
+          "paired_loss": 7,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 3,
+              "top3": 4
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 0,
+              "top3": 3
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 0,
+              "top3": 4
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 0,
+              "top3": 1
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 0,
+              "top3": 2
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 2,
+              "top3": 2
+            }
+          },
+          "empty": 0,
+          "mean_seconds": 0.0029273423238191753,
+          "p95_seconds": 0.0030579192098230124,
+          "total_views": 23150,
+          "quality_gate": false,
+          "improvement_gate": null,
+          "cost_gate": null,
+          "no_species_control_max_scores": [
+            0.9580004215240479,
+            0.7746157646179199,
+            0.9220935702323914,
+            0.8482552170753479
+          ]
+        }
+      }
+    },
+    "policy_commit": "f87f0c97358806a0016ce3725cbecb8b235e246d",
+    "model_load_seconds_plantclef_and_xp4": 1.5459148140216712
   }
 }
