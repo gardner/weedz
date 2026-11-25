@@ -988,6 +988,28 @@ photo withheld by the whole-photo policy. The pilot tasks, original priority
 rule and sealed blind scores all stayed fixed.
 [Control, margin and incidental receipts](../benchmarks/nz-local-bioclip-20261125.json)
 
+## Camera-project transfer of the crop-local cue
+
+Freeze a second LILA camera sample before running the crop-local verifier.
+Exclude all projects represented in the first 48-camera experiment or the
+12 photos in the original visual audit. Apply the earlier midday timestamp
+rule. Choose up to 16 remaining projects with at least eight eligible camera
+sites, eight sites per project and one image per site. Use the fixed
+`weedz-lila-transfer-v1` seed with separate project, site and frame keys.
+Test decoded pixel and perceptual uniqueness against the prior pools,
+including the 48 tested cameras, and within the new pool. Preserve source
+rights and native pixels, and keep failed downloads out with a recorded
+reason. Do not replace them.
+
+Compare the pilot baseline with the fixed crop-local suggestion at the
+0.01173484418541193 PlantCLEF floor and 0.02411 BioCLIP margin. Preserve
+the camera domain separately. Report the number of sites screened and
+suggestions withheld or retained. For a separate supplemental review
+bundle, retain up to six exploratory suggestions at most one per project.
+Select by descending BioCLIP margin, then PlantCLEF score and source ID.
+Full images and exact search tiles remain unreviewed. No supplemental case
+enters the handheld pilot or the blind outcome analysis.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
