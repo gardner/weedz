@@ -732,8 +732,9 @@ monolabel frames as a separate comparison.
 Freeze the six PlantCLEF target groups and their pinned native-model
 synonyms. Rank one maximum-scoring 4×4 tile target per image using the
 full softmax denominator. Compare the original proposal, whole-photo
-PlantCLEF agreement alone, the two-model whole-photo agreement rule,
-and broad native-model agreement on the winning tile alone. Run at a
+PlantCLEF agreement alone, and native-model agreement on the full photo
+or on the winning tile. Run each native agreement rule both with and
+without the whole-photo PlantCLEF check. Run at a
 ceiling of one suggestion per image. Apply the same checked tile-score
 floor to every rule, the median maximum tile score among the 13 explicitly
 positive quick validation frames. Also report the floor-free comparison
