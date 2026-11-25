@@ -70,7 +70,14 @@
     "nz-trailcam-transfer/local-tile-scores.json": "dc7d23842d5c37a8bfbab5a0eed95936def25cd150b17e32ea71b91585245dab",
     "nz-trailcam-transfer/nz-camera-transfer-cues-v1.zip": "0d534329b53e50916144214b9ef45189a3b682bf553d979fcfe81d5e9d293980",
     "nz-trailcam-transfer/exploratory-package-v1/manifest.json": "6021bcc19c1e2593dcc590d39b19baec4500bb803d1f989fc653aa58582e72ed",
-    "nz-trailcam-transfer/exploratory-package-v1/tasks.json": "6bc1ab464ad783d8fa4171819c446f88848e9597f5dbd1e63cffca1994543680"
+    "nz-trailcam-transfer/exploratory-package-v1/tasks.json": "6bc1ab464ad783d8fa4171819c446f88848e9597f5dbd1e63cffca1994543680",
+    "nz-trailcam-transfer/frozen-cue-targets.json": "c61be825f36ea27482b875bf501a1a05355df16a7a9ea2a8e1c81791c7badf94",
+    "nz-trailcam-transfer/loopback-review-check/check_api.py": "081a8a6975409ce80f88e94f10ac02ad48118cd8878cab18d5cc79566f311b03",
+    "nz-trailcam-transfer/loopback-review-check/check_browser.mjs": "bdc798471826f122dacad760c44ffd1ff806e05fb208df3cc1f5db52400d3385",
+    "nz-trailcam-transfer/loopback-review-check/api-check.json": "7407983c0fa0d8d52f7cc635f21de321157189a7d3561bb34131e68d3038d78e",
+    "nz-trailcam-transfer/loopback-review-check/browser-check.json": "489a62b5694e4b140d9626367828b5eef6f2213a840bd8d9f6d2be831b8d7679",
+    "nz-trailcam-transfer/loopback-review-check/label-studio-empty-export.json": "402d003385c3950b07fd8377d6e0f517699f46f71d7c6f364db2ba27cdbe690d",
+    "nz-trailcam-transfer/loopback-review-check/empty-cue-report.json": "f05021d86b409567a92aa3b8b1436b3708ae9675a66975d4c61701c36c6e591c"
   },
   "frozen_review_pins": {
     "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
@@ -81,5 +88,13 @@
     "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
     "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
     "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  },
+  "review_workflow": {
+    "imported_tasks": 2,
+    "verified_originals": 2,
+    "verified_search_crops": 2,
+    "browser_checked_tasks": 2,
+    "actual_human_reviews": 0,
+    "unassessed_cues": 2
   }
 }

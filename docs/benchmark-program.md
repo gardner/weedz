@@ -1029,6 +1029,27 @@ the crop-local rule on fresh camera projects. They cannot establish plant
 presence, recall or precision. The pilot packages and sealed hashes still
 match their receipts. [Camera transfer and packet evidence](../benchmarks/nz-camera-transfer-20261125.json)
 
+The camera packet has its own operator-side `frozen-cue-targets.json`.
+It binds the original cue taxa to the task IDs, image hashes, package and
+score receipts. Import the camera tasks into a separate review project.
+Use the project's full Label Studio JSON export with task data and metadata.
+
+```sh
+uv run python -m weedz.annotation.pilot_cue_outcomes \
+  --package /private/path/to/exploratory-package-v1 \
+  --export /private/path/to/camera-export.json \
+  --cue-receipt /private/path/to/frozen-cue-targets.json \
+  --output /private/path/to/camera-review-report.json
+```
+
+The report records effort and counts cue support only after agreeing
+submissions from at least two reviewer accounts. Uncertain or unresolved
+cases remain unassessed. Keep the camera report outside the handheld
+pilot's recall and timing analysis. The disposable local project verified
+both task payloads and all four image files. Both tasks rendered in a
+browser with clickable watchlist choices. The full JSON export produced
+two unreviewed cases and zero submissions.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3

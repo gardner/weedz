@@ -1,7 +1,12 @@
 """Only matching independent review accounts support blind outcome comparisons."""
 
+import hashlib
+import json
+from pathlib import Path
+
 import pytest
 
+from weedz.annotation.pilot_cue_outcomes import report_cues
 from weedz.annotation.pilot_outcomes import evaluate_blind
 
 GORSE = "Ulex europaeus"
@@ -89,3 +94,41 @@ def test_visible_answer_without_species_is_uncertain() -> None:
     )
     assert summary["consensus"] == {"uncertain": 1}
     assert summary["suggestions_unassessed"] == 1
+
+
+def test_camera_cues_bind_package_and_count_independent_reviews(tmp_path: Path) -> None:
+    package = tmp_path / "package"
+    package.mkdir()
+    planned = task("a")
+    planned["data"].update(review_hint="Unreviewed cue", search_preview="crop.png")
+    raw_tasks = json.dumps([planned]).encode()
+    tasks_sha = hashlib.sha256(raw_tasks).hexdigest()
+    (package / "tasks.json").write_bytes(raw_tasks)
+    raw_manifest = json.dumps({"task_count": 1, "files": {"tasks.json": tasks_sha}}).encode()
+    (package / "manifest.json").write_bytes(raw_manifest)
+    cue = tmp_path / "cue.json"
+    binding = {
+        "package_manifest_sha256": hashlib.sha256(raw_manifest).hexdigest(),
+        "task_file_sha256": tasks_sha,
+        "decisions": [seal("a", GORSE)],
+    }
+    cue.write_text(json.dumps(binding))
+    export = tmp_path / "export.json"
+    export.write_text("[]")
+    empty = report_cues(package, export, cue)
+    assert empty["cue_outcomes"]["suggestions_unassessed"] == 1
+    assert empty["effort"]["submissions"] == 0
+    assert "agreed_taxa_missed" not in empty["cue_outcomes"]
+    row = exported("a", vote(1, GORSE), vote(2, GORSE)) | {"data": planned["data"]}
+    export.write_text(json.dumps([row]))
+    result = report_cues(package, export, cue)
+    assert result["cue_outcomes"]["suggestions_supported"] == 1
+    assert result["effort"]["submissions"] == 2
+
+    row["data"] = dict(row["data"], search_preview="wrong.png")
+    export.write_text(json.dumps([row]))
+    with pytest.raises(ValueError, match="must match the package"):
+        report_cues(package, export, cue)
+    cue.write_text(json.dumps(binding | {"task_file_sha256": "invalid"}))
+    with pytest.raises(ValueError, match="cue receipt"):
+        report_cues(package, export, cue)

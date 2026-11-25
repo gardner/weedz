@@ -151,7 +151,8 @@ prompts. The refit surfaced one possible gorse case among the 89 incidental
 photos. That case is already in the assisted pilot and awaits human review.
 The same fixed rule surfaced two more cues on 112 frames from new camera
 projects. They are in a separate supplemental review bundle, with no
-botanical label assigned.
+botanical label assigned. Both tasks passed the local review-interface
+check, and full exports can be checked against the original cue receipt.
 
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
