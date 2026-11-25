@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125/phenobench-weed-presence",
+  "artifacts": {
+    "evaluate.py": "4ac603b0b4668967a5e2967734c57597bcd00363d91b0da05de06c9af4a43369",
+    "prespecified.json": "b0ab5766c319402279faef7bc52f87227839a766c8aa8ab4f03ccf51353edabe",
+    "report.json": "4184c16835f70e3eb3a77ccd60479fbb51fdc28357e51f62a24bb3a0eb7fa765"
+  },
+  "summary": {
+    "1": {
+      "tp": 58,
+      "fp": 1,
+      "tn": 2,
+      "fn": 3,
+      "review_candidates": 59,
+      "agreed_annotation_precision": 0.9830508474576272,
+      "annotation_recall": 0.9508196721311475
+    },
+    "64": {
+      "tp": 57,
+      "fp": 1,
+      "tn": 2,
+      "fn": 4,
+      "review_candidates": 58,
+      "agreed_annotation_precision": 0.9827586206896551,
+      "annotation_recall": 0.9344262295081968
+    },
+    "512": {
+      "tp": 52,
+      "fp": 1,
+      "tn": 2,
+      "fn": 9,
+      "review_candidates": 53,
+      "agreed_annotation_precision": 0.9811320754716981,
+      "annotation_recall": 0.8524590163934426
+    }
+  },
+  "images": 64,
+  "with_annotated_weed": 61,
+  "source_receipt_sha256": "a1baae80ab1a1b6c578334c6ef73d30fe9c8cadfb760ad80b05e5ee6203f09bf",
+  "waw_receipt_sha256": "43efb6d5fecabc776db3c29bef28546c1e0cc776cb162920a7b1053a0c569b38",
+  "plan_sha256": "b0ab5766c319402279faef7bc52f87227839a766c8aa8ab4f03ccf51353edabe",
+  "producer_sha256": "4ac603b0b4668967a5e2967734c57597bcd00363d91b0da05de06c9af4a43369",
+  "scope": "Coarse annotated weed presence in developer-exposed European crop frames. No photographic species or NZ inference claims."
+}

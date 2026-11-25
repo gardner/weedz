@@ -12,7 +12,14 @@
     "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
     "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
     "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
-    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960",
+    "pilot-effort-check/v3-local-api-check.json": "35103a7d287ee4173bf6cc757569c1edee5b40c0b34242041d2d2cbae45414c6",
+    "pilot-effort-check/v3-local-browser-verified.json": "328df8a549a3c3cb92630e27277de766b690afc2d2119c37ffdadd958535c585",
+    "pilot-effort-check/check_v3_local.py": "d8cdb5f890e2d86de74f59f9978640c3da47a4e3d10c3bf6313efbaf870fab79",
+    "pilot-effort-check/check_v3_browser.mjs": "34cf6ecc283e6cd69a4b3433864b7cd1cf690a355be068116a2d793063ed5435",
+    "pilot-effort-check/blind-v3-browser.png": "f5c355038fc8f1f8c8214950a92ef74b873e483fa72539fcfa429e01b2077ffd",
+    "pilot-effort-check/assisted-v3-browser.png": "dc0482a2f70b4cd7b544f3da4b0746a6205733315ac26c60ff6bf60870bd63cc",
+    "pilot-effort-check/empty-report-v3.json": "5b2d3413227554143d892011a4684e6cfafdf41e56d684ab009746b5f86a88b0"
   },
   "gorse_source_pool": {
     "original_photos": 3,
@@ -38,5 +45,85 @@
     }
   },
   "verification": "Full package checksums, previous identities and search crops, disjoint blind source pixels, and Label Studio config checked. Builder rechecked observer, observation, near duplicates and encounter overlap.",
-  "scope": "Source subject labels support review reference cases only. Threshold and blinded review are untouched."
+  "scope": "Source subject labels support review reference cases only. Threshold and blinded review are untouched.",
+  "loopback_verification": {
+    "api": {
+      "blind": {
+        "project": 1,
+        "storage": 1,
+        "task_count": 16,
+        "first_task": 1,
+        "additional_gorse_tasks_verified": 0,
+        "source_images_verified": 16,
+        "search_crops_verified": 0
+      },
+      "assisted": {
+        "project": 2,
+        "storage": 2,
+        "task_count": 21,
+        "first_task": 32,
+        "additional_gorse_tasks_verified": 2,
+        "source_images_verified": 21,
+        "search_crops_verified": 21
+      }
+    },
+    "browser": {
+      "blind": {
+        "taskRendered": true,
+        "watchlistChoiceClickable": true,
+        "visibleSearchHint": false,
+        "servedImageTypes": [
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original",
+          "original"
+        ]
+      },
+      "assisted": {
+        "taskRendered": true,
+        "watchlistChoiceClickable": true,
+        "visibleSearchHint": true,
+        "servedImageTypes": [
+          "original",
+          "search crop",
+          "search crop",
+          "original",
+          "search crop",
+          "search crop",
+          "original",
+          "search crop",
+          "search crop",
+          "search crop",
+          "original",
+          "original",
+          "original",
+          "search crop",
+          "original",
+          "search crop",
+          "original",
+          "search crop",
+          "search crop",
+          "original",
+          "original",
+          "search crop",
+          "original",
+          "search crop"
+        ]
+      }
+    },
+    "version": "1.23.2",
+    "human_submissions": 0
+  }
 }

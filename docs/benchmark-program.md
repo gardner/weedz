@@ -409,8 +409,11 @@ three original photos whose source subject is *Ulex europaeus*. All three
 fell below the frozen priority score. Assisted v3 adds two of those photos as
 reference cases. It preserves all 19 v2 tasks and their search crop pixels.
 The v3 bundle has **21 assisted** tasks, paired with the original **16 blind**
-tasks. All package hashes and task bindings were checked. These gorse-subject
-controls can reveal how reviewers handle low scores for an expected subject.
+tasks. All package hashes and task bindings were checked. A separate local
+Label Studio 1.23.2 run imported both arms, served and verified all 37
+source images and all 21 assisted search crops, and opened a new gorse task
+in the browser. These gorse-subject controls can reveal how reviewers
+handle low scores for an expected subject.
 No incidental target is verified by the new stratum.
 [Acquisition and package evidence](../benchmarks/nz-gorse-controls-20261125.json).
 
@@ -652,6 +655,27 @@ Four extra model input frames cost an average of 0.85 seconds per source photo,
 including window preparation and proposal handling. The small net gain does not
 justify switching the frozen NZ workflow. The development-only results are
 indexed in [the mask localization summary](../benchmarks/phenobench-mask-errors-20261125.json).
+
+## Final weed-presence decisions on PhenoBench
+
+The saved Weeds Are Weird semantic decisions also allow a coarse image-level
+check where the source provides a pixel label. Treat any source weed or
+partial-weed pixel as the positive label. Count one suggested review per
+frame when the model marks at least the declared number of weed pixels.
+
+| Minimum predicted weed pixels | Annotated positives recovered | Candidate frames | Annotated-negative frames suggested |
+| --- | ---: | ---: | ---: |
+| 1 | 58/61 | 59 | 1/3 |
+| 64 | 57/61 | 58 | 1/3 |
+| 512 | 52/61 | 53 | 1/3 |
+
+The largest fixed mask-area floor dropped six calls and lost six annotated
+positives relative to the smallest floor. The one suggestion on an
+annotated-negative frame persisted. The three annotated-negative frames
+provide a denominator for this development fixture only. These are weed
+category labels in crop frames. Do not extrapolate them to watchlist species,
+real NZ false alarms or site-level absence.
+[Presence decision evidence](../benchmarks/phenobench-weed-presence-20261125.json).
 
 ## Balanced crop adaptation protocol
 
