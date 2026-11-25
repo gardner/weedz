@@ -792,6 +792,33 @@ accounts for only a small part of the observed disagreement. Three of the
 five recoveries came from the largest spatial component and two from one
 other component. [Evaluation receipts and rank audit](../benchmarks/roadside-agreement-20261125.json)
 
+## Fresh NZ subject and lookalike agreement controls
+
+Compare the frozen agreement policy with variants on NZ photos outside the
+examined 2024–2025 source-subject cohort. Query the three watchlist subjects,
+two native lookalikes (*Austroderia fulvida*, *Clematis paniculata*) and broom.
+Use the first 100 descending observation IDs in January–June and July–October
+2026 for each exact taxon. Require research grade, an upload in 2026, CC0 or
+CC BY observation and photo rights, public coordinates and reported accuracy
+of at most 100 m. Take at most eight originals per taxon using a fixed hash
+order. Rotate through taxa to share the eligible observer pool. Keep one
+photo per observation and observer, and apply the existing pixel, near-copy
+and encounter exclusions against the earlier pools and within this set.
+Freeze the manifest before inference. Source identifications describe the
+photographed subject only.
+
+Use the original three-target PlantCLEF 4×4 tile scorer, its fixed score
+floor and one suggestion per image. Compare score-only triage, the frozen
+whole-photo conjunction, agreement with the native model on the winning
+tile alone, and replacing just the native whole-photo check with the
+winning-tile check. Report recoveries of photographed targets, photo-level
+lookalike suggestions, and paired differences. Treat at least three new
+subject recoveries and zero additional suggestions across the lookalike and
+broom controls as the follow-up gate. Require at least four independent
+photos in each of the six strata to apply the gate. Report shortfalls
+explicitly. Passing would justify a separate incidental comparison. NZ
+pilot settings and existing reviewer tasks remain frozen.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
