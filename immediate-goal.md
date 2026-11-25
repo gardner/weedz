@@ -127,8 +127,9 @@ split and label limits, reproducible baselines, and improvement experiments.
 On ImageWeeds, maximum-score aggregation raised recall from 5 to 23 of 303
 labeled image-species pairs at five suggestions per image. On the held-out
 Danish roadside subset, tiled PlantCLEF recovered 16 of 21 labeled positives at
-top one versus 10 for whole-photo classification. Neither result establishes
-incidental species recovery in NZ.
+top one versus 10 for whole-photo classification. The released XP4 thresholds
+recovered 15 of 21 positives on that same subset using a variable number of
+suggestions. Incidental species recovery in NZ remains unmeasured.
 
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
@@ -136,12 +137,10 @@ target-subject controls. All package images and search crops passed a local
 review-interface check. Real incidental candidates above the priority threshold
 are still missing, and no human submissions or measured review times exist.
 
-1. Finish the full Danish roadside cutoff reconstruction and apply the fixed
-   cutoffs to the reserved comparisons. Record source and label limits.
-2. Keep the blind NZ sample and its sealed outputs fixed. Use a separate
+1. Keep the blind NZ sample and its sealed outputs fixed. Use a separate
    discovery pool for any additional independently sourced candidate positives
    and record the inclusion criteria.
-3. Run the small NZ usability pilot with independent human submissions. Measure
+2. Run the small NZ usability pilot with independent human submissions. Measure
    completion, time and uncertainty in both arms. Compare frozen predictions
    against agreed, assessable blind outcomes before deciding whether to widen
    labeling or revise the policy.

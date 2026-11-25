@@ -25,7 +25,7 @@ or training independence. All acquisition and inference artifacts stay outside G
 | CWFID | 60 images, 119 sparse category masks; 179 media/mask assets and manifest/provenance verified | Coverage of assessed crop/weed positive pixels | Already inspected. Multispectral false-color imagery and partial human support. Source image 028 overlaps train/test; exclude from held-out claims. Algorithmic vegetation boundaries are separate evidence. |
 | NZ90 review preparation | 90 media assets and manifest/provenance verified; zero annotations | Review preparation only | Observation/observer groups exist, but site independence and botanical labels are not established. No predictions added during this audit. Recheck all prior exposure before assigning a blind holdout. |
 | NZ300 subject controls | Prior cohort receipt and experiment documentation available; not re-audited by this source inventory | Existing subject-recovery diagnostic only | Already inspected six-species development cohort. Subject labels do not exhaustively label scenes. Neither incidental discovery nor fresh holdout evidence. |
-| Danish roadside | Published split indexes, multilabel CSV, XP4 checkpoint and 46 score-checked publisher tensors | Positive species recovery on a bounded replication fixture | Route proximity crosses source splits. A separate 25-frame test selection meets the filename-coordinate distance rule. Full threshold replication and cross-method image comparisons remain open. |
+| Danish roadside | Published split indexes, multilabel CSV, XP4 checkpoint, released thresholds and checksum-verified publisher tensors | Positive species recovery, crop comparisons and released threshold replay on bounded test cohorts | Route proximity crosses source splits. A separate 25-frame test selection meets the filename-coordinate distance rule. Annotation completeness and full test-split scores remain unknown. |
 | PlantCLEF | Released classifier checkpoint and cached ImageWeeds outputs available | Same-classifier whole-frame/tile/region comparisons on ImageWeeds | This is not an official PlantCLEF plot evaluation. Usable plot truth and a closed source split still need verification/acquisition. |
 
 Leafy Spurge and DeepWeeds remain supporting point-classification and image-class
@@ -160,9 +160,9 @@ publisher's 926-by-768 BEiT features for each of 46 frames. A direct CPU FP32
 linear, max and sigmoid calculation matched the upstream model's scores exactly.
 The quick test recovered 3/12 positive pairs with one output and 11/12 with three.
 The deterministically sampled 16 multilabel frames recovered 1/32 and 19/32
-respectively. The run used ranked outputs because the official validation
-threshold file was unavailable in the acquired assets. Image feature extraction,
-official threshold metrics and false-alarm claims remain outside this run.
+respectively. This initial comparison uses ranked outputs. The released
+threshold replay below uses fixed cutoffs. Image feature extraction and
+false-alarm claims remain outside both comparisons.
 
 The reserved source-test selection has 25 frames across seven source folders,
 including four from the publisher's no-species folder. The deterministic selection
@@ -176,7 +176,8 @@ The 46 smoke images and 25 reserved originals were downloaded and checksum
 verified. The reserved frames passed exact decoded RGB matching and a 64-bit
 dHash check at Hamming distance <=4 against the acquired smoke images and one
 another. This image check covers those 71 files. The broader source-split audit
-uses filenames and coordinates. The reserved images remain unscored.
+uses filenames and coordinates. The reserve remained unscored until the
+evaluation protocol below was frozen.
 
 A PlantCLEF pixel baseline screened the same 46 smoke frames for the six
 declared roadside targets. It retained the full softmax denominator, took the
@@ -431,7 +432,8 @@ Acquisition was bounded to the first 40 MiB of each of the four official
 image archives. After checking complete JPEG records, decoded duplicates and
 boxes mapped to the pinned classifier vocabularies, the bounded fixture covered
 13 sessions. Eight development sessions supplied 14 images and 49 sampled
-boxes. Five reserve sessions contain ten images and remain unscored.
+boxes. Five reserve sessions supplied ten images for the later classifier
+adaptation comparison.
 Results apply to the selected prefixes, rather than estimating population
 performance across the archive. The terms permit noncommercial research
 and restrict distribution. Images and annotations stay private.
@@ -544,9 +546,8 @@ and review effort remain unmeasured.
 2. Verify candidate quality on real incidental photos with human outcomes
    before selecting a revised operating point. The controlled multiscale
    comparison gave similar recovery at about twice the runtime.
-3. Finish the full XP4 validation reconstruction before claiming reproduction
-   of XP4's published operating point. The quick validation mode is reproduced
-   below. Add usable PlantCLEF plot labels if available.
+3. Add usable PlantCLEF plot labels if available. The bounded Danish replay
+   leaves full publisher test-split performance and NZ transfer unmeasured.
 4. Extend the verified pilot packages with the missing assisted strata where
    evidence supports them. Recheck all independence and source bindings.
 5. Run a small human usability pilot to measure actual effort. Specialist NZ
@@ -579,7 +580,7 @@ improvement gate. This paired comparison used known source boxes and a small
 training vocabulary. It does not measure localization or identification of
 unseen taxa.
 
-## XP4 quick-validation cutoffs
+## XP4 validation cutoffs and fixed test replay
 
 The release includes a quick-validation configuration for 16 publisher
 frames. Replaying it computes the first maximum of Youden's J on validation
@@ -592,8 +593,38 @@ The frozen quick cutoffs recovered 6/12 labeled positives on the separate
 14-frame test set and 22/32 on the 16-frame multilabel smoke set. They selected
 8 and 27 pairs, respectively. The extra selections disagree with the supplied
 row labels and do not establish false alarms for incompletely labeled scenes.
-The full published validation path uses 2,160 frames. Its exact operating
-point remains pending.
+
+The full CPU FP32 reconstruction scored all 2,160 publisher validation
+feature tensors. All 16 shared quick-validation tensors matched by checksum
+and yielded identical scores. The first maximum of Youden's J and the strict
+cutoff recovered 1,005/1,181 validation positives. Exactly one positive per
+taxon landed on its cutoff and was excluded by the strict comparison.
+
+The upstream XP4 configuration uses the published `xp4_val` threshold table
+and CUDA autocast. Replaying those released settings on the cached publisher
+features recovered the same number of annotated positives as the CPU
+reconstruction in each test cohort. The largest cutoff difference was 0.00437.
+No cutoff was fit on a test frame. Test tensor checksums and source filenames
+were distinct from those used for validation.
+
+| Test cohort | Recovered positive pairs, CPU / released | Selected pairs, CPU / released | No-species controls with a suggestion, CPU / released |
+| --- | ---: | ---: | ---: |
+| Publisher quick test, 14 frames | 10/12 both | 14 / 15 | 0/2 both |
+| Multilabel sample, 16 frames | 30/32 both | 41 / 42 | — |
+| Distance-screened reserve, 25 frames | 15/21 both | 26 / 26 | 2/4 both |
+
+The published operating point uses six Danish target groups. These counts
+apply to the sampled source frames and their supplied labels. Full paper test
+metrics, exhaustively verified negatives and NZ transfer remain unmeasured.
+The NZ pilot policy stays frozen.
+
+Run `evaluate_full_thresholds.py` from the private `roadside-source/`
+evidence directory with the closed calibration receipts in place. Run
+`evaluate_released_thresholds.py` with CUDA-enabled PyTorch and the cached
+tensors. Use a fresh output directory populated with the corresponding inputs
+for a rerun. The reports bind source memberships, settings, producer scripts,
+and score and tensor receipts. See the
+[aggregate results and hashes](../benchmarks/xp4-full-validation-20261125.json).
 
 ## Bounded multiscale incidental screening
 
