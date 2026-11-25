@@ -140,6 +140,11 @@ added two suggestions on lookalike photos. The separate 2026 acquisition
 supplied nine comparison photos and zero target-subject photos after the
 overlap checks. Neither result supports changing the frozen pilot rule.
 
+A grouped replay recovered 122 of 150 known subjects with a lower shared
+score floor, up from 69, and added one prompt on a toetoe-subject photo.
+In the 89 unreviewed handheld and camera photos, the full-photo native
+check agreed with zero tile suggestions even with the score floor removed.
+
 The frozen NZ policy has verified offline packages for 16 blind and 21 assisted
 tasks. The assisted set includes uncertain incidental scenes, lookalikes and
 target-subject controls. All package images and search crops passed a local

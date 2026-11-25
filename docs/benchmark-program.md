@@ -898,6 +898,33 @@ count. Any joint-agreement case below the pilot floor remains an exploratory
 review candidate, with no new priority verdict. The blind arm is outside
 this diagnostic.
 
+The 300 development photos formed 203 groups and five folds of 59 to 61
+photos. Of those photos, 182 had public coordinates and usable accuracy.
+Observer and location groups stayed together during fitting and evaluation.
+The remaining photos could only be grouped by observer and image evidence.
+
+| Rule | Recovered watchlist subjects, out of 150 | New comparison prompts, out of 150 |
+| --- | ---: | ---: |
+| Frozen floor | 69 | 0 |
+| No floor, agreement still required | 124 | 4 |
+| Fitted shared floor | 122 | 1 |
+| Fitted taxon-specific floors | 119 | 1 |
+
+The shared floor gained recoveries in all five folds, including 33 more
+gorse photos across the folds. The fitted rules both introduced a pampas
+suggestion on the same held-out toetoe-subject photo in one fold. It counts
+as additional reviewer work. The photo's background remains unassessed.
+Neither variant met the predeclared zero-new-prompt gate.
+
+The floor-free incidental diagnostic showed whole-photo PlantCLEF agreement
+on 28/41 handheld photos and 29/48 trail-camera frames. Native whole-photo
+agreement was zero in both sets, so all 89 remained withheld even without a
+floor. No additional review candidates came from this rule. Threshold tuning
+addresses misses on photographed subjects, while incidental recovery in
+these pools is limited by the native whole-photo check. The pilot baseline
+and sealed blind hashes were verified after both runs.
+[Fold results and source receipts](../benchmarks/nz-score-floor-20261125.json)
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3

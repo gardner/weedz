@@ -1,0 +1,662 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "protocol_commit": "dc51bdf",
+  "ceiling_protocol_commit": "9520367",
+  "baseline_floor": 0.13646656274795532,
+  "fold_design": {
+    "source_labels_sha256": "ef2f1b931544e4bd4ab784fd0fbab2b1cc5480579281243c2b34b20617b7703e",
+    "fold_seed": 20261125,
+    "protocol": "dc51bdf",
+    "group_count": 203,
+    "public_locations_with_usable_accuracy": 182,
+    "connections": {
+      "observers": 220,
+      "pixels": 0,
+      "locations": 3
+    },
+    "group_size_histogram": {
+      "1": 159,
+      "2": 18,
+      "6": 1,
+      "8": 2,
+      "4": 1,
+      "3": 18,
+      "5": 3,
+      "10": 1
+    },
+    "folds": [
+      {
+        "by_subject": {
+          "Ulex europaeus": 10,
+          "Clematis vitalba": 11,
+          "Cortaderia selloana": 10,
+          "Cytisus scoparius": 10,
+          "Clematis paniculata": 10,
+          "Austroderia fulvida": 10
+        },
+        "groups": 37,
+        "images": 61
+      },
+      {
+        "by_subject": {
+          "Ulex europaeus": 10,
+          "Clematis vitalba": 10,
+          "Cortaderia selloana": 10,
+          "Cytisus scoparius": 10,
+          "Clematis paniculata": 10,
+          "Austroderia fulvida": 10
+        },
+        "groups": 42,
+        "images": 60
+      },
+      {
+        "by_subject": {
+          "Ulex europaeus": 10,
+          "Clematis vitalba": 10,
+          "Cortaderia selloana": 10,
+          "Cytisus scoparius": 10,
+          "Clematis paniculata": 10,
+          "Austroderia fulvida": 10
+        },
+        "groups": 41,
+        "images": 60
+      },
+      {
+        "by_subject": {
+          "Ulex europaeus": 10,
+          "Clematis vitalba": 9,
+          "Cortaderia selloana": 10,
+          "Cytisus scoparius": 10,
+          "Clematis paniculata": 10,
+          "Austroderia fulvida": 10
+        },
+        "groups": 40,
+        "images": 59
+      },
+      {
+        "by_subject": {
+          "Ulex europaeus": 10,
+          "Clematis vitalba": 10,
+          "Cortaderia selloana": 10,
+          "Cytisus scoparius": 10,
+          "Clematis paniculata": 10,
+          "Austroderia fulvida": 10
+        },
+        "groups": 43,
+        "images": 60
+      }
+    ],
+    "producer_sha256": "3d85a10e8f2be7c167ffb000737252e0c2435e39dfa4810ce7ebaa24dae13116"
+  },
+  "per_fold": [
+    {
+      "fold": 0,
+      "results": {
+        "frozen": {
+          "floors": {
+            "Clematis vitalba": 0.13646656274795532,
+            "Ulex europaeus": 0.13646656274795532,
+            "Cortaderia selloana": 0.13646656274795532
+          },
+          "heldout": {
+            "photos": 61,
+            "target_subjects": 31,
+            "suggestions": 8,
+            "correct_target_subjects": 8,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 0,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 0
+          }
+        },
+        "no_floor": {
+          "floors": {
+            "Clematis vitalba": 0.0,
+            "Ulex europaeus": 0.0,
+            "Cortaderia selloana": 0.0
+          },
+          "heldout": {
+            "photos": 61,
+            "target_subjects": 31,
+            "suggestions": 21,
+            "correct_target_subjects": 21,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 13,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 13
+          }
+        },
+        "shared": {
+          "floors": {
+            "Clematis vitalba": 0.01173484418541193,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.01173484418541193
+          },
+          "heldout": {
+            "photos": 61,
+            "target_subjects": 31,
+            "suggestions": 21,
+            "correct_target_subjects": 21,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 13,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 13
+          }
+        },
+        "taxon_specific": {
+          "floors": {
+            "Clematis vitalba": 0.0017226818017661572,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.030666589736938477
+          },
+          "heldout": {
+            "photos": 61,
+            "target_subjects": 31,
+            "suggestions": 19,
+            "correct_target_subjects": 19,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 11,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 11
+          }
+        }
+      }
+    },
+    {
+      "fold": 1,
+      "results": {
+        "frozen": {
+          "floors": {
+            "Clematis vitalba": 0.13646656274795532,
+            "Ulex europaeus": 0.13646656274795532,
+            "Cortaderia selloana": 0.13646656274795532
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 13,
+            "correct_target_subjects": 13,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 0,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 0
+          }
+        },
+        "no_floor": {
+          "floors": {
+            "Clematis vitalba": 0.0,
+            "Ulex europaeus": 0.0,
+            "Cortaderia selloana": 0.0
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 26,
+            "correct_target_subjects": 26,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 13,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 13
+          }
+        },
+        "shared": {
+          "floors": {
+            "Clematis vitalba": 0.01173484418541193,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.01173484418541193
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 26,
+            "correct_target_subjects": 26,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 13,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 13
+          }
+        },
+        "taxon_specific": {
+          "floors": {
+            "Clematis vitalba": 0.0017226818017661572,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.0121726980432868
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 26,
+            "correct_target_subjects": 26,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 13,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 13
+          }
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "results": {
+        "frozen": {
+          "floors": {
+            "Clematis vitalba": 0.13646656274795532,
+            "Ulex europaeus": 0.13646656274795532,
+            "Cortaderia selloana": 0.13646656274795532
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 15,
+            "correct_target_subjects": 15,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 0,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 0
+          }
+        },
+        "no_floor": {
+          "floors": {
+            "Clematis vitalba": 0.0,
+            "Ulex europaeus": 0.0,
+            "Cortaderia selloana": 0.0
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 29,
+            "correct_target_subjects": 26,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 3,
+            "gained_subjects": 11,
+            "new_comparison_prompts": 3,
+            "new_suggestions": 14
+          }
+        },
+        "shared": {
+          "floors": {
+            "Clematis vitalba": 0.006705407053232193,
+            "Ulex europaeus": 0.006705407053232193,
+            "Cortaderia selloana": 0.006705407053232193
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 26,
+            "correct_target_subjects": 25,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 1,
+            "gained_subjects": 10,
+            "new_comparison_prompts": 1,
+            "new_suggestions": 11
+          }
+        },
+        "taxon_specific": {
+          "floors": {
+            "Clematis vitalba": 0.012520862743258476,
+            "Ulex europaeus": 0.013766348361968994,
+            "Cortaderia selloana": 0.006705407053232193
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 25,
+            "correct_target_subjects": 24,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 1,
+            "gained_subjects": 9,
+            "new_comparison_prompts": 1,
+            "new_suggestions": 10
+          }
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "results": {
+        "frozen": {
+          "floors": {
+            "Clematis vitalba": 0.13646656274795532,
+            "Ulex europaeus": 0.13646656274795532,
+            "Cortaderia selloana": 0.13646656274795532
+          },
+          "heldout": {
+            "photos": 59,
+            "target_subjects": 29,
+            "suggestions": 14,
+            "correct_target_subjects": 14,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 0,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 0
+          }
+        },
+        "no_floor": {
+          "floors": {
+            "Clematis vitalba": 0.0,
+            "Ulex europaeus": 0.0,
+            "Cortaderia selloana": 0.0
+          },
+          "heldout": {
+            "photos": 59,
+            "target_subjects": 29,
+            "suggestions": 24,
+            "correct_target_subjects": 23,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 1,
+            "gained_subjects": 9,
+            "new_comparison_prompts": 1,
+            "new_suggestions": 10
+          }
+        },
+        "shared": {
+          "floors": {
+            "Clematis vitalba": 0.01173484418541193,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.01173484418541193
+          },
+          "heldout": {
+            "photos": 59,
+            "target_subjects": 29,
+            "suggestions": 23,
+            "correct_target_subjects": 23,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 9,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 9
+          }
+        },
+        "taxon_specific": {
+          "floors": {
+            "Clematis vitalba": 0.0017226818017661572,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.0121726980432868
+          },
+          "heldout": {
+            "photos": 59,
+            "target_subjects": 29,
+            "suggestions": 23,
+            "correct_target_subjects": 23,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 9,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 9
+          }
+        }
+      }
+    },
+    {
+      "fold": 4,
+      "results": {
+        "frozen": {
+          "floors": {
+            "Clematis vitalba": 0.13646656274795532,
+            "Ulex europaeus": 0.13646656274795532,
+            "Cortaderia selloana": 0.13646656274795532
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 19,
+            "correct_target_subjects": 19,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 0,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 0
+          }
+        },
+        "no_floor": {
+          "floors": {
+            "Clematis vitalba": 0.0,
+            "Ulex europaeus": 0.0,
+            "Cortaderia selloana": 0.0
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 28,
+            "correct_target_subjects": 28,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 9,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 9
+          }
+        },
+        "shared": {
+          "floors": {
+            "Clematis vitalba": 0.01173484418541193,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.01173484418541193
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 27,
+            "correct_target_subjects": 27,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 8,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 8
+          }
+        },
+        "taxon_specific": {
+          "floors": {
+            "Clematis vitalba": 0.0017226818017661572,
+            "Ulex europaeus": 0.01173484418541193,
+            "Cortaderia selloana": 0.0121726980432868
+          },
+          "heldout": {
+            "photos": 60,
+            "target_subjects": 30,
+            "suggestions": 27,
+            "correct_target_subjects": 27,
+            "wrong_target_subject_suggestions": 0,
+            "comparison_subject_suggestions": 0,
+            "gained_subjects": 8,
+            "new_comparison_prompts": 0,
+            "new_suggestions": 8
+          }
+        }
+      }
+    }
+  ],
+  "pooled_out_of_fold": {
+    "frozen": {
+      "photos": 300,
+      "target_subjects": 150,
+      "suggestions": 69,
+      "correct_target_subjects": 69,
+      "wrong_target_subject_suggestions": 0,
+      "comparison_subject_suggestions": 0,
+      "gained_subjects": 0,
+      "new_comparison_prompts": 0,
+      "new_suggestions": 0
+    },
+    "no_floor": {
+      "photos": 300,
+      "target_subjects": 150,
+      "suggestions": 128,
+      "correct_target_subjects": 124,
+      "wrong_target_subject_suggestions": 0,
+      "comparison_subject_suggestions": 4,
+      "gained_subjects": 55,
+      "new_comparison_prompts": 4,
+      "new_suggestions": 59
+    },
+    "shared": {
+      "photos": 300,
+      "target_subjects": 150,
+      "suggestions": 123,
+      "correct_target_subjects": 122,
+      "wrong_target_subject_suggestions": 0,
+      "comparison_subject_suggestions": 1,
+      "gained_subjects": 53,
+      "new_comparison_prompts": 1,
+      "new_suggestions": 54
+    },
+    "taxon_specific": {
+      "photos": 300,
+      "target_subjects": 150,
+      "suggestions": 120,
+      "correct_target_subjects": 119,
+      "wrong_target_subject_suggestions": 0,
+      "comparison_subject_suggestions": 1,
+      "gained_subjects": 50,
+      "new_comparison_prompts": 1,
+      "new_suggestions": 51
+    }
+  },
+  "recovered_subjects_by_taxon": {
+    "frozen": {
+      "Ulex europaeus": 13,
+      "Cortaderia selloana": 31,
+      "Clematis vitalba": 25
+    },
+    "no_floor": {
+      "Ulex europaeus": 46,
+      "Clematis vitalba": 37,
+      "Cortaderia selloana": 41
+    },
+    "shared": {
+      "Ulex europaeus": 46,
+      "Clematis vitalba": 36,
+      "Cortaderia selloana": 40
+    },
+    "taxon_specific": {
+      "Ulex europaeus": 45,
+      "Clematis vitalba": 36,
+      "Cortaderia selloana": 38
+    }
+  },
+  "additional_comparison_prompts_by_taxon": {
+    "frozen": {},
+    "no_floor": {
+      "Cytisus scoparius \u2192 Ulex europaeus": 1,
+      "Austroderia fulvida \u2192 Cortaderia selloana": 3
+    },
+    "shared": {
+      "Austroderia fulvida \u2192 Cortaderia selloana": 1
+    },
+    "taxon_specific": {
+      "Austroderia fulvida \u2192 Cortaderia selloana": 1
+    }
+  },
+  "advance_from_development": {
+    "shared": false,
+    "taxon_specific": false
+  },
+  "incidental_ceiling": {
+    "incidental_handheld": {
+      "photos": 41,
+      "plantclef_whole_agrees": 28,
+      "native_whole_agrees": 0,
+      "both_agree": 0,
+      "tiles_above_pilot_floor": 0,
+      "both_agree_above_floor": 0
+    },
+    "incidental_camera": {
+      "photos": 48,
+      "plantclef_whole_agrees": 29,
+      "native_whole_agrees": 0,
+      "both_agree": 0,
+      "tiles_above_pilot_floor": 1,
+      "both_agree_above_floor": 0
+    },
+    "source_strata": {
+      "nz-paired-pilot": {
+        "photos": 8,
+        "plantclef_whole_agrees": 5,
+        "native_whole_agrees": 0,
+        "both_agree": 0,
+        "tiles_above_pilot_floor": 0,
+        "both_agree_above_floor": 0
+      },
+      "nz-paired-pilot-supplement": {
+        "photos": 18,
+        "plantclef_whole_agrees": 13,
+        "native_whole_agrees": 0,
+        "both_agree": 0,
+        "tiles_above_pilot_floor": 0,
+        "both_agree_above_floor": 0
+      },
+      "nz-habitat-enrichment": {
+        "photos": 10,
+        "plantclef_whole_agrees": 7,
+        "native_whole_agrees": 0,
+        "both_agree": 0,
+        "tiles_above_pilot_floor": 0,
+        "both_agree_above_floor": 0
+      },
+      "nz-botanical-discovery": {
+        "photos": 5,
+        "plantclef_whole_agrees": 3,
+        "native_whole_agrees": 0,
+        "both_agree": 0,
+        "tiles_above_pilot_floor": 0,
+        "both_agree_above_floor": 0
+      },
+      "nz-trailcam-discovery": {
+        "photos": 48,
+        "plantclef_whole_agrees": 29,
+        "native_whole_agrees": 0,
+        "both_agree": 0,
+        "tiles_above_pilot_floor": 1,
+        "both_agree_above_floor": 0
+      }
+    },
+    "maximum_scores": {
+      "nz-paired-pilot": 0.03332841768860817,
+      "nz-paired-pilot-supplement": 0.03801483288407326,
+      "nz-habitat-enrichment": 0.003972604870796204,
+      "nz-botanical-discovery": 0.0017717628506943583,
+      "nz-trailcam-discovery": 0.3978608548641205
+    }
+  },
+  "artifacts": {
+    "nz-score-floor/group_subject_folds.py": "3d85a10e8f2be7c167ffb000737252e0c2435e39dfa4810ce7ebaa24dae13116",
+    "nz-score-floor/grouped-folds.json": "d34a125741a22569fb2de1e00015856a547629cb495c096bfc99ebb6563a3995",
+    "nz-score-floor/replay.py": "8636ac09b4b4ae59fdad60eb4157ec4fc473710f80d5e99e0bc0ecb70462c511",
+    "nz-score-floor/score-floor-report.json": "c2242b838b022093de4014553c6ed934c2eaed3f8975ea4859865f94629e76a9",
+    "nz-score-floor/incidental_ceiling.py": "41470479af9ebf98a0dc93ae98023d6587d3bb1706fcb00d5d78d77e39198b4e",
+    "nz-score-floor/incidental-agreement-ceiling.json": "d9713e6f53ae06ca7b923d6d7e4ecef9d09e151c8959951637bf7aabfe0b99bb"
+  },
+  "cached_inputs": {
+    "nz-fresh-agreement/development-native-tile-predictions.json": "c696d626e0e529c0755304712ee7681f50b21ff3bc3fe1e17c93bb64c900e5a6",
+    "nz-paired-pilot/assisted-scores.json": "f26a1b183c28a2c3e0f09c1cfcd7436eb4a8c0469ce532bc564274226eacfc43",
+    "nz-paired-pilot/assisted_pool.jsonl": "fa5439181bdf5baed08e341958ccf4dd5c231f85800fbf2b5bf67d0fcd0f0a91",
+    "nz-paired-pilot-supplement/assisted-scores.json": "2b9405717eb0a4e760e9e33540c1509e459efaa75e95333c855ff423fddfd4ef",
+    "nz-paired-pilot-supplement/assisted_pool.jsonl": "20fe271931291708447349dd76610ab480fa8ee7a68444c592f077aa309848d4",
+    "nz-habitat-enrichment/assisted-scores.json": "11cbff0edc869685538deca65ac9545b77b63dd4b95aacf464f8c59d67c94dd3",
+    "nz-habitat-enrichment/assisted_pool.jsonl": "f9eb9cdde8a83f0623e282c9311810bcb67f8d40692a6f961cadadb5fcc8a8f8",
+    "nz-botanical-discovery/assisted-scores.json": "771929f2dbf42500bc7e6eb77570d47ea6b5d9a1f2fbafe01043879262acdb25",
+    "nz-botanical-discovery/assisted_pool.jsonl": "6db941ce17e2a5fc55faec65d97ff56f9f8d42959c0622341c65e2ca9c890191",
+    "nz-trailcam-discovery/assisted-scores.json": "64f20926e9965fe3d6cf9399dc2bda496edce0fe58da2af25c80bb5187b63697",
+    "nz-trailcam-discovery/assisted_pool.jsonl": "16b74e62dc2ba993a6bc420e27a5e3197917e9a0b2ac164630ab34ad4c479f8b"
+  },
+  "frozen_review_pins": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29",
+    "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
+    "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  }
+}
