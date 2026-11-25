@@ -445,6 +445,32 @@ remains unverified in the public download, so no official plot scores were compu
 The grouped-source, decision-rule and packet results are indexed in the
 [latest diagnostic summary](../benchmarks/nz-context-and-grouped-source-20261125.json).
 
+## Pilot timing analysis
+
+Use the verified blind v1 and assisted v2 packages as separate projects for a
+small human usability pilot. Use the same review instructions across arms and
+record interface problems and any interruptions separately. Export full Label
+Studio JSON with task data, metadata and annotations when the pilot ends.
+Label Studio records annotation time in seconds in
+[`lead_time`](https://labelstud.io/guide/export#Relevant-JSON-property-descriptions).
+
+```sh
+uv run python -m weedz.annotation.pilot_effort \
+  --blind-package /private/path/to/blind-v1 \
+  --blind-export /private/path/to/blind-export.json \
+  --assisted-package /private/path/to/assisted-v2 \
+  --assisted-export /private/path/to/assisted-export.json \
+  --output /private/path/to/pilot-effort.json
+```
+
+The report binds each export to the original task payloads and keeps distinct
+counts for submitted, cancelled, untimed and unsure outcomes. A missing or zero
+lead time counts as unmeasured. Task coverage uses the package size because
+exports can omit untouched tasks. Ground-truth rows and drafts do not contribute
+to timing. Keep the report with the reviewer notes. The two arms use different
+images, which limits what a timing difference can establish. The report
+describes submissions and does not adjudicate biological observations.
+
 ## Remaining work and next experiment
 
 1. Use the development CropAndWeed sessions to test a classifier adapted to
