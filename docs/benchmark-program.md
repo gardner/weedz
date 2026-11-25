@@ -501,6 +501,14 @@ Studio JSON with task data, metadata and annotations when the pilot ends.
 Label Studio records annotation time in seconds in
 [`lead_time`](https://labelstud.io/guide/export#Relevant-JSON-property-descriptions).
 
+Portable reviewer bundles are available under `pilot-reviewer-handoff/`
+in the private evidence root. Each ZIP contains the original task JSON,
+labeling configuration, source images, attribution and setup instructions.
+The assisted archive also includes its search crops. Use the original
+operator package when summarizing returned exports. The blind decision seal
+and operator source manifests remain in the private directories. The ZIP
+file hashes are in [the handoff summary](../benchmarks/nz-pilot-handoff-20261125.json).
+
 ```sh
 uv run python -m weedz.annotation.pilot_effort \
   --blind-package /private/path/to/blind-v1 \
