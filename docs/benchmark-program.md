@@ -198,6 +198,35 @@ and positive-pair recovery does not measure false alarms or reviewer effort.
 The private reports and producer scripts are indexed in
 [the tracked aggregate summary](../benchmarks/crop-roadside-diagnostics-20261125.json).
 
+## Reserved roadside evaluation protocol
+
+Freeze the candidate methods and gates before scoring the 25 reserved images.
+Run whole-image PlantCLEF, the 4×4 PlantCLEF grid, the SAM3 masked-region branch,
+and publisher-feature XP4. Score the same six target groups throughout.
+For SAM3, use the existing plant and flower prompts and keep up to 16 unique
+masks by concept score. The PlantCLEF branches use max aggregation within
+target groups and across crops. Score the first one and three target slots.
+Run each method once on the reserved set, excluding any failed run from claims
+until the full original cohort has been retried with identical settings.
+
+The primary quality gate for a candidate pixel pipeline is at least 60% of
+explicit positive pairs recovered at rank one and 80% at rank three. At least
+two more rank-one recoveries than the whole-photo control justify a more
+expensive crop stage on this small fixture. If multiple crop methods meet the
+gate, prefer higher rank-one recovery, then lower measured time. Report paired
+gains and losses, denominators and per-target counts. Treat small differences
+as development evidence. Use the publisher folder only for explicit positive
+targets, with the no-species folder carried separately as a control.
+
+Bound the study to 25 reserved frames and 16 classifier crops per image per
+crop method. Measure wall time including source decoding and proposal
+generation and report model-load time separately. Set a mean ceiling of
+2 seconds per image on the local RTX 5090 for a candidate pixel pipeline and
+report the 95th percentile. XP4 head timing covers publisher features and is
+reported separately. These thresholds are provisional development gates.
+NZ precision, missed plants and reviewer benefit require the blind and assisted
+NZ review packages and human review.
+
 ## Remaining work and next experiment
 
 1. Expand the split audit to another species-box source with documented capture
