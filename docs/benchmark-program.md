@@ -262,18 +262,65 @@ the tested SAM3 profile for this fixture. NZ background localization,
 lookalike behavior, calibrated operating thresholds, and reviewer effort
 need separate evidence.
 
+## NZ transfer controls and pilot policy
+
+The same crop and scoring policy ran on the existing 300 NZ source-subject
+photos in 81.44 seconds for 5,100 classifier crops. Source labels were joined
+after the predictions were saved. Among the three watchlist subjects, the
+4×4 grid ranked the photographed subject first in 149/150 images. Whole-photo
+PlantCLEF ranked it first in 143/150. With broom added as a fourth target, the
+counts were 198/200 and 191/200, respectively.
+
+The pinned PlantCLEF vocabulary lacks the NZ cohort's two native lookalike
+subjects, *Austroderia fulvida* and *Clematis paniculata*. Thirteen of the 100
+native-subject images reached the median tile score of the 150 watchlist
+subjects. A priority rule using that score floor and agreement with PlantCLEF
+whole-photo ranking admitted 75 of 150 watchlist-subject photos and 13 of
+100 native-subject photos. Adding agreement with the broad native
+EfficientNet classifier retained 69 of 150 watchlist subjects and zero of
+those 13 native-subject images on these development controls. The native
+classifier can itself confuse or miss lookalikes, and agreement may suppress
+a valid incidental target when a different subject fills the frame.
+
+For the assisted pilot, freeze the three-target watchlist, one priority
+suggestion per image, the PlantCLEF 4×4 geometry and max policy, and a score
+floor of 0.13646656274795532. The whole-photo PlantCLEF top watchlist target
+and broad native EfficientNet top species must both agree with the tile
+target to receive priority. This floor is a development triage heuristic.
+Record source pixels, the winning tile's bounds, model identities and both
+classifiers' suggestions. A winning tile is a search area for the reviewer.
+The reviewer supplies any plant location and species label.
+
+Preserve above-floor disagreements, native lookalikes, and visually
+difficult candidates as distinct assisted strata. Both low scores and absent
+agreement remain eligible for an independently sampled blind stratum.
+Collect blind frames by a fixed, seeded ordering of source-eligible incidental
+photos before looking at scores, with no predictions in the reviewer payload.
+Keep priority suggestions separate from verified labels and retain uncertain
+and visually unresolvable outcomes.
+
+The existing NZ90 blind package passed a checksum and payload audit on all
+90 images. It has 90 unique decoded images, 90 observations and 90 observers,
+with zero annotations or predictions in the bundle. It includes 19
+animal-subject incidental photos and no encoded encounter groups. It is useful
+for testing the review format. A paired assisted and blind incidental pilot
+still needs a wider incidental pool and an encounter audit across both splits.
+
+The source-control and package-audit reports are indexed in
+[the NZ transfer summary](../benchmarks/nz-tile-transfer-20261125.json).
+
 ## Remaining work and next experiment
 
 1. Expand the split audit to another species-box source with documented capture
    groups. Compare eligible domain-suited classifiers against the measured
    ImageWeeds crop baseline and preserve a fresh evaluation cohort.
-2. Check the frozen tile policy on the existing NZ source-subject controls,
-   including native lookalikes and an audit of missing classifier taxa. Then
-   freeze a candidate selection and abstention policy for assisted preparation.
+2. Apply the frozen NZ pilot policy to eligible images. Separate model
+   disagreement, lookalike and hard-case selection from probability sampling.
 3. Obtain or recreate the official validation thresholds before claiming
    reproduction of XP4's published operating point. Add usable PlantCLEF plot
    labels if available and preserve domain-specific reports.
-4. Prepare diverse NZ candidate and blind-review packages, preserving random
-   unflagged photos, lookalikes, uncertainty, provenance and encounter separation.
+4. Prepare and validate NZ candidate and blind-review packages. Verify no
+   observation, photographer, exact decoded image, near duplicate or known
+   encounter crosses the two sets, and record the coverage of the encounter audit.
 5. Run a small human usability pilot to measure actual effort. Specialist NZ
    verification remains necessary before claims about background discovery.
