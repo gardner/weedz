@@ -445,6 +445,40 @@ remains unverified in the public download, so no official plot scores were compu
 The grouped-source, decision-rule and packet results are indexed in the
 [latest diagnostic summary](../benchmarks/nz-context-and-grouped-source-20261125.json).
 
+## Blind outcome analysis
+
+The unchanged `aa4db4a` decision policy was run on the 16 blind photos
+before reviewer submissions. The decisions are sealed under
+`nz-blind-policy-seal/sealed-decisions.json` in the private evidence root.
+The seal binds the source manifest, package manifest, exact task payloads and
+scorer. The reviewer bundle retains only the original task data and credits.
+Keep the seal outside the review workspace until independent submissions are
+finished.
+
+After review, use full Label Studio JSON with task metadata and annotations.
+Use the package and private seal from the same pilot revision.
+
+```sh
+uv run python -m weedz.annotation.pilot_outcomes \
+  --blind-package /private/path/to/blind-v1 \
+  --blind-export /private/path/to/blind-export.json \
+  --sealed-decisions /private/path/to/sealed-decisions.json \
+  --output /private/path/to/blind-outcomes.json
+```
+
+The report counts exact taxon-set agreement from at least two distinct
+reviewer accounts. A single reviewer can contribute usability and timing
+evidence. The outcome analysis keeps single-reviewer, conflicting and unsure
+cases separate. A completed submission must explicitly name visible watchlist
+taxa or answer that none are visible. A suggestion unsupported by those
+answers is reported as unsupported in the pilot, with expert adjudication
+and exhaustive site absence outside its scope.
+
+The local synthetic export produced one unsure task and 15 unreviewed tasks.
+It serves as an integration check. Use actual submissions for the pilot
+decision. The artifact hashes are recorded in
+[the pilot seal summary](../benchmarks/nz-blind-outcome-seal-20261125.json).
+
 ## Pilot timing analysis
 
 Use the verified blind v1 and assisted v2 packages as separate projects for a

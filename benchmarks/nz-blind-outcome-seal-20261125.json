@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "artifacts": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot/screen.py": "3624e94cda47e4cf52ceecf4c8a11367f566650167c0705aefe0bbef56dc8f51",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29"
+  },
+  "sealed_tasks": 16,
+  "policy_commit": "aa4db4a",
+  "probe": {
+    "synthetic": true,
+    "consensus": {
+      "uncertain": 1,
+      "unreviewed": 15
+    }
+  },
+  "actual_human_outcomes": 0
+}
