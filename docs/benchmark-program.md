@@ -401,8 +401,18 @@ previous pools, and two have the highest scores in the habitat pool. All
 four retain their uncertain priority status. The first of the old-pool
 examples shows small yellow flowers in distant shrubbery, a visual cue worth
 checking without treating the model's species suggestion as verified. The
-latest package pairs **19 assisted** with the original **16 blind** tasks,
+v2 package pairs **19 assisted** with the original **16 blind** tasks,
 with observer, observation, image and encounter separation rechecked.
+
+A separate gorse query across three fixed observation intervals acquired
+three original photos whose source subject is *Ulex europaeus*. All three
+fell below the frozen priority score. Assisted v3 adds two of those photos as
+reference cases. It preserves all 19 v2 tasks and their search crop pixels.
+The v3 bundle has **21 assisted** tasks, paired with the original **16 blind**
+tasks. All package hashes and task bindings were checked. These gorse-subject
+controls can reveal how reviewers handle low scores for an expected subject.
+No incidental target is verified by the new stratum.
+[Acquisition and package evidence](../benchmarks/nz-gorse-controls-20261125.json).
 
 ## External source-box benchmark with recording sessions
 
@@ -481,7 +491,7 @@ decision. The artifact hashes are recorded in
 
 ## Pilot timing analysis
 
-Use the verified blind v1 and assisted v2 packages as separate projects for a
+Use the verified blind v1 and assisted v3 packages as separate projects for a
 small human usability pilot. Use the same review instructions across arms and
 record interface problems and any interruptions separately. Export full Label
 Studio JSON with task data, metadata and annotations when the pilot ends.
@@ -492,7 +502,7 @@ Label Studio records annotation time in seconds in
 uv run python -m weedz.annotation.pilot_effort \
   --blind-package /private/path/to/blind-v1 \
   --blind-export /private/path/to/blind-export.json \
-  --assisted-package /private/path/to/assisted-v2 \
+  --assisted-package /private/path/to/assisted-v3 \
   --assisted-export /private/path/to/assisted-export.json \
   --output /private/path/to/pilot-effort.json
 ```
@@ -505,7 +515,7 @@ to timing. Keep the report with the reviewer notes. The two arms use different
 images, which limits what a timing difference can establish. The report
 describes submissions and does not adjudicate biological observations.
 
-A loopback-only Label Studio 1.23.2 smoke test imported copies of both packages
+A loopback-only Label Studio 1.23.2 smoke test imported blind v1 and assisted v2
 into separate temporary projects. It verified HTTP-served bytes for all 35
 originals and all 19 assisted crops. A headless browser opened one task in
 each arm and clicked a watchlist choice. The assisted search preview loaded
