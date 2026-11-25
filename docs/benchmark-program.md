@@ -309,6 +309,33 @@ still needs a wider incidental pool and an encounter audit across both splits.
 The source-control and package-audit reports are indexed in
 [the NZ transfer summary](../benchmarks/nz-tile-transfer-20261125.json).
 
+## First incidental NZ acquisition
+
+The frozen pilot source frame contains 368 eligible animal-subject
+observations from the first two ID-ordered iNaturalist pages in each of four
+2025 months. It is a bounded sampling frame. Seeded order within each month
+assigned blind photos before assisted-pool selection and before model inference.
+Both observation and original-photo licenses had to be CC0 or CC BY, and the
+source coordinates had to be public with reported accuracy of 100 m or better.
+
+The resulting offline blind package contains 16 images, four per month. The
+package audit verified checksums, independent observer and observation IDs,
+unique decoded images, and prediction-free and annotation-free task payloads.
+The two-arm source selection excluded near-duplicate hashes and encounters
+within two days and 100 m plus both coordinate uncertainties. Exact locations
+stay in private acquisition evidence.
+
+The first assisted pool yielded eight images against the planned quota of 48.
+The capped search encountered 268 known-observation or observer exclusions,
+including attempts repeated across arms. All eight assisted photos fell below
+the frozen priority floor. Retain those results as low-score evidence and expand
+the assisted source using later incidental pages and distinct botanical
+lookalike and target-subject strata. The expanded source changes the assisted
+sampling frame and leaves the blind sample frozen.
+
+The first acquisition and bundle verification are indexed in the
+[pilot acquisition summary](../benchmarks/nz-paired-pilot-20261125.json).
+
 ## Remaining work and next experiment
 
 1. Expand the split audit to another species-box source with documented capture

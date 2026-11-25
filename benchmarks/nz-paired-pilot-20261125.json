@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "artifacts": {
+    "nz-paired-pilot/source_frame.py": "51c80e4eed023ab72e51d94dbfdbdc49ba42d2d90f16bd1cceac74da1431e8a8",
+    "nz-paired-pilot/source-frame.json": "e5d46c3937b636a3773251917b631ec2df5176bd36f393750924b3fce2c03110",
+    "nz-paired-pilot/acquire_pool.py": "49426d658c5188be8f436f099138a761722de6c8fa1aa303a35d47d9242fb945",
+    "nz-paired-pilot/pool-ready.json": "e2025c937bf50e29ce041ce658181ccba721617f53652d979af659511911eb1b",
+    "nz-paired-pilot/blind.jsonl": "694b432d9dbe094a0fc8331eea47d9bc7e8d5789c170b7989f1296a73d001050",
+    "nz-paired-pilot/assisted_pool.jsonl": "fa5439181bdf5baed08e341958ccf4dd5c231f85800fbf2b5bf67d0fcd0f0a91",
+    "nz-paired-pilot/screen.py": "3624e94cda47e4cf52ceecf4c8a11367f566650167c0705aefe0bbef56dc8f51",
+    "nz-paired-pilot/assisted-scores.json": "f26a1b183c28a2c3e0f09c1cfcd7436eb4a8c0469ce532bc564274226eacfc43",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515"
+  },
+  "source_frame": {
+    "eligible": 368,
+    "sampling_scope": "Fixed first two ID-ordered pages from each of four 2025 months. Hash order is applied within these pages before model inference. Observer/pixel/encounter exclusions and image availability further bound the pilot.",
+    "monthly_counts": {
+      "2025-10-01": 42,
+      "2025-04-01": 87,
+      "2025-07-01": 104,
+      "2025-01-01": 135
+    }
+  },
+  "first_pool": {
+    "counts": {
+      "known_observation_or_observer": 268,
+      "blind:2025-01-01": 4,
+      "blind:2025-04-01": 4,
+      "blind:2025-07-01": 4,
+      "blind:2025-10-01": 4,
+      "assisted_pool:2025-01-01": 0,
+      "assisted_pool:2025-04-01": 0,
+      "assisted_pool:2025-07-01": 2,
+      "assisted_pool:2025-10-01": 6
+    },
+    "quotas": {
+      "blind": 4,
+      "assisted_pool": 12
+    },
+    "exposure_limits": "Prior pilot and NZ90 exact decoded image checks, NZ300 and this pool perceptual checks. Pool encounter rule uses up to two days and 100 m plus both public coordinate uncertainty values."
+  },
+  "verified_blind_tasks": 16,
+  "verified_assisted_candidates": 8,
+  "blind_assisted_pixel_overlap": 0,
+  "assisted_scores": {
+    "low_score_uncertain": 8
+  },
+  "policy_commit": "aa4db4a",
+  "follow_up": "Extend assisted-only source sampling to fill the priority, disagreement and botanical lookalike strata."
+}
