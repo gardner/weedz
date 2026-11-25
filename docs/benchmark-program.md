@@ -819,6 +819,14 @@ photos in each of the six strata to apply the gate. Report shortfalls
 explicitly. Passing would justify a separate incidental comparison. NZ
 pilot settings and existing reviewer tasks remain frozen.
 
+Replay the same four decisions separately on the existing 300 development
+controls. Reuse the cached 17-view PlantCLEF scores and cached whole-photo
+native predictions. Run one new native inference on the original winning
+tile of each above-floor photo. Below-floor photos contribute no suggestion
+under any rule, so they need no new inference. Keep the fresh and development
+denominators separate. The development controls can explain trade-offs when
+fresh strata are sparse and can motivate future validation.
+
 ## Instance localization errors and proposal windows
 
 A replay of the cached PhenoBench development masks reproduced all 535 SAM3
