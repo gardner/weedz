@@ -7,74 +7,74 @@
     {
       "name": "segformer_recall",
       "stratum": "all",
-      "successes": 1100,
-      "total": 1100,
-      "value": 1.0,
-      "low": 0.9965199179737294,
-      "high": 1.0,
+      "successes": 0,
+      "total": 0,
+      "value": null,
+      "low": null,
+      "high": null,
       "target": 0.95,
       "ceiling": null,
-      "passed": true
+      "passed": null
     },
     {
       "name": "segformer_recall",
       "stratum": "tiny",
-      "successes": 44,
-      "total": 44,
-      "value": 1.0,
-      "low": 0.9197043962415192,
-      "high": 1.0,
+      "successes": 0,
+      "total": 0,
+      "value": null,
+      "low": null,
+      "high": null,
       "target": 0.95,
       "ceiling": null,
-      "passed": false
+      "passed": null
     },
     {
       "name": "segformer_recall",
       "stratum": "small",
-      "successes": 99,
-      "total": 99,
-      "value": 1.0,
-      "low": 0.9626467879321726,
-      "high": 1.0,
+      "successes": 0,
+      "total": 0,
+      "value": null,
+      "low": null,
+      "high": null,
       "target": 0.95,
       "ceiling": null,
-      "passed": true
+      "passed": null
     },
     {
       "name": "segformer_recall",
       "stratum": "medium",
-      "successes": 255,
-      "total": 255,
-      "value": 1.0,
-      "low": 0.985159028085392,
-      "high": 1.0,
+      "successes": 0,
+      "total": 0,
+      "value": null,
+      "low": null,
+      "high": null,
       "target": 0.95,
       "ceiling": null,
-      "passed": true
+      "passed": null
     },
     {
       "name": "segformer_recall",
       "stratum": "large",
-      "successes": 702,
-      "total": 702,
-      "value": 1.0,
-      "low": 0.994557618042,
-      "high": 1.0,
+      "successes": 0,
+      "total": 0,
+      "value": null,
+      "low": null,
+      "high": null,
       "target": 0.95,
       "ceiling": null,
-      "passed": true
+      "passed": null
     },
     {
       "name": "segformer_false_alarm_rate",
       "stratum": "all",
-      "successes": 832,
-      "total": 832,
-      "value": 1.0,
-      "low": 0.9954040819821094,
-      "high": 1.0,
+      "successes": 0,
+      "total": 0,
+      "value": null,
+      "low": null,
+      "high": null,
       "target": null,
       "ceiling": 0.1,
-      "passed": false
+      "passed": null
     },
     {
       "name": "segformer_baseline_recall",
@@ -329,11 +329,11 @@
     "negative_void_tolerance": 0.02,
     "development_positive_recall_target": 0.95,
     "development_positive_images": 1133,
-    "segformer_threshold": 0.0,
+    "segformer_threshold": "unreachable: 95% development recall would flag every photo",
     "sam3_presence_threshold": 0.058349609375,
     "score_rule": "score >= threshold. SAM3 uses max raw concept score before retention.",
     "segformer_baseline_rule": "Any predicted ADE20K vegetation pixel",
     "sam3_baseline_rule": "Any proposal retained at the pipeline's fixed cutoff"
   },
-  "seconds": 44.62
+  "seconds": 25.18
 }

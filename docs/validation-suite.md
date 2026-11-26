@@ -64,7 +64,7 @@ the table below from the scorecard.
 | --- | --- | --- | --- |
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Planned |
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Measured · SAM3 recalled 93.2% of tiny and 90.9% of small positives |
-| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · 7.3% of labelled vegetation pixels covered |
+| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · half the vegetation covered in 12.3% of photos |
 | Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Planned |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Planned |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Planned |
@@ -73,16 +73,20 @@ the table below from the scorecard.
 
 ### What this showed
 
-Keep the presence scores for review ranking. At the development-tuned
-cutoffs, SegFormer flagged every assessable photo and SAM3 flagged 24.3% of
-labelled negatives while missing 3 of 44 tiny and 9 of 99 small positives.
-Requiring at least one SegFormer vegetation pixel recovered 25 of 44 tiny positives.
+**At the pipeline's current cutoff, SAM3 flags only 36.9% of photos with
+vegetation** (406 of 1,100), and half of those where plants cover 0.5% of the
+photo or less. Lowering its score threshold on development recovers 93.3%, but
+then flags 24.3% of photos with no vegetation. SegFormer can't reach 95%
+development recall without flagging every photo (its vegetation share is 0 on
+too many small-plant photos). Counting any predicted vegetation pixel
+recovers 95.0%, but only 25 of 44 tiny positives, with 26.1% false alarms.
+Keep the presence scores for review ranking, not for dropping photos.
 [Presence results](../benchmarks/validation/cocostuff-vegetation-presence.json)
 
-The default SAM3 prompts covered 7.3% of labelled vegetation pixels and
-recovered 2.9% of tiny connected regions at IoU ≥ 0.5. Compare `tree`, `grass`
-and `shrub` prompts before relying on these proposals for small or diffuse
-vegetation. [Proposal results](../benchmarks/validation/cocostuff-vegetation-proposals.json)
+The default SAM3 prompts cover at least half the labelled vegetation in only
+12.3% of photos, and recover 2.9% of tiny connected regions at IoU ≥ 0.5.
+Compare `tree`, `grass` and `shrub` prompts before relying on these proposals
+for small or diffuse vegetation. [Proposal results](../benchmarks/validation/cocostuff-vegetation-proposals.json)
 
 ### Rerun the COCO-Stuff checks
 
