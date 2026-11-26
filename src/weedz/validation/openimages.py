@@ -155,6 +155,13 @@ def _normalized_box(raw: Sequence[float], width: int, height: int) -> Box:
 
 
 def _sam_prediction(model: Sam3Image, path: Path) -> SamPrediction:
+    # SAM3 boxes are in the EXIF-upright frame and Open Images boxes in the stored one.
+    # No sampled CVDF JPEG has a rotation tag; refuse one rather than mis-score its boxes.
+    with Image.open(path) as image:
+        width, height = image.size
+        orientation = image.getexif().get(0x0112, 1)
+    if orientation != 1:
+        raise ValueError(f"{path.name} has EXIF orientation {orientation}; boxes would not align")
     result = model.screen(path)
     if result["failed_prompts"]:
         errors = [
@@ -168,8 +175,6 @@ def _sam_prediction(model: Sam3Image, path: Path) -> SamPrediction:
         for prompt in result["prompts"]
         for score in prompt["raw_top_concept_scores_before_retention"][:1]
     ]
-    with Image.open(path) as image:
-        width, height = image.size
     retained = [region for region in result["regions"] if region["prompt"] in PROPOSAL_PROMPTS]
     boxes = [_normalized_box(region["box"], width, height) for region in retained[:PROPOSAL_BUDGET]]
     return SamPrediction(max(top_scores, default=0.0), boxes)

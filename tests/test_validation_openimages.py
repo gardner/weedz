@@ -168,3 +168,22 @@ def test_profile_changes_with_pipeline_source(tmp_path: Path, monkeypatch: pytes
     original = openimages._profile(context, "sam3")
     source.write_text("updated")
     assert openimages._profile(context, "sam3") != original
+
+
+def test_sam_boxes_refuse_photos_with_an_exif_rotation(tmp_path: Path):
+    # SAM3 returns boxes in the EXIF-upright frame; Open Images boxes use the stored frame.
+    from PIL import Image
+
+    from weedz.validation.openimages import _sam_prediction
+
+    photo = tmp_path / "rotated.jpg"
+    exif = Image.Exif()
+    exif[0x0112] = 6
+    Image.new("RGB", (40, 20)).save(photo, exif=exif)
+
+    class Unused:
+        def screen(self, path: Path) -> dict:
+            raise AssertionError("SAM3 should not run on a rotated photo")
+
+    with pytest.raises(ValueError, match="EXIF orientation 6"):
+        _sam_prediction(Unused(), photo)  # type: ignore[arg-type]
