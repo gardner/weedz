@@ -50,7 +50,9 @@ def _run(args: argparse.Namespace) -> None:
 
 
 def _scorecard(args: argparse.Namespace) -> None:
-    results = [CheckResult.model_validate_json(path.read_text()) for path in args.results]
+    # Skip the previous scorecard, which a `benchmarks/validation/*.json` glob includes.
+    paths = [path for path in args.results if path.resolve() != args.output.resolve()]
+    results = [CheckResult.model_validate_json(path.read_text()) for path in paths]
     card = Scorecard.collect(results)
     card.write(args.output)
     if args.markdown:

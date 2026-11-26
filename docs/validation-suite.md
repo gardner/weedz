@@ -61,6 +61,9 @@ the table below from the scorecard.
 
 ## Checks
 
+The [scorecard](../benchmarks/validation/scorecard.md) lists every metric, stratum
+and gate from the latest full runs.
+
 | Stage | Check | Dataset | Status |
 | --- | --- | --- | --- |
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Measured · 95.5% recall and 38.7% false alarms for SegFormer, 94.7% and 23.7% for SAM3 |

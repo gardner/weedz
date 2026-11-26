@@ -129,3 +129,16 @@ def test_the_cli_runs_a_check_then_builds_the_scorecard(tmp_path: Path):
         assert "cli-check" in table.read_text()
     finally:
         REGISTRY.pop("cli-check")
+
+
+def test_rebuilding_the_scorecard_skips_its_own_previous_output(tmp_path: Path):
+    # The documented command globs benchmarks/validation/*.json, which includes
+    # the scorecard.json written by the previous run.
+    from weedz.validation.cli import main
+
+    saved = tmp_path / "cli-check.json"
+    saved.write_text(_result("cli-check").model_dump_json())
+    card = tmp_path / "scorecard.json"
+    main(["scorecard", str(saved), "--output", str(card)])
+    main(["scorecard", str(saved), str(card), "--output", str(card)])
+    assert [result.check for result in Scorecard.read(card).results] == ["cli-check"]
