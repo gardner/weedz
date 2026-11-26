@@ -69,3 +69,34 @@ the table below from the scorecard.
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Planned |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
 | Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
+
+### Rerun the COCO-Stuff checks
+
+Use the [isolated SAM3 CUDA runtime](sam3-image-comparison.md#reproduce) with
+`httpx`, `scipy==1.16.3` and `transformers==4.57.6` installed alongside
+its pinned SAM3 dependencies. The default project environment uses CPU PyTorch.
+
+Under the data root, link the existing SegFormer snapshot directory at
+`cocostuff/models/de01bae28967510f9ddd496c60a969357195400c` and the existing
+SAM3 checkpoint at `cocostuff/models/3c879f39826c281e95690f02c7821c4de09afae7/sam3.pt`.
+The checks verify the public archives and resume downloads and inference from
+the cache. Run presence first to populate the SAM3 cache for proposals.
+
+```sh
+export CUDA_VISIBLE_DEVICES=0 PYTHONPATH="$PWD/src"
+export UV_PROJECT_ENVIRONMENT="$SAM3_RUNTIME/.venv"
+data_root="$HOME/src/weedz-validation-data"
+for check in cocostuff-vegetation-presence cocostuff-vegetation-proposals; do
+  uv run --no-sync main.py validate run "$check" --data-root "$data_root" \
+    --cache-dir "$data_root/cocostuff/.cache" --device cuda:0 \
+    --output benchmarks/validation
+done
+```
+
+Presence selects the highest score cutoff that retains at least 95% of
+development positives. SegFormer scores the share of predicted vegetation
+pixels. SAM3 scores the strongest raw concept match and also reports recall
+using the pipeline's retained proposals. The proposal check uses the default
+`plant` and `flower` prompts and 0.5 retention cutoff.
+COCO-Stuff uses PNG index 255 for void and PNG index 0 for person. Annotations
+are CC BY 4.0 and images are subject to Flickr terms. [COCO-Stuff dataset](https://github.com/nightrome/cocostuff)

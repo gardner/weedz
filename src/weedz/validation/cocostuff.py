@@ -25,7 +25,6 @@ from weedz.validation.cocostuff_models import (
     model_inputs,
     release_cuda,
     sam_predictor,
-    sam_presence,
     segformer_predictor,
 )
 from weedz.validation.cocostuff_regions import (
@@ -48,8 +47,8 @@ RECALL_TARGET = 0.95
 FALSE_ALARM_CEILING = 0.10
 COMMON_LIMITS = [
     "COCO-Stuff PNG index 255 is void. PNG index 0 is person. Label ID 0 is void in labels.txt.",
-    "Vegetation follows the selected scene labels. Fruit and vegetable food classes are excluded "
-    "because they describe food objects, including detached produce, rather than scene vegetation.",
+    "Vegetation follows the selected scene labels. Fruit and vegetable classes describe food "
+    "objects, including detached produce, and lie outside the vegetation target.",
     "COCO and COCO-Stuff annotations are CC BY 4.0. COCO images are subject to Flickr terms.",
     "This evaluation measures COCO label recovery. COCO val2017 may overlap SAM3 training data.",
 ]
@@ -203,7 +202,7 @@ def _sam_presence(
 
     def predict(path: Path) -> PresencePrediction:
         result = predictor(path)
-        return PresencePrediction(sam_presence(result), bool(result["regions"]))
+        return PresencePrediction(result.presence_score, bool(result.regions))
 
     return _predict_presence(data, items, by_id, "sam3", predict)
 
@@ -282,7 +281,7 @@ def _score_images(data: Dataset, items: Sequence[ImageItem], predict: SamPredict
     for index, item in enumerate(items, 1):
         truth = data.masks(item)
         height, width = truth.vegetation.shape
-        records = predict(data.image(item))["regions"][:PROPOSAL_LIMIT]
+        records = predict(data.image(item)).regions[:PROPOSAL_LIMIT]
         proposals = [proposal_mask(row, size=(width, height), kind="sam3") for row in records]
         instances = [
             instance_mask(instance, (height, width))

@@ -3,9 +3,9 @@
 import importlib
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import Any
 
 from PIL import Image, ImageOps
 
@@ -22,8 +22,14 @@ from weedz.validation.registry import RunContext
 SEGFORMER = Path("cocostuff/models") / MODEL_REVISION
 SAM3 = Path("cocostuff/models") / HF_REVISION / "sam3.pt"
 SAM_CONFIG = Sam3Config()
-type SamPredictor = Callable[[Path], dict[str, Any]]
 type FractionPredictor = Callable[[Path], float]
+type SamPredictor = Callable[[Path], SamPrediction]
+
+
+@dataclass(frozen=True)
+class SamPrediction:
+    presence_score: float
+    regions: list[dict]
 
 
 def model_inputs(*, presence: bool) -> dict[str, str]:
@@ -65,7 +71,7 @@ def sam_predictor(context: RunContext) -> SamPredictor:
     def model() -> Sam3Image:
         return Sam3Image.load(checkpoint, SAM_CONFIG, root)
 
-    def predict(path: Path) -> dict[str, Any]:
+    def predict(path: Path) -> SamPrediction:
         result = model().screen(path)
         if result["status"] in {"failed", "partial"}:
             failures = [
@@ -74,20 +80,17 @@ def sam_predictor(context: RunContext) -> SamPredictor:
                 if row["status"] == "failed"
             ]
             raise RuntimeError(f"SAM3 failed on COCO image {path.stem}: {failures}")
-        return result
+        presence_score = max(
+            (
+                float(score)
+                for prompt in result["prompts"]
+                for score in prompt["raw_top_concept_scores_before_retention"]
+            ),
+            default=0.0,
+        )
+        return SamPrediction(presence_score, result["regions"])
 
     return predict
-
-
-def sam_presence(result: dict[str, Any]) -> float:
-    return max(
-        (
-            float(score)
-            for prompt in result["prompts"]
-            for score in prompt["raw_top_concept_scores_before_retention"]
-        ),
-        default=0.0,
-    )
 
 
 def release_cuda() -> None:
