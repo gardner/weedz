@@ -1,8 +1,12 @@
 """Pilot effort joins only verified tasks and records actual human submissions."""
 
+import hashlib
+import json
+from pathlib import Path
+
 import pytest
 
-from weedz.annotation.pilot_effort import summarize
+from weedz.annotation.pilot_effort import _package, summarize
 
 
 def task(identifier: str) -> dict:
@@ -72,3 +76,17 @@ def test_duplicate_annotation_and_invalid_timing_are_rejected() -> None:
         summarize([first], [first | {"id": 7, "annotations": [answer(1, 2), answer(1, 2)]}])
     with pytest.raises(ValueError, match="Invalid lead time"):
         summarize([first], [first | {"id": 7, "annotations": [answer(1, float("nan"))]}])
+
+
+def test_package_rejects_a_manifest_for_the_other_arm(tmp_path: Path) -> None:
+    raw = json.dumps([task("one")]).encode()
+    (tmp_path / "tasks.json").write_bytes(raw)
+    manifest = {
+        "mode": "blind",
+        "task_count": 1,
+        "files": {"tasks.json": hashlib.sha256(raw).hexdigest()},
+    }
+    (tmp_path / "manifest.json").write_text(json.dumps(manifest))
+    assert len(_package(tmp_path, "blind")[0]) == 1
+    with pytest.raises(ValueError, match="assisted pilot package"):
+        _package(tmp_path, "assisted")

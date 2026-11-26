@@ -133,8 +133,10 @@ def _load(path: Path) -> tuple[Any, str]:
     return json.loads(raw), hashlib.sha256(raw).hexdigest()
 
 
-def _package(root: Path) -> tuple[list[Row], str]:
+def _package(root: Path, mode: str | None = None) -> tuple[list[Row], str]:
     manifest, digest = _load(root / "manifest.json")
+    if mode is not None and manifest.get("mode") != mode:
+        raise ValueError(f"Use a {mode} pilot package")
     tasks, tasks_digest = _load(root / "tasks.json")
     if tasks_digest != manifest["files"]["tasks.json"] or len(tasks) != manifest["task_count"]:
         raise ValueError("Pilot task checksum or count differs from its manifest")
@@ -148,8 +150,8 @@ def main() -> None:
         parser.add_argument(f"--{arm}-export", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    blind_tasks, blind_manifest = _package(args.blind_package)
-    assisted_tasks, assisted_manifest = _package(args.assisted_package)
+    blind_tasks, blind_manifest = _package(args.blind_package, "blind")
+    assisted_tasks, assisted_manifest = _package(args.assisted_package, "assisted")
     blind_sha = {task["meta"]["image_sha256"] for task in blind_tasks}
     assisted_sha = {task["meta"]["image_sha256"] for task in assisted_tasks}
     if blind_sha & assisted_sha:

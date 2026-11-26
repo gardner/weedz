@@ -162,10 +162,8 @@ def main() -> None:
     parser.add_argument("--sealed-decisions", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    tasks, manifest_sha = _package(args.blind_package)
+    tasks, manifest_sha = _package(args.blind_package, "blind")
     manifest, _ = _load(args.blind_package / "manifest.json")
-    if manifest.get("mode") != "blind":
-        raise ValueError("Use a blind pilot package")
     seal, seal_sha = _load(args.sealed_decisions)
     if seal.get("package_manifest_sha256") != manifest_sha:
         raise ValueError("Pilot manifest differs from the sealed decisions")
