@@ -102,6 +102,50 @@ Keep a separate blind review sample without model suggestions for measuring
 misses and false alarms. A collection containing only confident predictions would
 hide failures and give a biased assessment.
 
+### Improve the review intake before inviting more reviewers
+
+An initial visual pass of [CVAT blind job 20](https://cvat.llm.nz/tasks/15/jobs/20)
+found visible plants on two of its 16 photos. The blind sample was drawn
+from animal-subject observations before vegetation screening. Keep those
+frozen tasks as the original intake audit, and build a separate, more
+useful batch for species review.
+
+1. **Screen for visible vegetation before scoring weed species.** Compare
+   the existing full-frame SAM3 `plant` and `flower` proposals with an
+   overlapping-tile variant that can pick up small background plants. Keep
+   plant visibility and species suggestions as separate outputs. Use
+   `vegetation detected`, `uncertain` and `no vegetation detected` for
+   triage. Retain the source image and the evidence behind every result.
+2. **Validate the screen on labels we already have.** Use mapped human
+   vegetation masks for clear and small-plant controls. Use outdoor scenes
+   with assessable absence or limited annotation coverage as distinct
+   cohorts. Measure plant-present recall, the fraction of plant-poor photos
+   moved out of the main queue, and runtime. Report small, distant or
+   occluded positives separately wherever the source supports those groups.
+   Set thresholds on development scenes and evaluate on distinct sites or
+   capture groups. The proposed initial target is at least 95% retention of
+   labeled plant-positive photos. A small positive subgroup needs its own
+   denominator before the rule can be used to deprioritize similar NZ photos.
+3. **Fill most reviewer slots with photos that can answer a botanical question.**
+   Prefer ground-level habitat views with usable vegetation detail. Include
+   each watchlist species where there are candidates, native lookalikes,
+   hard views and disagreements. Reserve a small random sample of low-score
+   or unfiltered frames to audit misses. Keep selection strata and their
+   eligible pool sizes. Use hints only in the assisted arm.
+4. **Check the new batch before assigning it.** Open every task in a contact
+   sheet at usable resolution. Verify original and crop alignment, rights,
+   working controls and independence across arms. Record the proportion
+   with vegetation visible enough to assess and the number of tasks in each
+   stratum. Keep specialist time for species, boundaries and ambiguous cases.
+
+The first plant-presence source audit checked 2,000 ADE20K validation masks.
+There were 967 images with a mapped vegetation class, including 111 where
+those classes covered at most 0.5% of the image. The 123 low-ignore images
+without a mapped vegetation pixel are candidate comparison scenes. Their
+labels remain limited to the mapped classes, and most of this comparison pool
+is unlike NZ field photos. [Publisher benchmark](https://github.com/CSAILVision/sceneparsing#benchmark-details)
+· [Label inventory](benchmarks/ade20k-vegetation-inventory-20261126.json)
+
 ## Readiness for the main human-labeling effort
 
 The aim is measurable readiness rather than an indefinitely perfect pipeline:
