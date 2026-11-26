@@ -281,7 +281,12 @@ class Screener:
 
     @classmethod
     def load(
-        cls, cache_dir: Path | None = None, model: str = "bioclip", *, backend: str = "cpu"
+        cls,
+        cache_dir: Path | None = None,
+        model: str = "bioclip",
+        *,
+        backend: str = "cpu",
+        snapshot: Path | None = None,
     ) -> "Screener":
         # Heavy libraries are deliberately outside deterministic Temporal workflow imports.
         from weedz.discovery.encoder_backend import CudaEncoder, require_backend
@@ -293,7 +298,7 @@ class Screener:
 
         torch.set_num_threads(4)
         entry = MODELS[model]
-        path = Path(
+        path = snapshot or Path(
             snapshot_download(
                 entry["repo"],
                 revision=entry["revision"],

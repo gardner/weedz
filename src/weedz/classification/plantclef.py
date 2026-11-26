@@ -89,9 +89,7 @@ class PlantClassifier:
             },
         )
 
-    def predict(self, images: list[Image.Image], top_k: int = 5) -> list[list[dict]]:
-        if not images:
-            return []
+    def _logits(self, images: list[Image.Image]) -> Any:
         if len(images) > 32:
             raise ValueError("Classifier batch exceeds 32-image cap")
         device = self.metadata["device"]
@@ -99,5 +97,19 @@ class PlantClassifier:
             batch = self.torch.stack([self.transform(image) for image in images]).to(
                 device, dtype=self.torch.float32
             )
-            logits = self.model(batch).float().cpu().numpy()
+            return self.model(batch).float()
+
+    def predict(self, images: list[Image.Image], top_k: int = 5) -> list[list[dict]]:
+        if not images:
+            return []
+        logits = self._logits(images).cpu().numpy()
         return [ranked_species(row, self.labels, top_k) for row in logits]
+
+    def predict_selected(
+        self, images: list[Image.Image], indices: tuple[int, ...]
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Return full logits and full-denominator FP32 shares for selected classes."""
+        with self.torch.inference_mode():
+            logits = self._logits(images)
+            shares = logits.softmax(dim=1)[:, indices]
+            return logits.cpu().numpy(), shares.cpu().numpy()
