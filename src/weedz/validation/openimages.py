@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 from PIL import Image
@@ -60,6 +60,16 @@ SAM_CONFIG = Sam3Config(prompts=(*PROPOSAL_PROMPTS, "tree", "grass", "shrub"))
 MODEL_DIR = Path(DATASET_DIR, "models")
 SAM_CHECKPOINT = MODEL_DIR / "sam3.pt"
 SEG_SNAPSHOT = MODEL_DIR / "segformer"
+type ModelName = Literal["sam3", "segformer"]
+PIPELINE_SOURCES: dict[ModelName, tuple[Path, ...]] = {
+    "sam3": (
+        Path("segmentation/sam3_image.py"),
+        Path("segmentation/regions.py"),
+        Path("segmentation/ingress.py"),
+        Path("segmentation/artifacts.py"),
+    ),
+    "segformer": (Path("discovery/vegetation.py"),),
+}
 COMMON_LIMITS = [
     "Plant and its boxable subclasses define scope. Verification and exhaustiveness apply to "
     "publisher classes, and may miss other vegetation such as grass or shrubs.",
@@ -178,7 +188,7 @@ def _load_sam(context: RunContext, cache: Path) -> Callable[[Path], SamPredictio
     model = Sam3Image.load(
         context.data_root / SAM_CHECKPOINT,
         SAM_CONFIG,
-        cache / "sam3-pipeline",
+        cache,
         max_source_bytes=IMAGE_BYTE_LIMIT,
     )
     return lambda path: _sam_prediction(model, path)
@@ -189,15 +199,17 @@ def _load_seg(context: RunContext) -> Callable[[Path], float]:
     return lambda path: _seg_prediction(model, path)
 
 
-def _profile(context: RunContext, method: str) -> str:
+def _profile(context: RunContext, method: ModelName) -> str:
     versions = {package: version(package) for package in ("torch", "numpy", "pillow")}
+    source_root = Path(__file__).parents[1]
+    sources = tuple(sha256(source_root / path) for path in PIPELINE_SOURCES[method])
     settings = (
         (CHECKPOINT_SHA256, CODE_REVISION, asdict(SAM_CONFIG), PROPOSAL_PROMPTS, PROPOSAL_BUDGET)
         if method == "sam3"
         else (MODEL_FILES, version("transformers"))
     )
     fingerprint = hashlib.sha256(
-        json.dumps((1, context.device, versions, settings), sort_keys=True).encode()
+        json.dumps((1, context.device, versions, sources, settings), sort_keys=True).encode()
     ).hexdigest()[:20]
     return f"{method}-{fingerprint}"
 
@@ -314,11 +326,12 @@ def _validate_context(context: RunContext, *, minimum: int) -> None:
 def _sam_all(
     items: Sequence[Item], images: Mapping[str, Path], context: RunContext, cache: Path
 ) -> dict[str, SamPrediction]:
+    profile = cache / _profile(context, "sam3")
     return _predict_all(
         items,
         images,
-        cache / _profile(context, "sam3"),
-        lambda: _load_sam(context, cache),
+        profile,
+        lambda: _load_sam(context, profile / "pipeline"),
         asdict,
         _sam_from_json,
     )

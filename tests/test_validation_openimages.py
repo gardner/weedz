@@ -155,3 +155,16 @@ def test_image_cache_verifies_s3_checksum_and_cached_bytes(tmp_path: Path) -> No
     )
     with httpx.Client(transport=unverified) as client, pytest.raises(ValueError, match="checksum"):
         image_path(tmp_path, "234567890abcdef1", client)
+
+
+def test_profile_changes_with_pipeline_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    from weedz.validation import openimages
+    from weedz.validation.registry import RunContext
+
+    source = tmp_path / "sam3_image.py"
+    source.write_text("original")
+    monkeypatch.setitem(openimages.PIPELINE_SOURCES, "sam3", (source,))
+    context = RunContext(tmp_path, tmp_path, device="cuda:0")
+    original = openimages._profile(context, "sam3")
+    source.write_text("updated")
+    assert openimages._profile(context, "sam3") != original
