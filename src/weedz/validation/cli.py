@@ -30,6 +30,7 @@ def parser() -> argparse.ArgumentParser:
 
 
 def _run(args: argparse.Namespace) -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     check = REGISTRY[args.check]
     context = RunContext(
         data_root=args.data_root,
