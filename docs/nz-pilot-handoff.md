@@ -9,6 +9,11 @@ reviewer brief for new assignments. The [vegetation-focused batch audit](../benc
 records the new jobs, source checks and preflight. The earlier jobs remain
 available as an intake baseline.
 
+The new blind and assisted jobs use different photos. Report timing by arm
+as descriptive and use the two replicas of each arm to measure agreement on
+the same photos. Two reviewers completing both arms yield 24 submissions per
+arm.
+
 For hosted reviews, keep each replica’s annotations separate. Export from
 the job using **CVAT for images 1.1** so the photo tags, attributes and masks
 are preserved. Keep the job ID, reviewer account and session notes with the
@@ -26,12 +31,12 @@ optional tasks in two separate projects. The local test projects contain zero
 human submissions. The [handoff audit](../benchmarks/nz-review-handoff-audit-20261125.json)
 records the exact archive and task hashes.
 
-## Material to distribute
+### Archived reviewer packages
 
 The paths below are relative to the private evaluation artifact directory for
-25 November 2026. Each ZIP contains its files, labeling configuration, task
-JSON and setup instructions. Share the appropriate ZIP with each reviewer.
-Keep the operator packages, cue receipts and blind decision seal private.
+25 November 2026. Each ZIP records the files, labeling configuration, task
+JSON and setup instructions for the offline pilot. Keep these archives and
+the operator packages, cue receipts and blind decision seal private.
 
 | Project | Reviewer ZIP | Photos |
 | --- | --- | ---: |

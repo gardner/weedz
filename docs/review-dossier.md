@@ -8,7 +8,7 @@ tool is to use. Base each submission on what you can see in the photo.
 
 Sign in to **CVAT** with your own account and open the job in the column
 assigned to you. If a job denies access, give the coordinator your CVAT
-username so they can assign it. If you’re doing both handheld jobs, finish
+username so they can assign it. If you’re doing both pilot jobs, finish
 the blind job first.
 
 | Review | Reviewer A | Reviewer B |
@@ -26,9 +26,9 @@ the blind job first.
 | Old man’s beard | *Clematis vitalba* |
 | Pampas grass | *Cortaderia selloana* |
 
-Work independently. In assisted or camera jobs, the task guide lists the
-suggested name for each image and the contextual image shows the search crop.
-Use both as clues and inspect the full photo, including areas outside the crop.
+Work independently. In assisted or camera jobs, use the contextual image to
+see the search crop. The task guide may also suggest a species. Use these as
+clues and inspect the full photo, including areas outside the crop.
 Open any linked source observation only after saving your review of that photo.
 [CVAT contextual images](https://docs.cvat.ai/docs/annotation/manual-annotation/utilities/contextual-images/)
 
