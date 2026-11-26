@@ -30,8 +30,13 @@ if ! pr="$("$gh_cli" pr list --head "$branch" --state open --json number --jq '.
 fi
 [[ -n "$pr" ]] || exit 0
 
-# gh exits 8 when any check is pending; the JSON is still complete.
+# gh exits 8 when any check is pending; the JSON is still complete then.
 checks="$("$gh_cli" pr checks "$pr" --json name,bucket,startedAt,link 2>/dev/null)"
+status=$?
+if [[ $status -ne 0 && $status -ne 8 ]]; then
+  warn "gh pr checks failed with status $status"
+  exit 0
+fi
 if ! running="$(jq -r --arg names "$review_checks" '
     ($names | split(" ")) as $reviews
     | .[] | select(.bucket == "pending" and (.name as $n | $reviews | index($n)))

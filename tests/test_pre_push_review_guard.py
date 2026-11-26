@@ -97,3 +97,9 @@ def test_without_pre_commit_it_uses_the_current_branch(tmp_path: Path):
     environment |= {"GH": str(gh), "FAKE_LOG": str(tmp_path / "gh.log"), "FAKE_PR": ""}
     subprocess.run(["bash", str(HOOK)], env=environment, cwd=repo, check=True)
     assert "--head work/current" in (tmp_path / "gh.log").read_text()
+
+
+def test_a_failed_checks_lookup_warns_instead_of_passing_silently(tmp_path: Path):
+    result = _push(tmp_path, FAKE_CHECKS="", FAKE_CHECKS_EXIT="1")
+    assert result.returncode == 0
+    assert "couldn't check" in result.stderr
