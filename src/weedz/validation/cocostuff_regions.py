@@ -16,7 +16,7 @@ PROPOSAL_LIMIT = 100
 REGION_THRESHOLD = 0.5
 BACKGROUND_THRESHOLD = 0.8
 METRICS = (
-    "pixel_recall",
+    "half_covered_images",
     "component_iou_recall",
     "component_coverage_recall",
     "potted_plant_iou_recall",
@@ -123,7 +123,9 @@ def score_proposals(
             )
     pixels = sparse_coverage(truth.vegetation, union)
     if pixels.labelled_pixels:
-        counts.add("pixel_recall", stratum, pixels.covered_labelled_pixels, pixels.labelled_pixels)
+        # Per photo, not per pixel: pixels within a photo are not independent samples.
+        half = 2 * pixels.covered_labelled_pixels >= pixels.labelled_pixels
+        counts.add("half_covered_images", stratum, int(half), 1)
     _record_regions(counts, "component", _component_recovery(truth, retained), union.size)
     plants = (_instance_recovery(instance, ~truth.void, retained) for instance in instances)
     _record_regions(counts, "potted_plant", plants, union.size)

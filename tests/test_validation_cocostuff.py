@@ -84,6 +84,36 @@ def test_presence_tunes_on_development_and_scores_held_out() -> None:
     assert counts["baseline_false_alarm_rate", "all"] == (1, 1)
 
 
+def test_a_threshold_that_flags_every_photo_is_unreachable() -> None:
+    items = [
+        PresenceItem("dev-scored", "large", "development"),
+        PresenceItem("dev-unscored", "tiny", "development"),
+        PresenceItem("test-positive", "tiny", "held-out"),
+        PresenceItem("test-negative", "negative", "held-out"),
+    ]
+    scores = {"dev-scored": 0.4, "dev-unscored": 0.0, "test-positive": 0.0, "test-negative": 0.0}
+
+    def predict(item: PresenceItem) -> PresencePrediction:
+        return PresencePrediction(scores[item.source_id], scores[item.source_id] > 0)
+
+    threshold, metrics = presence_metrics(items, predict)
+    assert threshold is None
+    counts = {(metric.name, metric.stratum): (metric.successes, metric.total) for metric in metrics}
+    assert counts["recall", "all"] == (0, 0)  # unmeasured, not zero
+    assert counts["baseline_recall", "all"] == (0, 1)
+
+
+def test_a_photo_counts_as_covered_only_when_half_its_vegetation_is() -> None:
+    vegetation = np.zeros((10, 10), dtype=bool)
+    vegetation[0, :5] = True
+    small = np.zeros_like(vegetation)
+    small[0, :2] = True
+    metrics = proposal_metrics(Masks(vegetation, np.zeros_like(vegetation)), [small], [])
+    counts = {(row.name, row.stratum): (row.successes, row.total) for row in metrics}
+    assert counts["half_covered_images", "all"] == (0, 1)
+    assert ("pixel_recall", "all") not in counts
+
+
 def test_proposals_score_union_instances_and_labelled_background() -> None:
     vegetation = np.zeros((10, 10), dtype=bool)
     vegetation[0, :4] = True
@@ -107,7 +137,7 @@ def test_proposals_score_union_instances_and_labelled_background() -> None:
         [left],
     )
     counts = {(row.name, row.stratum): (row.successes, row.total) for row in metrics}
-    assert counts["pixel_recall", "medium"] == (4, 4)
+    assert counts["half_covered_images", "medium"] == (1, 1)
     assert counts["component_iou_recall", "medium"] == (1, 1)
     assert counts["component_coverage_recall", "medium"] == (1, 1)
     assert counts["potted_plant_iou_recall", "small"] == (1, 1)
@@ -128,7 +158,7 @@ def test_single_proposal_coverage_and_budget() -> None:
         [],
     )
     counts = {(row.name, row.stratum): (row.successes, row.total) for row in metrics}
-    assert counts["pixel_recall", "all"] == (4, 5)
+    assert counts["half_covered_images", "all"] == (1, 1)
     assert counts["component_iou_recall", "all"] == (0, 1)
     assert counts["component_coverage_recall", "all"] == (0, 1)
     assert counts["nonvegetation_proposal_share", "all"] == (0, 100)

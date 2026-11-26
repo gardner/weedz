@@ -44,6 +44,7 @@ DATASET = "COCO-Stuff val2017"
 PRESENCE = "cocostuff-vegetation-presence"
 PROPOSALS = "cocostuff-vegetation-proposals"
 RECALL_TARGET = 0.95
+UNREACHABLE = "unreachable: 95% development recall would flag every photo"
 FALSE_ALARM_CEILING = 0.10
 COMMON_LIMITS = [
     "COCO-Stuff PNG index 255 is void. PNG index 0 is person. Label ID 0 is void in labels.txt.",
@@ -90,6 +91,13 @@ def presence_metrics(
         if positive_scores
         else None
     )
+    development = [
+        predictions[item.source_id].score
+        for item in items
+        if item.split == "development" and item.stratum != "unassessable"
+    ]
+    if threshold is not None and threshold <= min(development):
+        threshold = None  # it would flag every development photo: the target is unreachable
     held_out = [
         item for item in items if item.split == "held-out" and item.stratum != "unassessable"
     ]
@@ -253,10 +261,10 @@ def run_presence(context: RunContext) -> CheckResult:
                 "development_positive_images": sum(
                     item.split == "development" and item.positive for item in items
                 ),
-                "segformer_threshold": seg_threshold if seg_threshold is not None else "unmeasured",
+                "segformer_threshold": seg_threshold if seg_threshold is not None else UNREACHABLE,
                 "sam3_presence_threshold": sam_threshold
                 if sam_threshold is not None
-                else "unmeasured",
+                else UNREACHABLE,
                 "score_rule": (
                     "score >= threshold. SAM3 uses max raw concept score before retention."
                 ),
