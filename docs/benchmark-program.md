@@ -1,5 +1,29 @@
 # Pipeline benchmark program
 
+## Plant-presence intake benchmark protocol
+
+Use the [MIT ADE20K scene-parsing validation set](https://github.com/CSAILVision/sceneparsing#benchmark-details)
+as an external vegetation proxy. Map the human mask labels for tree, grass,
+plant, flower and palm. Sample 12 photos per stratum in each of two disjoint
+scene-category splits. Include mapped vegetation above 0.5% of the image,
+mapped vegetation at or below 0.5%, and no mapped vegetation with low ignore
+coverage and without the ambiguous field, hill or land classes. Cap each
+scene category at six frames per stratum. Use deterministic hash order for
+selection and verify the input pairs and duplicate exclusions before inference.
+The third stratum supports only a class-scoped prompt comparison.
+
+Compare the existing SAM3 `plant` and `flower` whole-frame pass with that
+same pass plus four overlapping half-scale tiles. Use one call per view and
+keep the existing model settings. Evaluate threshold choices 0.50, 0.60 and
+0.70. Select on development by requiring at least 95% retention of labeled
+plant-positive frames; among eligible choices minimize comparison-frame calls,
+then prefer the cheaper method. Report omitted-split retention by plant size,
+any proposal versus mapped-region recovery, and runtime. Withhold an intake
+deprioritization policy if the held-out positive retention falls below 95%.
+Scene categories and pixel checks bound overlap; physical-site and model
+pretraining overlap remain unknown. Use the existing stage benchmarks for
+geometry and weed taxonomy, which this source does not supply.
+
 Status: 25 November 2026. This tracks the work in
 [the immediate goal](../immediate-goal.md). The pipeline is not ready for the main
 NZ labeling effort. Existing labels reveal substantial localization,
