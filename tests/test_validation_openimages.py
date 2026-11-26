@@ -100,3 +100,58 @@ def test_box_scoring_uses_first_100_and_one_to_one_matching() -> None:
     assert by_stratum["small"].value == 0.5
     assert by_stratum["large"].value == 0
     assert by_stratum["medium"].value is None
+
+
+def test_predictions_resume_without_loading_model(tmp_path: Path) -> None:
+    from weedz.validation.openimages import _predict_all
+
+    item = Item("p", True, "small", ())
+    image = tmp_path / "p.jpg"
+    image.with_suffix(".sha256").write_text("image-digest\n")
+    instances = []
+
+    def load():
+        instances.append("loaded")
+        return lambda _: 0.25
+
+    inputs = ([item], {"p": image}, tmp_path / "predictions", load, float, float)
+    assert _predict_all(*inputs) == {"p": 0.25}
+    assert _predict_all(*inputs) == {"p": 0.25}
+    assert instances == ["loaded"]
+    image.with_suffix(".sha256").write_text("updated-digest\n")
+    assert _predict_all(*inputs) == {"p": 0.25}
+    assert instances == ["loaded", "loaded"]
+
+
+def test_image_cache_verifies_s3_checksum_and_cached_bytes(tmp_path: Path) -> None:
+    import hashlib
+
+    import httpx
+
+    from weedz.validation.openimages_data import IMAGE_URL, image_path
+
+    image_id = "0123456789abcdef"
+    image_bytes = b"image bytes"
+    requests = []
+
+    def server(request: httpx.Request) -> httpx.Response:
+        requests.append(str(request.url))
+        checksum = hashlib.md5(image_bytes, usedforsecurity=False).hexdigest()
+        return httpx.Response(
+            200, headers={"etag": f'"{checksum}"'}, stream=httpx.ByteStream(image_bytes)
+        )
+
+    with httpx.Client(transport=httpx.MockTransport(server)) as client:
+        cached = image_path(tmp_path, image_id, client)
+        assert cached.read_bytes() == image_bytes
+        image_path(tmp_path, image_id, client)
+        assert requests == [IMAGE_URL.format(id=image_id)]
+        cached.write_bytes(b"corrupted")
+        assert image_path(tmp_path, image_id, client).read_bytes() == image_bytes
+        assert len(requests) == 2
+
+    unverified = httpx.MockTransport(
+        lambda _: httpx.Response(200, stream=httpx.ByteStream(image_bytes))
+    )
+    with httpx.Client(transport=unverified) as client, pytest.raises(ValueError, match="checksum"):
+        image_path(tmp_path, "234567890abcdef1", client)

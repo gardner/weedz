@@ -12,6 +12,7 @@ from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
+import httpx
 from PIL import Image
 
 from weedz.discovery.vegetation import MODEL_FILES, VegetationScreener, vegetation_fraction
@@ -68,6 +69,7 @@ COMMON_LIMITS = [
 ]
 PRESENCE_LIMITS = [
     "The 11,851 Plant rows with decimal confidence are positive and negative combined. "
+    "There are 7,081 verified Plant-absent rows, with 7,000 eligible after conflicts. "
     "The publisher's official class hierarchy supports inference downwards from a verified Plant "
     "absence. A positive descendant or any vegetation box overrides eligibility as a negative. "
     "Missing labels and negative descendant labels alone do not establish Plant absence.",
@@ -76,6 +78,7 @@ PRESENCE_LIMITS = [
     "boxes remain in the cohort.",
     "Overall recall is for the sampled cohort with small photos oversampled. The current "
     "SegFormer ranker orders all scores and has no rejection threshold.",
+    "Only 202 held-out and 231 development positives qualify as small. All are included.",
 ]
 BOX_LIMITS = [
     "The proposal denominator includes individual non-depiction vegetation boxes in sampled "
@@ -233,9 +236,22 @@ def _sam_from_json(raw: dict[str, Any]) -> SamPrediction:
 
 def _images(items: Sequence[Item], cache: Path) -> dict[str, Path]:
     ids = [item.id for item in items]
-    with ThreadPoolExecutor(max_workers=16) as executor:
-        paths = executor.map(lambda item_id: image_path(cache, item_id), ids)
+    logger.info("Preparing %d Open Images JPEGs", len(ids))
+    limits = httpx.Limits(max_connections=16, max_keepalive_connections=16)
+    with (
+        httpx.Client(timeout=30, limits=limits, headers={"Accept-Encoding": "identity"}) as client,
+        ThreadPoolExecutor(max_workers=16) as executor,
+    ):
+        paths = executor.map(lambda item_id: image_path(cache, item_id, client), ids)
         return dict(zip(ids, paths, strict=True))
+
+
+def _cohort_digest(images: Mapping[str, Path]) -> str:
+    manifest = "\n".join(
+        f"{item_id} {path.with_suffix('.sha256').read_text().strip()}"
+        for item_id, path in images.items()
+    )
+    return hashlib.sha256(manifest.encode()).hexdigest()
 
 
 def _metadata(context: RunContext) -> tuple[dict[str, str], list[Item], dict[str, str]]:
@@ -281,6 +297,10 @@ def _configuration(
         "sam3_retention_threshold": SAM_CONFIG.concept_threshold,
         "sam3_source_byte_budget": IMAGE_BYTE_LIMIT,
         "smoke_limit": context.limit or 0,
+        "torch": version("torch"),
+        "numpy": version("numpy"),
+        "pillow": version("pillow"),
+        "sam3_code_revision": CODE_REVISION,
     }
 
 
@@ -328,10 +348,13 @@ def run_presence(context: RunContext) -> CheckResult:
     sam = _sam_all(cohort, images, context, cache)
     configuration = _configuration(scope, context)
     configuration.update(
+        cohort_images_sha256=_cohort_digest(images),
         development_images=len(development),
         held_out_images=len(held_out),
         sam3_presence_score="maximum raw concept score across the five prompts",
         segformer_presence_score="vegetation fraction of the ADE20K argmax grid",
+        segformer_ranker_policy="rank all scores; no rejection threshold",
+        transformers=version("transformers"),
         threshold_rule="highest inclusive threshold reaching 95% development recall",
     )
     metrics = []
@@ -363,9 +386,11 @@ def run_boxes(context: RunContext) -> CheckResult:
     ][: context.limit]
     boxed = [item for item in positives if any(not label.group for label in item.boxes)]
     cache = context.cache_dir / DATASET_DIR
-    predictions = _sam_all(boxed, _images(boxed, cache), context, cache)
+    images = _images(boxed, cache)
+    predictions = _sam_all(boxed, images, context, cache)
     configuration = _configuration(scope, context)
     configuration.update(
+        cohort_images_sha256=_cohort_digest(images),
         proposal_budget=PROPOSAL_BUDGET,
         proposal_prompts=", ".join(PROPOSAL_PROMPTS),
         proposal_order="plant then flower, descending score within each prompt",

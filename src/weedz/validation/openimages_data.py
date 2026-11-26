@@ -10,9 +10,10 @@ from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import TypedDict
-from urllib.error import HTTPError, URLError
+from typing import NotRequired, TypedDict
 from urllib.request import urlopen
+
+import httpx
 
 from weedz.region_evaluation.geometry import Box
 from weedz.validation.splits import Split, split_of
@@ -97,7 +98,7 @@ def verify_metadata(root: Path) -> dict[str, str]:
 
 class ClassNode(TypedDict):
     LabelName: str
-    Subcategory: list["ClassNode"]
+    Subcategory: NotRequired[list["ClassNode"]]
 
 
 def _subcategories(tree: ClassNode) -> Iterator[ClassNode]:
@@ -221,15 +222,29 @@ def select_items(
     return selected[: (limit + 1) // 2] + negatives[: limit // 2]
 
 
-def _fetch_image(item_id: str) -> tuple[bytes, str]:
+def _read_image(response: httpx.Response) -> bytes:
+    content = bytearray()
+    for chunk in response.iter_raw():
+        content.extend(chunk)
+        if len(content) > IMAGE_BYTE_LIMIT:
+            raise ValueError(f"Open Images image byte budget exceeded for {response.url}")
+    return bytes(content)
+
+
+def _fetch_image(item_id: str, client: httpx.Client) -> tuple[bytes, str]:
     url = IMAGE_URL.format(id=item_id)
     for attempt in range(3):
         try:
-            with urlopen(url, timeout=30) as response:
+            with client.stream("GET", url) as response:
+                response.raise_for_status()
                 etag = response.headers.get("ETag", "").strip('"')
-                content = response.read(IMAGE_BYTE_LIMIT + 1)
-        except URLError as error:
-            if attempt == 2 or isinstance(error, HTTPError) and error.code < 500:
+                content = _read_image(response)
+        except (httpx.TransportError, httpx.HTTPStatusError) as error:
+            if attempt == 2 or (
+                isinstance(error, httpx.HTTPStatusError)
+                and error.response.status_code < 500
+                and error.response.status_code != 429
+            ):
                 raise
             continue
         digest = hashlib.md5(content, usedforsecurity=False).hexdigest()
@@ -239,14 +254,14 @@ def _fetch_image(item_id: str) -> tuple[bytes, str]:
     raise RuntimeError(f"Open Images download retries exhausted for {item_id}")
 
 
-def image_path(cache: Path, item_id: str) -> Path:
+def image_path(cache: Path, item_id: str, client: httpx.Client) -> Path:
     if not re.fullmatch(r"[0-9a-f]{16}", item_id):
         raise ValueError(f"Invalid Open Images image ID {item_id!r}")
     path = cache / "images" / f"{item_id}.jpg"
     receipt = path.with_suffix(".sha256")
     if path.is_file() and receipt.is_file() and sha256(path) == receipt.read_text().strip():
         return path
-    content, digest = _fetch_image(item_id)
+    content, digest = _fetch_image(item_id, client)
     write_atomic(path, content)
     write_atomic(receipt, (digest + "\n").encode())
     return path
