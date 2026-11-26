@@ -61,10 +61,10 @@ the table below from the scorecard.
 
 | Stage | Check | Dataset | Status |
 | --- | --- | --- | --- |
-| Plant presence | `openimages-plant-presence` | Open Images V7 validation | Measured, 95.5% recall and 38.7% false alarms for SegFormer, 94.7% and 23.7% for SAM3 |
-| Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Planned |
-| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Planned |
-| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured, 39.2% box recall at IoU ≥ 0.5 in the first 100 proposals |
+| Plant presence | `openimages-plant-presence` | Open Images V7 validation | Measured · 95.5% recall and 38.7% false alarms for SegFormer, 94.7% and 23.7% for SAM3 |
+| Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Measured · at the pipeline's cutoff SAM3 flags 36.9% of photos with vegetation |
+| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · half the vegetation covered in 12.3% of photos |
+| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · 39.2% box recall at IoU ≥ 0.5 in the first 100 proposals |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Planned |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Planned |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
@@ -72,13 +72,32 @@ the table below from the scorecard.
 
 ### What this showed
 
+#### Open Images V7
+
 Both presence screeners missed the overall recall and false-alarm gates. Keep
 their scores for review ranking. On small-vegetation photos, SAM3 recovered
 199/202 and SegFormer recovered 177/202. SAM3's default proposal prompts matched
 500/1,468 small boxes (34.1%). Test explicit tree prompts and focused views for
 proposal recall before relying on boxes to surface small plants.
 
-### Running Open Images
+#### COCO-Stuff val2017
+
+**At the pipeline's current cutoff, SAM3 flags only 36.9% of photos with
+vegetation** (406 of 1,100), and half of those where plants cover 0.5% of the
+photo or less. Lowering its score threshold on development recovers 93.3%, but
+then flags 24.3% of photos with no vegetation. SegFormer can't reach 95%
+development recall without flagging every photo (its vegetation share is 0 on
+too many small-plant photos). Counting any predicted vegetation pixel
+recovers 95.0%, but only 25 of 44 tiny positives, with 26.1% false alarms.
+Keep the presence scores for review ranking, not for dropping photos.
+[Presence results](../benchmarks/validation/cocostuff-vegetation-presence.json)
+
+The default SAM3 prompts cover at least half the labelled vegetation in only
+12.3% of photos, and recover 2.9% of tiny connected regions at IoU ≥ 0.5.
+Compare `tree`, `grass` and `shrub` prompts before relying on these proposals
+for small or diffuse vegetation. [Proposal results](../benchmarks/validation/cocostuff-vegetation-proposals.json)
+
+### Rerun the Open Images checks
 
 Place or link your existing SAM3 checkpoint at `openimages-v7/models/sam3.pt`
 under the data root. For the presence check, place or link the pinned SegFormer
@@ -108,3 +127,39 @@ done
 For a smoke run, add `--limit 50` and use a separate output directory. Presence
 uses up to 50 images per split. Use the same `--cache-dir` on subsequent runs to
 reuse verified JPEGs and predictions. The default cache is `$DATA_ROOT/.cache`.
+
+### Rerun the COCO-Stuff checks
+
+Use the [isolated SAM3 CUDA runtime](sam3-image-comparison.md#reproduce) with
+`httpx`, `scipy==1.16.3` and `transformers==4.57.6` installed alongside
+its pinned SAM3 dependencies. Set `SAM3_RUNTIME` to that project's directory.
+The default project environment uses CPU PyTorch.
+
+Under the data root, link the existing SegFormer snapshot directory at
+`cocostuff/models/de01bae28967510f9ddd496c60a969357195400c` and the existing
+SAM3 checkpoint at `cocostuff/models/3c879f39826c281e95690f02c7821c4de09afae7/sam3.pt`.
+The checks verify the public archives and resume downloads and inference from
+the cache. Run presence first to populate the SAM3 cache for proposals.
+
+```sh
+export CUDA_VISIBLE_DEVICES=0 PYTHONPATH="$PWD/src"
+export UV_PROJECT_ENVIRONMENT="$SAM3_RUNTIME/.venv"
+data_root="$HOME/src/weedz-validation-data"
+for check in cocostuff-vegetation-presence cocostuff-vegetation-proposals; do
+  uv run --no-sync main.py validate run "$check" --data-root "$data_root" \
+    --cache-dir "$data_root/cocostuff/.cache" --device cuda:0 \
+    --output benchmarks/validation
+done
+```
+
+Presence selects the highest score cutoff that retains at least 95% of
+development positives. SegFormer scores the share of predicted vegetation
+pixels. SAM3 scores the strongest raw concept match and also reports recall
+using the pipeline's retained proposals. The proposal check uses the default
+`plant` and `flower` prompts and 0.5 retention cutoff.
+COCO-Stuff uses PNG index 255 for void and PNG index 0 for person. Annotations
+are CC BY 4.0 and images are subject to Flickr terms. [COCO-Stuff dataset](https://github.com/nightrome/cocostuff)
+
+On the shared CUDA device, the initial full presence pass took 21m 19s.
+The proposal pass took 3m 32s with the presence cache available. The
+presence receipt records a 45s full replay from cached predictions.
