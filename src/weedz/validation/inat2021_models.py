@@ -2,13 +2,11 @@
 
 import hashlib
 import io
-import json
 import logging
 import sqlite3
 from collections.abc import Callable, Iterable
 from contextlib import closing
 from dataclasses import dataclass
-from importlib.metadata import version
 from itertools import batched
 from pathlib import Path
 
@@ -29,6 +27,7 @@ from weedz.discovery.inference import (
     summarize_scores,
 )
 from weedz.species_aggregation import RankedTaxon, aggregate_taxa
+from weedz.validation.fingerprint import pipeline_fingerprint
 from weedz.validation.inat2021_data import TARGETS, Item
 from weedz.validation.registry import RunContext
 
@@ -38,6 +37,20 @@ LOCAL_MARGIN = 0.02411
 GRID = 4
 TOP_K = 5
 BATCH_SIZE = 16
+# The pipeline code each stage's cached evidence depends on.
+PIPELINE_SOURCES = {
+    "plantclef": (
+        Path("classification/plantclef.py"),
+        Path("classification/precision.py"),
+        Path("discovery/inference.py"),
+    ),
+    "bioclip": (
+        Path("classification/bioclip.py"),
+        Path("discovery/encoder_backend.py"),
+        Path("discovery/inference.py"),
+    ),
+    "native": (Path("classification/aotearoa.py"), Path("classification/plantclef.py")),
+}
 PLANT_LABELS = {
     "Clematis vitalba": "Clematis vitalba L.",
     "Ulex europaeus": "Ulex europaeus L.",
@@ -260,16 +273,16 @@ def _identity(stage: str, device: str) -> str:
         "native": [aotearoa.INPUT_POLICY],
     }
     libraries = ("torch", "torchvision", "timm", "pillow", "numpy", "open_clip_torch")
-    payload = [
+    return pipeline_fingerprint(
+        PIPELINE_SOURCES[stage],
+        libraries,
         1,
         stage,
         device,
         BATCH_SIZE,
         [MODEL_INPUTS[p] for p in paths[stage]],
         specifications[stage],
-        [version(name) for name in libraries],
-    ]
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+    )
 
 
 def _cached_batches[Evidence: BaseModel](

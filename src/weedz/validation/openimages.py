@@ -19,6 +19,7 @@ from weedz.discovery.vegetation import MODEL_FILES, VegetationScreener, vegetati
 from weedz.region_evaluation.boxes import Box, box_iou
 from weedz.region_evaluation.matching import match_regions
 from weedz.segmentation.sam3_image import CHECKPOINT_SHA256, CODE_REVISION, Sam3Config, Sam3Image
+from weedz.validation.fingerprint import SAM3_SOURCES, SEGFORMER_SOURCES, pipeline_fingerprint
 from weedz.validation.metrics import Outcome, Rate, binary_metrics, rate
 from weedz.validation.openimages_data import (
     BOXES,
@@ -62,13 +63,8 @@ SAM_CHECKPOINT = MODEL_DIR / "sam3.pt"
 SEG_SNAPSHOT = MODEL_DIR / "segformer"
 type ModelName = Literal["sam3", "segformer"]
 PIPELINE_SOURCES: dict[ModelName, tuple[Path, ...]] = {
-    "sam3": (
-        Path("segmentation/sam3_image.py"),
-        Path("segmentation/regions.py"),
-        Path("segmentation/ingress.py"),
-        Path("segmentation/artifacts.py"),
-    ),
-    "segformer": (Path("discovery/vegetation.py"),),
+    "sam3": SAM3_SOURCES,
+    "segformer": SEGFORMER_SOURCES,
 }
 COMMON_LIMITS = [
     "Plant and its boxable subclasses define scope. Verification and exhaustiveness apply to "
@@ -200,17 +196,15 @@ def _load_seg(context: RunContext) -> Callable[[Path], float]:
 
 
 def _profile(context: RunContext, method: ModelName) -> str:
-    versions = {package: version(package) for package in ("torch", "numpy", "pillow")}
-    source_root = Path(__file__).parents[1]
-    sources = tuple(sha256(source_root / path) for path in PIPELINE_SOURCES[method])
     settings = (
         (CHECKPOINT_SHA256, CODE_REVISION, asdict(SAM_CONFIG), PROPOSAL_PROMPTS, PROPOSAL_BUDGET)
         if method == "sam3"
-        else (MODEL_FILES, version("transformers"))
+        else (MODEL_FILES,)
     )
-    fingerprint = hashlib.sha256(
-        json.dumps((1, context.device, versions, sources, settings), sort_keys=True).encode()
-    ).hexdigest()[:20]
+    packages = ("torch", "numpy", "pillow", *(() if method == "sam3" else ("transformers",)))
+    fingerprint = pipeline_fingerprint(
+        PIPELINE_SOURCES[method], packages, 1, context.device, settings
+    )
     return f"{method}-{fingerprint}"
 
 

@@ -17,6 +17,7 @@ from weedz.discovery.vegetation import (
 )
 from weedz.segmentation.sam3_image import CHECKPOINT_SHA256, HF_REVISION, Sam3Config, Sam3Image
 from weedz.validation.cocostuff_data import IMAGE_ARCHIVE, atomic_file
+from weedz.validation.fingerprint import SAM3_SOURCES, SEGFORMER_SOURCES, pipeline_fingerprint
 from weedz.validation.registry import RunContext
 
 SEGFORMER = Path("cocostuff/models") / MODEL_REVISION
@@ -41,8 +42,16 @@ def model_inputs(*, presence: bool) -> dict[str, str]:
 
 def segformer_predictor(context: RunContext) -> FractionPredictor:
     snapshot = context.data_root / SEGFORMER
-    root = context.cache_dir / "cocostuff" / "segformer-fp32-v1"
-    output = root / MODEL_REVISION / IMAGE_ARCHIVE.sha256 / context.device.replace(":", "-")
+    fingerprint = pipeline_fingerprint(
+        SEGFORMER_SOURCES,
+        ("torch", "transformers", "pillow", "numpy"),
+        "segformer-fp32-v1",
+        MODEL_REVISION,
+        MODEL_FILES,
+        IMAGE_ARCHIVE.sha256,
+        context.device,
+    )
+    output = context.cache_dir / "cocostuff" / f"segformer-{fingerprint}"
 
     @cache
     def model() -> VegetationScreener:
@@ -65,7 +74,9 @@ def sam_predictor(context: RunContext) -> SamPredictor:
     if context.device != "cuda:0":
         raise ValueError("The Weedz SAM3 runtime requires --device cuda:0")
     checkpoint = context.data_root / SAM3
-    root = context.cache_dir / "cocostuff" / "sam3"
+    libraries = ("torch", "numpy", "pillow")
+    fingerprint = pipeline_fingerprint(SAM3_SOURCES, libraries, CHECKPOINT_SHA256)
+    root = context.cache_dir / "cocostuff" / f"sam3-{fingerprint}"
 
     @cache
     def model() -> Sam3Image:
