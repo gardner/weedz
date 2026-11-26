@@ -14,8 +14,7 @@ uv run main.py validate scorecard benchmarks/validation/*.json \
   --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
 ```
 
-Add `--limit 50` for a quick smoke run. Results from limited runs are not saved
-to `benchmarks/validation/`.
+Add `--limit 50` and change `--output` to a separate directory for a smoke run.
 
 ## Reading a result
 
@@ -64,8 +63,40 @@ the table below from the scorecard.
 | --- | --- | --- | --- |
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Planned |
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Planned |
-| Region proposals | `cocostuff-vegetation-proposals`, `openimages-plant-boxes` | COCO-Stuff val2017, Open Images V7 validation | Planned |
+| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Planned |
+| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Planned |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Planned |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Planned |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
 | Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
+
+### Running Open Images
+
+Place or link your existing SAM3 checkpoint at `openimages-v7/models/sam3.pt`
+under the data root. For the presence check, place or link the pinned SegFormer
+snapshot at `openimages-v7/models/segformer/`. The check verifies the checkpoint
+and snapshot files before use. It downloads the required Open Images metadata and
+sampled CVDF JPEGs as needed.
+
+Use the [isolated CUDA SAM3 runtime](sam3-image-comparison.md#reproduce).
+Set `SAM3_SITE_PACKAGES` to its Python 3.12 site-packages directory. The
+command below uses the CUDA packages from that runtime and the repo's other
+dependencies from the normal uv environment. The local Transformers overlay
+provides the versions used for SegFormer.
+
+```sh
+uv sync --locked
+uv pip install --target .venv/openimages-overlay \
+  'transformers==4.57.6' 'huggingface-hub==0.36.2' 'numpy==1.26.4' \
+  'scipy==1.16.3' 'scikit-learn==1.7.2'
+export PYTHONPATH="$PWD/.venv/openimages-overlay:$SAM3_SITE_PACKAGES"
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0
+for check in openimages-plant-presence openimages-plant-boxes; do
+  uv run main.py validate run "$check" --data-root "$DATA_ROOT" --device cuda:0 \
+    --output benchmarks/validation
+done
+```
+
+For a smoke run, add `--limit 50` and use a separate output directory. Presence
+uses up to 50 images per split. Use the same `--cache-dir` on subsequent runs to
+reuse verified JPEGs and predictions. The default cache is `$DATA_ROOT/.cache`.

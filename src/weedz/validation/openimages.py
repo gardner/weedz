@@ -78,7 +78,7 @@ PRESENCE_LIMITS = [
     "boxes remain in the cohort.",
     "Overall recall is for the sampled cohort with small photos oversampled. The current "
     "SegFormer ranker orders all scores and has no rejection threshold.",
-    "Only 202 held-out and 231 development positives qualify as small. All are included.",
+    "Only 202 held-out and 231 development positives qualify as small. Full runs include all.",
 ]
 BOX_LIMITS = [
     "The proposal denominator includes individual non-depiction vegetation boxes in sampled "
