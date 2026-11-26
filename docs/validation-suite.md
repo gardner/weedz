@@ -63,18 +63,33 @@ the table below from the scorecard.
 | Stage | Check | Dataset | Status |
 | --- | --- | --- | --- |
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Planned |
-| Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Planned |
-| Region proposals | `cocostuff-vegetation-proposals`, `openimages-plant-boxes` | COCO-Stuff val2017, Open Images V7 validation | Planned |
+| Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Measured · SAM3 recalled 93.2% of tiny and 90.9% of small positives |
+| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · 7.3% of labelled vegetation pixels covered |
+| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Planned |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Planned |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Planned |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
 | Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
 
+### What this showed
+
+Keep the presence scores for review ranking. At the development-tuned
+cutoffs, SegFormer flagged every assessable photo and SAM3 flagged 24.3% of
+labelled negatives while missing 3 of 44 tiny and 9 of 99 small positives.
+Requiring at least one SegFormer vegetation pixel recovered 25 of 44 tiny positives.
+[Presence results](../benchmarks/validation/cocostuff-vegetation-presence.json)
+
+The default SAM3 prompts covered 7.3% of labelled vegetation pixels and
+recovered 2.9% of tiny connected regions at IoU ≥ 0.5. Compare `tree`, `grass`
+and `shrub` prompts before relying on these proposals for small or diffuse
+vegetation. [Proposal results](../benchmarks/validation/cocostuff-vegetation-proposals.json)
+
 ### Rerun the COCO-Stuff checks
 
 Use the [isolated SAM3 CUDA runtime](sam3-image-comparison.md#reproduce) with
 `httpx`, `scipy==1.16.3` and `transformers==4.57.6` installed alongside
-its pinned SAM3 dependencies. The default project environment uses CPU PyTorch.
+its pinned SAM3 dependencies. Set `SAM3_RUNTIME` to that project's directory.
+The default project environment uses CPU PyTorch.
 
 Under the data root, link the existing SegFormer snapshot directory at
 `cocostuff/models/de01bae28967510f9ddd496c60a969357195400c` and the existing
@@ -100,3 +115,7 @@ using the pipeline's retained proposals. The proposal check uses the default
 `plant` and `flower` prompts and 0.5 retention cutoff.
 COCO-Stuff uses PNG index 255 for void and PNG index 0 for person. Annotations
 are CC BY 4.0 and images are subject to Flickr terms. [COCO-Stuff dataset](https://github.com/nightrome/cocostuff)
+
+On the shared CUDA device, the initial full presence pass took 21m 19s.
+The proposal pass took 3m 32s with the presence cache available. The
+presence receipt records a 45s full replay from cached predictions.
