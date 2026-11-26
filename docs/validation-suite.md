@@ -65,10 +65,18 @@ the table below from the scorecard.
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Planned |
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Planned |
 | Region proposals | `cocostuff-vegetation-proposals`, `openimages-plant-boxes` | COCO-Stuff val2017, Open Images V7 validation | Planned |
-| Species identification | `inat2021-target-species` | iNat2021 validation | Planned |
+| Species identification | `inat2021-target-species` | iNat2021 validation | Measured, local and pilot cue recall 10/16 (62.5%, 95% CI 38.6–81.5%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Planned |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
 | Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
+
+### What this showed
+
+BioCLIP 2 ranked the correct target first on 14 of 16 photos. PlantCLEF ranked
+it first on 9 of 16. Both cue rules recovered 10 of 16, but the local rule
+recovered 0 of 3 pampas photos and the pilot recovered 3 of 3. Keep the pilot
+as the comparison and review more pampas photos before changing the cue rule.
+[Species results](../benchmarks/validation/inat2021-target-species.json)
 
 ### Running the iNat2021 checks
 
