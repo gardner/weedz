@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from weedz.validation import inat2021_models
 from weedz.validation.inat2021 import (
     FALSE_ALARMS,
     SPECIES_ID,
@@ -16,6 +17,8 @@ from weedz.validation.inat2021_models import (
     LOCAL_MARGIN,
     PILOT_FLOOR,
     ClipEvidence,
+    ImageSource,
+    NativeEvidence,
     PlantEvidence,
     Prediction,
     decisions,
@@ -156,3 +159,42 @@ def test_runner_selects_held_out_before_predicting(labels: Path, check: str, cou
     assert all(item.taxon not in {GORSE, VITALBA, PAMPAS} for item in received) == (
         check == FALSE_ALARMS
     )
+
+
+def test_prediction_cache_reuses_completed_stages_by_image_hash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    root = tmp_path / "inat2021"
+    root.mkdir()
+    (root / "a.jpg").write_bytes(b"example image")
+    (root / "b.jpg").write_bytes(b"example image")
+    calls: list[str] = []
+
+    def loader[Evidence](kind: str, evidence: Evidence):
+        def load(_root: Path, _device: str):
+            calls.append(kind)
+
+            def predict(sources: list[ImageSource]) -> list[Evidence]:
+                return [evidence for _ in sources]
+
+            return predict
+
+        return load
+
+    plant = PlantEvidence(
+        top=(GORSE,), whole_target=GORSE, tile_target=GORSE, tile_index=3, tile_score=PILOT_FLOOR
+    )
+    clip = ClipEvidence(top=(GORSE,), tile_target=GORSE, tile_margin=LOCAL_MARGIN)
+    monkeypatch.setattr(inat2021_models, "_load_plant", loader("plant", plant))
+    monkeypatch.setattr(inat2021_models, "_load_clip", loader("clip", clip))
+    monkeypatch.setattr(
+        inat2021_models, "_load_native", loader("native", NativeEvidence(top=GORSE))
+    )
+    context = RunContext(tmp_path, tmp_path)
+    a = Item("1", "a.jpg", GORSE, "Ulex", "Fabaceae", "held-out")
+    b = Item("2", "b.jpg", GORSE, "Ulex", "Fabaceae", "held-out")
+    assert inat2021_models.predict_all(context, tmp_path, [a])[0].local_cue == GORSE
+    assert calls == ["plant", "clip", "native"]
+    monkeypatch.setattr(inat2021_models, "LOCAL_MARGIN", LOCAL_MARGIN + 0.01)
+    assert inat2021_models.predict_all(context, tmp_path, [b])[0].local_cue is None
+    assert calls == ["plant", "clip", "native"]
