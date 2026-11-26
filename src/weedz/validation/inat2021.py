@@ -204,7 +204,8 @@ def run_check(
     inputs: dict[str, str] | None = None,
     extra_limits: tuple[str, ...] = (),
 ) -> CheckResult:
-    selected = [item for item in items if item.split == "held-out" and _eligible(check, item)]
+    # Every rule here is frozen and nothing is tuned on iNat2021, so both halves are unseen.
+    selected = [item for item in items if _eligible(check, item)]
     selected = selected[: context.limit]
     rows = list(zip(selected, predictor(selected), strict=True))
     metrics = score_species(rows) if check == SPECIES_ID else score_false_alarms(rows)
@@ -216,7 +217,7 @@ def run_check(
         check=check,
         stage=STAGES[check],
         dataset=DATASET,
-        split="held-out",
+        split="validation",
         metrics=metrics,
         inputs=inputs or {},
         configuration=config,

@@ -39,7 +39,9 @@ One module per dataset, in `src/weedz/validation/<dataset>.py`:
    it, assign items to `development` or `held-out` by a stable hash of the
    source ID (`weedz.validation.splits.split_of`), so the same item always
    lands in the same place. Set thresholds and pass marks on `development`
-   only, and report `held-out`.
+   only, and report `held-out`. A check whose rules are all frozen, with
+   nothing tuned on the dataset, scores the whole split and reports
+   `validation`.
 3. **Run the real pipeline code** (`VegetationScreener`, `Sam3Image`,
    `PlantClassifier`, `BioClipClassifier`, `aggregate_taxa`). Load models
    behind a small predictor function, so tests can pass a fake and never need
@@ -65,23 +67,28 @@ the table below from the scorecard.
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Planned |
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Planned |
 | Region proposals | `cocostuff-vegetation-proposals`, `openimages-plant-boxes` | COCO-Stuff val2017, Open Images V7 validation | Planned |
-| Species identification | `inat2021-target-species` | iNat2021 validation | Measured, local and pilot cue recall 10/16 (62.5%, 95% CI 38.6–81.5%) |
-| Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 9/21,200 (0.042%) and local 49/21,200 (0.231%) wrong-subject cues |
+| Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
+| Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
 | Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
 
 ### What this showed
 
-BioCLIP 2 ranked the correct target first on 14 of 16 photos. PlantCLEF ranked
-it first on 9 of 16. Both cue rules recovered 10 of 16, but the local rule
-recovered 0 of 3 pampas photos and the pilot recovered 3 of 3. Keep the pilot
-as the comparison and review more pampas photos before changing the cue rule.
+Nothing is tuned on iNat2021, so both checks score every eligible photo in
+the validation set: 10 per species, 30 target photos and 40 lookalikes.
+BioCLIP 2 ranked the correct target first on 28 of 30 photos. PlantCLEF ranked
+it first on 16 of 30, and in its top five on 26. The pilot cue rule recovered
+21 of 30 and the local rule 20 of 30. On pampas the pilot recovered 8 of 10
+and the local rule 5 of 10. Keep the pilot as the comparison and review more
+pampas photos before changing the cue rule. Only PlantCLEF top-1 named a target
+on a lookalike photo: 3 of 10 toetoe (*Austroderia richardii*) photos.
 [Species results](../benchmarks/validation/inat2021-target-species.json)
 
-Both cue rules cleared the 1% wrong-subject ceiling across 21,200 photos.
-The local rule raised 17 cues on 56 same-genus photos, compared with 8
-for the pilot. Unfiltered BioCLIP ranked a watchlist prompt first on 38.8%
-of non-target subjects. Keep the agreement gate and prioritize same-genus
+Both cue rules cleared the 1% wrong-subject ceiling across 42,680 photos.
+The local rule raised 37 cues on 110 same-genus photos, compared with 14
+for the pilot, and 65 on 38,140 unrelated plants, compared with none.
+Unfiltered BioCLIP ranked a watchlist prompt first on 38.7% of non-target
+subjects. Keep the agreement gate and prioritize same-genus
 comparisons when testing changes. The labels cover photographed subjects.
 [False-alarm results](../benchmarks/validation/inat2021-target-false-alarms.json)
 
@@ -90,7 +97,7 @@ comparisons when testing changes. The labels cover photographed subjects.
 The checks verify the publisher's archives before extraction. Use the dataset
 only for non-commercial research and education, and keep the images private.
 The first run needs about 8.4 GB for the image archive plus space for the
-extracted held-out images. Keep the same `--cache-dir` to reuse the download
+extracted validation images. Keep the same `--cache-dir` to reuse the download
 and the per-image model evidence across both checks and subsequent runs.
 [Publisher terms and archive checksums](https://github.com/visipedia/inat_comp/tree/master/2021)
 
