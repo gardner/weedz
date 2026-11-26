@@ -8,6 +8,10 @@
 #
 # Fails open: if gh or jq is missing, or GitHub can't be reached, it warns and
 # lets the push through. `git push --no-verify` skips it for urgent fixes.
+#
+# One branch per push: pre-commit passes only the first pushed ref to the hook
+# (PRE_COMMIT_REMOTE_BRANCH), so `git push --all` or several refspecs at once
+# checks only the first branch. Push branches one at a time.
 set -uo pipefail
 
 gh_cli="${GH:-gh}"
