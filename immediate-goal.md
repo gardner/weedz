@@ -146,6 +146,11 @@ labels remain limited to the mapped classes, and most of this comparison pool
 is unlike NZ field photos. [Publisher benchmark](https://github.com/CSAILVision/sceneparsing#benchmark-details)
 · [Label inventory](benchmarks/ade20k-vegetation-inventory-20261126.json)
 
+The first live test called 14/24 labeled plant-positive photos after tiling.
+On a fresh 36-photo fixture, expanding the prompt vocabulary raised mapped
+plant recovery from 11/24 to 18/24, still below the 95% target. Keep the rule
+out of automatic review exclusion. [Stage validation](docs/pipeline-validation.md)
+
 ## Readiness for the main human-labeling effort
 
 The aim is measurable readiness rather than an indefinitely perfect pipeline:
@@ -216,6 +221,7 @@ times exist.
 
 ## Supporting documents
 
+- [Stage-by-stage validation evidence and remaining gaps](docs/pipeline-validation.md)
 - [Reviewer handoff and export instructions](docs/nz-pilot-handoff.md)
 - [Benchmark program, verified inventory and current results](docs/benchmark-program.md)
 - [Overall goal](goal.md)

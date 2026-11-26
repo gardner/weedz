@@ -44,6 +44,14 @@ runtime. Treat the larger vocabulary as a candidate. The original 95%
 retention target applies, and the new rule must add at most one comparison
 prompt on this bounded fixture before further transfer testing.
 
+The follow-up used 36 photos from scene categories excluded from the first
+fixture. The original prompts found mapped plants in 11/24 positive photos.
+The added prompts raised that to 18/24, including an improvement from 5/12
+to 8/12 on low-coverage vegetation. Neither prompt set called any of the
+12 class-scoped comparison photos. The shared five-prompt pass averaged
+0.26 seconds per photo. The gain did not reach the 95% intake requirement.
+[Vocabulary follow-up results](../benchmarks/ade20k-sam3-vocabulary-20261126.json)
+
 Status: 25 November 2026. This tracks the work in
 [the immediate goal](../immediate-goal.md). The pipeline is not ready for the main
 NZ labeling effort. Existing labels reveal substantial localization,
