@@ -37,7 +37,7 @@ One module per dataset, in `src/weedz/validation/<dataset>.py`:
    meaning; don't invent negatives the labels don't support.
 2. **Freeze the split.** Use the publisher's split where there is one. Within
    it, assign items to `development` or `held-out` by a stable hash of the
-   source ID (`weedz.validation.splits`, once added), so the same item always
+   source ID (`weedz.validation.splits.split_of`), so the same item always
    lands in the same place. Set thresholds and pass marks on `development`
    only, and report `held-out`.
 3. **Run the real pipeline code** (`VegetationScreener`, `Sam3Image`,
