@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
-from weedz.discovery.encoder_backend import PROFILE
+from weedz.discovery.encoder_backend import PROFILE, cosine_scores
 from weedz.discovery.inference import (
     COMPARISONS,
     LABELS,
@@ -21,6 +21,7 @@ from weedz.discovery.inference import (
     featureless,
     prompt,
     region_boxes,
+    square_view,
     summarize_scores,
 )
 from weedz.discovery.records import SPECIES
@@ -219,6 +220,18 @@ class BioClipClassifier:
     @classmethod
     def load(cls, cache_dir: Path, model: str = "bioclip-2") -> "BioClipClassifier":
         return cls(Screener.load(cache_dir, model=model, backend=PROFILE))
+
+    def view_similarities(self, images: list[Image.Image]) -> np.ndarray:
+        """Fixed-prompt similarities for one letterboxed view per supplied image."""
+        if not 1 <= len(images) <= 16:
+            raise ValueError("BioCLIP view scoring requires one to 16 images")
+        screener = self.screener
+        with screener.torch.inference_mode():
+            batch = screener.torch.stack(
+                [screener.transform(square_view(image, (0, 0, *image.size))) for image in images]
+            )
+            features = screener.model.encode_image(batch, normalize=True)
+        return cosine_scores(screener, features, screener.text)
 
     def profile_metadata(self, kind: str, proposer: dict | None = None) -> dict:
         metadata = {**self.metadata, "scope": kind}

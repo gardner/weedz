@@ -60,6 +60,7 @@ def _scorecard(args: argparse.Namespace) -> None:
 def main(argv: list[str]) -> None:
     import weedz.validation.checks  # noqa: F401  (registers the built-in checks)
 
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = parser().parse_args(argv)
     if args.action == "list":
         for check in sorted(REGISTRY.values(), key=lambda check: (check.stage, check.name)):
