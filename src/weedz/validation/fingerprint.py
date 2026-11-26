@@ -10,6 +10,8 @@ from collections.abc import Iterable
 from importlib.metadata import version
 from pathlib import Path
 
+from PIL import Image
+
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 
 SAM3_SOURCES = (
@@ -19,6 +21,18 @@ SAM3_SOURCES = (
     Path("segmentation/artifacts.py"),
 )
 SEGFORMER_SOURCES = (Path("discovery/vegetation.py"),)
+EXIF_ORIENTATION = 0x0112
+
+
+def require_stored_orientation(path: Path) -> None:
+    """Refuse a photo whose EXIF rotation would put SAM3's output in a different frame.
+
+    SAM3 reads photos EXIF-upright, while the public labels use the stored pixels.
+    """
+    with Image.open(path) as image:
+        orientation = image.getexif().get(EXIF_ORIENTATION, 1)
+    if orientation != 1:
+        raise ValueError(f"{path.name} has EXIF orientation {orientation}; labels would not align")
 
 
 def pipeline_fingerprint(

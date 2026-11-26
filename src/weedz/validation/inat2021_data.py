@@ -2,6 +2,7 @@
 
 import fcntl
 import hashlib
+import json
 import logging
 import shutil
 import subprocess
@@ -16,6 +17,7 @@ from pydantic import BaseModel
 from weedz.discovery.inference import file_sha256
 from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.records import SPECIES
+from weedz.validation.cocostuff_data import atomic_file
 from weedz.validation.splits import Split, split_of
 
 SOURCE = "https://ml-inat-competition-datasets.s3.amazonaws.com/2021"
@@ -171,23 +173,51 @@ def labels_file(data_root: Path, cache: Path) -> Path:
     return path
 
 
-def prepare_images(data_root: Path, cache: Path, items: list[Item]) -> None:
-    """Extract only requested images, publishing each file atomically."""
+MANIFEST = "extracted-sha256.json"
+
+
+def _manifest(root: Path) -> dict[str, str]:
+    path = root / MANIFEST
+    return json.loads(path.read_text()) if path.is_file() else {}
+
+
+def _verified(root: Path, manifest: dict[str, str], name: str) -> bool:
+    path = root / name
+    return name in manifest and path.is_file() and file_sha256(path) == manifest[name]
+
+
+def _extract(root: Path, cache: Path, missing: set[str], manifest: dict[str, str]) -> None:
+    archive = _archive(cache, "val.tar.gz", IMAGES_ARCHIVE_MD5)
+    logger.info("Extracting %d iNat2021 images", len(missing))
+    with tarfile.open(archive, "r|gz") as source:
+        for member in source:
+            name = member.name.removeprefix("./")
+            if name in missing:
+                _extract_member(source, member, root / name)
+                manifest[name] = file_sha256(root / name)
+                missing.remove(name)
+            if not missing:
+                break
+    with atomic_file(root / MANIFEST) as stream:
+        stream.write(json.dumps(manifest, indent=0, sort_keys=True).encode())
+    if missing:
+        raise ValueError(f"Verified archive is missing {len(missing)} requested images")
+
+
+def prepare_images(data_root: Path, cache: Path, items: list[Item]) -> str:
+    """Extract requested images from the verified archive and return a digest of their bytes.
+
+    Each extracted file's SHA-256 is recorded, so an image that was edited, truncated or
+    placed by hand is re-extracted rather than scored.
+    """
     root = data_root / "inat2021"
     cache.mkdir(parents=True, exist_ok=True)
     with (cache / "extract.lock").open("ab") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        missing = {item.file_name for item in items if not (root / item.file_name).is_file()}
-        if not missing:
-            return
-        archive = _archive(cache, "val.tar.gz", IMAGES_ARCHIVE_MD5)
-        logger.info("Extracting %d iNat2021 images", len(missing))
-        with tarfile.open(archive, "r|gz") as source:
-            for member in source:
-                name = member.name.removeprefix("./")
-                if name in missing:
-                    _extract_member(source, member, root / name)
-                    missing.remove(name)
-                if not missing:
-                    return
-        raise ValueError(f"Verified archive is missing {len(missing)} requested images")
+        manifest = _manifest(root)
+        names = sorted({item.file_name for item in items})
+        missing = {name for name in names if not _verified(root, manifest, name)}
+        if missing:
+            _extract(root, cache, missing, manifest)
+    requested = json.dumps({name: manifest[name] for name in names}, sort_keys=True)
+    return hashlib.sha256(requested.encode()).hexdigest()

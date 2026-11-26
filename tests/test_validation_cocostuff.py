@@ -210,3 +210,30 @@ def test_download_resumes_at_existing_byte_offset(
 
     monkeypatch.setattr(httpx, "stream", stream)
     assert verified_download(pin, archive).read_bytes() == b"abcdef"
+
+
+def test_sam_proposals_refuse_photos_with_an_exif_rotation(tmp_path: Path):
+    # SAM3 masks are in the EXIF-upright frame; COCO-Stuff pixel maps are in the stored frame.
+    from PIL import Image
+
+    from weedz.validation.cocostuff_models import sam_predictor
+    from weedz.validation.registry import RunContext
+
+    photo = tmp_path / "000000000001.jpg"
+    exif = Image.Exif()
+    exif[0x0112] = 3
+    Image.new("RGB", (40, 40)).save(photo, exif=exif)
+    predict = sam_predictor(RunContext(tmp_path, tmp_path, device="cuda:0"))
+    with pytest.raises(ValueError, match="EXIF orientation 3"):
+        predict(photo)
+
+
+def test_cached_evidence_is_keyed_by_the_dataset_adapters():
+    from weedz.validation import cocostuff_models, inat2021_models, openimages
+
+    for sources in (
+        *inat2021_models.PIPELINE_SOURCES.values(),
+        *openimages.PIPELINE_SOURCES.values(),
+    ):
+        assert any(path.parts[0] == "validation" for path in sources), sources
+    assert Path("validation/cocostuff_models.py") in cocostuff_models.ADAPTER_SOURCES

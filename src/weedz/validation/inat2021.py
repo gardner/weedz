@@ -235,7 +235,9 @@ def _run(check: str, context: RunContext) -> CheckResult:
     inputs = {str(LABELS_PATH): LABELS_SHA256, **verify_inputs(root), **overlap_inputs}
 
     def predictor(items: list[Item]) -> list[Prediction]:
-        prepare_images(root, cache, items)
+        inputs["inat2021/val images (SHA-256 of per-file digests)"] = prepare_images(
+            root, cache, items
+        )
         return predict_all(context, cache, items)
 
     return run_check(

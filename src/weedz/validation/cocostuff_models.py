@@ -17,12 +17,19 @@ from weedz.discovery.vegetation import (
 )
 from weedz.segmentation.sam3_image import CHECKPOINT_SHA256, HF_REVISION, Sam3Config, Sam3Image
 from weedz.validation.cocostuff_data import IMAGE_ARCHIVE, atomic_file
-from weedz.validation.fingerprint import SAM3_SOURCES, SEGFORMER_SOURCES, pipeline_fingerprint
+from weedz.validation.fingerprint import (
+    SAM3_SOURCES,
+    SEGFORMER_SOURCES,
+    pipeline_fingerprint,
+    require_stored_orientation,
+)
 from weedz.validation.registry import RunContext
 
 SEGFORMER = Path("cocostuff/models") / MODEL_REVISION
 SAM3 = Path("cocostuff/models") / HF_REVISION / "sam3.pt"
 SAM_CONFIG = Sam3Config()
+# This module turns model output into the cached evidence, so it is part of the cache key.
+ADAPTER_SOURCES = (Path("validation/cocostuff_models.py"),)
 type FractionPredictor = Callable[[Path], float]
 type SamPredictor = Callable[[Path], SamPrediction]
 
@@ -43,7 +50,7 @@ def model_inputs(*, presence: bool) -> dict[str, str]:
 def segformer_predictor(context: RunContext) -> FractionPredictor:
     snapshot = context.data_root / SEGFORMER
     fingerprint = pipeline_fingerprint(
-        SEGFORMER_SOURCES,
+        (*SEGFORMER_SOURCES, *ADAPTER_SOURCES),
         ("torch", "transformers", "pillow", "numpy"),
         "segformer-fp32-v1",
         MODEL_REVISION,
@@ -75,7 +82,8 @@ def sam_predictor(context: RunContext) -> SamPredictor:
         raise ValueError("The Weedz SAM3 runtime requires --device cuda:0")
     checkpoint = context.data_root / SAM3
     libraries = ("torch", "numpy", "pillow")
-    fingerprint = pipeline_fingerprint(SAM3_SOURCES, libraries, CHECKPOINT_SHA256)
+    sources = (*SAM3_SOURCES, *ADAPTER_SOURCES)
+    fingerprint = pipeline_fingerprint(sources, libraries, CHECKPOINT_SHA256)
     root = context.cache_dir / "cocostuff" / f"sam3-{fingerprint}"
 
     @cache
@@ -83,6 +91,7 @@ def sam_predictor(context: RunContext) -> SamPredictor:
         return Sam3Image.load(checkpoint, SAM_CONFIG, root)
 
     def predict(path: Path) -> SamPrediction:
+        require_stored_orientation(path)
         result = model().screen(path)
         if result["status"] in {"failed", "partial"}:
             failures = [

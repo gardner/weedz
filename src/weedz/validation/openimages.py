@@ -19,7 +19,12 @@ from weedz.discovery.vegetation import MODEL_FILES, VegetationScreener, vegetati
 from weedz.region_evaluation.boxes import Box, box_iou
 from weedz.region_evaluation.matching import match_regions
 from weedz.segmentation.sam3_image import CHECKPOINT_SHA256, CODE_REVISION, Sam3Config, Sam3Image
-from weedz.validation.fingerprint import SAM3_SOURCES, SEGFORMER_SOURCES, pipeline_fingerprint
+from weedz.validation.fingerprint import (
+    SAM3_SOURCES,
+    SEGFORMER_SOURCES,
+    pipeline_fingerprint,
+    require_stored_orientation,
+)
 from weedz.validation.metrics import Outcome, Rate, binary_metrics, rate
 from weedz.validation.openimages_data import (
     BOXES,
@@ -63,8 +68,8 @@ SAM_CHECKPOINT = MODEL_DIR / "sam3.pt"
 SEG_SNAPSHOT = MODEL_DIR / "segformer"
 type ModelName = Literal["sam3", "segformer"]
 PIPELINE_SOURCES: dict[ModelName, tuple[Path, ...]] = {
-    "sam3": SAM3_SOURCES,
-    "segformer": SEGFORMER_SOURCES,
+    "sam3": (*SAM3_SOURCES, Path("validation/openimages.py")),
+    "segformer": (*SEGFORMER_SOURCES, Path("validation/openimages.py")),
 }
 COMMON_LIMITS = [
     "Plant and its boxable subclasses define scope. Verification and exhaustiveness apply to "
@@ -155,13 +160,10 @@ def _normalized_box(raw: Sequence[float], width: int, height: int) -> Box:
 
 
 def _sam_prediction(model: Sam3Image, path: Path) -> SamPrediction:
-    # SAM3 boxes are in the EXIF-upright frame and Open Images boxes in the stored one.
     # No sampled CVDF JPEG has a rotation tag; refuse one rather than mis-score its boxes.
+    require_stored_orientation(path)
     with Image.open(path) as image:
         width, height = image.size
-        orientation = image.getexif().get(0x0112, 1)
-    if orientation != 1:
-        raise ValueError(f"{path.name} has EXIF orientation {orientation}; boxes would not align")
     result = model.screen(path)
     if result["failed_prompts"]:
         errors = [

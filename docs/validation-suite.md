@@ -196,6 +196,9 @@ only for non-commercial research and education, and keep the images private.
 The first run needs about 8.4 GB for the image archive plus space for the
 extracted validation images. Keep the same `--cache-dir` to reuse the download
 and the per-image model evidence across both checks and subsequent runs.
+Each extracted image's SHA-256 is recorded in `inat2021/extracted-sha256.json`, and
+an image that doesn't match is extracted again from the verified archive. The
+result's inputs record one digest over the scored images' bytes.
 [Publisher terms and archive checksums](https://github.com/visipedia/inat_comp/tree/master/2021)
 
 Under `--data-root`, link the existing checkpoint files into these locations.

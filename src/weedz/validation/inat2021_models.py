@@ -37,19 +37,22 @@ LOCAL_MARGIN = 0.02411
 GRID = 4
 TOP_K = 5
 BATCH_SIZE = 16
-# The pipeline code each stage's cached evidence depends on.
+# The pipeline code each stage's cached evidence depends on, including this adapter.
+ADAPTER = Path("validation/inat2021_models.py")
 PIPELINE_SOURCES = {
     "plantclef": (
         Path("classification/plantclef.py"),
         Path("classification/precision.py"),
         Path("discovery/inference.py"),
+        ADAPTER,
     ),
     "bioclip": (
         Path("classification/bioclip.py"),
         Path("discovery/encoder_backend.py"),
         Path("discovery/inference.py"),
+        ADAPTER,
     ),
-    "native": (Path("classification/aotearoa.py"), Path("classification/plantclef.py")),
+    "native": (Path("classification/aotearoa.py"), Path("classification/plantclef.py"), ADAPTER),
 }
 PLANT_LABELS = {
     "Clematis vitalba": "Clematis vitalba L.",
