@@ -151,6 +151,12 @@ On a fresh 36-photo fixture, expanding the prompt vocabulary raised mapped
 plant recovery from 11/24 to 18/24, still below the 95% target. Keep the rule
 out of automatic review exclusion. [Stage validation](docs/pipeline-validation.md)
 
+The replacement pilot now uses a source-verified vegetation ranking and visual
+preflight. The new CVAT jobs contain 12 blind and 12 assisted photos, including
+one low-score audit frame. The ranker was checked on ADE20K and PhenoBench human
+annotations. It remains a prioritization tool pending stronger small-plant
+recall. [Open the reviewer jobs](docs/review-dossier.md#open-your-assigned-review)
+
 ## Readiness for the main human-labeling effort
 
 The aim is measurable readiness rather than an indefinitely perfect pipeline:

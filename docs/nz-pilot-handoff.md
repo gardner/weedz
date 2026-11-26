@@ -4,7 +4,10 @@ Reviewers now work in the hosted CVAT jobs listed in the
 [reviewer brief](review-dossier.md#open-your-assigned-review). Each arm has
 two independent replica jobs. The coordinator assigns each reviewer their
 own replica. The [CVAT publication audit](../benchmarks/nz-cvat-review-pilot-20261126.json)
-records the jobs, verified originals and available search crops.
+records the first hosted batch. Use the 12 blind and 12 assisted jobs in the
+reviewer brief for new assignments. The [vegetation-focused batch audit](../benchmarks/nz-vegetation-review-v2-20261126.json)
+records the new jobs, source checks and preflight. The earlier jobs remain
+available as an intake baseline.
 
 For hosted reviews, keep each replica’s annotations separate. Export from
 the job using **CVAT for images 1.1** so the photo tags, attributes and masks

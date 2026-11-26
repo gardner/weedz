@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261126/review-v2",
+  "screened_nz_candidates": 281,
+  "new_full_resolution_photos": 24,
+  "operator_visible_vegetation": 23,
+  "low_score_audit": 1,
+  "distinct_from_previous_hosted_images": 40,
+  "ade20k": {
+    "fixture_hashes": {
+      "fixture.json": "6bef5db771897b83d56b1737ca6073da15d379a33eaec76509ab6fc99353e199",
+      "vocabulary-fixture.json": "0119e2338deabc040fa8839b755bce5430f2441aa4cfdc1e72ed7b0cb27b7a66"
+    },
+    "screening_threshold": 0.0001,
+    "eligible": [],
+    "by_stratum": {
+      "fit": {
+        "larger": {
+          "total": 12,
+          "called": 12,
+          "mapped_hit": 12
+        },
+        "small": {
+          "total": 12,
+          "called": 9,
+          "mapped_hit": 7
+        },
+        "comparison": {
+          "total": 12,
+          "called": 1,
+          "mapped_hit": 0
+        }
+      },
+      "original": {
+        "larger": {
+          "total": 12,
+          "called": 11,
+          "mapped_hit": 11
+        },
+        "small": {
+          "total": 12,
+          "called": 8,
+          "mapped_hit": 7
+        },
+        "comparison": {
+          "total": 12,
+          "called": 1,
+          "mapped_hit": 0
+        }
+      },
+      "new_categories": {
+        "larger": {
+          "total": 12,
+          "called": 12,
+          "mapped_hit": 12
+        },
+        "small": {
+          "total": 12,
+          "called": 7,
+          "mapped_hit": 5
+        },
+        "comparison": {
+          "total": 12,
+          "called": 0,
+          "mapped_hit": 0
+        }
+      }
+    },
+    "mean_seconds": 0.012265644102525484,
+    "holdout_pass": false
+  },
+  "phenobench_transfer": {
+    "source_checksum": "a1baae80ab1a1b6c578334c6ef73d30fe9c8cadfb760ad80b05e5ee6203f09bf",
+    "images": 64,
+    "with_predicted_vegetation": 55,
+    "with_actual_plant_overlap": 55,
+    "plant_pixels": 6352809,
+    "plant_pixels_found": 1767782,
+    "weed_pixels": 348689,
+    "weed_pixels_found": 10662,
+    "scope": "Agricultural source-labelled geometry, no species or plant-absent inference."
+  },
+  "browser_checked_jobs": 4,
+  "assisted_species_cues_matching_upstream_subject": 6,
+  "hosted_jobs": {
+    "blind": {
+      "task_id": 17,
+      "review_jobs": [
+        {
+          "id": 29,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/17/jobs/29"
+        },
+        {
+          "id": 30,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/17/jobs/30"
+        }
+      ],
+      "frames": 12,
+      "contexts": 0
+    },
+    "assisted": {
+      "task_id": 18,
+      "review_jobs": [
+        {
+          "id": 26,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/18/jobs/26"
+        },
+        {
+          "id": 27,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/18/jobs/27"
+        }
+      ],
+      "frames": 12,
+      "contexts": 12
+    }
+  },
+  "model_hashes": {
+    "pytorch_model.bin": "187ca07bea003a5717c63d04ea90b07f33cd033c0ebf44b4b89fce5070d6c8f3",
+    "config.json": "ee7400840fdb1e5045f0b2eba78bf053df8e33a309c4acec31705a48c8cc5c00",
+    "preprocessor_config.json": "8039d1d210abaa7117ad78e58cdfd6141a2ec72c03dae891b3cd76737e422c6c"
+  },
+  "artifacts": {
+    "review-preflight.json": "1989c73097cbb612932a512c8fd4cdc8928fccf81e0d866a02d44956fd40ea1b",
+    "ade-benchmark.json": "153949fbde3085a62c54c6e2b8e99106bf6e4e4db5e78de1bb8fc077d5c0787b",
+    "phenobench-transfer.json": "c71c69f8769f004924baecbdbee3ba75e5be87610a1bb386c06a0aa0a3b00308",
+    "selection.json": "701762ed940dddc908d3c592b4b357d865ef3d6b2b0097c7c1199c0715468a64",
+    "pool-scores.json": "4a4958dedc44fff9dff8b10b2f94c5487ee98e196348053c4c7286b00cf19805",
+    "assisted-species.json": "6eaf7aa287b12bec5c32511a8da14115948b3dd077b73c1bc07e00c8add2f14e",
+    "cvat-publication/publication.json": "ecd8ef92536360a4d4d545e0aa4302959490f435d2ab840e98f448feb1b09bf0",
+    "cvat-publication/browser-verification.json": "791de87b0256957dac69c649bd9d89b027cb63de11329784b90a88ab56c1b554",
+    "cli-smoke-report.json": "9b3a8b921fa4787f9e9f8712a90cac4e38c5b9b6f38a5213688b69e03903535d",
+    "cvat-publication/blind-empty-export.zip": "72fbb4c8f38c167fc3820180e8e5dafe40a7852df89251b95141f6962ab1efa3",
+    "cvat-publication/assisted-empty-export.zip": "f54354a8465a0f37376cfef99a5144a93f00c4b352ee62e4913d392517db76a3"
+  },
+  "use": "Visibility ranking and visual preflight. Scores did not meet the gate for automatic exclusion.",
+  "native_empty_export_verified_jobs": [
+    29,
+    26
+  ]
+}

@@ -20,6 +20,39 @@ plant proposals, crop, classifier or decision rule.
 [Prompt vocabulary follow-up](../benchmarks/ade20k-sam3-vocabulary-20261126.json) ·
 [Hosted CVAT audit](../benchmarks/nz-cvat-review-pilot-20261126.json)
 
+## Vegetation-focused review batch
+
+The intake pipeline ranks photos by vegetation coverage using SegFormer.
+It maps tree, grass, plant, flower and palm and retains every scored photo.
+On the two held-out ADE20K fixtures it found mapped vegetation in 35/48
+positive photos, including 12/24 low-coverage photos. On the independent
+agricultural source, it overlapped annotated vegetation on 55/64 PhenoBench
+frames and covered 1,767,782 of 6,352,809 annotated plant pixels. Only 10,662
+of 348,689 annotated weed pixels were covered. These results support using
+the score to order visual checks. Small-plant misses preclude automatic
+rejection. [Pinned SegFormer checkpoint](https://huggingface.co/nvidia/segformer-b2-finetuned-ade-512-512)
+
+The operator visually screened the ranked pool and selected 24 photos for
+the replacement CVAT batch. Twenty-three showed vegetation, and one
+low-score frame was retained for audit. The batch separates blind and
+assisted photos and checks image hashes, near copies, observer and camera
+groups, and available encounter evidence. The assisted arm uses the existing
+PlantCLEF-to-local-BioCLIP cue rule. Six source-subject controls received
+matching species cues. The other six photos use vegetation search crops.
+The blind arm has full images and credits. All four jobs rendered in a browser,
+and native export succeeded for one job per arm. The new batch is enriched for
+usable detail and supports a usability comparison within its sampling scope.
+[Batch and benchmark receipts](../benchmarks/nz-vegetation-review-v2-20261126.json)
+
+To rank another canonical manifest, use the pinned model snapshot with
+`config.json`, `preprocessor_config.json` and `pytorch_model.bin`:
+
+```sh
+uv run --with transformers==4.57.6 python scripts/rank_vegetation.py \
+  --model "$MODEL_SNAPSHOT" --manifest "$SAMPLES" --media-root "$MEDIA_ROOT" \
+  --output "$RANKED_PHOTOS"
+```
+
 ## What still needs stronger evidence
 
 - **Visibility suitable for NZ species review.** Generic vegetation masks

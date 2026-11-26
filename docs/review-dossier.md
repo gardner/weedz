@@ -13,8 +13,8 @@ the blind job first.
 
 | Review | Reviewer A | Reviewer B |
 | --- | --- | --- |
-| Handheld blind, 16 photos | [Open job A](https://cvat.llm.nz/tasks/15/jobs/20) | [Open job B](https://cvat.llm.nz/tasks/15/jobs/21) |
-| Handheld assisted, 21 photos | [Open job A](https://cvat.llm.nz/tasks/16/jobs/23) | [Open job B](https://cvat.llm.nz/tasks/16/jobs/24) |
+| Vegetation-focused blind, 12 photos | [Open job A](https://cvat.llm.nz/tasks/17/jobs/29) | [Open job B](https://cvat.llm.nz/tasks/17/jobs/30) |
+| Vegetation-focused assisted, 12 photos | [Open job A](https://cvat.llm.nz/tasks/18/jobs/26) | [Open job B](https://cvat.llm.nz/tasks/18/jobs/27) |
 | Optional camera review, 1 photo | [Open job A](https://cvat.llm.nz/tasks/13/jobs/14) | [Open job B](https://cvat.llm.nz/tasks/13/jobs/15) |
 | Optional camera review, 2 photos | [Open job A](https://cvat.llm.nz/tasks/14/jobs/17) | [Open job B](https://cvat.llm.nz/tasks/14/jobs/18) |
 
