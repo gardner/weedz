@@ -42,6 +42,7 @@ TOOLS = {
     "deepweeds-batches": ("weedz.deepweeds_cli", False),
     "labelled-batches": ("weedz.labelled.cli", False),
     "sam3-image": ("weedz.segmentation.sam3_cli", False),
+    "validate": ("weedz.validation.cli", False),
 }
 
 
