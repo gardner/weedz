@@ -1,3 +1,7 @@
+# Hooks run before each commit unless they name another stage. `pre-commit install`
+# installs both hook types below (rerun it once in an existing clone).
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
 repos:
   - repo: local
     hooks:
@@ -29,3 +33,10 @@ repos:
         entry: uv run --locked shellcheck
         language: system
         types: [shell]
+      - id: reviews-finished
+        name: No code review of this branch's PR is still running
+        entry: scripts/check-reviews-before-push.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

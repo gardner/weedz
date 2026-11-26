@@ -19,6 +19,7 @@ To ensure code quality stays high and readable: Use strong types, code formattin
     - If there are review comments then please evaluate if any of them are actually real or relevant, and then resolve the important issues with a new commit and resolve the GitHub PR conversation with information about the resolution, or with a comment saying why it is not relevant. After pushing a new commit, monitor the PR for new review comments and continue the process.
     - You can work on other things while waiting for the PR review comments.
     - After pushing wait for the code review agents to finish their review before pushing again.
+      A pre-push hook enforces this: it refuses the push while `claude-review` or `zai-review` is still running on the branch's PR, because a new push cancels the running review. Wait with `gh pr checks <PR> --watch`. Install it with `uv run pre-commit install`.
     - Keep looping like this until there are no more relevant issues found by the code review agents.
 
 # IMPORTANT
