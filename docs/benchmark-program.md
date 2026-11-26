@@ -24,6 +24,26 @@ Scene categories and pixel checks bound overlap; physical-site and model
 pretraining overlap remain unknown. Use the existing stage benchmarks for
 geometry and weed taxonomy, which this source does not supply.
 
+Neither model configuration qualified on the 72-photo fixture. At 0.50,
+the held-out whole-frame pass called 12 of 24 mapped plant-positive photos.
+Four additional tiles raised that to 14 of 24, with two of 12 comparison
+photos called in both cases. Whole-frame and tiled masks intersected a
+mapped vegetation region in 10 and 11 positive photos, respectively, using
+at least eight mapped pixels and 10% of the proposed mask area. Mean
+held-out processing cost was 0.17 and 0.69 seconds per photo. The 95% fit
+requirement nominated no rule to deprioritize reviewer photos.
+[Frozen fixture and scores](../benchmarks/ade20k-sam3-intake-20261126.json)
+
+Run one vocabulary follow-up on fresh scene categories from the publisher
+validation set. Keep 12 photos in each of the same three strata. Exclude
+every scene category and exact or near-copy image from the first fixture.
+Fix the whole-frame 0.50 score threshold. In one shared image pass compare
+`plant` and `flower` with those prompts plus `tree`, `grass` and `shrub`.
+Report positive and small-vegetation recovery, comparison prompts and
+runtime. Treat the larger vocabulary as a candidate. The original 95%
+retention target applies, and the new rule must add at most one comparison
+prompt on this bounded fixture before further transfer testing.
+
 Status: 25 November 2026. This tracks the work in
 [the immediate goal](../immediate-goal.md). The pipeline is not ready for the main
 NZ labeling effort. Existing labels reveal substantial localization,

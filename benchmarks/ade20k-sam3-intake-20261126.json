@@ -1,0 +1,273 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261126/vegetation-gate",
+  "fit_eligible": [],
+  "selected_from_fit": null,
+  "passed_held_out_positive_retention": false,
+  "held_out_target": 0.95,
+  "table": {
+    "whole@0.50": {
+      "fit": {
+        "larger": {
+          "photos": 12,
+          "called": 7,
+          "intersected_mapped_region": 7,
+          "mean_seconds": 0.16235394999481892
+        },
+        "small": {
+          "photos": 12,
+          "called": 10,
+          "intersected_mapped_region": 10,
+          "mean_seconds": 0.16038490899275834
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 0,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.14283359891366368
+        }
+      },
+      "reserve": {
+        "larger": {
+          "photos": 12,
+          "called": 5,
+          "intersected_mapped_region": 4,
+          "mean_seconds": 0.1643377848425492
+        },
+        "small": {
+          "photos": 12,
+          "called": 7,
+          "intersected_mapped_region": 6,
+          "mean_seconds": 0.17417266834915304
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 2,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.18132991841897214
+        }
+      }
+    },
+    "whole@0.60": {
+      "fit": {
+        "larger": {
+          "photos": 12,
+          "called": 7,
+          "intersected_mapped_region": 7,
+          "mean_seconds": 0.16235394999481892
+        },
+        "small": {
+          "photos": 12,
+          "called": 9,
+          "intersected_mapped_region": 9,
+          "mean_seconds": 0.16038490899275834
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 0,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.14283359891366368
+        }
+      },
+      "reserve": {
+        "larger": {
+          "photos": 12,
+          "called": 3,
+          "intersected_mapped_region": 3,
+          "mean_seconds": 0.1643377848425492
+        },
+        "small": {
+          "photos": 12,
+          "called": 3,
+          "intersected_mapped_region": 3,
+          "mean_seconds": 0.17417266834915304
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 2,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.18132991841897214
+        }
+      }
+    },
+    "whole@0.70": {
+      "fit": {
+        "larger": {
+          "photos": 12,
+          "called": 6,
+          "intersected_mapped_region": 6,
+          "mean_seconds": 0.16235394999481892
+        },
+        "small": {
+          "photos": 12,
+          "called": 8,
+          "intersected_mapped_region": 7,
+          "mean_seconds": 0.16038490899275834
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 0,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.14283359891366368
+        }
+      },
+      "reserve": {
+        "larger": {
+          "photos": 12,
+          "called": 3,
+          "intersected_mapped_region": 3,
+          "mean_seconds": 0.1643377848425492
+        },
+        "small": {
+          "photos": 12,
+          "called": 2,
+          "intersected_mapped_region": 2,
+          "mean_seconds": 0.17417266834915304
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 1,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.18132991841897214
+        }
+      }
+    },
+    "whole_plus_tiles@0.50": {
+      "fit": {
+        "larger": {
+          "photos": 12,
+          "called": 7,
+          "intersected_mapped_region": 7,
+          "mean_seconds": 0.6620741099031875
+        },
+        "small": {
+          "photos": 12,
+          "called": 11,
+          "intersected_mapped_region": 11,
+          "mean_seconds": 0.6388813812130442
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 0,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.606299362659532
+        }
+      },
+      "reserve": {
+        "larger": {
+          "photos": 12,
+          "called": 6,
+          "intersected_mapped_region": 5,
+          "mean_seconds": 0.6611020475975238
+        },
+        "small": {
+          "photos": 12,
+          "called": 8,
+          "intersected_mapped_region": 6,
+          "mean_seconds": 0.683557300750787
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 2,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.7135754248981053
+        }
+      }
+    },
+    "whole_plus_tiles@0.60": {
+      "fit": {
+        "larger": {
+          "photos": 12,
+          "called": 7,
+          "intersected_mapped_region": 7,
+          "mean_seconds": 0.6620741099031875
+        },
+        "small": {
+          "photos": 12,
+          "called": 10,
+          "intersected_mapped_region": 10,
+          "mean_seconds": 0.6388813812130442
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 0,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.606299362659532
+        }
+      },
+      "reserve": {
+        "larger": {
+          "photos": 12,
+          "called": 3,
+          "intersected_mapped_region": 3,
+          "mean_seconds": 0.6611020475975238
+        },
+        "small": {
+          "photos": 12,
+          "called": 6,
+          "intersected_mapped_region": 5,
+          "mean_seconds": 0.683557300750787
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 2,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.7135754248981053
+        }
+      }
+    },
+    "whole_plus_tiles@0.70": {
+      "fit": {
+        "larger": {
+          "photos": 12,
+          "called": 7,
+          "intersected_mapped_region": 7,
+          "mean_seconds": 0.6620741099031875
+        },
+        "small": {
+          "photos": 12,
+          "called": 8,
+          "intersected_mapped_region": 7,
+          "mean_seconds": 0.6388813812130442
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 0,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.606299362659532
+        }
+      },
+      "reserve": {
+        "larger": {
+          "photos": 12,
+          "called": 3,
+          "intersected_mapped_region": 3,
+          "mean_seconds": 0.6611020475975238
+        },
+        "small": {
+          "photos": 12,
+          "called": 4,
+          "intersected_mapped_region": 4,
+          "mean_seconds": 0.683557300750787
+        },
+        "comparison": {
+          "photos": 12,
+          "called": 1,
+          "intersected_mapped_region": null,
+          "mean_seconds": 0.7135754248981053
+        }
+      }
+    }
+  },
+  "photos": 72,
+  "views": 360,
+  "checkpoint_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+  "qualification": "Class-scoped ADE20K proxy. Mapped hit means at least 8 mapped pixels and 10% of the proposal mask. Calls on comparison scenes are not NZ false alarms.",
+  "assets": {
+    "fixture.py": "3b221513bccaa6f397a44b7025f60ab32de5a41e8018be8dfe23e54620154a28",
+    "fixture.json": "6bef5db771897b83d56b1737ca6073da15d379a33eaec76509ab6fc99353e199",
+    "run_gate.py": "108fe2b0ec88316716263d858ced39beceb5cf88c1f7f74904f8e7ef1f28baa8",
+    "sam3-vegetation/run.json": "e60c8eb4416d7882d297606ff3e2ea2922ff352808486469f2e989dec9854334",
+    "evaluate_gate.py": "b1186dab15a5b7bd66a65c49be64433e251e884ac63f09a7e9c96be9cd9b9104"
+  }
+}
