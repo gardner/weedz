@@ -47,7 +47,7 @@ PROPOSALS = "cocostuff-vegetation-proposals"
 RECALL_TARGET = 0.95
 FALSE_ALARM_CEILING = 0.10
 COMMON_LIMITS = [
-    "COCO-Stuff PNG index 255 is void; index 0 is person. Label ID 0 is void only in labels.txt.",
+    "COCO-Stuff PNG index 255 is void. PNG index 0 is person. Label ID 0 is void in labels.txt.",
     "Vegetation follows the selected scene labels. Fruit and vegetable food classes are excluded "
     "because they describe food objects, including detached produce, rather than scene vegetation.",
     "COCO and COCO-Stuff annotations are CC BY 4.0. COCO images are subject to Flickr terms.",
@@ -266,9 +266,11 @@ def run_presence(context: RunContext) -> CheckResult:
             },
             limits=[
                 *COMMON_LIMITS,
-                "The pinned SegFormer model metadata lists ADE20K (scene_parse_150) fine-tuning, "
-                "with no reported COCO fine-tuning. Cross-dataset image duplicates and pretraining "
-                "overlap were not audited.",
+                "The pinned SegFormer model metadata lists ADE20K (scene_parse_150) as its "
+                "fine-tuning dataset. A ZIP byte-length and CRC32 comparison of all 20,210 "
+                "ADEChallengeData2016 training JPEGs with all 5,000 COCO val2017 JPEGs found "
+                "zero byte-identical matches. Re-encoded duplicates and pretraining overlap "
+                "remain unknown.",
                 "A negative contains no mapped vegetation and at most 2% void. Plants can still "
                 "be present in the void area or outside the mapped taxonomy.",
             ],
@@ -322,9 +324,9 @@ def run_proposals(context: RunContext) -> CheckResult:
                 "IoU and coverage use the best single proposal per truth region, ignoring void "
                 "outside the truth. The same proposal can recover more than one region.",
                 "The non-vegetation diagnostic counts labelled background over each whole "
-                "proposal, including void in its denominator. It is a lower bound on background "
-                "proposals and does not measure proposal precision.",
-                "Wilson intervals treat pixels, regions or proposals as independent; their "
+                "proposal, including void in its denominator. It is a lower bound on the share "
+                "of background proposals.",
+                "Wilson intervals treat pixels, regions or proposals as independent. Their "
                 "spatial and image-level dependence makes these intervals optimistic.",
             ],
         )

@@ -1,6 +1,9 @@
 import hashlib
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
+import httpx
 import numpy as np
 import pytest
 
@@ -95,15 +98,20 @@ def test_proposals_score_union_instances_and_labelled_background() -> None:
     with_unknown = np.zeros_like(vegetation)
     with_unknown[1] = True
     with_unknown[2, :2] = True
+    at_background_threshold = np.zeros_like(vegetation)
+    at_background_threshold[1, :2] = True
+    at_background_threshold[2, :8] = True
     metrics = proposal_metrics(
-        Masks(vegetation, void), [left, right, background, with_unknown], [left]
+        Masks(vegetation, void),
+        [left, right, background, with_unknown, at_background_threshold],
+        [left],
     )
     counts = {(row.name, row.stratum): (row.successes, row.total) for row in metrics}
     assert counts["pixel_recall", "medium"] == (4, 4)
     assert counts["component_iou_recall", "medium"] == (1, 1)
     assert counts["component_coverage_recall", "medium"] == (1, 1)
     assert counts["potted_plant_iou_recall", "small"] == (1, 1)
-    assert counts["nonvegetation_proposal_share", "all"] == (1, 4)
+    assert counts["nonvegetation_proposal_share", "all"] == (2, 5)
 
 
 def test_single_proposal_coverage_and_budget() -> None:
@@ -149,3 +157,26 @@ def test_download_reuses_verified_partial_and_rejects_corrupt_archive(tmp_path: 
     archive.write_bytes(b"damaged")
     with pytest.raises(ValueError, match="Checksum mismatch"):
         verified_download(pin, archive)
+
+
+def test_download_resumes_at_existing_byte_offset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    archive = tmp_path / "data.zip"
+    archive.with_suffix(".zip.part").write_bytes(b"abc")
+    pin = Download("https://example.test/data.zip", hashlib.sha256(b"abcdef").hexdigest())
+
+    @contextmanager
+    def stream(
+        method: str, url: str, *, headers: dict[str, str], follow_redirects: bool, timeout: int
+    ) -> Iterator[httpx.Response]:
+        assert headers["Range"] == "bytes=3-"
+        yield httpx.Response(
+            206,
+            headers={"Content-Range": "bytes 3-5/6"},
+            request=httpx.Request(method, url),
+            stream=httpx.ByteStream(b"def"),
+        )
+
+    monkeypatch.setattr(httpx, "stream", stream)
+    assert verified_download(pin, archive).read_bytes() == b"abcdef"
