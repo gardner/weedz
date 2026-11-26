@@ -6,56 +6,58 @@ tool is to use. Base each submission on what you can see in the photo.
 
 ## Open your assigned review
 
-This pilot uses **Label Studio**. Ask the pilot coordinator for your project
-link. The current handoff consists of offline ZIPs for the coordinator to
-import into separate Label Studio projects. These download links work from the
-project workspace.
+Sign in to **CVAT** with your own account and open the job in the column
+assigned to you. If a job denies access, give the coordinator your CVAT
+username so they can assign it. If you’re doing both handheld jobs, finish
+the blind job first.
 
-- [Handheld blind review, 16 photos](../../weedz-evaluation-artifacts/20261125/pilot-reviewer-handoff/nz-pilot-blind-v1.zip)
-- [Handheld assisted review, 21 photos](../../weedz-evaluation-artifacts/20261125/pilot-reviewer-handoff/nz-pilot-assisted-v3.zip)
-- [Optional camera review, 1 photo](../../weedz-evaluation-artifacts/20261125/nz-trailcam-discovery/nz-trailcam-disagreement-v1.zip)
-- [Optional camera review, 2 photos](../../weedz-evaluation-artifacts/20261125/nz-trailcam-transfer/nz-camera-transfer-cues-v1.zip)
+| Review | Reviewer A | Reviewer B |
+| --- | --- | --- |
+| Handheld blind, 16 photos | [Open job A](https://cvat.llm.nz/tasks/15/jobs/20) | [Open job B](https://cvat.llm.nz/tasks/15/jobs/21) |
+| Handheld assisted, 21 photos | [Open job A](https://cvat.llm.nz/tasks/16/jobs/23) | [Open job B](https://cvat.llm.nz/tasks/16/jobs/24) |
+| Optional camera review, 1 photo | [Open job A](https://cvat.llm.nz/tasks/13/jobs/14) | [Open job B](https://cvat.llm.nz/tasks/13/jobs/15) |
+| Optional camera review, 2 photos | [Open job A](https://cvat.llm.nz/tasks/14/jobs/17) | [Open job B](https://cvat.llm.nz/tasks/14/jobs/18) |
 
 ## What to look for
 
-| Common name | Name in Label Studio |
+| Common name | Name in CVAT |
 | --- | --- |
 | Gorse | *Ulex europaeus* |
 | Old man’s beard | *Clematis vitalba* |
 | Pampas grass | *Cortaderia selloana* |
 
-Use your own reviewer account and work independently. If you’re assigned both
-handheld projects, finish the blind project first. In assisted or camera tasks,
-the suggested name and search crop are clues. Inspect the full photo, including
-areas outside the crop. Open any linked source observation only after submitting.
+Work independently. In assisted or camera jobs, the task guide lists the
+suggested name for each image and the contextual image shows the search crop.
+Use both as clues and inspect the full photo, including areas outside the crop.
+Open any linked source observation only after saving your review of that photo.
+[CVAT contextual images](https://docs.cvat.ai/docs/annotation/manual-annotation/utilities/contextual-images/)
 
 ## Review each photo
 
 1. **Inspect the full photo.** Zoom in as needed. Check the background, margins
-   and vegetation around the main subject. Answer **Plant visible**,
-   **No plant visible** or **Unsure**.
-2. **Answer the watchlist question.** Choose **Watchlist plant visible** if you
-   can identify at least one of the three listed species. Select every watchlist
-   species you can identify. Choose **No watchlist plant visible** when the
-   photo is clear enough for you to judge that none is visible. Choose **Unsure**
-   when blur, distance, occlusion or a lookalike prevents a confident answer.
+   and vegetation around the main subject. Use the **Tag** tool to add one
+   **Photo review** tag. Set its **Any plants** attribute to **Visible**,
+   **None visible** or **Unsure**.
+2. **Set the Watchlist attribute.** Choose **Visible** if you can identify at
+   least one of the three listed species. Check every species you can identify.
+   Choose **None visible** when the photo is clear enough for you to judge that
+   none is visible. Choose **Unsure** when blur, distance, occlusion or a
+   lookalike prevents a confident answer.
    If one species is identifiable and a second is uncertain, select the
    identifiable species and mention the uncertainty in your notes.
-3. **Answer the other-plants question.** Use **Other plant visible** when you
-   can see a plant outside the watchlist, even if you cannot name it. Use
-   **No other plant visible** or **Unsure** as appropriate.
+3. **Set the Other plants attribute.** Use **Visible** when you can see a plant
+   outside the watchlist, even if you cannot name it. Use **None visible** or
+   **Unsure** as appropriate. Complete all three attributes before moving on.
 4. **Mark identifiable plants on the full photo.** Brush the visible part of
    each watchlist plant you can locate and choose its species label. Leave
    hidden parts unpainted. Use **Other plant** for a visible region you can
    place outside the watchlist and **Unknown** for an unresolved region you
    can locate. If you cannot place a boundary, keep your photo-level answer
-   and mention it in your notes. Correct or clear the image taxon field if
-   needed, then submit the task.
+   and mention it in your notes. Save your changes in CVAT.
 
 ## Tell us how the review went
 
-Record interruptions, unclear instructions, loading or zoom problems, and
+Record your review time, interruptions, unclear instructions, loading or zoom problems, and
 anything that made it hard to identify or mark a plant. In your notes, include
-the project and task number so we can find the example. After finishing, give
-your notes to the pilot coordinator. If asked to export your work, return full
-Label Studio JSON for each project with task data, metadata and annotations.
+the job link and image number so we can find the example. After finishing,
+save your job and give your notes to the pilot coordinator.

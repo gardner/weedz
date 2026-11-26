@@ -1,5 +1,22 @@
 # NZ review pilot handoff
 
+Reviewers now work in the hosted CVAT jobs listed in the
+[reviewer brief](review-dossier.md#open-your-assigned-review). Each arm has
+two independent replica jobs. The coordinator assigns each reviewer their
+own replica. The [CVAT publication audit](../benchmarks/nz-cvat-review-pilot-20261126.json)
+records the jobs, verified originals and available search crops.
+
+For hosted reviews, keep each replica’s annotations separate. Export from
+the job using **CVAT for images 1.1** so the photo tags, attributes and masks
+are preserved. Keep the job ID, reviewer account and session notes with the
+export. [CVAT job replicas](https://docs.cvat.ai/docs/workspace/jobs-page/)
+· [CVAT annotation format](https://docs.cvat.ai/docs/dataset_management/formats/format-cvat/)
+
+## Earlier offline material
+
+The Label Studio packages and JSON commands below preserve the offline pilot
+and its evidence. The hosted CVAT export uses a different format.
+
 The handheld pilot is ready for independent reviewers. The two projects use
 16 blind photos and 21 assisted photos. The camera material adds three
 optional tasks in two separate projects. The local test projects contain zero
