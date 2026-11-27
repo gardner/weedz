@@ -303,7 +303,7 @@ One particularly useful opportunity is to combine **historical Flickr and Wikime
 
 For commercial deployment, the most straightforward starting points appear to be LINZ's openly licensed imagery and the permissively licensed DOC camera-trap dataset. For community photo platforms, you need to preserve image-specific attribution and respect their API and reuse terms. Google's Street View, in contrast, expressly prohibits bulk extraction and certain derived uses, so I wouldn't build a bulk-analysis pipeline around it. <Cite ref="turn721389search2"/>
 
-**My first experiment would be 10,000 daytime DOC camera-trap photographs and 10,000 KartaView photographs from one region.** That would give you a useful comparison between forest understory and roadside weed detection before committing to millions of images.
+**My first experiment would be 10,000 daytime DOC camera-trap photographs from one region, plus a matching roadside sample once a bounded check confirms KartaView's NZ coverage and terms.** That would give you a useful comparison between forest understory and roadside weed detection before committing to millions of images.
 
 ---
 
