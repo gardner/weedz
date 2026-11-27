@@ -11,6 +11,8 @@ from PIL import Image
 from test_validation_plantclef2024 import row, write_labels
 
 from weedz.validation import plantclef2024, plantclef2024_data
+from weedz.validation.inat2021_data import Item
+from weedz.validation.inat2021_models import Prediction
 from weedz.validation.plantclef2024_data import load_photos, prepare_images
 from weedz.validation.registry import RunContext
 
@@ -116,3 +118,29 @@ def test_runner_verifies_models_before_reusing_evidence(
     with pytest.raises(ValueError, match="modified checkpoint"):
         plantclef2024._run(plantclef2024.SPECIES_ID, RunContext(tmp_path, tmp_path))
     assert calls == ["verify models"]
+
+
+def test_runner_adapts_cache_paths_to_shared_predictor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    labels = write_labels(tmp_path / "labels.csv", [row("a"), row("b", tag="test")])
+    context = RunContext(tmp_path / "data", tmp_path / "external-cache")
+    monkeypatch.setattr(plantclef2024, "labels_file", lambda _: labels)
+    monkeypatch.setattr(
+        plantclef2024, "verify_inputs", lambda _: {"inat2021/models/fixture": "a" * 64}
+    )
+    monkeypatch.setattr(plantclef2024, "prepare_images", lambda *_: "b" * 64)
+
+    def predict(ctx: RunContext, cache: Path, items: list[Item]) -> list[Prediction]:
+        assert cache.name == plantclef2024.evidence_identity(ctx.device)
+        for item in items:
+            actual = (ctx.data_root / "inat2021" / item.file_name).resolve()
+            assert actual.is_relative_to(ctx.cache_dir / "plantclef2024/images")
+        return [Prediction(("Ulex europaeus",), (), None, None) for _ in items]
+
+    monkeypatch.setattr(plantclef2024, "predict_all", predict)
+    result = plantclef2024._run(plantclef2024.SPECIES_ID, context)
+    assert result.configuration["scored_subjects"] == 2
+    assert result.configuration["publisher_val_test_binomial_taxa"] == 1
+    assert result.inputs["plantclef2024/scored images (SHA-256 of per-file digests)"] == "b" * 64
+    assert not any(Path(path).is_absolute() for path in result.inputs)

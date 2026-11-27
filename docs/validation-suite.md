@@ -218,3 +218,49 @@ Use `--device cuda:0` with an existing CUDA-enabled runtime and `--no-sync`
 to keep uv from replacing that runtime with the project's locked CPU Torch.
 Send smoke-run output to an external directory.
 [CUDA runtime setup](temporal-segmentation.md)
+
+### Rerun the PlantCLEF 2024 checks
+
+These checks reuse the six verified checkpoints at `inat2021/models/` listed
+above. No new models or image archives are needed. Place or link the existing
+training CSV at `plantclef2024/metadata/plantclef2024-training.csv` under the
+data root. The adapter verifies its pinned SHA-256, or downloads it from the
+publisher if absent. Only `learn_tag=val` and `learn_tag=test` are scored.
+The pinned export contains 99,134 such photos covering 6,598 binomial taxa;
+7,806 is the model's class count. The publisher used `val` for model selection,
+so emphasize the separately reported `test` estimates.
+[Publisher split and model notes](https://zenodo.org/records/10848263)
+
+The species check scores all 60 target photos and 20 broom lookalikes. The
+false-alarm check scores every non-target same-genus and same-family photo,
+plus the 5,000 other plants with the lowest salted source-ID hash (20,503
+photos total). Both use the frozen pilot and local cue rules, with no tuning.
+Each result reports `all`, `val` and `test`, including per-species or relatedness
+strata. Wrong-subject rates do not establish absence elsewhere in the frame.
+
+Individual photos and their URL, author, licence and SHA-256 receipts live in
+`$CACHE_DIR/plantclef2024/images/`. Three download workers pause between requests,
+resume partial downloads, and verify every cached image. The publisher supplies
+no per-image checksums: the first HTTPS download establishes each local byte
+receipt. Photos stay outside Git and retain their individual licence terms.
+Predictions resume per model stage and image hash under the same cache directory;
+their identity includes the adapter's imported pipeline sources and libraries.
+All metadata and checkpoint hashes are verified even when predictions are cached.
+
+Set `CUDA_RUNTIME` to the existing CUDA-enabled uv environment (the iNat2021
+worktree's `.venv` for this run). Use its overlay without syncing it to CPU Torch:
+
+```sh
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export UV_PROJECT_ENVIRONMENT="$CUDA_RUNTIME"
+export PYTHONPATH="$PWD/src:$UV_PROJECT_ENVIRONMENT/cuda-runtime"
+for check in plantclef2024-target-species plantclef2024-target-false-alarms; do
+  uv run --no-sync main.py validate run "$check" --data-root "$DATA_ROOT" \
+    --cache-dir "$CACHE_DIR" --device cuda:0 --output benchmarks/validation
+done
+uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
+  --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
+```
+
+For a smoke run, add `--limit 50` and send `--output` to a separate directory.
+Keep the same `--cache-dir` for the full run and later replays.
