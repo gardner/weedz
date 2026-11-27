@@ -8,12 +8,12 @@ from weedz.validation import metrics
 @pytest.mark.parametrize(
     "successes,total,held_out_total,higher,expected",
     [
-        (80, 100, 200, True, 0.655969246),
-        (20, 100, 200, False, 0.344030754),
+        (80, 100, 200, True, 0.650315648),
+        (20, 100, 200, False, 0.349684352),
         (0, 10, 10, True, 0.0),
         (10, 10, 10, False, 1.0),
         # p_d=.7, n_h=13: use round(9.1)=9, not the fractional expected successes.
-        (7, 10, 13, True, 0.172028382),
+        (7, 10, 13, True, 0.128163887),
     ],
 )
 def test_floor_matches_hand_calculated_wilson_bounds(
@@ -22,6 +22,21 @@ def test_floor_matches_hand_calculated_wilson_bounds(
     assert metrics.development_floor(successes, total, held_out_total, higher) == pytest.approx(
         expected, abs=1e-8
     )
+
+
+@pytest.mark.parametrize(
+    "development, held_out",
+    [
+        ((37, 39), (18, 20)),  # CWFID-like, near the ceiling where Wilson is lopsided
+        ((30, 30), (32, 34)),  # PhenoBench-like
+    ],
+)
+def test_a_near_ceiling_held_out_sample_at_the_development_rate_passes(
+    development: tuple[int, int], held_out: tuple[int, int]
+):
+    # The pass test checks the lower bound, so the floor widens by the lower-side distance.
+    bound = metrics.development_floor(*development, held_out[1], True)
+    assert metrics.rate("recall", *held_out, target=bound).passed is True
 
 
 @pytest.mark.parametrize("higher,successes", [(True, 80), (False, 20)])

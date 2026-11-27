@@ -30,19 +30,19 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | plant-presence | openimages-plant-presence | sam3_recall | all | 1420/1500 | 94.7% (93.4–95.7%) | fail (≥ 95%) |
 | region-proposals | cocostuff-vegetation-proposals | half_covered_images | all | 135/1100 | 12.3% (10.5–14.3%) | fail (≥ 11%) |
 | region-proposals | cocostuff-vegetation-proposals | component_iou_recall | all | 280/4638 | 6.0% (5.4–6.8%) | pass (≥ 5%) |
-| region-proposals | cwfid-mask-coverage | foreground_90pct_covered | all | 20/20 | 100.0% (83.9–100.0%) | pass (≥ 72%) |
+| region-proposals | cwfid-mask-coverage | foreground_90pct_covered | all | 20/20 | 100.0% (83.9–100.0%) | pass (≥ 65%) |
 | region-proposals | imageweeds-region-recovery | box_recall | held-out | 166/327 | 50.8% (45.4–56.1%) | fail (≥ 46%) |
 | region-proposals | openimages-plant-boxes | sam3_box_recall | all | 1155/2949 | 39.2% (37.4–40.9%) | fail (≥ 38%) |
-| region-proposals | phenobench-instance-recovery | foreground_half_covered | held-out | 34/34 | 100.0% (89.8–100.0%) | pass (≥ 84%) |
+| region-proposals | phenobench-instance-recovery | foreground_half_covered | held-out | 34/34 | 100.0% (89.8–100.0%) | pass (≥ 78%) |
 | region-proposals | phenobench-instance-recovery | instance_recall | held-out | 318/463 | 68.7% (64.3–72.7%) | pass (≥ 46%) |
 | species-identification | imageweeds-species | conditional_top1 | held-out | 17/166 | 10.2% (6.5–15.8%) | fail (≥ 7%) |
-| species-identification | imageweeds-species | image_species_max_score_at5 | held-out | 8/153 | 5.2% (2.7–10.0%) | pass (≥ 1%) |
+| species-identification | imageweeds-species | image_species_max_score_at5 | held-out | 8/153 | 5.2% (2.7–10.0%) | pass (≥ 2%) |
 | species-identification | inat2021-target-species | plantclef_top1_recall | held-out | 9/16 | 56.2% (33.2–76.9%) | pass (≥ 5%) |
-| species-identification | inat2021-target-species | pilot_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 34%) |
-| species-identification | inat2021-target-species | local_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 25%) |
-| species-identification | plantclef2024-target-species | plantclef_top1_recall | test | 25/30 | 83.3% (66.4–92.7%) | pass (≥ 40%) |
-| species-identification | plantclef2024-target-species | pilot_cue_recall | test | 16/30 | 53.3% (36.1–69.8%) | pass (≥ 26%) |
-| species-identification | plantclef2024-target-species | local_cue_recall | test | 11/30 | 36.7% (21.9–54.5%) | pass (≥ 13%) |
+| species-identification | inat2021-target-species | pilot_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 28%) |
+| species-identification | inat2021-target-species | local_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 21%) |
+| species-identification | plantclef2024-target-species | plantclef_top1_recall | test | 25/30 | 83.3% (66.4–92.7%) | pass (≥ 38%) |
+| species-identification | plantclef2024-target-species | pilot_cue_recall | test | 16/30 | 53.3% (36.1–69.8%) | pass (≥ 25%) |
+| species-identification | plantclef2024-target-species | local_cue_recall | test | 11/30 | 36.7% (21.9–54.5%) | pass (≥ 14%) |
 | target-false-alarms | inat2021-target-false-alarms | pilot_cue_wrong_subject | all | 15/42680 | 0.0% (0.0–0.1%) | pass (≤ 1%) |
 | target-false-alarms | inat2021-target-false-alarms | local_cue_wrong_subject | all | 107/42680 | 0.3% (0.2–0.3%) | pass (≤ 1%) |
 | target-false-alarms | plantclef2024-target-false-alarms | pilot_cue_wrong_subject | all | 49/20503 | 0.2% (0.2–0.3%) | pass (≤ 1%) |
@@ -157,7 +157,7 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | development/large | 142/952 | 14.9% (12.8–17.3%) | — |
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | development/negative | 275/279 | 98.6% (96.4–99.4%) | — |
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | development/unassessable | 58/80 | 72.5% (61.9–81.1%) | — |
-| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | all | 20/20 | 100.0% (83.9–100.0%) | pass (≥ 72%) |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | all | 20/20 | 100.0% (83.9–100.0%) | pass (≥ 65%) |
 | region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | crop | 17/20 | 85.0% (64.0–94.8%) | — |
 | region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | weed | 20/20 | 100.0% (83.9–100.0%) | — |
 | region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_half_covered | all | 20/20 | 100.0% (83.9–100.0%) | — |
@@ -253,7 +253,7 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | held-out/date:05-26 | 8/8 | 100.0% (67.6–100.0%) | — |
 | region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | held-out/date:06-05 | 9/9 | 100.0% (70.1–100.0%) | — |
 | region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | held-out/weed | 16/32 | 50.0% (33.6–66.4%) | — |
-| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | held-out | 34/34 | 100.0% (89.8–100.0%) | pass (≥ 84%) |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | held-out | 34/34 | 100.0% (89.8–100.0%) | pass (≥ 78%) |
 | region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | held-out/crop | 34/34 | 100.0% (89.8–100.0%) | — |
 | region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | held-out/date:05-15 | 17/17 | 100.0% (81.6–100.0%) | — |
 | region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | held-out/date:05-26 | 8/8 | 100.0% (67.6–100.0%) | — |
@@ -406,7 +406,7 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | held-out/taxon:Ambrosia artemisiifolia | 2/33 | 6.1% (1.7–19.6%) | — |
 | species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | held-out/taxon:Bassia scoparia | 2/37 | 5.4% (1.5–17.7%) | — |
 | species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | held-out/taxon:Erigeron canadensis | 0/33 | 0.0% (0.0–10.4%) | — |
-| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | held-out | 8/153 | 5.2% (2.7–10.0%) | pass (≥ 1%) |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | held-out | 8/153 | 5.2% (2.7–10.0%) | pass (≥ 2%) |
 | species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | held-out/crop:maize | 3/82 | 3.7% (1.3–10.2%) | — |
 | species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | held-out/crop:soybean | 5/71 | 7.0% (3.0–15.4%) | — |
 | species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | held-out/taxon:Amaranthus retroflexus | 1/24 | 4.2% (0.7–20.2%) | — |
@@ -530,8 +530,8 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | species-identification | inat2021-target-species | iNat2021 validation | validation | plantclef_top5_recall | held-out | 13/16 | 81.2% (57.0–93.4%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | bioclip_top1_recall | held-out | 14/16 | 87.5% (64.0–96.5%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | bioclip_top5_recall | held-out | 16/16 | 100.0% (80.6–100.0%) | — |
-| species-identification | inat2021-target-species | iNat2021 validation | validation | pilot_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 34%) |
-| species-identification | inat2021-target-species | iNat2021 validation | validation | local_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 25%) |
+| species-identification | inat2021-target-species | iNat2021 validation | validation | pilot_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 28%) |
+| species-identification | inat2021-target-species | iNat2021 validation | validation | local_cue_recall | held-out | 10/16 | 62.5% (38.6–81.5%) | pass (≥ 21%) |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | plantclef_top1_recall | held-out/Clematis vitalba | 5/9 | 55.6% (26.7–81.1%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | plantclef_top5_recall | held-out/Clematis vitalba | 7/9 | 77.8% (45.3–93.7%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | bioclip_top1_recall | held-out/Clematis vitalba | 7/9 | 77.8% (45.3–93.7%) | — |
@@ -634,12 +634,12 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | pilot_cue_confusion | val/Cytisus scoparius | 0/10 | 0.0% (0.0–27.8%) | — |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | local_cue_confusion | val | 0/10 | 0.0% (0.0–27.8%) | — |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | local_cue_confusion | val/Cytisus scoparius | 0/10 | 0.0% (0.0–27.8%) | — |
-| species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | plantclef_top1_recall | test | 25/30 | 83.3% (66.4–92.7%) | pass (≥ 40%) |
+| species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | plantclef_top1_recall | test | 25/30 | 83.3% (66.4–92.7%) | pass (≥ 38%) |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | plantclef_top5_recall | test | 27/30 | 90.0% (74.4–96.5%) | — |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | bioclip_top1_recall | test | 25/30 | 83.3% (66.4–92.7%) | — |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | bioclip_top5_recall | test | 30/30 | 100.0% (88.6–100.0%) | — |
-| species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | pilot_cue_recall | test | 16/30 | 53.3% (36.1–69.8%) | pass (≥ 26%) |
-| species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | local_cue_recall | test | 11/30 | 36.7% (21.9–54.5%) | pass (≥ 13%) |
+| species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | pilot_cue_recall | test | 16/30 | 53.3% (36.1–69.8%) | pass (≥ 25%) |
+| species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | local_cue_recall | test | 11/30 | 36.7% (21.9–54.5%) | pass (≥ 14%) |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | plantclef_top1_recall | test/Clematis vitalba | 10/10 | 100.0% (72.2–100.0%) | — |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | plantclef_top5_recall | test/Clematis vitalba | 10/10 | 100.0% (72.2–100.0%) | — |
 | species-identification | plantclef2024-target-species | PlantCLEF 2024 single-plant publisher val/test | validation | bioclip_top1_recall | test/Clematis vitalba | 9/10 | 90.0% (59.6–98.2%) | — |

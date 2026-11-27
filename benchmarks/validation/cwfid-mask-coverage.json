@@ -12,7 +12,7 @@
       "value": 1.0,
       "low": 0.8388748419471806,
       "high": 1.0,
-      "target": 0.7175187272008905,
+      "target": 0.6450124060771218,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -331,5 +331,5 @@
     "excluded_overlap_id": "028",
     "split_rule": "publisher test minus train"
   },
-  "seconds": 12.21
+  "seconds": 36.77
 }

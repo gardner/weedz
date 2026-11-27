@@ -12,7 +12,7 @@
       "value": 0.12272727272727273,
       "low": 0.10463897956821486,
       "high": 0.14344144596069835,
-      "target": 0.11011196834900858,
+      "target": 0.11132683334727031,
       "ceiling": null,
       "passed": false,
       "higher_is_better": true
@@ -77,7 +77,7 @@
       "value": 0.060370849504096595,
       "low": 0.05387337699977689,
       "high": 0.06759597171079791,
-      "target": 0.04925000144386517,
+      "target": 0.04961186353224914,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -887,5 +887,5 @@
     "region_coverage_threshold": 0.5,
     "nonvegetation_proposal_threshold": 0.8
   },
-  "seconds": 551.42
+  "seconds": 559.1
 }

@@ -1208,7 +1208,7 @@
       "value": 0.625,
       "low": 0.38641040545502714,
       "high": 0.8151876744113636,
-      "target": 0.342021284681267,
+      "target": 0.28151888451425566,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -1221,7 +1221,7 @@
       "value": 0.625,
       "low": 0.38641040545502714,
       "high": 0.8151876744113636,
-      "target": 0.24635415514868167,
+      "target": 0.21005271504847478,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -1786,11 +1786,11 @@
     "open_clip_torch_version": "4.2.2",
     "pydantic_version": "2.14.3",
     "safetensors_version": "0.8.0",
-    "plantclef_evidence_identity": "b0a007412afc1ca9cfc7",
-    "bioclip_evidence_identity": "e2f0efa6cc2f50edb102",
-    "native_evidence_identity": "15a1c29267d6bd26d1e8",
+    "plantclef_evidence_identity": "2dcf6999fddafe7cc2ed",
+    "bioclip_evidence_identity": "52ccfe1d06c9a9a84106",
+    "native_evidence_identity": "6c272458408bf750db09",
     "sample_limit_applied": false,
     "scored_subjects": 70
   },
-  "seconds": 19.46
+  "seconds": 30.62
 }

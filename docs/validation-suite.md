@@ -30,9 +30,10 @@ Proposal, species-identification and whole-photo headline pass marks are
 **regression floors learned on development data**, not production quality
 targets. For development successes `s_d/n_d`, take the 95% Wilson interval
 `[L_d, U_d]`. At the development rate, compute the expected held-out interval
-`wilson(round((s_d/n_d) * n_h), n_h)` and its half-width `h`. A higher-is-better
-metric has target `max(0, L_d - h)`; a lower-is-better metric has ceiling
-`min(1, U_d + h)`. Only the held-out denominator enters this calculation, never
+`[L_e, U_e] = wilson(k, n_h)` with `k = round((s_d/n_d) * n_h)` and rate `e = k/n_h`.
+A higher-is-better metric has target `max(0, L_d - (e - L_e))`; a lower-is-better
+metric has ceiling `min(1, U_d + (U_e - e))`. The widening uses the distance on the
+side the pass test checks, because Wilson intervals are lopsided near 0% and 100%. Only the held-out denominator enters this calculation, never
 its successes. The whole held-out interval must still clear the gate. Missing
 development or held-out trials leave it ungated with a reason in `limits`.
 Receipts record each development count as `gate_development_<metric> = "s/n"`.
@@ -147,7 +148,7 @@ and gate from the latest full runs.
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Measured · 95.5% recall and 38.7% false alarms for SegFormer, 94.7% and 23.7% for SAM3 |
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Measured · at the pipeline's cutoff SAM3 flags 36.9% of photos with vegetation |
 | Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · **fail** (1/2 gates pass) · half-covered photos 12.3% (10.5–14.3%) |
-| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · **fail** · box recall 39.2% (37.4–40.9%); lower bound misses the 37.67% development floor |
+| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · **fail** · box recall 39.2% (37.4–40.9%); lower bound misses the 37.68% development floor |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured · **pass** (3/3 gates) · held-out pilot/local cues each 10/16 (62.5%, 38.6–81.5%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · **pass** (3/3 gates) · test top-1 25/30 (83.3%, 66.4–92.7%), pilot cues 16/30 (53.3%) |
@@ -178,7 +179,7 @@ their scores for review ranking. On small-vegetation photos, SAM3 recovered
 proposal recall before relying on boxes to surface small plants.
 
 The new box-recovery gate narrowly fails: development recovered 1,137/2,755
-boxes (41.3%), setting a 37.67% floor; held-out remains 1,155/2,949 (39.2%,
+boxes (41.3%), setting a 37.68% floor; held-out remains 1,155/2,949 (39.2%,
 37.4–40.9%). This flags consistency with development, while the low absolute
 recall still argues for testing prompts and focused views.
 
@@ -200,8 +201,8 @@ Compare `tree`, `grass` and `shrub` prompts before relying on these proposals
 for small or diffuse vegetation. [Proposal results](../benchmarks/validation/cocostuff-vegetation-proposals.json)
 
 The photo-coverage gate fails: development recovered 171/1,133 photos (15.1%),
-setting an 11.01% floor, while held-out's lower bound is 10.46%. Component IoU
-recovery passes its 4.93% floor at 280/4,638 (6.0%, 5.4–6.8%). Consistency on
+setting an 11.13% floor, while held-out's lower bound is 10.46%. Component IoU
+recovery passes its 4.96% floor at 280/4,638 (6.0%, 5.4–6.8%). Consistency on
 connected regions does not offset the low photo coverage; test the prompts
 before using proposals to discard photos.
 
@@ -246,7 +247,7 @@ publisher for model selection, so their results are reported separately.
 [Species results](../benchmarks/validation/plantclef2024-target-species.json)
 
 All three publisher-val-derived species gates pass on publisher test: floors
-are 40.42% for top-1, 25.78% for pilot cues and 13.42% for local cues.
+are 37.77% for top-1, 24.64% for pilot cues and 13.80% for local cues.
 Local recall still trails the pilot, so passing these regression floors does
 not justify replacing the pilot rule.
 
@@ -282,7 +283,7 @@ Watchlist recovery and the distance-filtered multilabel subset are unmeasured;
 labels do not support precision. [Publisher comparison](../benchmarks/validation/danish-roadside-publisher-baseline.json)
 
 On all 1,145 publisher test positives, production tiles recover 133 (11.6%,
-9.9–13.6%), passing the 5.75% floor learned from 105/1,181 validation positives.
+9.9–13.6%), passing the 5.88% floor learned from 105/1,181 validation positives.
 XP4 recovers 926/1,145 (80.9%, 78.5–83.0%) against 1,008/1,181 (85.4%) on
 validation. It is left ungated: its released cutoffs were fitted on publisher
 validation, so a validation-learned floor would be in-sample, and part of that
@@ -299,12 +300,12 @@ crop transfer alongside localization; aggregation alone leaves most labelled
 species unrecovered. Partial labels cannot establish precision.
 
 The held-out box gate fails: 166/327 (50.8%, 45.4–56.1%) has a lower bound
-below its 46.41% floor from 182/318 development matches. Keep both split and
+below its 46.32% floor from 182/318 development matches. Keep both split and
 pooled recovery visible when testing localization changes.
 
 The conditional top-1 gate also narrowly fails: 17/166 (10.2%, 6.5–15.8%)
-misses its 6.59% floor from 31/182 development identifications. Five-slot pair
-recall passes at 8/153 (5.2%, 2.7–10.0%) against a 1.40% floor from 15/150.
+misses its 7.33% floor from 31/182 development identifications. Five-slot pair
+recall passes at 8/153 (5.2%, 2.7–10.0%) against a 2.38% floor from 15/150.
 The low absolute pair recovery still calls for classifier and crop-transfer work.
 [Region results](../benchmarks/validation/imageweeds-region-recovery.json),
 [species results](../benchmarks/validation/imageweeds-species.json)
@@ -318,7 +319,7 @@ crop/weed recognition. [PhenoBench results](../benchmarks/validation/phenobench-
 
 Both PhenoBench gates pass: held-out instance recovery is 318/463 (68.7%,
 64.3–72.7%), and all 34 held-out photos are half covered (100%, 89.8–100%).
-The floors are 46.17% and 83.57%, respectively. Passing these development
+The floors are 46.13% and 78.50%, respectively. Passing these development
 floors does not remove the small-weed misses in the pooled diagnostics.
 
 On CWFID, SAM3 covers at least 90% of assessed positive pixels in all 20
@@ -329,7 +330,7 @@ precision. The earlier 60-photo SAM2 diagnostic used a different method and
 cohort. Keep dense-mask and small-instance checks alongside this result.
 [CWFID results](../benchmarks/validation/cwfid-mask-coverage.json)
 
-CWFID's 90%-coverage gate passes: 37/39 development photos set a 71.75% floor,
+CWFID's 90%-coverage gate passes: 37/39 development photos set a 64.50% floor,
 and the unchanged 20/20 test result has an 83.89% lower bound. This supports
 consistency on sparse assessed positives, alongside the dense-mask and instance
 checks above.

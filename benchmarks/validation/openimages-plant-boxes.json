@@ -12,7 +12,7 @@
       "value": 0.3916581892166836,
       "low": 0.3741927829665232,
       "high": 0.409405487068874,
-      "target": 0.37669685080443804,
+      "target": 0.3768104456205925,
       "ceiling": null,
       "passed": false,
       "higher_is_better": true
@@ -170,5 +170,5 @@
     "gate_rule": "95% development Wilson bound widened by expected held-out Wilson half-width",
     "gate_development_sam3_box_recall": "1137/2755"
   },
-  "seconds": 780.34
+  "seconds": 797.56
 }

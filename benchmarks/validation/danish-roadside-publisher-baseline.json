@@ -5448,7 +5448,7 @@
     "distance_filter": "3D Earth chord from filename coordinates; >100m from train+val+other scoring cohort",
     "scored_pairs": 778,
     "photos_without_positive_label": 483,
-    "recorded_inference_seconds": 1.177,
+    "recorded_inference_seconds": 1.377,
     "inference_timing_scope": "per-photo decode/load plus every reported inference method; excludes model initialization",
     "released_cutoffs_total_suggestions": 1254,
     "six_group_top1_total_suggestions": 1160,
@@ -5459,8 +5459,8 @@
     "gate_development_images": 1181,
     "gate_held_out_images": 1145,
     "gate_inference_images": 2909,
-    "gate_recorded_inference_seconds": 3.62,
-    "evidence_identity": "3663a3087adbfc1da40e",
+    "gate_recorded_inference_seconds": 4.298,
+    "evidence_identity": "419e3e8a73492cc3f31c",
     "cutoff_Solidago": 0.81298828125,
     "cutoff_Cytisus scoparius": 0.68896484375,
     "cutoff_Rosa rugosa": 0.72119140625,
@@ -5472,5 +5472,5 @@
     "calibration_split": "publisher validation (2160 photos), no test fitting",
     "calibration_rule": "released xp4_val; maximum Youden J on publisher validation"
   },
-  "seconds": 19.69
+  "seconds": 20.34
 }

@@ -844,7 +844,7 @@
       "value": 0.8333333333333334,
       "low": 0.6643564949358398,
       "high": 0.9266345762815145,
-      "target": 0.40419389117014815,
+      "target": 0.37770743276288876,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -896,7 +896,7 @@
       "value": 0.5333333333333333,
       "low": 0.36142299619873297,
       "high": 0.6976761109230025,
-      "target": 0.2577585443838464,
+      "target": 0.24640720506644953,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -909,7 +909,7 @@
       "value": 0.36666666666666664,
       "low": 0.21873920806100708,
       "high": 0.5448643634520511,
-      "target": 0.13419733171486278,
+      "target": 0.1379811114873284,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -1311,7 +1311,7 @@
     "sample_limit_applied": false,
     "scored_subjects": 80,
     "scored_observations": 80,
-    "evidence_identity": "44eaec619578fd674797",
+    "evidence_identity": "f85277134c4e3860a783",
     "torch_version": "2.15.0",
     "torchvision_version": "0.29.2",
     "timm_version": "1.0.31",
@@ -1329,5 +1329,5 @@
     "gate_split_policy": "publisher val development; publisher test held-out",
     "cohort_sha256": "05e2dc32af39f1db2dac216b8509159b6a16ff13aa7ee86689562be8d44cbc1e"
   },
-  "seconds": 17.98
+  "seconds": 29.56
 }

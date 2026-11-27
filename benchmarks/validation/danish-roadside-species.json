@@ -5043,7 +5043,7 @@
       "value": 0.11615720524017467,
       "low": 0.09886828076244097,
       "high": 0.13601309190119107,
-      "target": 0.05745055367620609,
+      "target": 0.058824564719703834,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -8732,7 +8732,7 @@
     "distance_filter": "3D Earth chord from filename coordinates; >100m from train+val+other scoring cohort",
     "scored_pairs": 778,
     "photos_without_positive_label": 483,
-    "recorded_inference_seconds": 715.579,
+    "recorded_inference_seconds": 716.051,
     "inference_timing_scope": "per-photo decode/load plus every reported inference method; excludes model initialization",
     "frame_top5_total_suggestions": 5800,
     "tiles_top5_total_suggestions": 5800,
@@ -8748,8 +8748,8 @@
     "gate_development_images": 1181,
     "gate_held_out_images": 1145,
     "gate_inference_images": 2909,
-    "gate_recorded_inference_seconds": 1795.106,
-    "evidence_identity": "c25916680497c963cf16"
+    "gate_recorded_inference_seconds": 1788.636,
+    "evidence_identity": "00c32502139a975f0ed4"
   },
-  "seconds": 1778.51
+  "seconds": 1856.1
 }

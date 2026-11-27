@@ -688,7 +688,7 @@
       "value": 1.0,
       "low": 0.8984854458466761,
       "high": 0.9999999999999999,
-      "target": 0.8357293297493693,
+      "target": 0.7849720526727073,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -766,7 +766,7 @@
       "value": 0.6868250539956804,
       "low": 0.6431889435502727,
       "high": 0.7273865414056306,
-      "target": 0.4617313397203655,
+      "target": 0.46126037145192833,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -1151,5 +1151,5 @@
     "proposal_budget": "all retained (128 per prompt)",
     "size_strata_pixels": "under512, 512to2047, 2048plus"
   },
-  "seconds": 36.27
+  "seconds": 52.73
 }

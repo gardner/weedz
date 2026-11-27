@@ -1468,7 +1468,7 @@
       "value": 0.10240963855421686,
       "low": 0.06492704635050434,
       "high": 0.15787755673904105,
-      "target": 0.06585582547322305,
+      "target": 0.07334971129868625,
       "ceiling": null,
       "passed": false,
       "higher_is_better": true
@@ -1780,7 +1780,7 @@
       "value": 0.05228758169934641,
       "low": 0.02673004958411372,
       "high": 0.09977641732765787,
-      "target": 0.013973036735338784,
+      "target": 0.023818110940115024,
       "ceiling": null,
       "passed": true,
       "higher_is_better": true
@@ -2434,5 +2434,5 @@
     "region_crop": "pipeline masked view, max side 1024, neutral square padding",
     "species_policies": "frequency and max_score, same five-slot budget"
   },
-  "seconds": 226.74
+  "seconds": 314.98
 }

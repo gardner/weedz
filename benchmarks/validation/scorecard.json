@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-27T10:23:35.029304Z",
+  "created": "2026-11-27T11:42:40.648526Z",
   "results": [
     {
       "check": "cocostuff-vegetation-presence",
@@ -658,7 +658,7 @@
           "value": 0.12272727272727273,
           "low": 0.10463897956821486,
           "high": 0.14344144596069835,
-          "target": 0.11011196834900858,
+          "target": 0.11132683334727031,
           "ceiling": null,
           "passed": false,
           "higher_is_better": true
@@ -723,7 +723,7 @@
           "value": 0.060370849504096595,
           "low": 0.05387337699977689,
           "high": 0.06759597171079791,
-          "target": 0.04925000144386517,
+          "target": 0.04961186353224914,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -1533,7 +1533,7 @@
         "region_coverage_threshold": 0.5,
         "nonvegetation_proposal_threshold": 0.8
       },
-      "seconds": 551.42
+      "seconds": 559.1
     },
     {
       "check": "cwfid-mask-coverage",
@@ -1549,7 +1549,7 @@
           "value": 1.0,
           "low": 0.8388748419471806,
           "high": 1.0,
-          "target": 0.7175187272008905,
+          "target": 0.6450124060771218,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -1868,7 +1868,7 @@
         "excluded_overlap_id": "028",
         "split_rule": "publisher test minus train"
       },
-      "seconds": 12.21
+      "seconds": 36.77
     },
     {
       "check": "imageweeds-region-recovery",
@@ -2092,7 +2092,7 @@
           "value": 0.5076452599388379,
           "low": 0.45368512861987387,
           "high": 0.5614278503212263,
-          "target": 0.46408099634789934,
+          "target": 0.46324655394599357,
           "ceiling": null,
           "passed": false,
           "higher_is_better": true
@@ -2429,7 +2429,7 @@
         "region_crop": "pipeline masked view, max side 1024, neutral square padding",
         "species_policies": "frequency and max_score, same five-slot budget"
       },
-      "seconds": 135.01
+      "seconds": 187.44
     },
     {
       "check": "openimages-plant-boxes",
@@ -2445,7 +2445,7 @@
           "value": 0.3916581892166836,
           "low": 0.3741927829665232,
           "high": 0.409405487068874,
-          "target": 0.37669685080443804,
+          "target": 0.3768104456205925,
           "ceiling": null,
           "passed": false,
           "higher_is_better": true
@@ -2603,7 +2603,7 @@
         "gate_rule": "95% development Wilson bound widened by expected held-out Wilson half-width",
         "gate_development_sam3_box_recall": "1137/2755"
       },
-      "seconds": 780.34
+      "seconds": 797.56
     },
     {
       "check": "phenobench-instance-recovery",
@@ -3295,7 +3295,7 @@
           "value": 1.0,
           "low": 0.8984854458466761,
           "high": 0.9999999999999999,
-          "target": 0.8357293297493693,
+          "target": 0.7849720526727073,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -3373,7 +3373,7 @@
           "value": 0.6868250539956804,
           "low": 0.6431889435502727,
           "high": 0.7273865414056306,
-          "target": 0.4617313397203655,
+          "target": 0.46126037145192833,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -3758,7 +3758,7 @@
         "proposal_budget": "all retained (128 per prompt)",
         "size_strata_pixels": "under512, 512to2047, 2048plus"
       },
-      "seconds": 36.27
+      "seconds": 52.73
     },
     {
       "check": "imageweeds-species",
@@ -5230,7 +5230,7 @@
           "value": 0.10240963855421686,
           "low": 0.06492704635050434,
           "high": 0.15787755673904105,
-          "target": 0.06585582547322305,
+          "target": 0.07334971129868625,
           "ceiling": null,
           "passed": false,
           "higher_is_better": true
@@ -5542,7 +5542,7 @@
           "value": 0.05228758169934641,
           "low": 0.02673004958411372,
           "high": 0.09977641732765787,
-          "target": 0.013973036735338784,
+          "target": 0.023818110940115024,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -6196,7 +6196,7 @@
         "region_crop": "pipeline masked view, max side 1024, neutral square padding",
         "species_policies": "frequency and max_score, same five-slot budget"
       },
-      "seconds": 226.74
+      "seconds": 314.98
     },
     {
       "check": "inat2021-target-species",
@@ -7408,7 +7408,7 @@
           "value": 0.625,
           "low": 0.38641040545502714,
           "high": 0.8151876744113636,
-          "target": 0.342021284681267,
+          "target": 0.28151888451425566,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -7421,7 +7421,7 @@
           "value": 0.625,
           "low": 0.38641040545502714,
           "high": 0.8151876744113636,
-          "target": 0.24635415514868167,
+          "target": 0.21005271504847478,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -7986,13 +7986,13 @@
         "open_clip_torch_version": "4.2.2",
         "pydantic_version": "2.14.3",
         "safetensors_version": "0.8.0",
-        "plantclef_evidence_identity": "b0a007412afc1ca9cfc7",
-        "bioclip_evidence_identity": "e2f0efa6cc2f50edb102",
-        "native_evidence_identity": "15a1c29267d6bd26d1e8",
+        "plantclef_evidence_identity": "2dcf6999fddafe7cc2ed",
+        "bioclip_evidence_identity": "52ccfe1d06c9a9a84106",
+        "native_evidence_identity": "6c272458408bf750db09",
         "sample_limit_applied": false,
         "scored_subjects": 70
       },
-      "seconds": 19.46
+      "seconds": 30.62
     },
     {
       "check": "plantclef2024-target-species",
@@ -8840,7 +8840,7 @@
           "value": 0.8333333333333334,
           "low": 0.6643564949358398,
           "high": 0.9266345762815145,
-          "target": 0.40419389117014815,
+          "target": 0.37770743276288876,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -8892,7 +8892,7 @@
           "value": 0.5333333333333333,
           "low": 0.36142299619873297,
           "high": 0.6976761109230025,
-          "target": 0.2577585443838464,
+          "target": 0.24640720506644953,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -8905,7 +8905,7 @@
           "value": 0.36666666666666664,
           "low": 0.21873920806100708,
           "high": 0.5448643634520511,
-          "target": 0.13419733171486278,
+          "target": 0.1379811114873284,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -9307,7 +9307,7 @@
         "sample_limit_applied": false,
         "scored_subjects": 80,
         "scored_observations": 80,
-        "evidence_identity": "44eaec619578fd674797",
+        "evidence_identity": "f85277134c4e3860a783",
         "torch_version": "2.15.0",
         "torchvision_version": "0.29.2",
         "timm_version": "1.0.31",
@@ -9325,7 +9325,7 @@
         "gate_split_policy": "publisher val development; publisher test held-out",
         "cohort_sha256": "05e2dc32af39f1db2dac216b8509159b6a16ff13aa7ee86689562be8d44cbc1e"
       },
-      "seconds": 17.98
+      "seconds": 29.56
     },
     {
       "check": "inat2021-target-false-alarms",
@@ -18450,7 +18450,7 @@
         "distance_filter": "3D Earth chord from filename coordinates; >100m from train+val+other scoring cohort",
         "scored_pairs": 778,
         "photos_without_positive_label": 483,
-        "recorded_inference_seconds": 1.177,
+        "recorded_inference_seconds": 1.377,
         "inference_timing_scope": "per-photo decode/load plus every reported inference method; excludes model initialization",
         "released_cutoffs_total_suggestions": 1254,
         "six_group_top1_total_suggestions": 1160,
@@ -18461,8 +18461,8 @@
         "gate_development_images": 1181,
         "gate_held_out_images": 1145,
         "gate_inference_images": 2909,
-        "gate_recorded_inference_seconds": 3.62,
-        "evidence_identity": "3663a3087adbfc1da40e",
+        "gate_recorded_inference_seconds": 4.298,
+        "evidence_identity": "419e3e8a73492cc3f31c",
         "cutoff_Solidago": 0.81298828125,
         "cutoff_Cytisus scoparius": 0.68896484375,
         "cutoff_Rosa rugosa": 0.72119140625,
@@ -18474,7 +18474,7 @@
         "calibration_split": "publisher validation (2160 photos), no test fitting",
         "calibration_rule": "released xp4_val; maximum Youden J on publisher validation"
       },
-      "seconds": 19.69
+      "seconds": 20.34
     },
     {
       "check": "danish-roadside-species",
@@ -23521,7 +23521,7 @@
           "value": 0.11615720524017467,
           "low": 0.09886828076244097,
           "high": 0.13601309190119107,
-          "target": 0.05745055367620609,
+          "target": 0.058824564719703834,
           "ceiling": null,
           "passed": true,
           "higher_is_better": true
@@ -27210,7 +27210,7 @@
         "distance_filter": "3D Earth chord from filename coordinates; >100m from train+val+other scoring cohort",
         "scored_pairs": 778,
         "photos_without_positive_label": 483,
-        "recorded_inference_seconds": 715.579,
+        "recorded_inference_seconds": 716.051,
         "inference_timing_scope": "per-photo decode/load plus every reported inference method; excludes model initialization",
         "frame_top5_total_suggestions": 5800,
         "tiles_top5_total_suggestions": 5800,
@@ -27226,10 +27226,10 @@
         "gate_development_images": 1181,
         "gate_held_out_images": 1145,
         "gate_inference_images": 2909,
-        "gate_recorded_inference_seconds": 1795.106,
-        "evidence_identity": "c25916680497c963cf16"
+        "gate_recorded_inference_seconds": 1788.636,
+        "evidence_identity": "00c32502139a975f0ed4"
       },
-      "seconds": 1778.51
+      "seconds": 1856.1
     }
   ]
 }
