@@ -259,6 +259,7 @@ receipt. Photos stay outside Git and retain their individual licence terms.
 Predictions resume per model stage and image hash under the same cache directory;
 their identity includes the adapter's imported pipeline sources and libraries.
 All metadata and checkpoint hashes are verified even when predictions are cached.
+One batch of up to 512 photos downloads while the preceding batch is scored.
 
 Set `CUDA_RUNTIME` to the existing CUDA-enabled uv environment (the iNat2021
 worktree's `.venv` for this run). Use its overlay without syncing it to CPU Torch:

@@ -1209,12 +1209,13 @@
     "device": "cuda:0",
     "download_workers": 3,
     "download_delay_seconds": 0.5,
+    "download_prefetch_subjects": 512,
     "target_organ_counts": "{\"Clematis vitalba\": {\"test\": {\"bark\": 4, \"branch\": 3, \"fruit\": 1, \"scan\": 2}, \"val\": {\"bark\": 6, \"habit\": 4}}, \"Cortaderia selloana\": {\"test\": {\"bark\": 10}, \"val\": {\"bark\": 9, \"fruit\": 1}}, \"Ulex europaeus\": {\"test\": {\"bark\": 7, \"branch\": 2, \"fruit\": 1}, \"val\": {\"bark\": 9, \"branch\": 1}}}",
     "scored_cohort_counts": "{\"test/lookalike\": 10, \"test/target\": 30, \"val/lookalike\": 10, \"val/target\": 30}",
     "sample_limit_applied": false,
     "scored_subjects": 80,
     "scored_observations": 80,
-    "evidence_identity": "fe797a6924ab83e7aaac",
+    "evidence_identity": "9e3bc7d49bf08578cb68",
     "torch_version": "2.15.0",
     "torchvision_version": "0.29.2",
     "timm_version": "1.0.31",
@@ -1226,5 +1227,5 @@
     "publisher_val_test_subjects": 99134,
     "publisher_val_test_binomial_taxa": 6598
   },
-  "seconds": 52.26
+  "seconds": 23.71
 }
