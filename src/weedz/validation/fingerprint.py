@@ -17,7 +17,10 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _module_path(module: str, root: Path) -> Path | None:
-    relative = Path(*module.split(".")[1:])
+    parts = module.split(".")[1:]
+    if not parts:  # `import weedz` itself
+        return Path("__init__.py") if (root / "__init__.py").is_file() else None
+    relative = Path(*parts)
     for candidate in (relative.with_suffix(".py"), relative / "__init__.py"):
         if (root / candidate).is_file():
             return candidate

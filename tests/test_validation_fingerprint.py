@@ -55,3 +55,13 @@ def test_the_inat_stages_cover_the_fp32_policy():
     for sources in PIPELINE_SOURCES.values():
         assert Path("classification/precision.py") in sources
         assert Path("species_aggregation.py") in sources
+
+
+def test_importing_from_the_package_root_follows_its_submodules(tmp_path: Path):
+    package = tmp_path / "weedz"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "entry.py").write_text("import weedz\nfrom weedz import tokens\n")
+    (package / "tokens.py").write_text("")
+    found = imported_sources(Path("entry.py"), root=package)
+    assert set(found) == {Path("entry.py"), Path("__init__.py"), Path("tokens.py")}
