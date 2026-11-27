@@ -199,3 +199,29 @@ def test_a_corrupt_image_response_is_retried_from_scratch(tmp_path: Path):
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         plantclef2024_data._download(client, "https://example.invalid/photo", partial, 0.0)
     assert partial.read_bytes() == good.getvalue()
+
+
+def test_a_mismatched_resume_range_restarts_the_download(tmp_path: Path):
+    import io
+
+    import httpx
+    from PIL import Image
+
+    from weedz.validation import plantclef2024_data
+
+    good = io.BytesIO()
+    Image.new("RGB", (4, 4)).save(good, format="JPEG")
+    partial = tmp_path / "photo.jpg.part"
+    partial.write_bytes(good.getvalue()[:10])
+    ranges: list[str | None] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        ranges.append(request.headers.get("Range"))
+        if request.headers.get("Range"):
+            return httpx.Response(206, headers={"Content-Range": "bytes 0-9/99"}, content=b"x")
+        return httpx.Response(200, content=good.getvalue())
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        plantclef2024_data._download(client, "https://example.invalid/photo", partial, 0.0)
+    assert partial.read_bytes() == good.getvalue()
+    assert ranges == ["bytes=10-", None]

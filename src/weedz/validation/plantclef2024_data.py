@@ -116,6 +116,10 @@ class ImageReceipt(BaseModel):
     author: str
 
 
+class UnresumableRange(ValueError):
+    """The server's resumed range doesn't continue the partial file."""
+
+
 def _transfer(client: httpx.Client, url: str, partial: Path) -> None:
     offset = partial.stat().st_size if partial.exists() else 0
     headers = {"Accept-Encoding": "identity"}
@@ -128,7 +132,7 @@ def _transfer(client: httpx.Client, url: str, partial: Path) -> None:
         if response.status_code == 206 and not response.headers.get("Content-Range", "").startswith(
             f"bytes {offset}-"
         ):
-            raise ValueError(f"Unexpected PlantCLEF download range: {url}")
+            raise UnresumableRange(f"Unexpected PlantCLEF download range: {url}")
         with partial.open("ab" if response.status_code == 206 else "wb") as stream:
             for chunk in response.iter_bytes():
                 stream.write(chunk)
@@ -145,8 +149,9 @@ def _download(client: httpx.Client, url: str, partial: Path, delay: float) -> No
         except httpx.HTTPError:
             if attempt == 3:
                 raise
-        except OSError:
-            # Pillow rejected truncated or non-image bytes: resuming would keep them.
+        except (OSError, UnresumableRange):
+            # Pillow rejected the bytes, or the server can't continue this partial:
+            # resuming would keep bad bytes, so start again from scratch.
             partial.unlink(missing_ok=True)
             if attempt == 3:
                 raise
