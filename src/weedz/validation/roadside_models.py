@@ -57,7 +57,10 @@ def library_versions() -> dict[str, str]:
 
 
 def suggestions(crops: Sequence[Sequence[RankedTaxon]], budget: int = BUDGET) -> tuple[str, ...]:
-    return tuple(aggregate_taxa(crops, policy=POLICY, budget=budget))
+    # Max-score is unchanged by singleton crops. Alphabetical encounter order
+    # matches the production tile profile's tie-break before the budget is spent.
+    alternatives = sorted((row for crop in crops for row in crop), key=lambda row: row.taxon)
+    return tuple(aggregate_taxa([[row] for row in alternatives], policy=POLICY, budget=budget))
 
 
 def publisher_suggestions(scores: tuple[float, ...], cutoffs: tuple[float, ...]) -> tuple[str, ...]:
@@ -133,14 +136,17 @@ def _ranks(logits: np.ndarray, labels: tuple[str, ...]) -> list[list[RankedTaxon
 
 def _group_ranking(shares: np.ndarray, indices: list[list[int]]) -> tuple[str, ...]:
     values = [float(shares[:, group].max()) for group in indices]
-    return suggestions(
-        [
+    return tuple(
+        aggregate_taxa(
             [
-                RankedTaxon(taxon=group, score=value, score_kind=plantclef.SCORE_KIND)
-                for group, value in zip(GROUPS, values, strict=True)
-            ]
-        ],
-        budget=6,
+                [
+                    RankedTaxon(taxon=group, score=value, score_kind=plantclef.SCORE_KIND)
+                    for group, value in zip(GROUPS, values, strict=True)
+                ]
+            ],
+            policy=POLICY,
+            budget=6,
+        )
     )
 
 

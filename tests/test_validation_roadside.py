@@ -322,3 +322,24 @@ def test_publisher_predictor_replays_the_released_head_with_fixture_weights(tmp_
     assert result.methods["released_cutoffs"] == GROUPS[1:]
     assert result.methods["six_group_top1"] == ("Reynoutria",)
     assert result.inference_seconds > 0
+
+
+def test_baseline_configuration_describes_feature_head_and_variable_budget(tmp_path: Path):
+    result = roadside.run_check(
+        roadside.BASELINE,
+        RunContext(tmp_path, tmp_path),
+        [item(1, (BROOM,))],
+        lambda items: [prediction((BROOM,)) for _ in items],
+    )
+    assert result.configuration["feature_views"] == 926
+    assert result.configuration["class_count"] == 6
+    assert "variable" in str(result.configuration["suggestion_budget"])
+    assert "tile_fraction" not in result.configuration
+
+
+def test_suggestion_ties_match_the_production_tile_profile():
+    from weedz.classification.batch import _aggregate_views
+
+    crops = [[ranked("Rosa rugosa Thunb.", 0.5)], [ranked("Cytisus scoparius (L.) Link", 0.5)]]
+    production = _aggregate_views([{"topk": [row.model_dump() for row in crop]} for crop in crops])
+    assert roadside_models.suggestions(crops, budget=1) == (production[0]["taxon"],)

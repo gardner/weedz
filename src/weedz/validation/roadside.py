@@ -136,22 +136,23 @@ def selected_items(items: list[Item], limit: int | None) -> list[Item]:
     )[:limit]
 
 
-def _configuration(
-    check: str, context: RunContext, items: list[Item]
-) -> dict[str, str | int | float | bool]:
+def _model_configuration(baseline: bool) -> dict[str, str | int | float | bool]:
+    if baseline:
+        return {
+            "model": "released XP4 linear/max/sigmoid head over supplied BEiT features",
+            "class_count": 6,
+            "feature_views": 926,
+            "feature_dimensions": 768,
+            "suggestion_budget": "variable (six strict released cutoffs)",
+            "aggregation": "maximum logit over 926 feature rows then sigmoid",
+            "precision": "released CUDA FP16 autocast; CPU fallback FP32",
+            "prompts": "none (six publisher groups)",
+            "tuning": "none; frozen published validation cutoffs",
+            "comparison": "released XP4 thresholds from publisher validation only",
+        }
     return {
-        **library_versions(),
-        "limit": context.limit or "none",
-        "images": len(items),
-        "test_images": sum(item.source_split == "test" for item in items),
-        "multilabel_images": sum(item.source_split == "multilabel" for item in items),
-        "distance_filtered_images": sum(item.distance_filtered for item in items),
-        "device": context.device,
-        "split_salt": SALT,
-        "source_id": "publisher JPEG filename",
-        "split_policy": (
-            "split_of(source_id); held-out only within publisher test and separate multilabel"
-        ),
+        "model": "PlantCLEF2024 DINOv2 ViT-B/14 reg4 fully fine-tuned",
+        "class_count": 7806,
         "suggestion_budget": BUDGET,
         "aggregation": POLICY,
         "per_view_alternatives": BUDGET,
@@ -164,23 +165,41 @@ def _configuration(
         "max_tiles": MAX_TILES,
         "letterbox_rgb": json.dumps(LETTERBOX),
         "historical_grid": GRID,
-        "precision": "FP32 PlantCLEF; released XP4 CUDA FP16 autocast (CPU fallback FP32)",
+        "precision": "FP32; production fp32_math policy",
         "classifier_batch": BATCH_SIZE,
         "production_vocabulary": "all 7,806 PlantCLEF classes",
-        "prompts": "none (PlantCLEF closed vocabulary; XP4 six publisher outputs)",
+        "prompts": "none (PlantCLEF full closed vocabulary)",
         "tuning": "no dataset tuning; frozen production budget/geometry and historical 4x4 control",
+        "comparison": (
+            "six_group_* diagnostics rank only six Danish groups, unlike the "
+            "full-vocabulary five-slot main list"
+        ),
+    }
+
+
+def _configuration(
+    check: str, context: RunContext, items: list[Item]
+) -> dict[str, str | int | float | bool]:
+    return {
+        **library_versions(),
+        **_model_configuration(check == BASELINE),
+        "limit": context.limit or "none",
+        "images": len(items),
+        "test_images": sum(item.source_split == "test" for item in items),
+        "multilabel_images": sum(item.source_split == "multilabel" for item in items),
+        "distance_filtered_images": sum(item.distance_filtered for item in items),
+        "device": context.device,
+        "split_salt": SALT,
+        "source_id": "publisher JPEG filename",
+        "split_policy": (
+            "split_of(source_id); held-out only within publisher test and separate multilabel"
+        ),
         "distance_filter_metres": DISTANCE_METRES,
         "distance_filter": (
             "3D Earth chord from filename coordinates; >100m from train+val+other scoring cohort"
         ),
         "scored_pairs": sum(len(item.positives) for item in items),
         "photos_without_positive_label": sum(not item.positives for item in items),
-        "comparison": "released XP4 thresholds from publisher validation only"
-        if check == BASELINE
-        else (
-            "six_group_* diagnostics rank only six Danish groups, unlike the "
-            "full-vocabulary five-slot main list"
-        ),
     }
 
 
@@ -232,6 +251,8 @@ def run_check(
 
 
 def run(context: RunContext, *, baseline: bool = False) -> CheckResult:
+    if context.device not in {"cpu", "cuda:0"}:
+        raise ValueError("Roadside checks support cpu or cuda:0 only")
     staging = context.cache_dir / DATASET / "downloads"
     inputs = prepare_metadata(context.data_root, staging)
     items = load_items(
@@ -252,6 +273,9 @@ def run(context: RunContext, *, baseline: bool = False) -> CheckResult:
         for group, cutoff in zip(GROUPS, thresholds(context.data_root), strict=True):
             config[f"cutoff_{group}"] = cutoff
         config["publisher_revision"] = "043379010d0081eb23f58146bcdbf94f611b3f7f"
+        config["cutoff_comparison"] = "strict score > released threshold (float32)"
+        config["calibration_split"] = "publisher validation (2160 photos), no test fitting"
+        config["calibration_rule"] = "released xp4_val; maximum Youden J on publisher validation"
     return result.model_copy(update={"configuration": config})
 
 
