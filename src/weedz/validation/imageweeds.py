@@ -38,6 +38,7 @@ from weedz.validation.agri_models import (
 )
 from weedz.validation.cocostuff_data import Download, atomic_file, verified_download
 from weedz.validation.fingerprint import require_stored_orientation
+from weedz.validation.gates import apply_development_gates, cohort_sha256, hash_split_metrics
 from weedz.validation.metrics import Rate
 from weedz.validation.registry import Check, RunContext, register
 from weedz.validation.scorecard import CheckResult
@@ -49,7 +50,8 @@ IOU = 0.5
 logger = logging.getLogger(__name__)
 LIMITS = [
     "Already inspected during development. Publisher split unavailable; all 138 eligible "
-    "images are scored as validation with frozen rules, not a fresh held-out claim.",
+    "images retain pooled validation diagnostics. Gates use split_of(source_id) halves, "
+    "not a fresh independent held-out claim.",
     "Partial publisher boxes establish labelled positives only. Unmatched proposals and "
     "unlabelled species are unassessed; no precision or false-alarm rate is supported.",
     "All decoded-pixel aliases are quarantined, including conflicting annotation aliases. "
@@ -285,6 +287,21 @@ def _result(
     runtime: dict[str, str],
 ) -> CheckResult:
     species = name == SPECIES
+    config = {
+        **configuration(context),
+        "gate_split_policy": "split_of(source_id); pooled validation rows are diagnostic",
+        "cohort_sha256": cohort_sha256((i.source_id, i.crop) for i in items),
+    }
+    limits = list(LIMITS)
+    metrics = apply_development_gates(
+        metrics,
+        metrics,
+        ("conditional_top1", "image_species_max_score_at5") if species else ("box_recall",),
+        config,
+        limits,
+        development_stratum="development",
+        held_out_stratum="held-out",
+    )
     return CheckResult(
         check=name,
         stage="species-identification" if species else "region-proposals",
@@ -293,7 +310,7 @@ def _result(
         metrics=metrics,
         inputs=inputs | model_inputs(context.data_root, species=species),
         configuration={
-            **configuration(context),
+            **config,
             **sam_configuration(),
             **runtime,
             "images": len(items),
@@ -310,7 +327,7 @@ def _result(
             "species_policies": "frequency and max_score, same five-slot budget",
         },
         limits=[
-            *LIMITS,
+            *limits,
             *(
                 [
                     "Conditional identification excludes localization misses; "
@@ -332,7 +349,11 @@ def _result(
 def run_regions(context: RunContext) -> CheckResult:
     items, inputs, aliases = load_items(context)
     proposals, runtime = _proposals(context, items)
-    metrics = region_metrics(items, lambda item: proposals[item.source_id])
+    metrics = hash_split_metrics(
+        items,
+        lambda members: region_metrics(members, lambda item: proposals[item.source_id]),
+        lambda item: item.source_id,
+    )
     return _result(context, REGIONS, items, inputs, aliases, metrics, runtime)
 
 
@@ -340,7 +361,11 @@ def run_species(context: RunContext) -> CheckResult:
     items, inputs, aliases = load_items(context)
     proposals, runtime = _proposals(context, items)
     predictor = species_predictor(context, proposals)
-    metrics = species_metrics(items, predictor)
+    metrics = hash_split_metrics(
+        items,
+        lambda members, predict=predictor: species_metrics(members, predict),
+        lambda item: item.source_id,
+    )
     del predictor
     release_cuda()
     return _result(context, SPECIES, items, inputs, aliases, metrics, runtime)

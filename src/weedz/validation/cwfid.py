@@ -27,6 +27,7 @@ from weedz.validation.agri_models import (
     sam_predictor,
 )
 from weedz.validation.cocostuff_data import Download, verified_download
+from weedz.validation.gates import apply_development_gates, cohort_sha256, prefixed
 from weedz.validation.registry import Check, RunContext, register
 from weedz.validation.scorecard import CheckResult
 
@@ -37,6 +38,10 @@ logger = logging.getLogger(__name__)
 
 def test_ids(split: dict[str, list[int]]) -> list[str]:
     return [f"{number:03}" for number in sorted(set(split["test"]) - set(split["train"]))]
+
+
+def development_ids(split: dict[str, list[int]]) -> list[str]:
+    return [f"{number:03}" for number in sorted(set(split["train"]) - set(split["test"]))]
 
 
 def positive_masks(colours: np.ndarray) -> dict[str, BoolMask]:
@@ -50,7 +55,9 @@ def positive_masks(colours: np.ndarray) -> dict[str, BoolMask]:
     return {"crop": crop, "weed": weed, "assessed": crop | weed}
 
 
-def load_items(context: RunContext) -> tuple[list[tuple[str, Path, Path]], dict[str, str]]:
+def load_items(
+    context: RunContext, development: bool = False
+) -> tuple[list[tuple[str, Path, Path]], dict[str, str]]:
     relative = Path("cwfid/source") / f"cwfid-{REVISION}.tar.gz"
     path = verified_download(ARCHIVE, context.data_root / relative)
     inputs = {str(relative): ARCHIVE.sha256}
@@ -59,7 +66,8 @@ def load_items(context: RunContext) -> tuple[list[tuple[str, Path, Path]], dict[
         prefix = f"dataset-{REVISION}"
         raw = source.read(f"{prefix}/train_test_split.yaml")
         materialize(context.data_root, Path("cwfid/train_test_split.yaml"), raw, inputs)
-        for name in select(test_ids(yaml.safe_load(raw)), context.limit):
+        ids = development_ids if development else test_ids
+        for name in select(ids(yaml.safe_load(raw)), context.limit):
             image = materialize(
                 context.data_root,
                 Path(f"cwfid/images/{name}.png"),
@@ -78,32 +86,55 @@ def load_items(context: RunContext) -> tuple[list[tuple[str, Path, Path]], dict[
 
 def run(context: RunContext, predict: Callable[[Path], list[dict]] | None = None) -> CheckResult:
     items, inputs = load_items(context)
+    development, development_inputs = load_items(context, development=True)
+    inputs.update(development_inputs)
     inputs.update(model_inputs(context.data_root))
     predict = predict or sam_predictor(context, "cwfid")
     tally = Tallies()
+    dev_tally = Tallies()
     proposals = 0
-    for index, (_, image, annotation) in enumerate(items, 1):
+    for index, (_, image, annotation) in enumerate(items + development, 1):
+        counts = tally if index <= len(items) else dev_tally
         with Image.open(annotation) as source:
             truth = positive_masks(np.asarray(source.convert("RGB")))
         shape = truth["assessed"].shape
         records = predict(image)
-        proposals += len(records)
+        if index <= len(items):
+            proposals += len(records)
         masks = [proposal_mask(row, size=(shape[1], shape[0]), kind="sam3") for row in records]
         union = mask_union(masks, shape)
         for category, mask in truth.items():
-            image_coverage(tally, mask, union, "all" if category == "assessed" else category)
-        logger.info("CWFID %d/%d", index, len(items))
+            image_coverage(counts, mask, union, "all" if category == "assessed" else category)
+        logger.info("CWFID %d/%d", index, len(items) + len(development))
     del predict
     release_cuda()
+    config = configuration(context)
+    config["cohort_sha256"] = cohort_sha256(
+        [(name, "held-out") for name, *_ in items]
+        + [(name, "development") for name, *_ in development]
+    )
+    config["gate_split_policy"] = (
+        "publisher train development; publisher test held-out; exclude 028"
+    )
+    config["gate_development_images"] = len(development)
+    limits: list[str] = []
+    metrics = apply_development_gates(
+        tally.metrics(),
+        dev_tally.metrics(),
+        ("foreground_90pct_covered",),
+        config,
+        limits,
+    )
+    metrics.extend(prefixed(dev_tally.metrics(), "development"))
     return CheckResult(
         check=NAME,
         stage="region-proposals",
         dataset="CWFID publisher test, no overlap",
         split="test",
-        metrics=tally.metrics(),
+        metrics=metrics,
         inputs=inputs,
         configuration={
-            **configuration(context),
+            **config,
             **sam_configuration(),
             **tally.means(),
             "images": len(items),
@@ -113,6 +144,7 @@ def run(context: RunContext, predict: Callable[[Path], list[dict]] | None = None
             "split_rule": "publisher test minus train",
         },
         limits=[
+            *limits,
             "Already inspected during development. The publisher test split is preserved, "
             "but this is not independent held-out evidence. Source image 028 is in both "
             "train and test and is excluded.",

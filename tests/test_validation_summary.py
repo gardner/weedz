@@ -45,3 +45,18 @@ def test_empty_scorecard_and_stages_without_gates_still_render():
     assert "## Full results" in Scorecard.collect([]).markdown()
     markdown = Scorecard.collect([_result("a", "stage", [rate("recall", 9, 10)])]).markdown()
     assert "| stage | 1 | 0 | 0 | 0 |" in markdown
+
+
+def test_headlines_include_development_derived_held_out_gates_only():
+    result = _result(
+        "species",
+        "species-identification",
+        [
+            rate("top1_recall", 90, 100),
+            rate("top1_recall", 45, 50, stratum="held-out", target=0.7),
+            rate("diagnostic_recall", 45, 50, stratum="test", target=0.7),
+        ],
+    ).model_copy(update={"configuration": {"gate_development_top1_recall": "45/50"}})
+    headline = Scorecard.collect([result]).markdown().split("## Full results")[0]
+    assert "| species | top1_recall | held-out | 45/50 |" in headline
+    assert "diagnostic_recall" not in headline

@@ -59,6 +59,24 @@ def wilson(successes: int, total: int, z: float = Z_95) -> tuple[float, float]:
     return max(0.0, centre - half), min(1.0, centre + half)
 
 
+def development_floor(
+    successes: int, total: int, held_out_total: int, higher_is_better: bool
+) -> float | None:
+    """Development Wilson bound widened by the expected held-out half-width.
+
+    Only the held-out denominator enters the calculation. Empty development or
+    held-out samples cannot establish a regression gate.
+    """
+    if not 0 <= successes <= total or held_out_total < 0:
+        raise ValueError("Development gates require valid counts")
+    if not total or not held_out_total:
+        return None
+    low, high = wilson(successes, total)
+    expected_low, expected_high = wilson(round(successes / total * held_out_total), held_out_total)
+    half_width = (expected_high - expected_low) / 2
+    return max(0.0, low - half_width) if higher_is_better else min(1.0, high + half_width)
+
+
 def newcombe(
     successes: int, total: int, baseline_successes: int, baseline_total: int
 ) -> tuple[float, float]:

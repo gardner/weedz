@@ -35,6 +35,7 @@ from weedz.validation.cocostuff_regions import (
     ProposalCounts,
     score_proposals,
 )
+from weedz.validation.gates import apply_development_gates, cohort_sha256, prefixed
 from weedz.validation.metrics import Outcome, Rate, binary_metrics, rate
 from weedz.validation.registry import Check, RunContext, register
 from weedz.validation.scorecard import CheckResult
@@ -316,17 +317,35 @@ def _score_images(data: Dataset, items: Sequence[ImageItem], predict: SamPredict
 def run_proposals(context: RunContext) -> CheckResult:
     with dataset(context, proposals=True) as data:
         items = _selected(data, context, ("held-out",))
-        metrics = _score_images(data, items, sam_predictor(context))
+        development = _selected(data, context, ("development",))
+        predict = sam_predictor(context)
+        metrics = _score_images(data, items, predict)
+        dev_metrics = _score_images(data, development, predict)
+        del predict
         release_cuda()
+        config = _configuration(context)
+        config["cohort_sha256"] = cohort_sha256(
+            (item.source_id, item.split) for item in items + development
+        )
+        config["gate_split_policy"] = "split_of(source_id); all rows contain held-out only"
+        config["gate_development_images"] = len(development)
+        limits: list[str] = []
+        metrics = apply_development_gates(
+            metrics,
+            dev_metrics,
+            ("half_covered_images", "component_iou_recall"),
+            config,
+            limits,
+        )
         return CheckResult(
             check=PROPOSALS,
             stage="region-proposals",
             dataset=DATASET,
             split="held-out",
-            metrics=metrics,
+            metrics=metrics + prefixed(dev_metrics, "development"),
             inputs=data.inputs | model_inputs(context.data_root, presence=False),
             configuration={
-                **_configuration(context),
+                **config,
                 "held_out_images": len(items),
                 "proposal_budget": PROPOSAL_LIMIT,
                 "proposal_order": (
@@ -338,6 +357,7 @@ def run_proposals(context: RunContext) -> CheckResult:
                 "nonvegetation_proposal_threshold": BACKGROUND_THRESHOLD,
             },
             limits=[
+                *limits,
                 *COMMON_LIMITS,
                 "Connected vegetation pixels can merge several plants or split a single plant. "
                 "Non-crowd potted plant polygon instances are scored separately.",

@@ -195,7 +195,9 @@ def _multilabel(path: Path) -> dict[str, tuple[str, ...]]:
     return labels
 
 
-def load_items(csv_path: Path, membership: list[Membership]) -> list[Item]:
+def load_items(
+    csv_path: Path, membership: list[Membership], *, include_development: bool = False
+) -> list[Item]:
     labels = _multilabel(csv_path)
     if set(labels) != {name for split, _, name in membership if split == "multilabel"}:
         raise ValueError("Roadside CSV and multilabel membership disagree")
@@ -207,6 +209,8 @@ def load_items(csv_path: Path, membership: list[Membership]) -> list[Item]:
             position(name) for split, _, name in membership if split in {"train", "val", other}
         ]
         trees[cohort] = KDTree(points) if points else None
+    if include_development:
+        trees["val"] = None
     items = []
     seen: set[str] = set()
     for split, folder, name in membership:
@@ -218,7 +222,8 @@ def load_items(csv_path: Path, membership: list[Membership]) -> list[Item]:
         positives = labels[name] if split == "multilabel" else _folder_label(folder)
         tree = trees[split]
         far = tree is None or float(tree.query(position(name))[0]) > DISTANCE_METRES
-        items.append(Item(name, f"{split}/{folder}/{name}", split, positives, split_of(name), far))
+        frozen = "development" if split == "val" else split_of(name)
+        items.append(Item(name, f"{split}/{folder}/{name}", split, positives, frozen, far))
     return items
 
 

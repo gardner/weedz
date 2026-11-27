@@ -86,18 +86,24 @@ def _summary(results: list[CheckResult]) -> list[str]:
             "",
             "## Headline gates",
             "",
-            "Gated metrics in the `all` stratum. Counts above include gates in every stratum.",
+            "Gated `all` metrics and development-derived held-out headlines. "
+            "Counts above include gates in every stratum.",
             "",
-            "| Stage | Check | Metric | Count | Rate (95% CI) | Gate |",
-            "| --- | --- | --- | ---: | --- | --- |",
+            "| Stage | Check | Metric | Stratum | Count | Rate (95% CI) | Gate |",
+            "| --- | --- | --- | --- | ---: | --- | --- |",
         ]
     )
     for result in results:
         for metric in result.metrics:
-            if metric.stratum == "all" and is_gated(metric):
+            learned = (
+                metric.stratum in {"held-out", "test"}
+                and f"gate_development_{metric.name}" in result.configuration
+            )
+            if (metric.stratum == "all" or learned) and is_gated(metric):
                 rows.append(
                     f"| {result.stage} | {result.check} | {metric.name} "
-                    f"| {metric.successes}/{metric.total} | {_interval(metric)} | {_gate(metric)} |"
+                    f"| {metric.stratum} | {metric.successes}/{metric.total} "
+                    f"| {_interval(metric)} | {_gate(metric)} |"
                 )
     return [*rows, ""]
 
