@@ -74,3 +74,16 @@ def test_compare_reports_removed_checks_when_given_individual_results(
     main(["compare", str(baseline), *map(str, paths)])
     output = capsys.readouterr().out
     assert "removed" in output and "new" in output
+
+
+def test_the_documented_glob_can_include_the_baseline_scorecard(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    # `validate compare benchmarks/validation/scorecard.json benchmarks/validation/*.json`
+    # passes the baseline scorecard among the results; it must not count twice.
+    card = tmp_path / "scorecard.json"
+    Scorecard.collect([_result(90)]).write(card)
+    result = tmp_path / "screen.json"
+    result.write_text(_result(90).model_dump_json())
+    main(["compare", str(card), str(card), str(result)])
+    assert "no clear change" in capsys.readouterr().out

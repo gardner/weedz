@@ -65,15 +65,25 @@ def _scorecard(args: argparse.Namespace) -> None:
         args.markdown.write_text(card.markdown())
 
 
-def _compare(args: argparse.Namespace) -> None:
-    results: list[CheckResult] = []
-    for path in args.results:
+def _rerun(paths: list[Path]) -> Scorecard:
+    """Collect reruns; a check's own result file wins over a scorecard that also holds it.
+
+    The documented `benchmarks/validation/*.json` glob includes scorecard.json itself.
+    """
+    single: dict[str, CheckResult] = {}
+    carded: dict[str, CheckResult] = {}
+    for path in paths:
         data = json.loads(path.read_text())
         if "results" in data:
-            results.extend(Scorecard.model_validate(data).results)
+            carded |= {result.check: result for result in Scorecard.model_validate(data).results}
         else:
-            results.append(CheckResult.model_validate(data))
-    comparison = compare_scorecards(Scorecard.read(args.baseline), Scorecard.collect(results))
+            result = CheckResult.model_validate(data)
+            single[result.check] = result
+    return Scorecard.collect(list((carded | single).values()))
+
+
+def _compare(args: argparse.Namespace) -> None:
+    comparison = compare_scorecards(Scorecard.read(args.baseline), _rerun(args.results))
     print(comparison.markdown(limit=20), end="")
     if args.markdown:
         args.markdown.write_text(comparison.markdown())

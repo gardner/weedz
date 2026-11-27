@@ -43,7 +43,7 @@ percentage points, with 95% [Newcombe method 10](https://doi.org/10.1002/(SICI)1
 An interval excluding zero means **better** or **worse**; otherwise **no clear change**.
 Targets mean higher is better; ceilings mean lower. Otherwise explicit direction
 wins, then recall/recovery/coverage (higher) or false_alarm/wrong_subject/confusion (lower).
-Unknown directions stay **changed** without a verdict. Missing metrics are **new**
+A metric with no known direction is **changed** when its interval excludes 0, without a better/worse verdict. Missing metrics are **new**
 or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
 
 The console shows 20 rows, worst first; markdown includes every row. Changed hashes,
@@ -57,8 +57,8 @@ uv run main.py validate compare benchmarks/validation/scorecard.json \
   benchmarks/validation/scorecard.json
 ```
 
-This exits 0 across 728 metrics: **461 no clear change**, 136 unmeasured and 131
-changed (unknown direction). Every measured directional metric shows no clear change.
+This exits 0 across 728 metrics: **592 no clear change** and 136 unmeasured.
+Metrics unmeasured in both runs are listed last.
 SegFormer's Open Images recall is 1,433/1,500 each: difference 0.0 points (95% CI −1.5 to +1.5).
 
 Runs on the same images are **paired**; this independent-proportions interval is conservative.

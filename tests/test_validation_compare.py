@@ -124,6 +124,7 @@ def test_zero_denominators_are_unmeasured(empty_baseline: bool, empty_rerun: boo
         ("recall", 90, 91, "no clear change"),
         ("recall", 90, 90, "no clear change"),
         ("unknown", 90, 20, "changed"),
+        ("unknown", 90, 90, "no clear change"),
     ],
 )
 def test_verdicts_use_direction_and_the_difference_interval(
@@ -214,3 +215,15 @@ def test_the_largest_degradation_comes_first_in_either_direction():
     )
     comparison = compare_scorecards(baseline, rerun)
     assert [row.key[0] for row in comparison.rows] == ["z", "a"]
+
+
+def test_metrics_unmeasured_in_both_runs_come_last():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 50, 100))]
+    )
+    rerun = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 0, 0))]
+    )
+    rows = compare_scorecards(baseline, rerun).rows
+    # Losing a measurement surfaces; never having one doesn't crowd the table.
+    assert [row.key[0] for row in rows] == ["b", "a"]

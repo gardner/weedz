@@ -60,8 +60,8 @@ class Comparison:
             "Gated regressions are marked; exit code 1 if any get worse.",
             "",
             "Runs on the same images are paired; this independent-proportions interval "
-            "is conservative for this guard. Unknown directions are reported as changed, "
-            "without a better/worse verdict.",
+            "is conservative for this guard. A metric with no known direction is reported "
+            "as changed when its interval excludes 0, without a better/worse verdict.",
             "",
         ]
         for check, changes in self.changes.items():
@@ -128,10 +128,10 @@ def _direction(baseline: Rate, rerun: Rate) -> bool | None:
 
 
 def _verdict(difference: Difference, higher: bool | None) -> Verdict:
-    if higher is None:
-        return "changed"
     if difference.low <= 0 <= difference.high:
         return "no clear change"
+    if higher is None:
+        return "changed"
     return "better" if (difference.low > 0) == higher else "worse"
 
 
@@ -154,7 +154,9 @@ def _sort_key(row: MetricComparison) -> tuple[int, float, MetricKey]:
     degradation = 0.0
     if row.verdict == "worse" and row.difference and row.baseline and row.rerun:
         degradation = row.difference.value * (1 if _direction(row.baseline, row.rerun) else -1)
-    return ORDER.index(row.verdict), degradation, row.key
+    never_measured = row.verdict == "unmeasured" and not (row.baseline and row.baseline.total)
+    rank = len(ORDER) if never_measured else ORDER.index(row.verdict)
+    return rank, degradation, row.key
 
 
 def compare_scorecards(baseline: Scorecard, rerun: Scorecard) -> Comparison:
