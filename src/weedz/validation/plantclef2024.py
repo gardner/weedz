@@ -11,7 +11,9 @@ from itertools import batched
 from pathlib import Path
 
 from weedz.validation.fingerprint import imported_sources, pipeline_fingerprint
+from weedz.validation.gates import apply_development_gates, cohort_sha256
 from weedz.validation.inat2021 import (
+    HEADLINE_RECALL,
     Predictor,
     Scored,
     _configuration,
@@ -167,15 +169,31 @@ def run_check(
     configuration = _configuration_for(selected, context)
     configuration["publisher_val_test_subjects"] = len(photos)
     configuration["publisher_val_test_binomial_taxa"] = len({p.item.taxon for p in photos})
+    metrics = _metrics(selected, rows, targets=targets)
+    limits: list[str] = list(LIMITS)
+    if targets:
+        metrics = apply_development_gates(
+            metrics,
+            metrics,
+            HEADLINE_RECALL,
+            configuration,
+            limits,
+            development_stratum="val",
+            held_out_stratum="test",
+        )
+        configuration["gate_split_policy"] = "publisher val development; publisher test held-out"
+        configuration["cohort_sha256"] = cohort_sha256(
+            (p.item.source_id, f"{p.publisher_split}/{p.item.taxon}") for p in selected
+        )
     return CheckResult(
         check=check,
         stage=STAGES[check],
         dataset=DATASET,
         split="validation",
-        metrics=_metrics(selected, rows, targets=targets),
+        metrics=metrics,
         inputs=inputs or {},
         configuration=configuration,
-        limits=list(LIMITS),
+        limits=limits,
     )
 
 

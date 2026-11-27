@@ -3,11 +3,12 @@
 import json
 from collections import defaultdict
 from collections.abc import Callable
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from itertools import chain
 
 from weedz.discovery.inference import LABELS, MODELS, prompt
 from weedz.discovery.lookalikes import LOOKALIKES
+from weedz.validation.gates import apply_development_gates, cohort_sha256, hash_split_metrics
 from weedz.validation.inat2021_data import (
     IMAGES_ARCHIVE_MD5,
     LABELS_ARCHIVE_MD5,
@@ -47,6 +48,7 @@ DATASET = "iNat2021 validation"
 STAGES = {SPECIES_ID: "species-identification", FALSE_ALARMS: "target-false-alarms"}
 CUE_CEILING = 0.01
 WORST_SPECIES = 15
+HEADLINE_RECALL = ("plantclef_top1_recall", "pilot_cue_recall", "local_cue_recall")
 Predictor = Callable[[list[Item]], list[Prediction]]
 Scored = list[tuple[Item, Prediction]]
 Flag = Callable[[Item, Prediction], bool]
@@ -167,12 +169,26 @@ def _eligible(check: str, item: Item) -> bool:
 
 
 # Defined here, not in inat2021_models, whose edits invalidate every cached prediction.
-RUNTIME_LIBRARIES = ("torch", "torchvision", "timm", "pillow", "numpy", "open_clip_torch")
+RUNTIME_LIBRARIES = (
+    "torch",
+    "torchvision",
+    "timm",
+    "pillow",
+    "numpy",
+    "open_clip_torch",
+    "pydantic",
+    "safetensors",
+)
 
 
 def runtime(device: str) -> dict[str, str]:
     """Library versions and each stage's evidence key, for the result's configuration."""
-    versions = {f"{name}_version": version(name) for name in RUNTIME_LIBRARIES}
+    versions: dict[str, str] = {}
+    for name in RUNTIME_LIBRARIES:
+        try:
+            versions[f"{name}_version"] = version(name)
+        except PackageNotFoundError:
+            versions[f"{name}_version"] = "not installed"
     keys = {f"{stage}_evidence_identity": _identity(stage, device) for stage in PIPELINE_SOURCES}
     return versions | keys
 
@@ -218,12 +234,35 @@ def run_check(
     inputs: dict[str, str] | None = None,
     extra_limits: tuple[str, ...] = (),
 ) -> CheckResult:
-    # Every rule here is frozen and nothing is tuned on iNat2021, so both halves are unseen.
+    # Preserve pooled diagnostics; only source-ID held-out headlines receive fitted gates.
     selected = [item for item in items if _eligible(check, item)]
     selected = selected[: context.limit]
     rows = list(zip(selected, predictor(selected), strict=True))
-    metrics = score_species(rows) if check == SPECIES_ID else score_false_alarms(rows)
+    metrics = (
+        hash_split_metrics(rows, score_species, lambda row: row[0].source_id)
+        if check == SPECIES_ID
+        else score_false_alarms(rows)
+    )
     config = _configuration()
+    limits = [*LIMITS, *extra_limits]
+    if check == SPECIES_ID:
+        metrics = apply_development_gates(
+            metrics,
+            metrics,
+            HEADLINE_RECALL,
+            config,
+            limits,
+            development_stratum="development",
+            held_out_stratum="held-out",
+        )
+        config["gate_split_policy"] = "split_of(source_id); pooled validation rows are diagnostic"
+        config["cohort_sha256"] = cohort_sha256(
+            (item.source_id, f"{item.split}/{item.taxon}") for item in selected
+        )
+        limits.append(
+            "Regression gates use the source-ID development half; historical inspection "
+            "and pretraining overlap mean the held-out half is not fresh evidence."
+        )
     config["device"] = context.device
     config.update(runtime(context.device))
     config["sample_limit_applied"] = context.limit is not None
@@ -236,7 +275,7 @@ def run_check(
         metrics=metrics,
         inputs=inputs or {},
         configuration=config,
-        limits=[*LIMITS, *extra_limits],
+        limits=limits,
     )
 
 

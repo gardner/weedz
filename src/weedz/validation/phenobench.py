@@ -29,8 +29,10 @@ from weedz.validation.agri_models import (
     sam_predictor,
 )
 from weedz.validation.cocostuff_data import Download, verified_download
+from weedz.validation.gates import apply_development_gates, cohort_sha256, prefixed
 from weedz.validation.registry import Check, RunContext, register
 from weedz.validation.scorecard import CheckResult
+from weedz.validation.splits import split_of
 
 NAME = "phenobench-instance-recovery"
 ARCHIVE = Download(
@@ -132,6 +134,7 @@ def run(context: RunContext, predict: Callable[[Path], list[dict]] | None = None
     inputs.update(model_inputs(context.data_root))
     predict = predict or sam_predictor(context, "phenobench")
     tally = Tallies()
+    halves = {split: Tallies() for split in ("development", "held-out")}
     proposals = 0
     for index, (name, image, semantic, instance) in enumerate(items, 1):
         with Image.open(semantic) as source:
@@ -145,18 +148,38 @@ def run(context: RunContext, predict: Callable[[Path], list[dict]] | None = None
             for row in records
         ]
         score_image(tally, semantics, ids, masks, name.split("_")[0])
+        score_image(halves[split_of(name)], semantics, ids, masks, name.split("_")[0])
         logger.info("PhenoBench %d/%d", index, len(items))
     del predict
     release_cuda()
+    metrics = tally.metrics()
+    for split, counts in halves.items():
+        metrics.extend(prefixed(counts.metrics(), split))
+    config = configuration(context)
+    config["cohort_sha256"] = cohort_sha256((name, split_of(name)) for name, *_ in items)
+    config["gate_split_policy"] = "split_of(source_id); pooled validation rows are diagnostic"
+    limits = [
+        "Gates use source-ID development and held-out halves of the previously inspected "
+        "64-photo cohort; this is not fresh independent held-out evidence."
+    ]
+    metrics = apply_development_gates(
+        metrics,
+        metrics,
+        ("instance_recall", "foreground_half_covered"),
+        config,
+        limits,
+        development_stratum="development",
+        held_out_stratum="held-out",
+    )
     return CheckResult(
         check=NAME,
         stage="region-proposals",
         dataset="PhenoBench v1.1.0 development64",
         split="validation",
-        metrics=tally.metrics(),
+        metrics=metrics,
         inputs=inputs,
         configuration={
-            **configuration(context),
+            **config,
             **sam_configuration(),
             **tally.means(),
             "images": len(items),
@@ -167,6 +190,7 @@ def run(context: RunContext, predict: Callable[[Path], list[dict]] | None = None
             "size_strata_pixels": "under512, 512to2047, 2048plus",
         },
         limits=[
+            *limits,
             "Already inspected during development; the fixed 64-image publisher validation subset "
             "is not a fresh held-out cohort. No parameters were tuned in this port.",
             "Source semantics: 0 background, 1 crop, 2 weed, 3 partial crop, 4 partial weed. "

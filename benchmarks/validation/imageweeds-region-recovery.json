@@ -14,7 +14,8 @@
       "high": 0.5776534358980785,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "box_recall",
@@ -26,7 +27,8 @@
       "high": 0.5797496601733173,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "box_recall",
@@ -38,7 +40,8 @@
       "high": 0.6157688505422441,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "box_recall",
@@ -50,7 +53,8 @@
       "high": 0.6288707726998589,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "box_recall",
@@ -62,7 +66,8 @@
       "high": 0.513908557926655,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "box_recall",
@@ -74,7 +79,8 @@
       "high": 0.6770379918663759,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "box_recall",
@@ -86,7 +92,8 @@
       "high": 0.587996881588154,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "box_recall",
@@ -98,11 +105,220 @@
       "high": 0.6891431880536332,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development",
+      "successes": 182,
+      "total": 318,
+      "value": 0.5723270440251572,
+      "low": 0.5174056907577985,
+      "high": 0.6255218244497053,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development/crop:maize",
+      "successes": 129,
+      "total": 237,
+      "value": 0.5443037974683544,
+      "low": 0.48069459377066703,
+      "high": 0.6064996962109197,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development/crop:soybean",
+      "successes": 53,
+      "total": 81,
+      "value": 0.654320987654321,
+      "low": 0.5458937528984923,
+      "high": 0.7487735046840956,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development/taxon:Amaranthus retroflexus",
+      "successes": 32,
+      "total": 55,
+      "value": 0.5818181818181818,
+      "low": 0.45033103735230756,
+      "high": 0.7026223424648965,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development/taxon:Amaranthus tuberculatus",
+      "successes": 24,
+      "total": 51,
+      "value": 0.47058823529411764,
+      "low": 0.3405299020949959,
+      "high": 0.6047669578990353,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development/taxon:Ambrosia artemisiifolia",
+      "successes": 58,
+      "total": 95,
+      "value": 0.6105263157894737,
+      "low": 0.5100024053334903,
+      "high": 0.7024590480946263,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development/taxon:Bassia scoparia",
+      "successes": 33,
+      "total": 66,
+      "value": 0.5,
+      "low": 0.3827368802505011,
+      "high": 0.6172631197494989,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "development/taxon:Erigeron canadensis",
+      "successes": 35,
+      "total": 51,
+      "value": 0.6862745098039216,
+      "low": 0.5497300046930566,
+      "high": 0.7967232153447456,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out",
+      "successes": 166,
+      "total": 327,
+      "value": 0.5076452599388379,
+      "low": 0.45368512861987387,
+      "high": 0.5614278503212263,
+      "target": 0.46324655394599357,
+      "ceiling": null,
+      "passed": false,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out/crop:maize",
+      "successes": 93,
+      "total": 180,
+      "value": 0.5166666666666667,
+      "low": 0.44408135790723213,
+      "high": 0.5885554588287142,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out/crop:soybean",
+      "successes": 73,
+      "total": 147,
+      "value": 0.4965986394557823,
+      "low": 0.4168953578770951,
+      "high": 0.5764751650028997,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out/taxon:Amaranthus retroflexus",
+      "successes": 22,
+      "total": 46,
+      "value": 0.4782608695652174,
+      "low": 0.34124689434045685,
+      "high": 0.6186258692719597,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out/taxon:Amaranthus tuberculatus",
+      "successes": 26,
+      "total": 67,
+      "value": 0.3880597014925373,
+      "low": 0.28049048016711003,
+      "high": 0.5077691032787037,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out/taxon:Ambrosia artemisiifolia",
+      "successes": 49,
+      "total": 81,
+      "value": 0.6049382716049383,
+      "low": 0.49605477323606173,
+      "high": 0.7043189619200981,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out/taxon:Bassia scoparia",
+      "successes": 39,
+      "total": 76,
+      "value": 0.5131578947368421,
+      "low": 0.4028869302897975,
+      "high": 0.6221627122084885,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "box_recall",
+      "stratum": "held-out/taxon:Erigeron canadensis",
+      "successes": 30,
+      "total": 57,
+      "value": 0.5263157894736842,
+      "low": 0.3991801621874118,
+      "high": 0.6501283201887471,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
     }
   ],
   "limits": [
-    "Already inspected during development. Publisher split unavailable; all 138 eligible images are scored as validation with frozen rules, not a fresh held-out claim.",
+    "Already inspected during development. Publisher split unavailable; all 138 eligible images retain pooled validation diagnostics. Gates use split_of(source_id) halves, not a fresh independent held-out claim.",
     "Partial publisher boxes establish labelled positives only. Unmatched proposals and unlabelled species are unassessed; no precision or false-alarm rate is supported.",
     "All decoded-pixel aliases are quarantined, including conflicting annotation aliases. An image with any invalid source box is withheld whole; no clipping or label union.",
     "Box matching is one-to-one maximum cardinality at IoU >=0.5 in the first 100 retained SAM3 proposals. Boxes do not establish individual plant or mask accuracy.",
@@ -304,6 +520,10 @@
     "operating_points": "Frozen before this port; no threshold or budget tuning",
     "image_coverage_threshold": 0.5,
     "image_limit": "none",
+    "gate_split_policy": "split_of(source_id); pooled validation rows are diagnostic",
+    "cohort_sha256": "e194b52f4d331390d0df0a32b0e82ba70e0162c1686e469a0974134af938578f",
+    "gate_rule": "95% development Wilson bound widened by expected held-out Wilson half-width",
+    "gate_development_box_recall": "182/318",
     "sam3_max_side": 1024,
     "sam3_max_regions": 128,
     "sam3_max_prompt_bytes": 8000000,
@@ -337,5 +557,5 @@
     "region_crop": "pipeline masked view, max side 1024, neutral square padding",
     "species_policies": "frequency and max_score, same five-slot budget"
   },
-  "seconds": 194.93
+  "seconds": 187.44
 }

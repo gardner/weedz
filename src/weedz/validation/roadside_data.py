@@ -45,7 +45,7 @@ SPECIES = (
     ("Reynoutria japonica Houtt.", "Reynoutria sachalinensis (F.Schmidt) Nakai"),
 )
 PINS_PATH = Path(__file__).with_name("roadside_pins.json")
-PINS_SHA256 = "d96194dfb780852a11f8d7f14ae70fbd459c1d7deff0e833f0123c969890053b"
+PINS_SHA256 = "f70dad2a466c733d8e849e649e9df4e3cd5d1cb786ac29977a54254c98381838"
 DISTANCE_METRES = 100
 Membership = tuple[str, str, str]
 logger = logging.getLogger(__name__)
@@ -195,7 +195,9 @@ def _multilabel(path: Path) -> dict[str, tuple[str, ...]]:
     return labels
 
 
-def load_items(csv_path: Path, membership: list[Membership]) -> list[Item]:
+def load_items(
+    csv_path: Path, membership: list[Membership], *, include_development: bool = False
+) -> list[Item]:
     labels = _multilabel(csv_path)
     if set(labels) != {name for split, _, name in membership if split == "multilabel"}:
         raise ValueError("Roadside CSV and multilabel membership disagree")
@@ -207,6 +209,8 @@ def load_items(csv_path: Path, membership: list[Membership]) -> list[Item]:
             position(name) for split, _, name in membership if split in {"train", "val", other}
         ]
         trees[cohort] = KDTree(points) if points else None
+    if include_development:
+        trees["val"] = None
     items = []
     seen: set[str] = set()
     for split, folder, name in membership:
@@ -218,7 +222,8 @@ def load_items(csv_path: Path, membership: list[Membership]) -> list[Item]:
         positives = labels[name] if split == "multilabel" else _folder_label(folder)
         tree = trees[split]
         far = tree is None or float(tree.query(position(name))[0]) > DISTANCE_METRES
-        items.append(Item(name, f"{split}/{folder}/{name}", split, positives, split_of(name), far))
+        frozen = "development" if split == "val" else split_of(name)
+        items.append(Item(name, f"{split}/{folder}/{name}", split, positives, frozen, far))
     return items
 
 

@@ -11,6 +11,7 @@ from collections.abc import Callable
 from weedz.discovery.inference import LETTERBOX, MAX_STRIDE, MAX_TILES, TILE_FRACTION
 from weedz.discovery.lookalikes import LOOKALIKES
 from weedz.discovery.records import SPECIES as WATCHLIST
+from weedz.validation.gates import apply_development_gates, cohort_sha256
 from weedz.validation.metrics import Rate, rate
 from weedz.validation.registry import Check, RunContext, register
 from weedz.validation.roadside_data import (
@@ -118,7 +119,7 @@ def score(pairs: list[tuple[Item, Prediction]]) -> list[Rate]:
             for positive in item.positives:
                 for cohort in _cohorts(item):
                     for group in _groups(positive):
-                        count = counts[method, cohort, group]
+                        count = counts.setdefault((method, cohort, group), [0, 0])
                         count[0] += positive in recovered
                         count[1] += 1
     return [
@@ -132,8 +133,36 @@ def selected_items(items: list[Item], limit: int | None) -> list[Item]:
         raise ValueError("Roadside smoke limit must be positive")
     # Stable source IDs, rather than directory order or labels, define the smoke prefix.
     return sorted(
-        (item for item in items if item.split == "held-out"), key=lambda item: item.source_id
+        (item for item in items if item.split == "held-out" and item.source_split != "val"),
+        key=lambda item: item.source_id,
     )[:limit]
+
+
+def gate_items(items: list[Item], source_split: str, limit: int | None) -> list[Item]:
+    """Publisher val/test positives supply the regression trials; blanks add no trials."""
+    return sorted(
+        (item for item in items if item.source_split == source_split and item.positives),
+        key=lambda item: item.source_id,
+    )[:limit]
+
+
+def inference_items(items: list[Item], limit: int | None) -> list[Item]:
+    combined = [
+        *selected_items(items, limit),
+        *gate_items(items, "val", limit),
+        *gate_items(items, "test", limit),
+    ]
+    return list({item.source_id: item for item in combined}.values())
+
+
+def publisher_metrics(pairs: list[tuple[Item, Prediction]]) -> list[Rate]:
+    metrics = []
+    for source, split in (("val", "development"), ("test", "held-out")):
+        for metric in score([row for row in pairs if row[0].source_split == source]):
+            if metric.stratum == "all" or metric.stratum.startswith("all/"):
+                suffix = "" if metric.stratum == "all" else metric.stratum.removeprefix("all")
+                metrics.append(metric.model_copy(update={"stratum": split + suffix}))
+    return metrics
 
 
 def _model_configuration(baseline: bool) -> dict[str, str | int | float | bool]:
@@ -213,7 +242,10 @@ def run_check(
     inputs: dict[str, str] | None = None,
 ) -> CheckResult:
     selected = selected_items(items, context.limit)
-    predictions = predictor(selected)
+    cohort = inference_items(items, context.limit)
+    evidence = predictor(cohort)
+    by_id = dict(zip((item.source_id for item in cohort), evidence, strict=True))
+    predictions = [by_id[item.source_id] for item in selected]
     configuration = _configuration(check, context, selected)
     configuration["recorded_inference_seconds"] = round(
         sum(prediction.inference_seconds for prediction in predictions), 3
@@ -225,7 +257,41 @@ def run_check(
         suggestions = sum(len(prediction.methods[method]) for prediction in predictions)
         configuration[f"{method}_total_suggestions"] = suggestions
     limits = list(LIMITS)
+    configuration["cohort_sha256"] = cohort_sha256(
+        (i.source_id, f"{i.source_split}/{'|'.join(i.positives)}") for i in cohort
+    )
+    metrics = score(list(zip(selected, predictions, strict=True)))
+    metrics.extend(publisher_metrics(list(zip(cohort, evidence, strict=True))))
+    metrics = apply_development_gates(
+        metrics,
+        metrics,
+        # XP4's cutoffs were fitted on publisher val, so a val-learned floor would be
+        # in-sample: the baseline stays an ungated comparison.
+        () if check == BASELINE else ("tiles_top5_recall",),
+        configuration,
+        limits,
+        development_stratum="development",
+        held_out_stratum="held-out",
+    )
+    configuration["gate_split_policy"] = (
+        "publisher val positives development; all publisher test positives held-out"
+    )
+    configuration["gate_development_images"] = len(gate_items(items, "val", context.limit))
+    configuration["gate_held_out_images"] = len(gate_items(items, "test", context.limit))
+    configuration["gate_inference_images"] = len(cohort)
+    configuration["gate_recorded_inference_seconds"] = round(
+        sum(p.inference_seconds for p in evidence), 3
+    )
+    limits.append(
+        "Regression gates use labelled publisher val/test folder positives. Legacy "
+        "hash-selected test plus multilabel rows are retained ungated. No route split "
+        "was needed; neighbouring publisher val/test frames still limit independence."
+    )
     if check == BASELINE:
+        limits.append(
+            "XP4 is ungated: its released cutoffs maximise Youden J on publisher val, so a "
+            "floor learned on val positives would be in-sample and biased upward."
+        )
         limits.append(
             "XP4 comparison scores the released linear/max/sigmoid head over cached "
             "publisher BEiT features (926 views), not end-to-end feature extraction. "
@@ -244,7 +310,7 @@ def run_check(
         stage=STAGE,
         dataset=DATASET,
         split="held-out",
-        metrics=score(list(zip(selected, predictions, strict=True))),
+        metrics=metrics,
         limits=limits,
         inputs=inputs or {},
         configuration=configuration,
@@ -257,9 +323,11 @@ def run(context: RunContext, *, baseline: bool = False) -> CheckResult:
     staging = context.cache_dir / DATASET / "downloads"
     inputs = prepare_metadata(context.data_root, staging)
     items = load_items(
-        context.data_root / DATASET / "metadata/multilabel.csv", read_membership(context.data_root)
+        context.data_root / DATASET / "metadata/multilabel.csv",
+        read_membership(context.data_root),
+        include_development=True,
     )
-    selected = selected_items(items, context.limit)
+    selected = inference_items(items, context.limit)
     paths, assets = acquire_assets(context.data_root, staging, selected, baseline=baseline)
     inputs.update(assets)
     inputs.update(verify_models(context, baseline))

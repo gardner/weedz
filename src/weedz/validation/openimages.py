@@ -24,6 +24,7 @@ from weedz.validation.fingerprint import (
     pipeline_fingerprint,
     require_stored_orientation,
 )
+from weedz.validation.gates import apply_development_gates, cohort_sha256, prefixed
 from weedz.validation.metrics import Outcome, Rate, binary_metrics, rate
 from weedz.validation.openimages_data import (
     BOXES,
@@ -327,6 +328,8 @@ def _validate_context(context: RunContext, *, minimum: int) -> None:
 def _sam_all(
     items: Sequence[Item], images: Mapping[str, Path], context: RunContext, cache: Path
 ) -> dict[str, SamPrediction]:
+    for item in items:
+        require_stored_orientation(images[item.id])
     profile = cache / _profile(context, "sam3")
     return _predict_all(
         items,
@@ -399,12 +402,17 @@ def run_boxes(context: RunContext) -> CheckResult:
         item for item in select_items(items, "held-out", negative_budget=0) if item.present
     ][: context.limit]
     boxed = [item for item in positives if any(not label.group for label in item.boxes)]
+    development = [
+        item
+        for item in select_items(items, "development", negative_budget=0)
+        if item.present and any(not label.group for label in item.boxes)
+    ][: context.limit]
     cache = context.cache_dir / DATASET_DIR
-    images = _images(boxed, cache)
-    predictions = _sam_all(boxed, images, context, cache)
+    images = _images(boxed + development, cache)
+    predictions = _sam_all(boxed + development, images, context, cache)
     configuration = _configuration(scope, context)
     configuration.update(
-        cohort_images_sha256=_cohort_digest(images),
+        cohort_images_sha256=_cohort_digest({item.id: images[item.id] for item in boxed}),
         proposal_budget=PROPOSAL_BUDGET,
         proposal_prompts=", ".join(PROPOSAL_PROMPTS),
         proposal_order="plant then flower, descending score within each prompt",
@@ -413,13 +421,30 @@ def run_boxes(context: RunContext) -> CheckResult:
         positives_with_individual_boxes=len(boxed),
         group_of_boxes_excluded=sum(label.group for item in positives for label in item.boxes),
     )
+    configuration["gate_split_policy"] = "split_of(source_id); all rows contain held-out only"
+    configuration["cohort_sha256"] = cohort_sha256(
+        [(i.id, f"held-out/{i.stratum}") for i in boxed]
+        + [(i.id, f"development/{i.stratum}") for i in development]
+    )
+    configuration["gate_development_images"] = len(development)
+    for library in ("torch", "numpy", "pillow", "scipy", "pydantic"):
+        configuration[f"{library}_version"] = version(library)
+    dev_metrics = box_metrics(development, lambda item: predictions[item.id].boxes)
+    limits = COMMON_LIMITS + BOX_LIMITS
+    metrics = apply_development_gates(
+        box_metrics(boxed, lambda item: predictions[item.id].boxes),
+        dev_metrics,
+        ("sam3_box_recall",),
+        configuration,
+        limits,
+    )
     return CheckResult(
         check=BOX_RECALL,
         stage="region-proposals",
         dataset=DATASET,
         split="held-out",
-        metrics=box_metrics(boxed, lambda item: predictions[item.id].boxes),
-        limits=COMMON_LIMITS + BOX_LIMITS,
+        metrics=metrics + prefixed(dev_metrics, "development"),
+        limits=limits,
         inputs=inputs,
         configuration=configuration,
     )
