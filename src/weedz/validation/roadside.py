@@ -77,9 +77,9 @@ LIMITS = [
         "an independently signed publisher manifest."
     ),
     (
-        "Publisher code is MIT-licensed; the Zenodo dataset record exposes no "
-        "explicit licence identifier. Keep data outside Git; no redistribution or "
-        "broader licence claim is made."
+        "Dataset and XP4 release: CC BY 4.0 (Zenodo API records 14013930/13891416); "
+        "publisher code: MIT. The reused PlantCLEF checkpoint is CC BY-NC 4.0. "
+        "Images and checkpoints stay outside Git."
     ),
 ]
 
@@ -195,6 +195,15 @@ def run_check(
     selected = selected_items(items, context.limit)
     predictions = predictor(selected)
     configuration = _configuration(check, context, selected)
+    configuration["recorded_inference_seconds"] = round(
+        sum(prediction.inference_seconds for prediction in predictions), 3
+    )
+    configuration["inference_timing_scope"] = (
+        "per-photo decode/load plus every reported inference method; excludes model initialization"
+    )
+    for method in predictions[0].methods if predictions else ():
+        suggestions = sum(len(prediction.methods[method]) for prediction in predictions)
+        configuration[f"{method}_total_suggestions"] = suggestions
     limits = list(LIMITS)
     if check == BASELINE:
         limits.append(

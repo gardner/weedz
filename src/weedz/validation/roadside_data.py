@@ -6,6 +6,7 @@ import json
 import logging
 import math
 import re
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
@@ -78,6 +79,17 @@ def fetch_verified(path: Path, url: str, expected: str, staging: Path | None = N
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = (staging or path.parent) / (expected + ".part")
     partial.parent.mkdir(parents=True, exist_ok=True)
+    if partial.exists() and sha256(partial) == expected:
+        _publish_download(partial, path)
+        return
+    _stream_download(partial, url)
+    if sha256(partial) != expected:
+        partial.unlink()
+        raise ValueError(f"Roadside download checksum mismatch: {path.name}")
+    _publish_download(partial, path)
+
+
+def _stream_download(partial: Path, url: str) -> None:
     offset = partial.stat().st_size if partial.exists() else 0
     request = Request(url, headers={"Range": f"bytes={offset}-"} if offset else {})
     with urlopen(request, timeout=120) as response:
@@ -87,13 +99,14 @@ def fetch_verified(path: Path, url: str, expected: str, staging: Path | None = N
         with partial.open("ab" if resume else "wb") as stream:
             while chunk := response.read(1024 * 1024):
                 stream.write(chunk)
-    if sha256(partial) != expected:
-        partial.unlink()
-        raise ValueError(f"Roadside download checksum mismatch: {path.name}")
-    # Staging and data can be on separate filesystems.
-    import shutil
 
-    shutil.move(str(partial), path)
+
+def _publish_download(partial: Path, path: Path) -> None:
+    # Keep the verified staging file until an atomic rename publishes the copy.
+    temporary = path.with_name(path.name + ".tmp")
+    shutil.copyfile(partial, temporary)
+    temporary.replace(path)
+    partial.unlink()
 
 
 def source_pins() -> dict[str, Pin]:

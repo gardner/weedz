@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageOps
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from weedz.classification import plantclef
 from weedz.discovery.inference import region_boxes, square_view
@@ -33,7 +33,7 @@ BUDGET = 5
 BATCH_SIZE = 4
 GRID = 4
 POLICY = "max_score"
-LIBRARIES = ("torch", "torchvision", "timm", "pillow", "numpy", "scipy", "pydantic")
+LIBRARIES = ("torch", "torchvision", "timm", "pillow", "numpy", "scipy", "pydantic", "safetensors")
 PLANT_WEIGHTS = Path(f"{DATASET}/models/plantclef/plantclef2024.safetensors")
 PLANT_MAPPING = Path(f"{DATASET}/models/plantclef/species_id_mapping.txt")
 XP4_WEIGHTS = Path(f"{DATASET}/models/model_tiling_state_dict_xp4.pth")
@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 class Prediction(BaseModel):
     model_config = ConfigDict(frozen=True)
     methods: dict[str, tuple[str, ...]]
+    inference_seconds: float = Field(default=0.0, ge=0, allow_inf_nan=False)
 
 
 def library_versions() -> dict[str, str]:
@@ -155,6 +156,7 @@ def _load_plant(context: RunContext) -> Callable[[Path], Prediction]:
         offset += len(group)
 
     def predict(path: Path) -> Prediction:
+        started = time.monotonic()
         with Image.open(path) as source:
             image = ImageOps.exif_transpose(source).convert("RGB")
         production = region_boxes(*image.size)
@@ -182,7 +184,8 @@ def _load_plant(context: RunContext) -> Callable[[Path], Prediction]:
                 "six_group_whole_top3": whole_groups[:3],
                 "six_group_grid_top1": grid_groups[:1],
                 "six_group_grid_top3": grid_groups[:3],
-            }
+            },
+            inference_seconds=round(time.monotonic() - started, 6),
         )
 
     return predict
@@ -199,6 +202,7 @@ def _load_publisher(context: RunContext) -> Callable[[Path], Prediction]:
     cutoffs = thresholds(context.data_root)
 
     def predict(path: Path) -> Prediction:
+        started = time.monotonic()
         features = torch.load(path, weights_only=True, map_location="cpu")
         if features.shape != (926, 768) or not features.isfinite().all():
             raise ValueError("Invalid publisher BEiT feature tensor")
@@ -215,7 +219,8 @@ def _load_publisher(context: RunContext) -> Callable[[Path], Prediction]:
                 "released_cutoffs": publisher_suggestions(scores, cutoffs),
                 "six_group_top1": ranking[:1],
                 "six_group_top3": ranking[:3],
-            }
+            },
+            inference_seconds=round(time.monotonic() - started, 6),
         )
 
     return predict

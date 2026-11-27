@@ -218,3 +218,73 @@ Use `--device cuda:0` with an existing CUDA-enabled runtime and `--no-sync`
 to keep uv from replacing that runtime with the project's locked CPU Torch.
 Send smoke-run output to an external directory.
 [CUDA runtime setup](temporal-segmentation.md)
+
+### Rerun the Danish roadside checks
+
+Set `DATA_ROOT` to the external validation-data directory and `CLASSIFIER_RUNTIME`
+to the existing iNat2021 CUDA runtime's project directory. Keep that runtime;
+`uv sync` would replace its CUDA Torch with this project's CPU build.
+Reuse the already pinned PlantCLEF files from the iNat2021 data directory:
+
+```sh
+mkdir -p "$DATA_ROOT/danish-roadside/models/plantclef"
+for file in plantclef2024.safetensors species_id_mapping.txt; do
+  ln -s "../../../inat2021/models/plantclef/$file" \
+    "$DATA_ROOT/danish-roadside/models/plantclef/$file"
+done
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export UV_PROJECT_ENVIRONMENT="$CLASSIFIER_RUNTIME/.venv"
+export PYTHONPATH="$PWD/src:$UV_PROJECT_ENVIRONMENT/cuda-runtime"
+for check in danish-roadside-species danish-roadside-publisher-baseline; do
+  uv run --no-sync main.py validate run "$check" --data-root "$DATA_ROOT" \
+    --cache-dir "$DATA_ROOT/.cache" --device cuda:0 --output benchmarks/validation
+done
+uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
+  --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
+```
+
+For a smoke run add `--limit 50` and write to a separate output directory.
+Both checks score the same 1,160 hash-held-out photos: 1,060 of the publisher's
+2,140 test photos and 100 of its separate 206 multilabel photos. The source ID
+is the JPEG filename; `split_of` freezes membership before inference. No
+operating point is fitted on either scoring cohort. XP4 uses its published
+validation cutoffs, with the upstream strict `>` comparison and CUDA FP16
+autocast. Its suggestion count varies; it is a separate comparison.
+
+The main result is labelled-positive recovery in five full-vocabulary
+PlantCLEF suggestions, using the production `region_boxes`/`square_view`
+geometry and `aggregate_taxa` maximum-score policy. A frame control keeps the
+production centre crop. A fixed 4×4 grid and six-group top-one/top-three rows
+retain the earlier roadside method as diagnostics. The six-group rankings
+restrict alternatives to Danish labels, so they do not measure the same task
+as the main five-slot list. Neither method uses dataset labels as inference
+inputs. No screening or segmentation gate discards photos in this check.
+
+Metadata, original JPEGs and publisher feature tensors are downloaded from
+pinned URLs under `danish-roadside/` in the data root. The checked-in
+`src/weedz/validation/roadside_pins.json` records their SHA-256 hashes; it contains
+no images or labels. Interrupted downloads use staging under `--cache-dir` and
+resume with HTTP ranges. Every completed file and checkpoint is verified even
+when SQLite evidence under `--cache-dir/danish-roadside/` is reused. Cache
+identities include transitive pipeline sources, model hashes, library versions,
+geometry and budgets. The result records total command time and the sum of
+per-photo inference durations, including cached durations; the latter covers
+all diagnostic methods and excludes model initialization.
+
+Distance-filtered rows require more than 100 m from publisher training,
+validation and the other scoring cohort, using the filename-coordinate Earth
+chord rule. Scored neighbours are not separated from one another. These rows
+reduce a known leakage risk without establishing independent routes or sites.
+Only explicit positive pairs count. Blank CSV cells and the no-species folder
+supply no negatives to these checks. Watchlist recovery is unmeasured; broom
+is the only labelled pipeline lookalike. Wilson intervals do not account for
+correlation between neighbouring frames or labels within one photo.
+
+The publisher provides no per-file SHA-256 manifest, so the pins freeze bytes
+acquired over HTTPS, rather than independently authenticating them. The
+[dataset](https://zenodo.org/api/records/14013930) and
+[XP4 model release](https://zenodo.org/api/records/13891416) declare CC BY 4.0;
+the [publisher code](https://github.com/plantnet/roadside-invasive-plant-identification)
+is MIT-licensed. The reused PlantCLEF checkpoint is CC BY-NC 4.0. XP4 timing
+covers only loading supplied BEiT features and running the head, with no feature
+extraction; compare its recovery, not its runtime, with the image pipeline.

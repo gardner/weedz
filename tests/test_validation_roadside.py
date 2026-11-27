@@ -248,3 +248,77 @@ def test_fingerprint_tracks_transitive_pipeline_changes(
     monkeypatch.setattr(fingerprint, "version", lambda name: real_version(name) + ".changed")
     assert roadside_models.evidence_identity(context, False) != before
     assert original.is_dir()
+
+
+def test_complete_staging_download_recovers_without_network(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    import hashlib
+
+    monkeypatch.setattr(roadside_data, "urlopen", lambda *_args, **_kwargs: pytest.fail("network"))
+    contents = b"finished download before process crash"
+    expected = hashlib.sha256(contents).hexdigest()
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    (staging / (expected + ".part")).write_bytes(contents)
+    path = tmp_path / "image.jpg"
+    roadside_data.fetch_verified(path, "https://example.invalid/never-request", expected, staging)
+    assert path.read_bytes() == contents
+
+
+@pytest.mark.parametrize("valid", [True, False])
+def test_resumed_download_verifies_bytes_before_publishing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, valid: bool
+):
+    import hashlib
+    import io
+
+    expected = hashlib.sha256(b"abcd").hexdigest()
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    partial = staging / (expected + ".part")
+    partial.write_bytes(b"ab")
+
+    class Response(io.BytesIO):
+        status = 206
+        headers = {"Content-Range": "bytes 2-3/4"}
+
+    def fake(request, **_kwargs):
+        assert request.headers["Range"] == "bytes=2-"
+        return Response(b"cd" if valid else b"zz")
+
+    monkeypatch.setattr(roadside_data, "urlopen", fake)
+    destination = tmp_path / "images/source.jpg"
+    if valid:
+        roadside_data.fetch_verified(destination, "https://example.invalid", expected, staging)
+        assert destination.read_bytes() == b"abcd"
+    else:
+        with pytest.raises(ValueError, match="checksum"):
+            roadside_data.fetch_verified(destination, "https://example.invalid", expected, staging)
+        assert not destination.exists()
+    assert not partial.exists()
+
+
+def test_publisher_predictor_replays_the_released_head_with_fixture_weights(tmp_path: Path):
+    import json
+
+    import torch
+
+    root = tmp_path / "danish-roadside"
+    (root / "models").mkdir(parents=True)
+    (root / "metadata").mkdir()
+    weights = {
+        "linear_classif.weight": torch.zeros(6, 768),
+        "linear_classif.bias": torch.arange(6, dtype=torch.float32),
+    }
+    torch.save(weights, tmp_path / roadside_models.XP4_WEIGHTS)
+    (root / "metadata/xp4-thresholds.json").write_text(
+        json.dumps({"xp4_val": dict.fromkeys(GROUPS, 0.5)})
+    )
+    path = tmp_path / "features.pth"
+    torch.save(torch.zeros(926, 768), path)
+    predictor = roadside_models.load_predictor(RunContext(tmp_path, tmp_path), True)
+    result = predictor(path)
+    assert result.methods["released_cutoffs"] == GROUPS[1:]
+    assert result.methods["six_group_top1"] == ("Reynoutria",)
+    assert result.inference_seconds > 0
