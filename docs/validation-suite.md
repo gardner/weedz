@@ -73,11 +73,12 @@ and gate from the latest full runs.
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
+| Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · 82/778 positive pairs recovered at five suggestions: 10.5% (95% CI 8.6–12.9%) |
+| Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · released XP4 cutoffs recover 642/778: 82.5% (95% CI 79.7–85.0%), with a variable suggestion count |
 | Region proposals | `imageweeds-region-recovery` | ImageWeeds v2 primary138 | Measured · 348/645 boxes recovered (54.0%, 95% CI 50.1–57.8%) |
 | Species identification | `imageweeds-species` | ImageWeeds v2 primary138 | Measured · conditional top-1 48/348 (13.8%, 95% CI 10.6–17.8%); five-slot pair recall 23/303 (7.6%, 5.1–11.1%) |
 | Region proposals | `phenobench-instance-recovery` | PhenoBench development64 | Measured · 535/853 instances recovered (62.7%, 95% CI 59.4–65.9%) |
 | Region proposals | `cwfid-mask-coverage` | CWFID publisher test, excluding 028 | Measured · ≥90% of assessed positive pixels covered in 20/20 photos (100%, 95% CI 83.9–100%) |
-| Whole-photo species list | `danish-roadside-species` | Danish roadside | Planned |
 
 ### What this showed
 
@@ -125,6 +126,26 @@ Unfiltered BioCLIP ranked a watchlist prompt first on 38.7% of non-target
 subjects. Keep the agreement gate and prioritize same-genus
 comparisons when testing changes. The labels cover photographed subjects.
 [False-alarm results](../benchmarks/validation/inat2021-target-false-alarms.json)
+
+#### Danish roadside
+
+Production tiles recover **82/778 labelled photo–group pairs (10.5%, 95% CI
+8.6–12.9%)** within five full-vocabulary suggestions. Held-out publisher test
+recall is 76/577 (13.2%); the distance-filtered subset is 74/468 (15.8%).
+The separate multilabel cohort is 6/201 (3.0%). A 4×4 grid improves pooled
+recovery to 122/778 (15.7%, 13.3–18.4%). Broom recovery remains just 1/125
+for production and 2/125 for the grid. Compare finer views and aggregation policies on development,
+and inspect broom's candidate ranks before adopting a change.
+[Pipeline results](../benchmarks/validation/danish-roadside-species.json)
+
+The earlier 16/21 result ranked only six Danish groups on 25 reserved photos.
+The same grid diagnostic now recovers 562/778 (72.2%, 69.0–75.3%) at rank one;
+that restricted ranking explains much of the gap from the broad five-slot list.
+XP4's released cutoffs recover 642/778 (82.5%, 79.7–85.0%) with 1,254 suggestions
+across 1,160 photos. Its six trained outputs, variable budget and supplied
+features give a useful recovery comparison, with a different cost and task.
+Watchlist recovery and the distance-filtered multilabel subset are unmeasured;
+labels do not support precision. [Publisher comparison](../benchmarks/validation/danish-roadside-publisher-baseline.json)
 
 #### Agricultural datasets
 
@@ -256,6 +277,85 @@ Use `--device cuda:0` with an existing CUDA-enabled runtime and `--no-sync`
 to keep uv from replacing that runtime with the project's locked CPU Torch.
 Send smoke-run output to an external directory.
 [CUDA runtime setup](temporal-segmentation.md)
+
+### Rerun the Danish roadside checks
+
+Set `DATA_ROOT` to the external validation-data directory and `CLASSIFIER_RUNTIME`
+to the existing iNat2021 CUDA runtime's project directory. Keep that runtime;
+`uv sync` would replace its CUDA Torch with this project's CPU build.
+Reuse the already pinned PlantCLEF files from the iNat2021 data directory:
+
+```sh
+mkdir -p "$DATA_ROOT/danish-roadside/models/plantclef"
+for file in plantclef2024.safetensors species_id_mapping.txt; do
+  ln -s "../../../inat2021/models/plantclef/$file" \
+    "$DATA_ROOT/danish-roadside/models/plantclef/$file"
+done
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export UV_PROJECT_ENVIRONMENT="$CLASSIFIER_RUNTIME/.venv"
+export PYTHONPATH="$PWD/src:$UV_PROJECT_ENVIRONMENT/cuda-runtime"
+for check in danish-roadside-species danish-roadside-publisher-baseline; do
+  uv run --no-sync main.py validate run "$check" --data-root "$DATA_ROOT" \
+    --cache-dir "$DATA_ROOT/.cache" --device cuda:0 --output benchmarks/validation
+done
+uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
+  --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
+```
+
+For a smoke run add `--limit 50` and write to a separate output directory.
+Both checks score the same 1,160 hash-held-out photos: 1,060 of the publisher's
+2,140 test photos and 100 of its separate 206 multilabel photos. The source ID
+is the JPEG filename; `split_of` freezes membership before inference. No
+operating point is fitted on either scoring cohort. XP4 uses its published
+validation cutoffs, with the upstream strict `>` comparison and CUDA FP16
+autocast. Its suggestion count varies; it is a separate comparison.
+
+The main result is labelled-positive recovery in five full-vocabulary
+PlantCLEF suggestions, using the production `region_boxes`/`square_view`
+geometry and `aggregate_taxa` maximum-score policy. A frame control keeps the
+production centre crop. A fixed 4×4 grid and six-group top-one/top-three rows
+retain the earlier roadside method as diagnostics, including Pillow’s original
+rounded padding for odd margins. The six-group rankings
+restrict alternatives to Danish labels, so they do not measure the same task
+as the main five-slot list. Neither method uses dataset labels as inference
+inputs. No screening or segmentation gate discards photos in this check.
+
+Metadata, original JPEGs and publisher feature tensors are downloaded from
+pinned URLs under `danish-roadside/` in the data root. The checked-in
+`src/weedz/validation/roadside_pins.json` records their URLs and SHA-256 hashes.
+Image bytes and CSV rows stay outside Git. Interrupted downloads use staging
+under `--cache-dir` and
+resume with HTTP ranges. Every completed file and checkpoint is verified even
+when SQLite evidence under `--cache-dir/danish-roadside/` is reused. Cache
+identities include transitive pipeline sources, model hashes, actual imported
+library versions (including CUDA build suffixes), geometry and budgets. The
+result records total command time and the sum of
+per-photo inference durations, including cached durations; the latter covers
+all diagnostic methods and excludes model initialization.
+
+Distance-filtered rows require more than 100 m from publisher training,
+validation and the other scoring cohort, using the filename-coordinate Earth
+chord rule. Scored neighbours are not separated from one another. These rows
+reduce a known leakage risk without establishing independent routes or sites.
+Only explicit positive pairs count. Blank CSV cells and the no-species folder
+supply no negatives to these checks. Watchlist recovery is unmeasured; broom
+is the only labelled pipeline lookalike. Wilson intervals do not account for
+correlation between neighbouring frames or labels within one photo.
+
+The publisher provides no per-file SHA-256 manifest, so the pins freeze bytes
+acquired over HTTPS, rather than independently authenticating them. The
+[dataset](https://zenodo.org/api/records/14013930) and
+[XP4 model release](https://zenodo.org/api/records/13891416) declare CC BY 4.0;
+the [publisher code](https://github.com/plantnet/roadside-invasive-plant-identification)
+is MIT-licensed. The reused PlantCLEF checkpoint is CC BY-NC 4.0. XP4 timing
+covers only loading supplied BEiT features and running the head, with no feature
+extraction; compare its recovery, not its runtime, with the image pipeline.
+
+The final full checks took 14m 20s for PlantCLEF and 10.5s for XP4 on the shared
+RTX 5090 (`cuda:0`), with verified downloads and 50 smoke predictions cached.
+The PlantCLEF duration includes the frame, production tiles and historical grid.
+Its per-photo inference ledger totals 14m 33s including reused smoke durations;
+XP4's ledger totals 2.7s. Initial source acquisition took about 20 minutes.
 
 ### Rerun ImageWeeds
 
