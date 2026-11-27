@@ -165,6 +165,7 @@ def _model_configuration(baseline: bool) -> dict[str, str | int | float | bool]:
         "max_tiles": MAX_TILES,
         "letterbox_rgb": json.dumps(LETTERBOX),
         "historical_grid": GRID,
+        "historical_padding": "Pillow ImageOps.pad rounded centering (earlier grid)",
         "precision": "FP32; production fp32_math policy",
         "classifier_batch": BATCH_SIZE,
         "production_vocabulary": "all 7,806 PlantCLEF classes",

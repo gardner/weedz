@@ -17,7 +17,7 @@ from PIL import Image, ImageOps
 from pydantic import BaseModel, ConfigDict, Field
 
 from weedz.classification import plantclef
-from weedz.discovery.inference import region_boxes, square_view
+from weedz.discovery.inference import LETTERBOX, region_boxes, square_view
 from weedz.species_aggregation import RankedTaxon, aggregate_taxa
 from weedz.validation.fingerprint import imported_sources, pipeline_fingerprint
 from weedz.validation.registry import RunContext
@@ -129,6 +129,16 @@ def _grid_boxes(image: Image.Image) -> list[tuple[int, int, int, int]]:
     ]
 
 
+def historical_views(image: Image.Image) -> list[Image.Image]:
+    """Preserve the earlier grid's rounded Pillow centering, including odd margins."""
+    views = []
+    for box in _grid_boxes(image):
+        crop = image.crop(box)
+        side = max(crop.size)
+        views.append(ImageOps.pad(crop, (side, side), color=LETTERBOX))
+    return views
+
+
 def _ranks(logits: np.ndarray, labels: tuple[str, ...]) -> list[list[RankedTaxon]]:
     return [
         [
@@ -175,7 +185,7 @@ def _load_plant(context: RunContext) -> Callable[[Path], Prediction]:
         views = [
             image,
             *(square_view(image, box) for box in production),
-            *(square_view(image, box) for box in _grid_boxes(image)),
+            *historical_views(image),
         ]
         outputs = [
             model.predict_selected(list(batch), selected) for batch in batched(views, BATCH_SIZE)

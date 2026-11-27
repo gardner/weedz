@@ -366,3 +366,22 @@ def test_runtime_build_changes_invalidate_evidence_even_with_identical_distribut
     before = roadside_models.evidence_identity(context, False)
     monkeypatch.setattr(torch, "__version__", "2.15.0+differentbuild")
     assert roadside_models.evidence_identity(context, False) != before
+
+
+def test_historical_grid_preserves_previous_pillow_padding():
+    import numpy as np
+    from PIL import Image, ImageOps
+
+    from weedz.discovery.inference import LETTERBOX
+
+    image = Image.new("RGB", (40, 28), "green")  # 10x7 tiles need an odd, three-pixel pad.
+    actual = roadside_models.historical_views(image)
+    expected = [
+        ImageOps.pad(image.crop((x, y, x + 10, y + 7)), (10, 10), color=LETTERBOX)
+        for y in range(0, 28, 7)
+        for x in range(0, 40, 10)
+    ]
+    assert len(actual) == 16
+    assert all(
+        np.array_equal(np.asarray(a), np.asarray(b)) for a, b in zip(actual, expected, strict=True)
+    )
