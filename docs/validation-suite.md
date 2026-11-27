@@ -73,7 +73,9 @@ and gate from the latest full runs.
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
-| Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
+| Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · 82/778 positive pairs recovered at five suggestions: 10.5% (95% CI 8.6–12.9%) |
+| Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · released XP4 cutoffs recover 642/778: 82.5% (95% CI 79.7–85.0%), with a variable suggestion count |
+| Whole-photo species list | Existing ports | ImageWeeds, PhenoBench, CWFID | Planned |
 
 ### What this showed
 
@@ -121,6 +123,26 @@ Unfiltered BioCLIP ranked a watchlist prompt first on 38.7% of non-target
 subjects. Keep the agreement gate and prioritize same-genus
 comparisons when testing changes. The labels cover photographed subjects.
 [False-alarm results](../benchmarks/validation/inat2021-target-false-alarms.json)
+
+#### Danish roadside
+
+Production tiles recover **82/778 labelled photo–group pairs (10.5%, 95% CI
+8.6–12.9%)** within five full-vocabulary suggestions. Held-out publisher test
+recall is 76/577 (13.2%); the distance-filtered subset is 74/468 (15.8%).
+The separate multilabel cohort is 6/201 (3.0%). A 4×4 grid improves pooled
+recovery to 122/778 (15.7%, 13.3–18.4%). Broom recovery remains just 1/125
+for production and 2/125 for the grid. Compare finer views and aggregation policies on development,
+and inspect broom's candidate ranks before adopting a change.
+[Pipeline results](../benchmarks/validation/danish-roadside-species.json)
+
+The earlier 16/21 result ranked only six Danish groups on 25 reserved photos.
+The same grid diagnostic now recovers 562/778 (72.2%, 69.0–75.3%) at rank one;
+that restricted ranking explains much of the gap from the broad five-slot list.
+XP4's released cutoffs recover 642/778 (82.5%, 79.7–85.0%) with 1,254 suggestions
+across 1,160 photos. Its six trained outputs, variable budget and supplied
+features give a useful recovery comparison, with a different cost and task.
+Watchlist recovery and the distance-filtered multilabel subset are unmeasured;
+labels do not support precision. [Publisher comparison](../benchmarks/validation/danish-roadside-publisher-baseline.json)
 
 ### Rerun the Open Images checks
 
@@ -255,19 +277,22 @@ The main result is labelled-positive recovery in five full-vocabulary
 PlantCLEF suggestions, using the production `region_boxes`/`square_view`
 geometry and `aggregate_taxa` maximum-score policy. A frame control keeps the
 production centre crop. A fixed 4×4 grid and six-group top-one/top-three rows
-retain the earlier roadside method as diagnostics. The six-group rankings
+retain the earlier roadside method as diagnostics, including Pillow’s original
+rounded padding for odd margins. The six-group rankings
 restrict alternatives to Danish labels, so they do not measure the same task
 as the main five-slot list. Neither method uses dataset labels as inference
 inputs. No screening or segmentation gate discards photos in this check.
 
 Metadata, original JPEGs and publisher feature tensors are downloaded from
 pinned URLs under `danish-roadside/` in the data root. The checked-in
-`src/weedz/validation/roadside_pins.json` records their SHA-256 hashes; it contains
-no images or labels. Interrupted downloads use staging under `--cache-dir` and
+`src/weedz/validation/roadside_pins.json` records their URLs and SHA-256 hashes.
+Image bytes and CSV rows stay outside Git. Interrupted downloads use staging
+under `--cache-dir` and
 resume with HTTP ranges. Every completed file and checkpoint is verified even
 when SQLite evidence under `--cache-dir/danish-roadside/` is reused. Cache
-identities include transitive pipeline sources, model hashes, library versions,
-geometry and budgets. The result records total command time and the sum of
+identities include transitive pipeline sources, model hashes, actual imported
+library versions (including CUDA build suffixes), geometry and budgets. The
+result records total command time and the sum of
 per-photo inference durations, including cached durations; the latter covers
 all diagnostic methods and excludes model initialization.
 
@@ -288,3 +313,9 @@ the [publisher code](https://github.com/plantnet/roadside-invasive-plant-identif
 is MIT-licensed. The reused PlantCLEF checkpoint is CC BY-NC 4.0. XP4 timing
 covers only loading supplied BEiT features and running the head, with no feature
 extraction; compare its recovery, not its runtime, with the image pipeline.
+
+The final full checks took 14m 20s for PlantCLEF and 10.5s for XP4 on the shared
+RTX 5090 (`cuda:0`), with verified downloads and 50 smoke predictions cached.
+The PlantCLEF duration includes the frame, production tiles and historical grid.
+Its per-photo inference ledger totals 14m 33s including reused smoke durations;
+XP4's ledger totals 2.7s. Initial source acquisition took about 20 minutes.
