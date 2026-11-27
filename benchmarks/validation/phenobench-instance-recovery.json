@@ -14,7 +14,8 @@
       "high": 0.9661688230914496,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_90pct_covered",
@@ -26,7 +27,8 @@
       "high": 0.9913878616538281,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_90pct_covered",
@@ -38,7 +40,8 @@
       "high": 0.9334954271839244,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_90pct_covered",
@@ -50,7 +53,8 @@
       "high": 1.0,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_90pct_covered",
@@ -62,7 +66,8 @@
       "high": 1.0,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_90pct_covered",
@@ -74,7 +79,8 @@
       "high": 0.5984284307501431,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_half_covered",
@@ -86,7 +92,8 @@
       "high": 1.0,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_half_covered",
@@ -98,7 +105,8 @@
       "high": 1.0,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_half_covered",
@@ -110,7 +118,8 @@
       "high": 1.0,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_half_covered",
@@ -122,7 +131,8 @@
       "high": 1.0,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_half_covered",
@@ -134,7 +144,8 @@
       "high": 1.0,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "foreground_half_covered",
@@ -146,7 +157,8 @@
       "high": 0.9644804333931265,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -158,7 +170,8 @@
       "high": 0.6590100803744636,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -170,7 +183,8 @@
       "high": 0.6746661210210377,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -182,7 +196,8 @@
       "high": 0.7391267214688627,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -194,7 +209,8 @@
       "high": 0.6450994673174467,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -206,7 +222,8 @@
       "high": 0.6510749116504693,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -218,7 +235,8 @@
       "high": 0.7476972219796222,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -230,7 +248,8 @@
       "high": 0.6455750243292248,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -242,7 +261,8 @@
       "high": 0.8591038945619643,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -254,7 +274,8 @@
       "high": 0.8191488406218069,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -266,7 +287,8 @@
       "high": 0.42136562131550337,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "instance_recall",
@@ -278,10 +300,610 @@
       "high": 0.5651412498830136,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "development",
+      "successes": 28,
+      "total": 30,
+      "value": 0.9333333333333333,
+      "low": 0.7867654163738308,
+      "high": 0.9815229762087295,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "development/crop",
+      "successes": 28,
+      "total": 30,
+      "value": 0.9333333333333333,
+      "low": 0.7867654163738308,
+      "high": 0.9815229762087295,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "development/date:05-15",
+      "successes": 14,
+      "total": 16,
+      "value": 0.875,
+      "low": 0.639771727342413,
+      "high": 0.9650225122567595,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "development/date:05-26",
+      "successes": 6,
+      "total": 6,
+      "value": 1.0,
+      "low": 0.6096657120978346,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "development/date:06-05",
+      "successes": 8,
+      "total": 8,
+      "value": 1.0,
+      "low": 0.6755924351161198,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "development/weed",
+      "successes": 13,
+      "total": 29,
+      "value": 0.4482758620689655,
+      "low": 0.28413168023037194,
+      "high": 0.6245203678902909,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "development",
+      "successes": 30,
+      "total": 30,
+      "value": 1.0,
+      "low": 0.8864866068260312,
+      "high": 0.9999999999999999,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "development/crop",
+      "successes": 30,
+      "total": 30,
+      "value": 1.0,
+      "low": 0.8864866068260312,
+      "high": 0.9999999999999999,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "development/date:05-15",
+      "successes": 16,
+      "total": 16,
+      "value": 1.0,
+      "low": 0.8063923194655637,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "development/date:05-26",
+      "successes": 6,
+      "total": 6,
+      "value": 1.0,
+      "low": 0.6096657120978346,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "development/date:06-05",
+      "successes": 8,
+      "total": 8,
+      "value": 1.0,
+      "low": 0.6755924351161198,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "development/weed",
+      "successes": 25,
+      "total": 29,
+      "value": 0.8620689655172413,
+      "low": 0.6944100627964798,
+      "high": 0.9450256003588804,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development",
+      "successes": 217,
+      "total": 390,
+      "value": 0.5564102564102564,
+      "low": 0.5067915172130072,
+      "high": 0.6049285645979635,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/complete",
+      "successes": 181,
+      "total": 319,
+      "value": 0.567398119122257,
+      "low": 0.5125469394178793,
+      "high": 0.6206453716225752,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/crop",
+      "successes": 143,
+      "total": 238,
+      "value": 0.6008403361344538,
+      "low": 0.53749641404586,
+      "high": 0.6609807214877463,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/date:05-15",
+      "successes": 81,
+      "total": 168,
+      "value": 0.48214285714285715,
+      "low": 0.4078312851136441,
+      "high": 0.5572528101845656,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/date:05-26",
+      "successes": 48,
+      "total": 88,
+      "value": 0.5454545454545454,
+      "low": 0.44170066774534067,
+      "high": 0.6454059625578509,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/date:06-05",
+      "successes": 88,
+      "total": 134,
+      "value": 0.6567164179104478,
+      "low": 0.5729651372644814,
+      "high": 0.7317327407131023,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/partial",
+      "successes": 36,
+      "total": 71,
+      "value": 0.5070422535211268,
+      "low": 0.39341308325020075,
+      "high": 0.6199484948878713,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/size:2048plus",
+      "successes": 116,
+      "total": 149,
+      "value": 0.7785234899328859,
+      "low": 0.7053215261362715,
+      "high": 0.837724847801911,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/size:512to2047",
+      "successes": 51,
+      "total": 72,
+      "value": 0.7083333333333334,
+      "low": 0.5949425733065095,
+      "high": 0.8006194381116332,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/size:under512",
+      "successes": 50,
+      "total": 169,
+      "value": 0.2958579881656805,
+      "low": 0.23219906467993418,
+      "high": 0.3685911596632852,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "development/weed",
+      "successes": 74,
+      "total": 152,
+      "value": 0.4868421052631579,
+      "low": 0.4086917071593119,
+      "high": 0.5656411819815536,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "held-out",
+      "successes": 31,
+      "total": 34,
+      "value": 0.9117647058823529,
+      "low": 0.7703951343719113,
+      "high": 0.9695340563253514,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "held-out/crop",
+      "successes": 34,
+      "total": 34,
+      "value": 1.0,
+      "low": 0.8984854458466761,
+      "high": 0.9999999999999999,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "held-out/date:05-15",
+      "successes": 14,
+      "total": 17,
+      "value": 0.8235294117647058,
+      "low": 0.5897054143116588,
+      "high": 0.9380887336237901,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "held-out/date:05-26",
+      "successes": 8,
+      "total": 8,
+      "value": 1.0,
+      "low": 0.6755924351161198,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "held-out/date:06-05",
+      "successes": 9,
+      "total": 9,
+      "value": 1.0,
+      "low": 0.7008549515804559,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_90pct_covered",
+      "stratum": "held-out/weed",
+      "successes": 16,
+      "total": 32,
+      "value": 0.5,
+      "low": 0.33630882869327483,
+      "high": 0.6636911713067252,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "held-out",
+      "successes": 34,
+      "total": 34,
+      "value": 1.0,
+      "low": 0.8984854458466761,
+      "high": 0.9999999999999999,
+      "target": 0.8357293297493693,
+      "ceiling": null,
+      "passed": true,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "held-out/crop",
+      "successes": 34,
+      "total": 34,
+      "value": 1.0,
+      "low": 0.8984854458466761,
+      "high": 0.9999999999999999,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "held-out/date:05-15",
+      "successes": 17,
+      "total": 17,
+      "value": 1.0,
+      "low": 0.8156818649911483,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "held-out/date:05-26",
+      "successes": 8,
+      "total": 8,
+      "value": 1.0,
+      "low": 0.6755924351161198,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "held-out/date:06-05",
+      "successes": 9,
+      "total": 9,
+      "value": 1.0,
+      "low": 0.7008549515804559,
+      "high": 1.0,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "foreground_half_covered",
+      "stratum": "held-out/weed",
+      "successes": 31,
+      "total": 32,
+      "value": 0.96875,
+      "low": 0.8425573617998744,
+      "high": 0.9944621398359969,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out",
+      "successes": 318,
+      "total": 463,
+      "value": 0.6868250539956804,
+      "low": 0.6431889435502727,
+      "high": 0.7273865414056306,
+      "target": 0.4617313397203655,
+      "ceiling": null,
+      "passed": true,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/complete",
+      "successes": 265,
+      "total": 378,
+      "value": 0.701058201058201,
+      "low": 0.6530735952650634,
+      "high": 0.7449973749995261,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/crop",
+      "successes": 221,
+      "total": 281,
+      "value": 0.7864768683274022,
+      "low": 0.7348671969661884,
+      "high": 0.8303595107840638,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/date:05-15",
+      "successes": 126,
+      "total": 180,
+      "value": 0.7,
+      "low": 0.6294468133268561,
+      "high": 0.7621949875044985,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/date:05-26",
+      "successes": 82,
+      "total": 133,
+      "value": 0.6165413533834586,
+      "low": 0.5317374963621947,
+      "high": 0.6948020353496082,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/date:06-05",
+      "successes": 110,
+      "total": 150,
+      "value": 0.7333333333333333,
+      "low": 0.6573854995109168,
+      "high": 0.7976283864506474,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/partial",
+      "successes": 53,
+      "total": 85,
+      "value": 0.6235294117647059,
+      "low": 0.5172990783621897,
+      "high": 0.7190770491661035,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/size:2048plus",
+      "successes": 161,
+      "total": 188,
+      "value": 0.8563829787234043,
+      "low": 0.799109728734865,
+      "high": 0.899383708626055,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/size:512to2047",
+      "successes": 80,
+      "total": 100,
+      "value": 0.8,
+      "low": 0.7111708344068411,
+      "high": 0.8666330666689676,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/size:under512",
+      "successes": 77,
+      "total": 175,
+      "value": 0.44,
+      "low": 0.3685271417178468,
+      "high": 0.5140504208983554,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "instance_recall",
+      "stratum": "held-out/weed",
+      "successes": 97,
+      "total": 182,
+      "value": 0.532967032967033,
+      "low": 0.46055236360839313,
+      "high": 0.6040188040747986,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
     }
   ],
   "limits": [
+    "Gates use source-ID development and held-out halves of the previously inspected 64-photo cohort; this is not fresh independent held-out evidence.",
     "Already inspected during development; the fixed 64-image publisher validation subset is not a fresh held-out cohort. No parameters were tuned in this port.",
     "Source semantics: 0 background, 1 crop, 2 weed, 3 partial crop, 4 partial weed. The website repeats partial-crop for ID 4; the publisher devkit confirms partial weed.",
     "SAM3 is class-agnostic: crop/weed strata measure localization, not semantic recognition. These labels cannot measure weed-species identity.",
@@ -500,6 +1122,11 @@
     "operating_points": "Frozen before this port; no threshold or budget tuning",
     "image_coverage_threshold": 0.5,
     "image_limit": "none",
+    "cohort_sha256": "2b15e29bdb1ac8354e193296da6a2a0f556aba1d5a1cf5bd1fbd2e7e11376631",
+    "gate_split_policy": "split_of(source_id); pooled validation rows are diagnostic",
+    "gate_rule": "95% development Wilson bound widened by expected held-out Wilson half-width",
+    "gate_development_foreground_half_covered": "30/30",
+    "gate_development_instance_recall": "217/390",
     "sam3_max_side": 1024,
     "sam3_max_regions": 128,
     "sam3_max_prompt_bytes": 8000000,
@@ -524,5 +1151,5 @@
     "proposal_budget": "all retained (128 per prompt)",
     "size_strata_pixels": "under512, 512to2047, 2048plus"
   },
-  "seconds": 62.78
+  "seconds": 36.27
 }

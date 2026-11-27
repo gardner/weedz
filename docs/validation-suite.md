@@ -148,16 +148,16 @@ and gate from the latest full runs.
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Measured · at the pipeline's cutoff SAM3 flags 36.9% of photos with vegetation |
 | Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · **fail** (1/2 gates pass) · half-covered photos 12.3% (10.5–14.3%) |
 | Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · **fail** · box recall 39.2% (37.4–40.9%), below the 37.67% development floor at its lower bound |
-| Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
+| Species identification | `inat2021-target-species` | iNat2021 validation | Measured · **pass** (3/3 gates) · held-out pilot/local cues each 10/16 (62.5%, 38.6–81.5%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
-| Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · test: PlantCLEF top-1 25/30 (83.3%), pilot cues 16/30 (53.3%) |
+| Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · **pass** (3/3 gates) · test top-1 25/30 (83.3%, 66.4–92.7%), pilot cues 16/30 (53.3%) |
 | Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Measured · pilot cues 49/20,503 (0.239%); local 223/20,503 (1.088%), missing the 1% ceiling |
 | Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · 82/778 positive pairs recovered at five suggestions: 10.5% (95% CI 8.6–12.9%) |
 | Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · released XP4 cutoffs recover 642/778: 82.5% (95% CI 79.7–85.0%), with a variable suggestion count |
-| Region proposals | `imageweeds-region-recovery` | ImageWeeds v2 primary138 | Measured · 348/645 boxes recovered (54.0%, 95% CI 50.1–57.8%) |
-| Species identification | `imageweeds-species` | ImageWeeds v2 primary138 | Measured · conditional top-1 48/348 (13.8%, 95% CI 10.6–17.8%); five-slot pair recall 23/303 (7.6%, 5.1–11.1%) |
-| Region proposals | `phenobench-instance-recovery` | PhenoBench development64 | Measured · 535/853 instances recovered (62.7%, 95% CI 59.4–65.9%) |
-| Region proposals | `cwfid-mask-coverage` | CWFID publisher test, excluding 028 | Measured · ≥90% of assessed positive pixels covered in 20/20 photos (100%, 95% CI 83.9–100%) |
+| Region proposals | `imageweeds-region-recovery` | ImageWeeds v2 primary138 | Measured · **fail** · held-out box recovery 166/327 (50.8%, 45.4–56.1%) |
+| Species identification | `imageweeds-species` | ImageWeeds v2 primary138 | Measured · **fail** (1/2 gates pass) · held-out conditional top-1 17/166 (10.2%, 6.5–15.8%); five-slot pairs 8/153 (5.2%, 2.7–10.0%) |
+| Region proposals | `phenobench-instance-recovery` | PhenoBench development64 | Measured · **pass** (2/2 gates) · held-out instance recovery 318/463 (68.7%, 64.3–72.7%) |
+| Region proposals | `cwfid-mask-coverage` | CWFID publisher test, excluding 028 | Measured · **pass** · ≥90% of assessed positive pixels covered in 20/20 photos (100%, 83.9–100%) |
 
 ### What this showed
 
@@ -210,6 +210,12 @@ pampas photos before changing the cue rule. Only PlantCLEF top-1 named a target
 on a lookalike photo: 3 of 10 toetoe (*Austroderia richardii*) photos.
 [Species results](../benchmarks/validation/inat2021-target-species.json)
 
+All three species gates pass on 16 hash-held-out target photos: PlantCLEF top-1
+is 9/16 (56.3%, 33.2–76.9%); pilot and local cues each recover 10/16 (62.5%,
+38.6–81.5%). The 14-photo development half gives a top-1 floor of only 4.80%.
+Treat this as a weak regression check and gather more independent target photos
+before making a production claim.
+
 Both cue rules cleared the 1% wrong-subject ceiling across 42,680 photos.
 The local rule raised 37 cues on 110 same-genus photos, compared with 14
 for the pilot, and 65 on 38,140 unrelated plants, compared with none.
@@ -229,6 +235,11 @@ and investigate local pampas agreement before replacing it. These are labelled
 single-plant subjects, not scene inventories. The `val` photos were used by the
 publisher for model selection, so their results are reported separately.
 [Species results](../benchmarks/validation/plantclef2024-target-species.json)
+
+All three publisher-val-derived species gates pass on publisher test: floors
+are 40.42% for top-1, 25.78% for pilot cues and 13.42% for local cues.
+Local recall still trails the pilot, so passing these regression floors does
+not justify replacing the pilot rule.
 
 Across 20,503 non-target subjects, the pilot raised 49 wrong-subject cues
 (0.239%, 95% CI 0.181–0.316%), clearing the 1% ceiling. The local rule raised
@@ -267,6 +278,13 @@ with maximum-score aggregation, versus 5/303 with frequency voting. Even
 publisher-box crops identify only 74/645 as top one. Improve classifier and
 crop transfer alongside localization; aggregation alone leaves most labelled
 species unrecovered. Partial labels cannot establish precision.
+The held-out box gate fails: 166/327 (50.8%, 45.4–56.1%) has a lower bound
+below its 46.41% floor from 182/318 development matches. Keep both split and
+pooled recovery visible when testing localization changes.
+The conditional top-1 gate also narrowly fails: 17/166 (10.2%, 6.5–15.8%)
+misses its 6.59% floor from 31/182 development identifications. Five-slot pair
+recall passes at 8/153 (5.2%, 2.7–10.0%) against a 1.40% floor from 15/150.
+The low absolute pair recovery still calls for classifier and crop-transfer work.
 [Region results](../benchmarks/validation/imageweeds-region-recovery.json),
 [species results](../benchmarks/validation/imageweeds-species.json)
 
@@ -277,6 +295,11 @@ hides these individual misses. Prioritize small weed instances when comparing
 proposal changes. Crop/weed strata describe localization, not species or
 crop/weed recognition. [PhenoBench results](../benchmarks/validation/phenobench-instance-recovery.json)
 
+Both PhenoBench gates pass: held-out instance recovery is 318/463 (68.7%,
+64.3–72.7%), and all 34 held-out photos are half covered (100%, 89.8–100%).
+The floors are 46.17% and 83.57%, respectively. Passing these development
+floors does not remove the small-weed misses in the pooled diagnostics.
+
 On CWFID, SAM3 covers at least 90% of assessed positive pixels in all 20
 nonoverlapping publisher test photos. Mean per-image coverage is 93.8% overall,
 92.4% for crop and 94.1% for weed. These sparse human regions use algorithmic
@@ -284,6 +307,11 @@ vegetation boundaries and false-colour imagery; they do not establish proposal
 precision. The earlier 60-photo SAM2 diagnostic used a different method and
 cohort. Keep dense-mask and small-instance checks alongside this result.
 [CWFID results](../benchmarks/validation/cwfid-mask-coverage.json)
+
+CWFID's 90%-coverage gate passes: 37/39 development photos set a 71.75% floor,
+and the unchanged 20/20 test result has an 83.89% lower bound. This supports
+consistency on sparse assessed positives, alongside the dense-mask and instance
+checks above.
 
 These datasets were already inspected during development. ImageWeeds and
 PhenoBench retain their entire fixed cohorts as pooled `validation` diagnostics,
