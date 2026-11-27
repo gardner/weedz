@@ -46,11 +46,13 @@ wins, then recall/recovery/coverage (higher) or false_alarm/wrong_subject/confus
 A metric with no known direction is **changed** when its interval excludes 0, without a better/worse verdict. Missing metrics are **new**
 or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
 
-The console shows 20 rows, worst first; markdown includes every row. Changed hashes,
-configuration (for example a `--limit` smoke run's cohort), datasets or splits are
-flagged as **not like-for-like**, with the changed keys listed. A gated regression
+The console shows 20 rows, worst first; markdown includes every row. Changed input
+hashes, cohorts (configuration keys naming which items were scored, such as a
+`--limit` smoke run's `smoke_limit` or `held_out_images`), datasets or splits are
+flagged as **not like-for-like**, with the changed keys listed. Measured values kept
+in configuration, such as timings, fitted thresholds and versions, are not compared. A gated regression
 exits **1** even then, so compare full runs, not smoke runs; otherwise it exits **0**,
-including new, removed and unmeasured metrics. Pass one result file per check. This does not certify completeness.
+including new, removed and unmeasured metrics. Pass one result file or scorecard per check. This does not certify completeness.
 
 For a worked example, compare the committed scorecard with itself:
 

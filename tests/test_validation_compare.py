@@ -148,7 +148,8 @@ def test_verdicts_use_direction_and_the_difference_interval(
         ({"inputs": {}}, "inputs changed"),
         ({"split": "development"}, "split changed"),
         # A --limit smoke run keeps the same input hashes but scores fewer images.
-        ({"configuration": {"smoke_limit": 50}}, "configuration changed (smoke_limit)"),
+        ({"configuration": {"smoke_limit": 50}}, "cohort changed (smoke_limit)"),
+        ({"configuration": {"held_out_images": 50}}, "cohort changed (held_out_images)"),
     ],
 )
 def test_changed_evidence_is_flagged(changes: dict[str, object], expected: str):
@@ -160,6 +161,20 @@ def test_changed_evidence_is_flagged(changes: dict[str, object], expected: str):
     assert expected in " ".join(comparison.changes["a"])
     assert "not like-for-like" in comparison.markdown()
     assert expected in comparison.markdown()
+
+
+@pytest.mark.parametrize(
+    "configuration",
+    [{"recorded_inference_seconds": 873.0}, {"sam3_threshold": 0.41}, {"torch_version": "2.16"}],
+)
+def test_measured_outputs_in_configuration_are_not_a_cohort_change(configuration: dict):
+    # Timings, fitted thresholds and versions move on every legitimate rerun.
+    metric = rate("recall", 9, 10)
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("a", metric)]),
+        Scorecard.collect([_result("a", metric, configuration=configuration)]),
+    )
+    assert comparison.changes == {}
 
 
 def test_unchanged_evidence_has_no_change_flag():

@@ -11,6 +11,7 @@ from weedz.validation.scorecard import Scorecard
 
 MetricKey = tuple[str, str, str]
 Verdict = Literal["better", "worse", "no clear change", "changed", "new", "removed", "unmeasured"]
+COHORT_KEYS = frozenset({"held_out_images", "selected_images"})
 ORDER: tuple[Verdict, ...] = (
     "worse",
     "removed",
@@ -101,6 +102,15 @@ def _index(card: Scorecard) -> dict[MetricKey, Rate]:
     return metrics
 
 
+def _is_cohort_key(key: str) -> bool:
+    """Configuration keys that say which items were scored, not what the run measured.
+
+    Configuration also holds measured outputs (timings, fitted thresholds, evidence
+    fingerprints, versions) that move on every legitimate rerun.
+    """
+    return "limit" in key or "cohort" in key or key.startswith("scored_") or key in COHORT_KEYS
+
+
 def _changed_keys(before: Mapping[str, object], after: Mapping[str, object]) -> list[str]:
     return sorted(key for key in before.keys() | after.keys() if before.get(key) != after.get(key))
 
@@ -112,9 +122,14 @@ def _changes(baseline: Scorecard, rerun: Scorecard) -> dict[str, tuple[str, ...]
     for check in sorted(old.keys() & new.keys()):
         before, after = old[check], new[check]
         flags = []
-        for field in ("inputs", "configuration"):
-            if keys := _changed_keys(getattr(before, field), getattr(after, field)):
-                flags.append(f"{field} changed ({', '.join(keys)})")
+        if keys := _changed_keys(before.inputs, after.inputs):
+            flags.append(f"inputs changed ({', '.join(keys)})")
+        if keys := [
+            key
+            for key in _changed_keys(before.configuration, after.configuration)
+            if _is_cohort_key(key)
+        ]:
+            flags.append(f"cohort changed ({', '.join(keys)})")
         if before.split != after.split:
             flags.append(f"split changed ({before.split} → {after.split})")
         if before.dataset != after.dataset:

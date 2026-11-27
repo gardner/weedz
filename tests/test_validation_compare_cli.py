@@ -111,3 +111,13 @@ def test_two_result_files_for_one_check_are_rejected(tmp_path: Path):
     second.write_text(_result(20).model_dump_json())
     with pytest.raises(ValueError, match="screen"):
         main(["compare", str(card), str(first), str(second)])
+
+
+def test_two_scorecards_holding_one_check_are_rejected(tmp_path: Path):
+    baseline = tmp_path / "baseline.json"
+    Scorecard.collect([_result(90)]).write(baseline)
+    first, second = tmp_path / "rerun.json", tmp_path / "stale.json"
+    Scorecard.collect([_result(90)]).write(first)
+    Scorecard.collect([_result(20)]).write(second)
+    with pytest.raises(ValueError, match="screen"):
+        main(["compare", str(baseline), str(first), str(second)])

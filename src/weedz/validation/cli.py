@@ -79,7 +79,10 @@ def _rerun(paths: list[Path], baseline: Path) -> Scorecard:
     for path in paths:
         data = json.loads(path.read_text())
         if "results" in data:
-            carded |= {result.check: result for result in Scorecard.model_validate(data).results}
+            for result in Scorecard.model_validate(data).results:
+                if result.check in carded:
+                    raise ValueError(f"Two scorecards hold {result.check}; pass one per check")
+                carded[result.check] = result
         else:
             result = CheckResult.model_validate(data)
             if result.check in single:
