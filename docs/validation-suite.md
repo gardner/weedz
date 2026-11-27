@@ -51,7 +51,7 @@ or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
 
 The console shows 20 rows, worst first; markdown includes every row. Changed input
 hashes, cohorts (configuration keys that decide which items are scored: limits,
-selection and split rules, salts, stratum definitions, per-split sampling budgets and image counts, such as a
+selection and split rules, target, lookalike and class lists, salts, stratum definitions, per-split sampling budgets and image counts, such as a
 `--limit` smoke run's `smoke_limit` or PhenoBench's `selection`), datasets or splits are
 flagged as **not like-for-like**, with the changed keys listed. Measured values kept
 in configuration, such as timings, fitted thresholds and versions, are not compared. A gated regression
@@ -67,7 +67,7 @@ uv run main.py validate compare benchmarks/validation/scorecard.json \
   benchmarks/validation/scorecard.json
 ```
 
-This exits 0 across 728 metrics: **592 no clear change** and 136 unmeasured.
+This exits 0 across 1,030 metrics: **894 no clear change** and 136 unmeasured.
 Metrics unmeasured in both runs are listed last.
 SegFormer's Open Images recall is 1,433/1,500 each: difference 0.0 points (95% CI −1.5 to +1.5).
 

@@ -155,6 +155,8 @@ def test_verdicts_use_direction_and_the_difference_interval(
         ({"configuration": {"test_images": 25}}, "cohort changed (test_images)"),
         ({"configuration": {"positive_budget_per_split": 9}}, "positive_budget_per_split"),
         ({"configuration": {"size_strata_pixels": "512"}}, "cohort changed (size_strata_pixels)"),
+        ({"configuration": {"targets": '["Ulex"]'}}, "cohort changed (targets)"),
+        ({"configuration": {"vegetation_classes": "tree"}}, "cohort changed (vegetation_classes)"),
         ({"configuration": {"image_and_region_area_strata": "x"}}, "image_and_region_area_strata"),
     ],
 )
@@ -323,3 +325,19 @@ def test_a_check_missing_from_a_partial_rerun_does_not_fail_the_guard():
         baseline, Scorecard.collect([_result("b", rate("recall", 9, 10))])
     )
     assert comparison.exit_code == 0
+
+
+def test_a_rerun_check_that_emits_no_metrics_fails_its_gates():
+    baseline = Scorecard.collect([_result("a", rate("recall", 90, 100, target=0.5))])
+    assert compare_scorecards(baseline, Scorecard.collect([_result("a")])).exit_code == 1
+
+
+def test_failing_gates_lead_the_console_table_in_a_partial_rerun():
+    skipped = [rate(f"recall_{index:02}", 9, 10) for index in range(30)]
+    baseline = Scorecard.collect(
+        [_result("a", *skipped), _result("z", rate("recall", 90, 100, target=0.5))]
+    )
+    rerun = Scorecard.collect([_result("z", rate("recall", 0, 0, target=0.5))])
+    comparison = compare_scorecards(baseline, rerun)
+    assert comparison.rows[0].key[0] == "z"
+    assert "(gated)" in comparison.markdown(limit=20)

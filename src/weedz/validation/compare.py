@@ -16,7 +16,10 @@ Verdict = Literal["better", "worse", "no clear change", "changed", "new", "remov
 # budgets ("split" covers *_budget_per_split). Model and output settings such as
 # tile_fraction or proposal_budget are not.
 COHORT_TERMS = ("limit", "cohort", "selection", "split", "salt", "minimum_per", "strat")
-COHORT_KEYS = frozenset({"images", "held_out_fraction"})
+# Taxonomy definitions that decide which items are positives or eligible.
+COHORT_KEYS = frozenset(
+    {"images", "held_out_fraction", "targets", "lookalikes", "vegetation_classes"}
+)
 ORDER: tuple[Verdict, ...] = (
     "worse",
     "removed",
@@ -52,6 +55,8 @@ class MetricComparison:
 class Comparison:
     rows: tuple[MetricComparison, ...]
     changes: dict[str, tuple[str, ...]]
+    # From the rerun scorecard itself, so a check that emits no metrics still counts.
+    rerun_checks: frozenset[str] = frozenset()
 
     def failing(self, row: MetricComparison) -> bool:
         """A gated metric got worse, or lost its measurement in a check that was rerun."""
@@ -61,11 +66,7 @@ class Comparison:
             return True
         measured_before = row.baseline is not None and row.baseline.total > 0
         lost = row.rerun is None or row.rerun.total == 0
-        return measured_before and lost and row.key[0] in self._rerun_checks
-
-    @property
-    def _rerun_checks(self) -> set[str]:
-        return {row.key[0] for row in self.rows if row.rerun is not None}
+        return measured_before and lost and row.key[0] in self.rerun_checks
 
     @property
     def exit_code(self) -> int:
@@ -206,7 +207,11 @@ def _sort_key(row: MetricComparison) -> tuple[int, float, MetricKey]:
 def compare_scorecards(baseline: Scorecard, rerun: Scorecard) -> Comparison:
     before, after = _index(baseline), _index(rerun)
     rows = [_compare(key, before.get(key), after.get(key)) for key in before.keys() | after.keys()]
-    return Comparison(tuple(sorted(rows, key=_sort_key)), _changes(baseline, rerun))
+    checks = frozenset(result.check for result in rerun.results)
+    unsorted = Comparison(tuple(rows), _changes(baseline, rerun), checks)
+    # Rows that fail the guard lead, so the console shows why it exited 1.
+    ordered = sorted(rows, key=lambda row: (not unsorted.failing(row), _sort_key(row)))
+    return Comparison(tuple(ordered), unsorted.changes, checks)
 
 
 def _measure(metric: Rate | None) -> str:
