@@ -66,7 +66,7 @@ def _scorecard(args: argparse.Namespace) -> None:
 
 
 def _compare(args: argparse.Namespace) -> None:
-    results = []
+    results: list[CheckResult] = []
     for path in args.results:
         data = json.loads(path.read_text())
         if "results" in data:

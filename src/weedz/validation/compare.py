@@ -1,5 +1,6 @@
 """Compare saved proportions with independent Newcombe hybrid Wilson intervals."""
 
+import math
 from collections import Counter
 from dataclasses import dataclass
 from typing import Literal
@@ -167,13 +168,21 @@ def _measure(metric: Rate | None) -> str:
         return "—"
     if metric.value is None:
         return "unmeasured"
-    return f"{metric.value:.1%} ({metric.successes}/{metric.total})"
+    precision = _precision(metric.value)
+    return f"{metric.value:.{precision}%} ({metric.successes}/{metric.total})"
 
 
 def _interval(difference: Difference | None) -> str:
     if difference is None:
         return "—"
+    precision = _precision(difference.value, difference.low, difference.high)
     return (
-        f"{difference.value * 100:+.1f} "
-        f"({difference.low * 100:+.1f} to {difference.high * 100:+.1f})"
+        f"{difference.value * 100:+.{precision}f} "
+        f"({difference.low * 100:+.{precision}f} to {difference.high * 100:+.{precision}f})"
     )
+
+
+def _precision(*values: float) -> int:
+    """Keep at least two significant digits in small nonzero percentages."""
+    nonzero = [abs(value * 100) for value in values if value != 0]
+    return max(1, 1 - math.floor(math.log10(min(nonzero)))) if nonzero else 1

@@ -186,3 +186,31 @@ def test_markdown_shows_worst_first_intervals_and_the_paired_data_limit():
     assert "Newcombe" in markdown and "95%" in markdown
     assert "paired" in markdown and "conservative" in markdown
     assert "1 worse" in markdown and "1 better" in markdown
+
+
+def test_small_rates_and_intervals_do_not_round_to_zero():
+    metric = rate("wrong_subject", 15, 42680, ceiling=0.01)
+    card = Scorecard.collect([_result("a", metric)])
+    markdown = compare_scorecards(card, card).markdown()
+    assert "0.035% (15/42680)" in markdown
+    assert "(-0.0 to +0.0)" not in markdown
+
+
+def test_a_small_increase_in_false_alarms_fails_the_guard():
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("a", rate("false_alarm", 10, 100000, ceiling=0.01))]),
+        Scorecard.collect([_result("a", rate("false_alarm", 100, 100000, ceiling=0.01))]),
+    )
+    assert comparison.rows[0].verdict == "worse"
+    assert comparison.exit_code == 1
+
+
+def test_the_largest_degradation_comes_first_in_either_direction():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 90, 100)), _result("z", rate("false_alarm", 10, 100))]
+    )
+    rerun = Scorecard.collect(
+        [_result("a", rate("recall", 60, 100)), _result("z", rate("false_alarm", 80, 100))]
+    )
+    comparison = compare_scorecards(baseline, rerun)
+    assert [row.key[0] for row in comparison.rows] == ["z", "a"]
