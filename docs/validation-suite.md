@@ -47,8 +47,10 @@ A metric with no known direction is **changed** when its interval excludes 0, wi
 or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
 
 The console shows 20 rows, worst first; markdown includes every row. Changed hashes,
-datasets or splits are flagged as **not like-for-like**. A gated regression exits **1**;
-otherwise **0**, including new, removed and unmeasured metrics. This does not certify completeness.
+configuration (for example a `--limit` smoke run's cohort), datasets or splits are
+flagged as **not like-for-like**, with the changed keys listed. A gated regression
+exits **1** even then, so compare full runs, not smoke runs; otherwise it exits **0**,
+including new, removed and unmeasured metrics. Pass one result file per check. This does not certify completeness.
 
 For a worked example, compare the committed scorecard with itself:
 

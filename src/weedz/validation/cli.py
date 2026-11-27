@@ -82,6 +82,8 @@ def _rerun(paths: list[Path], baseline: Path) -> Scorecard:
             carded |= {result.check: result for result in Scorecard.model_validate(data).results}
         else:
             result = CheckResult.model_validate(data)
+            if result.check in single:
+                raise ValueError(f"Two result files for {result.check}; pass one per check")
             single[result.check] = result
     return Scorecard.collect(list((carded | single).values()))
 

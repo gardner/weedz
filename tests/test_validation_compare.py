@@ -147,6 +147,8 @@ def test_verdicts_use_direction_and_the_difference_interval(
         ({"inputs": {"labels.csv": "a" * 64, "model.pt": "c" * 64}}, "model.pt"),
         ({"inputs": {}}, "inputs changed"),
         ({"split": "development"}, "split changed"),
+        # A --limit smoke run keeps the same input hashes but scores fewer images.
+        ({"configuration": {"smoke_limit": 50}}, "configuration changed (smoke_limit)"),
     ],
 )
 def test_changed_evidence_is_flagged(changes: dict[str, object], expected: str):

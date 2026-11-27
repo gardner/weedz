@@ -101,3 +101,13 @@ def test_a_partial_rerun_reports_missing_checks_as_removed(
     main(["compare", str(card), str(card), str(result)])
     output = capsys.readouterr().out
     assert "removed" in output
+
+
+def test_two_result_files_for_one_check_are_rejected(tmp_path: Path):
+    card = tmp_path / "scorecard.json"
+    Scorecard.collect([_result(90)]).write(card)
+    first, second = tmp_path / "a.json", tmp_path / "b.json"
+    first.write_text(_result(90).model_dump_json())
+    second.write_text(_result(20).model_dump_json())
+    with pytest.raises(ValueError, match="screen"):
+        main(["compare", str(card), str(first), str(second)])

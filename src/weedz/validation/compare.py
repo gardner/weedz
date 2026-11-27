@@ -2,6 +2,7 @@
 
 import math
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
@@ -100,6 +101,10 @@ def _index(card: Scorecard) -> dict[MetricKey, Rate]:
     return metrics
 
 
+def _changed_keys(before: Mapping[str, object], after: Mapping[str, object]) -> list[str]:
+    return sorted(key for key in before.keys() | after.keys() if before.get(key) != after.get(key))
+
+
 def _changes(baseline: Scorecard, rerun: Scorecard) -> dict[str, tuple[str, ...]]:
     old = {result.check: result for result in baseline.results}
     new = {result.check: result for result in rerun.results}
@@ -107,13 +112,9 @@ def _changes(baseline: Scorecard, rerun: Scorecard) -> dict[str, tuple[str, ...]
     for check in sorted(old.keys() & new.keys()):
         before, after = old[check], new[check]
         flags = []
-        if before.inputs != after.inputs:
-            paths = sorted(
-                path
-                for path in before.inputs.keys() | after.inputs.keys()
-                if before.inputs.get(path) != after.inputs.get(path)
-            )
-            flags.append(f"inputs changed ({', '.join(paths)})")
+        for field in ("inputs", "configuration"):
+            if keys := _changed_keys(getattr(before, field), getattr(after, field)):
+                flags.append(f"{field} changed ({', '.join(keys)})")
         if before.split != after.split:
             flags.append(f"split changed ({before.split} → {after.split})")
         if before.dataset != after.dataset:
