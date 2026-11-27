@@ -91,7 +91,7 @@ uv run main.py validate compare benchmarks/validation/scorecard.json \
   benchmarks/validation/scorecard.json
 ```
 
-This exits 0 across 1,030 metrics: **894 no clear change** and 136 unmeasured.
+This exits 0 across 1,514 metrics: **1,358 no clear change** and 156 unmeasured.
 Metrics unmeasured in both runs are listed last.
 SegFormer's Open Images recall is 1,433/1,500 each: difference 0.0 points (95% CI −1.5 to +1.5).
 
@@ -147,19 +147,26 @@ and gate from the latest full runs.
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Measured · 95.5% recall and 38.7% false alarms for SegFormer, 94.7% and 23.7% for SAM3 |
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Measured · at the pipeline's cutoff SAM3 flags 36.9% of photos with vegetation |
 | Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · **fail** (1/2 gates pass) · half-covered photos 12.3% (10.5–14.3%) |
-| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · **fail** · box recall 39.2% (37.4–40.9%), below the 37.67% development floor at its lower bound |
+| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · **fail** · box recall 39.2% (37.4–40.9%); lower bound misses the 37.67% development floor |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured · **pass** (3/3 gates) · held-out pilot/local cues each 10/16 (62.5%, 38.6–81.5%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · **pass** (3/3 gates) · test top-1 25/30 (83.3%, 66.4–92.7%), pilot cues 16/30 (53.3%) |
 | Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Measured · pilot cues 49/20,503 (0.239%); local 223/20,503 (1.088%), missing the 1% ceiling |
-| Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · 82/778 positive pairs recovered at five suggestions: 10.5% (95% CI 8.6–12.9%) |
-| Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · released XP4 cutoffs recover 642/778: 82.5% (95% CI 79.7–85.0%), with a variable suggestion count |
+| Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · **pass** · publisher test pairs at five suggestions: 133/1,145 (11.6%, 9.9–13.6%) |
+| Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · **fail** · released XP4 cutoffs recover 926/1,145 test positives (80.9%, 78.5–83.0%), with a variable suggestion count |
 | Region proposals | `imageweeds-region-recovery` | ImageWeeds v2 primary138 | Measured · **fail** · held-out box recovery 166/327 (50.8%, 45.4–56.1%) |
 | Species identification | `imageweeds-species` | ImageWeeds v2 primary138 | Measured · **fail** (1/2 gates pass) · held-out conditional top-1 17/166 (10.2%, 6.5–15.8%); five-slot pairs 8/153 (5.2%, 2.7–10.0%) |
 | Region proposals | `phenobench-instance-recovery` | PhenoBench development64 | Measured · **pass** (2/2 gates) · held-out instance recovery 318/463 (68.7%, 64.3–72.7%) |
 | Region proposals | `cwfid-mask-coverage` | CWFID publisher test, excluding 028 | Measured · **pass** · ≥90% of assessed positive pixels covered in 20/20 photos (100%, 83.9–100%) |
 
 ### What this showed
+
+The ten newly gated checks have 17 development-derived gates: 12 pass and five
+fail. Failures are Open Images boxes, COCO photo coverage, ImageWeeds boxes and
+conditional top-1, and the Danish publisher baseline. All 1,030 existing metric
+counts, rates and intervals are unchanged. The comparison with the previous
+scorecard reports 894 no clear change, 136 unmeasured and 484 new strata rows.
+Added development inputs and cohort fields are expected comparison flags.
 
 #### Open Images V7
 
@@ -168,6 +175,7 @@ their scores for review ranking. On small-vegetation photos, SAM3 recovered
 199/202 and SegFormer recovered 177/202. SAM3's default proposal prompts matched
 500/1,468 small boxes (34.1%). Test explicit tree prompts and focused views for
 proposal recall before relying on boxes to surface small plants.
+
 The new box-recovery gate narrowly fails: development recovered 1,137/2,755
 boxes (41.3%), setting a 37.67% floor; held-out remains 1,155/2,949 (39.2%,
 37.4–40.9%). This flags consistency with development, while the low absolute
@@ -211,7 +219,7 @@ on a lookalike photo: 3 of 10 toetoe (*Austroderia richardii*) photos.
 [Species results](../benchmarks/validation/inat2021-target-species.json)
 
 All three species gates pass on 16 hash-held-out target photos: PlantCLEF top-1
-is 9/16 (56.3%, 33.2–76.9%); pilot and local cues each recover 10/16 (62.5%,
+is 9/16 (56.2%, 33.2–76.9%); pilot and local cues each recover 10/16 (62.5%,
 38.6–81.5%). The 14-photo development half gives a top-1 floor of only 4.80%.
 Treat this as a weak regression check and gather more independent target photos
 before making a production claim.
@@ -252,9 +260,10 @@ describe labelled subjects; they do not establish absence elsewhere in a photo.
 
 #### Danish roadside
 
-Production tiles recover **82/778 labelled photo–group pairs (10.5%, 95% CI
-8.6–12.9%)** within five full-vocabulary suggestions. Held-out publisher test
-recall is 76/577 (13.2%); the distance-filtered subset is 74/468 (15.8%).
+On the preserved hash-selected diagnostic cohort, production tiles recover
+**82/778 labelled photo–group pairs (10.5%, 95% CI 8.6–12.9%)** within five
+full-vocabulary suggestions. Its publisher test subset recovers 76/577 (13.2%);
+the distance-filtered subset is 74/468 (15.8%).
 The separate multilabel cohort is 6/201 (3.0%). A 4×4 grid improves pooled
 recovery to 122/778 (15.7%, 13.3–18.4%). Broom recovery remains just 1/125
 for production and 2/125 for the grid. Compare finer views and aggregation policies on development,
@@ -262,13 +271,21 @@ and inspect broom's candidate ranks before adopting a change.
 [Pipeline results](../benchmarks/validation/danish-roadside-species.json)
 
 The earlier 16/21 result ranked only six Danish groups on 25 reserved photos.
-The same grid diagnostic now recovers 562/778 (72.2%, 69.0–75.3%) at rank one;
+The same grid diagnostic on the preserved cohort recovers 562/778 (72.2%,
+69.0–75.3%) at rank one;
 that restricted ranking explains much of the gap from the broad five-slot list.
 XP4's released cutoffs recover 642/778 (82.5%, 79.7–85.0%) with 1,254 suggestions
 across 1,160 photos. Its six trained outputs, variable budget and supplied
 features give a useful recovery comparison, with a different cost and task.
 Watchlist recovery and the distance-filtered multilabel subset are unmeasured;
 labels do not support precision. [Publisher comparison](../benchmarks/validation/danish-roadside-publisher-baseline.json)
+
+On all 1,145 publisher test positives, production tiles recover 133 (11.6%,
+9.9–13.6%), passing the 5.75% floor learned from 105/1,181 validation positives.
+XP4 recovers 926/1,145 (80.9%, 78.5–83.0%) and fails its 81.17% floor from
+1,008/1,181 validation positives. The baseline's validation-to-test drop merits
+checking on independent routes. Production's passing gate still leaves most
+labelled plants unrecovered; compare views and aggregation on development.
 
 #### Agricultural datasets
 
@@ -278,9 +295,11 @@ with maximum-score aggregation, versus 5/303 with frequency voting. Even
 publisher-box crops identify only 74/645 as top one. Improve classifier and
 crop transfer alongside localization; aggregation alone leaves most labelled
 species unrecovered. Partial labels cannot establish precision.
+
 The held-out box gate fails: 166/327 (50.8%, 45.4–56.1%) has a lower bound
 below its 46.41% floor from 182/318 development matches. Keep both split and
 pooled recovery visible when testing localization changes.
+
 The conditional top-1 gate also narrowly fails: 17/166 (10.2%, 6.5–15.8%)
 misses its 6.59% floor from 31/182 development identifications. Five-slot pair
 recall passes at 8/153 (5.2%, 2.7–10.0%) against a 1.40% floor from 15/150.
@@ -354,6 +373,8 @@ done
 For a smoke run, add `--limit 50` and use a separate output directory. Presence
 uses up to 50 images per split. Use the same `--cache-dir` on subsequent runs to
 reuse verified JPEGs and predictions. The default cache is `$DATA_ROOT/.cache`.
+The latest full box-gate run took 13m 00s over 1,751 boxed photos across both
+halves, reusing the smoke predictions.
 
 ### Rerun the COCO-Stuff checks
 
@@ -390,6 +411,7 @@ are CC BY 4.0 and images are subject to Flickr terms. [COCO-Stuff dataset](https
 On the shared CUDA device, the initial full presence pass took 21m 19s.
 The proposal pass took 3m 32s with the presence cache available. The
 presence receipt records a 45s full replay from cached predictions.
+The latest proposal gate run, including both halves, took 9m 11s.
 
 ### Rerun the iNat2021 checks
 
@@ -468,7 +490,7 @@ uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
 For a smoke run, add `--limit 50` and send `--output` to a separate directory.
 Keep the same `--cache-dir` for the full run and later replays.
 The full false-alarm receipt records 2 h 12 min including downloads and inference.
-The species receipt records 24 s with evidence reused from the 50-photo smoke run.
+The species gate receipt records 18 s with evidence reused from the 50-photo smoke run.
 
 ### Rerun the Danish roadside checks
 
@@ -527,9 +549,9 @@ resume with HTTP ranges. Every completed file and checkpoint is verified even
 when SQLite evidence under `--cache-dir/danish-roadside/` is reused. Cache
 identities include transitive pipeline sources, model hashes, actual imported
 library versions (including CUDA build suffixes), geometry and budgets. The
-result records total command time and the sum of
-per-photo inference durations, including cached durations; the latter covers
-all diagnostic methods and excludes model initialization.
+result records total command time and two per-photo inference ledgers: the
+legacy cohort and the union of gate/diagnostic photos. Both include cached
+durations, cover all diagnostic methods and exclude model initialization.
 
 Distance-filtered rows require more than 100 m from publisher training,
 validation and the other scoring cohort, using the filename-coordinate Earth
@@ -549,11 +571,13 @@ is MIT-licensed. The reused PlantCLEF checkpoint is CC BY-NC 4.0. XP4 timing
 covers only loading supplied BEiT features and running the head, with no feature
 extraction; compare its recovery, not its runtime, with the image pipeline.
 
-The final full checks took 14m 20s for PlantCLEF and 10.5s for XP4 on the shared
-RTX 5090 (`cuda:0`), with verified downloads and 50 smoke predictions cached.
-The PlantCLEF duration includes the frame, production tiles and historical grid.
-Its per-photo inference ledger totals 14m 33s including reused smoke durations;
-XP4's ledger totals 2.7s. Initial source acquisition took about 20 minutes.
+The latest full gate runs took 29m 39s for PlantCLEF and 20.3s for XP4 on
+`cuda:0`, verifying all 2,909 unique gate/diagnostic photos and reusing the
+134-photo smoke evidence. PlantCLEF includes the frame, production tiles and
+historical grid; its full inference ledger totals 29m 55s. XP4's ledger totals
+3.7s over supplied features. Extending the original pins required 1,749
+additional JPEGs and their feature tensors; acquisition ran separately from
+these command timings. No new checkpoints were downloaded.
 
 ### Rerun ImageWeeds
 
@@ -651,9 +675,10 @@ runs. The default SAM3 prompts are `plant, flower`, with the default 0.5
 retention cutoff and 128-region cap per prompt. ImageWeeds uses the first 100
 retained proposals; the mask checks use all retained proposals.
 
-On the shared `cuda:0`, the final full commands took 3m 15s for ImageWeeds
-regions, 3m 59s for ImageWeeds species, 1m 03s for PhenoBench and 25s for CWFID.
+On `cuda:0`, the latest full gate commands took 2m 15s for ImageWeeds regions,
+3m 47s for ImageWeeds species, 36s for PhenoBench and 12s for CWFID.
 The species run reused the 50-image smoke classifier cache and all proposal
-evidence; the other three final runs recomputed model evidence after the last
-adapter change. Times include archive and checkpoint verification. All four
-`--limit 50` smoke commands completed successfully (CWFID has 20 eligible images).
+evidence; the other full runs reused smoke predictions and computed the remaining
+photos. Times include archive and checkpoint verification; CWFID's full
+replay reused all 59 smoke predictions (20 test plus 39 development photos).
+All four `--limit 50` smoke commands completed successfully.
