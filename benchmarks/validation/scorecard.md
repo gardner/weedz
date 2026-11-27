@@ -72,10 +72,103 @@
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | large | 99/947 | 10.5% (8.7–12.6%) | — |
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | negative | 194/198 | 98.0% (94.9–99.2%) | — |
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | unassessable | 60/92 | 65.2% (55.1–74.2%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | all | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | crop | 17/20 | 85.0% (64.0–94.8%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | weed | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_half_covered | all | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_half_covered | crop | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_half_covered | weed | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | all | 348/645 | 54.0% (50.1–57.8%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | crop:maize | 222/417 | 53.2% (48.4–58.0%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | crop:soybean | 126/228 | 55.3% (48.8–61.6%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Amaranthus retroflexus | 54/101 | 53.5% (43.8–62.9%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Amaranthus tuberculatus | 50/118 | 42.4% (33.8–51.4%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Ambrosia artemisiifolia | 107/176 | 60.8% (53.4–67.7%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Bassia scoparia | 72/142 | 50.7% (42.6–58.8%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Erigeron canadensis | 65/108 | 60.2% (50.8–68.9%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | all | 1155/2949 | 39.2% (37.4–40.9%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | small | 500/1468 | 34.1% (31.7–36.5%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | medium | 374/824 | 45.4% (42.0–48.8%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | large | 281/657 | 42.8% (39.0–46.6%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | all | 59/64 | 92.2% (83.0–96.6%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | crop | 62/64 | 96.9% (89.3–99.1%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | date:05-15 | 28/33 | 84.8% (69.1–93.3%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | date:05-26 | 14/14 | 100.0% (78.5–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | date:06-05 | 17/17 | 100.0% (81.6–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | weed | 29/61 | 47.5% (35.5–59.8%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | all | 64/64 | 100.0% (94.3–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | crop | 64/64 | 100.0% (94.3–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | date:05-15 | 33/33 | 100.0% (89.6–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | date:05-26 | 14/14 | 100.0% (78.5–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | date:06-05 | 17/17 | 100.0% (81.6–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | weed | 56/61 | 91.8% (82.2–96.4%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | all | 535/853 | 62.7% (59.4–65.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | complete | 446/697 | 64.0% (60.4–67.5%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | crop | 364/519 | 70.1% (66.1–73.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | date:05-15 | 207/348 | 59.5% (54.2–64.5%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | date:05-26 | 130/221 | 58.8% (52.2–65.1%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | date:06-05 | 198/284 | 69.7% (64.1–74.8%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | partial | 89/156 | 57.1% (49.2–64.6%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | size:2048plus | 277/337 | 82.2% (77.8–85.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | size:512to2047 | 131/172 | 76.2% (69.3–81.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | size:under512 | 127/344 | 36.9% (32.0–42.1%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | weed | 171/334 | 51.2% (45.9–56.5%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | all | 48/348 | 13.8% (10.6–17.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | crop:maize | 27/222 | 12.2% (8.5–17.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | crop:soybean | 21/126 | 16.7% (11.2–24.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Amaranthus retroflexus | 16/54 | 29.6% (19.1–42.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Amaranthus tuberculatus | 0/50 | 0.0% (0.0–7.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Ambrosia artemisiifolia | 20/107 | 18.7% (12.4–27.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Bassia scoparia | 6/72 | 8.3% (3.9–17.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Erigeron canadensis | 6/65 | 9.2% (4.3–18.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | all | 179/348 | 51.4% (46.2–56.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | crop:maize | 110/222 | 49.5% (43.0–56.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | crop:soybean | 69/126 | 54.8% (46.1–63.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Amaranthus retroflexus | 43/54 | 79.6% (67.1–88.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Amaranthus tuberculatus | 22/50 | 44.0% (31.2–57.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Ambrosia artemisiifolia | 66/107 | 61.7% (52.2–70.3%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Bassia scoparia | 23/72 | 31.9% (22.3–43.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Erigeron canadensis | 25/65 | 38.5% (27.6–50.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | all | 5/303 | 1.7% (0.7–3.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | crop:maize | 3/194 | 1.5% (0.5–4.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | crop:soybean | 2/109 | 1.8% (0.5–6.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Amaranthus retroflexus | 0/48 | 0.0% (0.0–7.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Amaranthus tuberculatus | 0/50 | 0.0% (0.0–7.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Ambrosia artemisiifolia | 3/72 | 4.2% (1.4–11.5%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Bassia scoparia | 2/68 | 2.9% (0.8–10.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Erigeron canadensis | 0/65 | 0.0% (0.0–5.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | all | 23/303 | 7.6% (5.1–11.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | crop:maize | 14/194 | 7.2% (4.3–11.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | crop:soybean | 9/109 | 8.3% (4.4–15.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Amaranthus retroflexus | 6/48 | 12.5% (5.9–24.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Amaranthus tuberculatus | 0/50 | 0.0% (0.0–7.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Ambrosia artemisiifolia | 9/72 | 12.5% (6.7–22.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Bassia scoparia | 6/68 | 8.8% (4.1–17.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Erigeron canadensis | 2/65 | 3.1% (0.8–10.5%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | all | 48/645 | 7.4% (5.7–9.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | crop:maize | 27/417 | 6.5% (4.5–9.3%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | crop:soybean | 21/228 | 9.2% (6.1–13.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Amaranthus retroflexus | 16/101 | 15.8% (10.0–24.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Amaranthus tuberculatus | 0/118 | 0.0% (0.0–3.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Ambrosia artemisiifolia | 20/176 | 11.4% (7.5–16.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Bassia scoparia | 6/142 | 4.2% (2.0–8.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Erigeron canadensis | 6/108 | 5.6% (2.6–11.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | all | 74/645 | 11.5% (9.2–14.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | crop:maize | 37/417 | 8.9% (6.5–12.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | crop:soybean | 37/228 | 16.2% (12.0–21.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Amaranthus retroflexus | 17/101 | 16.8% (10.8–25.3%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Amaranthus tuberculatus | 2/118 | 1.7% (0.5–6.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Ambrosia artemisiifolia | 39/176 | 22.2% (16.7–28.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Bassia scoparia | 7/142 | 4.9% (2.4–9.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Erigeron canadensis | 9/108 | 8.3% (4.4–15.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | all | 297/645 | 46.0% (42.2–49.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | crop:maize | 177/417 | 42.4% (37.8–47.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | crop:soybean | 120/228 | 52.6% (46.2–59.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Amaranthus retroflexus | 65/101 | 64.4% (54.6–73.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Amaranthus tuberculatus | 63/118 | 53.4% (44.4–62.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Ambrosia artemisiifolia | 111/176 | 63.1% (55.7–69.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Bassia scoparia | 33/142 | 23.2% (17.1–30.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Erigeron canadensis | 25/108 | 23.1% (16.2–31.9%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | plantclef_top1_recall | all | 16/30 | 53.3% (36.1–69.8%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | plantclef_top5_recall | all | 26/30 | 86.7% (70.3–94.7%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | bioclip_top1_recall | all | 28/30 | 93.3% (78.7–98.2%) | — |
@@ -487,3 +580,453 @@
 | target-false-alarms | plantclef2024-target-false-alarms | PlantCLEF 2024 single-plant publisher val/test | validation | local_cue_worst_species | test/Clematis viticella | 2/10 | 20.0% (5.7–51.0%) | — |
 | target-false-alarms | plantclef2024-target-false-alarms | PlantCLEF 2024 single-plant publisher val/test | validation | local_cue_worst_species | test/Genista scorpius | 2/10 | 20.0% (5.7–51.0%) | — |
 | target-false-alarms | plantclef2024-target-false-alarms | PlantCLEF 2024 single-plant publisher val/test | validation | local_cue_worst_species | test/Saccharum spontaneum | 2/10 | 20.0% (5.7–51.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all | 642/778 | 82.5% (79.7–85.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/Solidago | 192/238 | 80.7% (75.2–85.2%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/Cytisus scoparius | 114/125 | 91.2% (84.9–95.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/Rosa rugosa | 159/171 | 93.0% (88.1–95.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/Lupinus polyphyllus | 60/83 | 72.3% (61.8–80.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/Pastinaca sativa | 60/97 | 61.9% (51.9–70.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/Reynoutria | 57/64 | 89.1% (79.1–94.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | all/lookalikes | 114/125 | 91.2% (84.9–95.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/all | 475/577 | 82.3% (79.0–85.2%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/Solidago | 180/223 | 80.7% (75.0–85.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/Cytisus scoparius | 73/79 | 92.4% (84.4–96.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/Rosa rugosa | 121/127 | 95.3% (90.1–97.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/Lupinus polyphyllus | 21/32 | 65.6% (48.3–79.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/Pastinaca sativa | 29/59 | 49.2% (36.8–61.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/Reynoutria | 51/57 | 89.5% (78.9–95.1%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/lookalikes | 73/79 | 92.4% (84.4–96.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/all | 386/468 | 82.5% (78.8–85.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/Solidago | 140/182 | 76.9% (70.3–82.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/Cytisus scoparius | 61/67 | 91.0% (81.8–95.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/Rosa rugosa | 96/101 | 95.0% (88.9–97.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/Lupinus polyphyllus | 19/25 | 76.0% (56.6–88.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/Pastinaca sativa | 22/41 | 53.7% (38.7–67.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/Reynoutria | 48/52 | 92.3% (81.8–97.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | test/distance-filtered/lookalikes | 61/67 | 91.0% (81.8–95.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/all | 167/201 | 83.1% (77.3–87.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/Solidago | 12/15 | 80.0% (54.8–93.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/Cytisus scoparius | 41/46 | 89.1% (77.0–95.3%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/Rosa rugosa | 38/44 | 86.4% (73.3–93.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/Lupinus polyphyllus | 39/51 | 76.5% (63.2–86.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/Pastinaca sativa | 31/38 | 81.6% (66.6–90.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/Reynoutria | 6/7 | 85.7% (48.7–97.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/lookalikes | 41/46 | 89.1% (77.0–95.3%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all | 189/778 | 24.3% (21.4–27.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/Solidago | 122/238 | 51.3% (44.9–57.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/Cytisus scoparius | 0/125 | 0.0% (0.0–3.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/Rosa rugosa | 3/171 | 1.8% (0.6–5.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/Lupinus polyphyllus | 0/83 | 0.0% (0.0–4.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/Pastinaca sativa | 0/97 | 0.0% (0.0–3.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/Reynoutria | 64/64 | 100.0% (94.3–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | all/lookalikes | 0/125 | 0.0% (0.0–3.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/all | 180/577 | 31.2% (27.6–35.1%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/Solidago | 121/223 | 54.3% (47.7–60.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/Cytisus scoparius | 0/79 | 0.0% (0.0–4.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/Rosa rugosa | 2/127 | 1.6% (0.4–5.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/Lupinus polyphyllus | 0/32 | 0.0% (0.0–10.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/Pastinaca sativa | 0/59 | 0.0% (0.0–6.1%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/Reynoutria | 57/57 | 100.0% (93.7–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/lookalikes | 0/79 | 0.0% (0.0–4.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/all | 145/468 | 31.0% (27.0–35.3%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/Solidago | 92/182 | 50.5% (43.3–57.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/Cytisus scoparius | 0/67 | 0.0% (0.0–5.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/Rosa rugosa | 1/101 | 1.0% (0.2–5.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/Lupinus polyphyllus | 0/25 | 0.0% (0.0–13.3%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/Pastinaca sativa | 0/41 | 0.0% (0.0–8.6%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/Reynoutria | 52/52 | 100.0% (93.1–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | test/distance-filtered/lookalikes | 0/67 | 0.0% (0.0–5.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/all | 9/201 | 4.5% (2.4–8.3%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/Solidago | 1/15 | 6.7% (1.2–29.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/Cytisus scoparius | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/Rosa rugosa | 1/44 | 2.3% (0.4–11.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/Lupinus polyphyllus | 0/51 | 0.0% (0.0–7.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/Pastinaca sativa | 0/38 | 0.0% (0.0–9.2%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/Reynoutria | 7/7 | 100.0% (64.6–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/lookalikes | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top1_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all | 656/778 | 84.3% (81.6–86.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/Solidago | 238/238 | 100.0% (98.4–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/Cytisus scoparius | 85/125 | 68.0% (59.4–75.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/Rosa rugosa | 154/171 | 90.1% (84.7–93.7%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/Lupinus polyphyllus | 40/83 | 48.2% (37.8–58.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/Pastinaca sativa | 75/97 | 77.3% (68.0–84.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/Reynoutria | 64/64 | 100.0% (94.3–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | all/lookalikes | 85/125 | 68.0% (59.4–75.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/all | 543/577 | 94.1% (91.9–95.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/Solidago | 223/223 | 100.0% (98.3–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/Cytisus scoparius | 70/79 | 88.6% (79.7–93.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/Rosa rugosa | 123/127 | 96.9% (92.2–98.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/Lupinus polyphyllus | 20/32 | 62.5% (45.3–77.1%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/Pastinaca sativa | 50/59 | 84.7% (73.5–91.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/Reynoutria | 57/57 | 100.0% (93.7–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/lookalikes | 70/79 | 88.6% (79.7–93.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/all | 443/468 | 94.7% (92.2–96.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/Solidago | 182/182 | 100.0% (97.9–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/Cytisus scoparius | 58/67 | 86.6% (76.4–92.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/Rosa rugosa | 97/101 | 96.0% (90.3–98.4%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/Lupinus polyphyllus | 19/25 | 76.0% (56.6–88.5%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/Pastinaca sativa | 35/41 | 85.4% (71.6–93.1%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/Reynoutria | 52/52 | 100.0% (93.1–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | test/distance-filtered/lookalikes | 58/67 | 86.6% (76.4–92.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/all | 113/201 | 56.2% (49.3–62.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/Solidago | 15/15 | 100.0% (79.6–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/Cytisus scoparius | 15/46 | 32.6% (20.9–47.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/Rosa rugosa | 31/44 | 70.5% (55.8–81.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/Lupinus polyphyllus | 20/51 | 39.2% (27.0–52.9%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/Pastinaca sativa | 25/38 | 65.8% (49.9–78.8%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/Reynoutria | 7/7 | 100.0% (64.6–100.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/lookalikes | 15/46 | 32.6% (20.9–47.0%) | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all | 48/778 | 6.2% (4.7–8.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/Solidago | 1/238 | 0.4% (0.1–2.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/Cytisus scoparius | 0/125 | 0.0% (0.0–3.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/Rosa rugosa | 20/171 | 11.7% (7.7–17.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/Lupinus polyphyllus | 1/83 | 1.2% (0.2–6.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/Pastinaca sativa | 0/97 | 0.0% (0.0–3.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/Reynoutria | 26/64 | 40.6% (29.5–52.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | all/lookalikes | 0/125 | 0.0% (0.0–3.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/all | 45/577 | 7.8% (5.9–10.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/Solidago | 0/223 | 0.0% (0.0–1.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/Cytisus scoparius | 0/79 | 0.0% (0.0–4.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/Rosa rugosa | 19/127 | 15.0% (9.8–22.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/Lupinus polyphyllus | 0/32 | 0.0% (0.0–10.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/Pastinaca sativa | 0/59 | 0.0% (0.0–6.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/Reynoutria | 26/57 | 45.6% (33.4–58.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/lookalikes | 0/79 | 0.0% (0.0–4.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/all | 44/468 | 9.4% (7.1–12.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/Solidago | 0/182 | 0.0% (0.0–2.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/Cytisus scoparius | 0/67 | 0.0% (0.0–5.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/Rosa rugosa | 18/101 | 17.8% (11.6–26.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/Lupinus polyphyllus | 0/25 | 0.0% (0.0–13.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/Pastinaca sativa | 0/41 | 0.0% (0.0–8.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/Reynoutria | 26/52 | 50.0% (36.9–63.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | test/distance-filtered/lookalikes | 0/67 | 0.0% (0.0–5.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/all | 3/201 | 1.5% (0.5–4.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/Solidago | 1/15 | 6.7% (1.2–29.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/Cytisus scoparius | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/Rosa rugosa | 1/44 | 2.3% (0.4–11.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/Lupinus polyphyllus | 1/51 | 2.0% (0.3–10.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/Pastinaca sativa | 0/38 | 0.0% (0.0–9.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/Reynoutria | 0/7 | 0.0% (0.0–35.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/lookalikes | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | frame_top5_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all | 82/778 | 10.5% (8.6–12.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/Solidago | 0/238 | 0.0% (0.0–1.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/Cytisus scoparius | 1/125 | 0.8% (0.1–4.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/Rosa rugosa | 43/171 | 25.1% (19.2–32.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/Lupinus polyphyllus | 2/83 | 2.4% (0.7–8.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/Pastinaca sativa | 2/97 | 2.1% (0.6–7.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/Reynoutria | 34/64 | 53.1% (41.1–64.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | all/lookalikes | 1/125 | 0.8% (0.1–4.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/all | 76/577 | 13.2% (10.7–16.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/Solidago | 0/223 | 0.0% (0.0–1.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/Cytisus scoparius | 1/79 | 1.3% (0.2–6.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/Rosa rugosa | 40/127 | 31.5% (24.1–40.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/Lupinus polyphyllus | 0/32 | 0.0% (0.0–10.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/Pastinaca sativa | 1/59 | 1.7% (0.3–9.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/Reynoutria | 34/57 | 59.6% (46.7–71.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/lookalikes | 1/79 | 1.3% (0.2–6.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/all | 74/468 | 15.8% (12.8–19.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/Solidago | 0/182 | 0.0% (0.0–2.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/Cytisus scoparius | 1/67 | 1.5% (0.3–8.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/Rosa rugosa | 38/101 | 37.6% (28.8–47.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/Lupinus polyphyllus | 0/25 | 0.0% (0.0–13.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/Pastinaca sativa | 1/41 | 2.4% (0.4–12.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/Reynoutria | 34/52 | 65.4% (51.8–76.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | test/distance-filtered/lookalikes | 1/67 | 1.5% (0.3–8.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/all | 6/201 | 3.0% (1.4–6.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/Solidago | 0/15 | 0.0% (0.0–20.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/Cytisus scoparius | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/Rosa rugosa | 3/44 | 6.8% (2.3–18.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/Lupinus polyphyllus | 2/51 | 3.9% (1.1–13.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/Pastinaca sativa | 1/38 | 2.6% (0.5–13.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/Reynoutria | 0/7 | 0.0% (0.0–35.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/lookalikes | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | tiles_top5_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all | 122/778 | 15.7% (13.3–18.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/Solidago | 4/238 | 1.7% (0.7–4.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/Cytisus scoparius | 2/125 | 1.6% (0.4–5.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/Rosa rugosa | 74/171 | 43.3% (36.1–50.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/Lupinus polyphyllus | 2/83 | 2.4% (0.7–8.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/Pastinaca sativa | 1/97 | 1.0% (0.2–5.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/Reynoutria | 39/64 | 60.9% (48.7–71.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | all/lookalikes | 2/125 | 1.6% (0.4–5.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/all | 111/577 | 19.2% (16.2–22.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/Solidago | 4/223 | 1.8% (0.7–4.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/Cytisus scoparius | 2/79 | 2.5% (0.7–8.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/Rosa rugosa | 65/127 | 51.2% (42.6–59.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/Lupinus polyphyllus | 0/32 | 0.0% (0.0–10.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/Pastinaca sativa | 1/59 | 1.7% (0.3–9.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/Reynoutria | 39/57 | 68.4% (55.5–79.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/lookalikes | 2/79 | 2.5% (0.7–8.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/all | 92/468 | 19.7% (16.3–23.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/Solidago | 1/182 | 0.5% (0.1–3.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/Cytisus scoparius | 1/67 | 1.5% (0.3–8.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/Rosa rugosa | 53/101 | 52.5% (42.8–61.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/Lupinus polyphyllus | 0/25 | 0.0% (0.0–13.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/Pastinaca sativa | 1/41 | 2.4% (0.4–12.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/Reynoutria | 36/52 | 69.2% (55.7–80.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | test/distance-filtered/lookalikes | 1/67 | 1.5% (0.3–8.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/all | 11/201 | 5.5% (3.1–9.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/Solidago | 0/15 | 0.0% (0.0–20.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/Cytisus scoparius | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/Rosa rugosa | 9/44 | 20.5% (11.2–34.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/Lupinus polyphyllus | 2/51 | 3.9% (1.1–13.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/Pastinaca sativa | 0/38 | 0.0% (0.0–9.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/Reynoutria | 0/7 | 0.0% (0.0–35.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/lookalikes | 0/46 | 0.0% (0.0–7.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | grid_top5_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all | 398/778 | 51.2% (47.6–54.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/Solidago | 160/238 | 67.2% (61.0–72.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/Cytisus scoparius | 27/125 | 21.6% (15.3–29.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/Rosa rugosa | 74/171 | 43.3% (36.1–50.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/Lupinus polyphyllus | 38/83 | 45.8% (35.5–56.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/Pastinaca sativa | 46/97 | 47.4% (37.8–57.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/Reynoutria | 53/64 | 82.8% (71.8–90.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | all/lookalikes | 27/125 | 21.6% (15.3–29.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/all | 334/577 | 57.9% (53.8–61.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/Solidago | 153/223 | 68.6% (62.2–74.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/Cytisus scoparius | 19/79 | 24.1% (16.0–34.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/Rosa rugosa | 65/127 | 51.2% (42.6–59.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/Lupinus polyphyllus | 13/32 | 40.6% (25.5–57.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/Pastinaca sativa | 33/59 | 55.9% (43.3–67.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/Reynoutria | 51/57 | 89.5% (78.9–95.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/lookalikes | 19/79 | 24.1% (16.0–34.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/all | 269/468 | 57.5% (53.0–61.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/Solidago | 127/182 | 69.8% (62.8–76.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/Cytisus scoparius | 17/67 | 25.4% (16.5–36.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/Rosa rugosa | 51/101 | 50.5% (40.9–60.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/Lupinus polyphyllus | 7/25 | 28.0% (14.3–47.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/Pastinaca sativa | 21/41 | 51.2% (36.5–65.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/Reynoutria | 46/52 | 88.5% (77.0–94.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | test/distance-filtered/lookalikes | 17/67 | 25.4% (16.5–36.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/all | 64/201 | 31.8% (25.8–38.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/Solidago | 7/15 | 46.7% (24.8–69.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/Cytisus scoparius | 8/46 | 17.4% (9.1–30.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/Rosa rugosa | 9/44 | 20.5% (11.2–34.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/Lupinus polyphyllus | 25/51 | 49.0% (35.9–62.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/Pastinaca sativa | 13/38 | 34.2% (21.2–50.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/Reynoutria | 2/7 | 28.6% (8.2–64.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/lookalikes | 8/46 | 17.4% (9.1–30.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top1_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all | 599/778 | 77.0% (73.9–79.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/Solidago | 232/238 | 97.5% (94.6–98.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/Cytisus scoparius | 61/125 | 48.8% (40.2–57.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/Rosa rugosa | 102/171 | 59.6% (52.2–66.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/Lupinus polyphyllus | 61/83 | 73.5% (63.1–81.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/Pastinaca sativa | 80/97 | 82.5% (73.7–88.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/Reynoutria | 63/64 | 98.4% (91.7–99.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | all/lookalikes | 61/125 | 48.8% (40.2–57.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/all | 475/577 | 82.3% (79.0–85.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/Solidago | 220/223 | 98.7% (96.1–99.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/Cytisus scoparius | 41/79 | 51.9% (41.1–62.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/Rosa rugosa | 83/127 | 65.4% (56.7–73.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/Lupinus polyphyllus | 24/32 | 75.0% (57.9–86.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/Pastinaca sativa | 50/59 | 84.7% (73.5–91.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/Reynoutria | 57/57 | 100.0% (93.7–100.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/lookalikes | 41/79 | 51.9% (41.1–62.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/all | 381/468 | 81.4% (77.6–84.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/Solidago | 179/182 | 98.4% (95.3–99.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/Cytisus scoparius | 35/67 | 52.2% (40.5–63.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/Rosa rugosa | 66/101 | 65.3% (55.7–73.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/Lupinus polyphyllus | 17/25 | 68.0% (48.4–82.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/Pastinaca sativa | 32/41 | 78.0% (63.3–88.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/Reynoutria | 52/52 | 100.0% (93.1–100.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | test/distance-filtered/lookalikes | 35/67 | 52.2% (40.5–63.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/all | 124/201 | 61.7% (54.8–68.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/Solidago | 12/15 | 80.0% (54.8–93.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/Cytisus scoparius | 20/46 | 43.5% (30.2–57.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/Rosa rugosa | 19/44 | 43.2% (29.7–57.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/Lupinus polyphyllus | 37/51 | 72.5% (59.1–82.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/Pastinaca sativa | 30/38 | 78.9% (63.7–88.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/Reynoutria | 6/7 | 85.7% (48.7–97.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/lookalikes | 20/46 | 43.5% (30.2–57.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_whole_top3_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all | 562/778 | 72.2% (69.0–75.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/Solidago | 192/238 | 80.7% (75.2–85.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/Cytisus scoparius | 77/125 | 61.6% (52.8–69.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/Rosa rugosa | 145/171 | 84.8% (78.7–89.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/Lupinus polyphyllus | 45/83 | 54.2% (43.6–64.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/Pastinaca sativa | 50/97 | 51.5% (41.7–61.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/Reynoutria | 53/64 | 82.8% (71.8–90.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | all/lookalikes | 77/125 | 61.6% (52.8–69.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/all | 471/577 | 81.6% (78.3–84.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/Solidago | 188/223 | 84.3% (79.0–88.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/Cytisus scoparius | 61/79 | 77.2% (66.8–85.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/Rosa rugosa | 114/127 | 89.8% (83.3–93.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/Lupinus polyphyllus | 20/32 | 62.5% (45.3–77.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/Pastinaca sativa | 38/59 | 64.4% (51.7–75.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/Reynoutria | 50/57 | 87.7% (76.8–93.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/lookalikes | 61/79 | 77.2% (66.8–85.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/all | 388/468 | 82.9% (79.2–86.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/Solidago | 152/182 | 83.5% (77.4–88.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/Cytisus scoparius | 51/67 | 76.1% (64.7–84.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/Rosa rugosa | 91/101 | 90.1% (82.7–94.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/Lupinus polyphyllus | 18/25 | 72.0% (52.4–85.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/Pastinaca sativa | 30/41 | 73.2% (58.1–84.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/Reynoutria | 46/52 | 88.5% (77.0–94.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | test/distance-filtered/lookalikes | 51/67 | 76.1% (64.7–84.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/all | 91/201 | 45.3% (38.5–52.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/Solidago | 4/15 | 26.7% (10.9–52.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/Cytisus scoparius | 16/46 | 34.8% (22.7–49.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/Rosa rugosa | 31/44 | 70.5% (55.8–81.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/Lupinus polyphyllus | 25/51 | 49.0% (35.9–62.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/Pastinaca sativa | 12/38 | 31.6% (19.1–47.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/Reynoutria | 3/7 | 42.9% (15.8–75.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/lookalikes | 16/46 | 34.8% (22.7–49.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top1_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all | 731/778 | 94.0% (92.1–95.4%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/Solidago | 235/238 | 98.7% (96.4–99.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/Cytisus scoparius | 115/125 | 92.0% (85.9–95.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/Rosa rugosa | 162/171 | 94.7% (90.3–97.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/Lupinus polyphyllus | 71/83 | 85.5% (76.4–91.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/Pastinaca sativa | 89/97 | 91.8% (84.6–95.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/Reynoutria | 59/64 | 92.2% (83.0–96.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | all/lookalikes | 115/125 | 92.0% (85.9–95.6%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/all | 544/577 | 94.3% (92.1–95.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/Solidago | 220/223 | 98.7% (96.1–99.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/Cytisus scoparius | 69/79 | 87.3% (78.2–93.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/Rosa rugosa | 121/127 | 95.3% (90.1–97.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/Lupinus polyphyllus | 26/32 | 81.2% (64.7–91.1%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/Pastinaca sativa | 54/59 | 91.5% (81.6–96.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/Reynoutria | 54/57 | 94.7% (85.6–98.2%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/lookalikes | 69/79 | 87.3% (78.2–93.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/all | 445/468 | 95.1% (92.7–96.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/Solidago | 181/182 | 99.5% (97.0–99.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/Cytisus scoparius | 57/67 | 85.1% (74.7–91.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/Rosa rugosa | 96/101 | 95.0% (88.9–97.9%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/Lupinus polyphyllus | 23/25 | 92.0% (75.0–97.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/Pastinaca sativa | 39/41 | 95.1% (83.9–98.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/Reynoutria | 49/52 | 94.2% (84.4–98.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | test/distance-filtered/lookalikes | 57/67 | 85.1% (74.7–91.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/all | 187/201 | 93.0% (88.6–95.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/Solidago | 15/15 | 100.0% (79.6–100.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/Cytisus scoparius | 46/46 | 100.0% (92.3–100.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/Rosa rugosa | 41/44 | 93.2% (81.8–97.7%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/Lupinus polyphyllus | 45/51 | 88.2% (76.6–94.5%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/Pastinaca sativa | 35/38 | 92.1% (79.2–97.3%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/Reynoutria | 5/7 | 71.4% (35.9–91.8%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/lookalikes | 46/46 | 100.0% (92.3–100.0%) | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/all | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/Solidago | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/Cytisus scoparius | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/Rosa rugosa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/Lupinus polyphyllus | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/Pastinaca sativa | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/Reynoutria | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/watchlist | 0/0 | unmeasured | — |
+| whole-photo-species | danish-roadside-species | danish-roadside | held-out | six_group_grid_top3_recall | multilabel/distance-filtered/lookalikes | 0/0 | unmeasured | — |

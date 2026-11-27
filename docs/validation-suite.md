@@ -74,7 +74,12 @@ and gate from the latest full runs.
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · test: PlantCLEF top-1 25/30 (83.3%), pilot cues 16/30 (53.3%) |
 | Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Measured · pilot cues 49/20,503 (0.239%); local 223/20,503 (1.088%), missing the 1% ceiling |
-| Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
+| Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · 82/778 positive pairs recovered at five suggestions: 10.5% (95% CI 8.6–12.9%) |
+| Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · released XP4 cutoffs recover 642/778: 82.5% (95% CI 79.7–85.0%), with a variable suggestion count |
+| Region proposals | `imageweeds-region-recovery` | ImageWeeds v2 primary138 | Measured · 348/645 boxes recovered (54.0%, 95% CI 50.1–57.8%) |
+| Species identification | `imageweeds-species` | ImageWeeds v2 primary138 | Measured · conditional top-1 48/348 (13.8%, 95% CI 10.6–17.8%); five-slot pair recall 23/303 (7.6%, 5.1–11.1%) |
+| Region proposals | `phenobench-instance-recovery` | PhenoBench development64 | Measured · 535/853 instances recovered (62.7%, 95% CI 59.4–65.9%) |
+| Region proposals | `cwfid-mask-coverage` | CWFID publisher test, excluding 028 | Measured · ≥90% of assessed positive pixels covered in 20/20 photos (100%, 95% CI 83.9–100%) |
 
 ### What this showed
 
@@ -143,6 +148,60 @@ ranked a target first on 36.9% of subjects. Keep the pilot baseline and test
 explicit other-gorse comparison prompts on development data. These rates
 describe labelled subjects; they do not establish absence elsewhere in a photo.
 [False-alarm results](../benchmarks/validation/plantclef2024-target-false-alarms.json)
+
+#### Danish roadside
+
+Production tiles recover **82/778 labelled photo–group pairs (10.5%, 95% CI
+8.6–12.9%)** within five full-vocabulary suggestions. Held-out publisher test
+recall is 76/577 (13.2%); the distance-filtered subset is 74/468 (15.8%).
+The separate multilabel cohort is 6/201 (3.0%). A 4×4 grid improves pooled
+recovery to 122/778 (15.7%, 13.3–18.4%). Broom recovery remains just 1/125
+for production and 2/125 for the grid. Compare finer views and aggregation policies on development,
+and inspect broom's candidate ranks before adopting a change.
+[Pipeline results](../benchmarks/validation/danish-roadside-species.json)
+
+The earlier 16/21 result ranked only six Danish groups on 25 reserved photos.
+The same grid diagnostic now recovers 562/778 (72.2%, 69.0–75.3%) at rank one;
+that restricted ranking explains much of the gap from the broad five-slot list.
+XP4's released cutoffs recover 642/778 (82.5%, 79.7–85.0%) with 1,254 suggestions
+across 1,160 photos. Its six trained outputs, variable budget and supplied
+features give a useful recovery comparison, with a different cost and task.
+Watchlist recovery and the distance-filtered multilabel subset are unmeasured;
+labels do not support precision. [Publisher comparison](../benchmarks/validation/danish-roadside-publisher-baseline.json)
+
+#### Agricultural datasets
+
+ImageWeeds exactly reproduces 348/645 box matches, 48/348 correct conditional
+identifications and 23/303 positive image-species pairs at five suggestions
+with maximum-score aggregation, versus 5/303 with frequency voting. Even
+publisher-box crops identify only 74/645 as top one. Improve classifier and
+crop transfer alongside localization; aggregation alone leaves most labelled
+species unrecovered. Partial labels cannot establish precision.
+[Region results](../benchmarks/validation/imageweeds-region-recovery.json),
+[species results](../benchmarks/validation/imageweeds-species.json)
+
+PhenoBench reproduces the earlier **535/853** one-to-one mask matches. Recovery
+is 171/334 for weeds (51.2%) and 127/344 for plants under 512 pixels (36.9%).
+The union covers at least half the labelled foreground in all 64 photos, which
+hides these individual misses. Prioritize small weed instances when comparing
+proposal changes. Crop/weed strata describe localization, not species or
+crop/weed recognition. [PhenoBench results](../benchmarks/validation/phenobench-instance-recovery.json)
+
+On CWFID, SAM3 covers at least 90% of assessed positive pixels in all 20
+nonoverlapping publisher test photos. Mean per-image coverage is 93.8% overall,
+92.4% for crop and 94.1% for weed. These sparse human regions use algorithmic
+vegetation boundaries and false-colour imagery; they do not establish proposal
+precision. The earlier 60-photo SAM2 diagnostic used a different method and
+cohort. Keep dense-mask and small-instance checks alongside this result.
+[CWFID results](../benchmarks/validation/cwfid-mask-coverage.json)
+
+These datasets were already inspected during development. Nothing was tuned in
+this port, so ImageWeeds and PhenoBench score their entire fixed cohorts as
+`validation`; CWFID preserves the publisher `test` split after removing 028.
+None is a new independent held-out claim. PhenoBench's website calls semantic
+ID 4 partial-crop twice; its devkit identifies 4 as partial weed. Its archive
+and website also disagree on licensing, so retain private noncommercial
+research handling.
 
 ### Rerun the Open Images checks
 
@@ -280,6 +339,26 @@ export PYTHONPATH="$PWD/src:$UV_PROJECT_ENVIRONMENT/cuda-runtime"
 for check in plantclef2024-target-species plantclef2024-target-false-alarms; do
   uv run --no-sync main.py validate run "$check" --data-root "$DATA_ROOT" \
     --cache-dir "$CACHE_DIR" --device cuda:0 --output benchmarks/validation
+
+### Rerun the Danish roadside checks
+
+Set `DATA_ROOT` to the external validation-data directory and `CLASSIFIER_RUNTIME`
+to the existing iNat2021 CUDA runtime's project directory. Keep that runtime;
+`uv sync` would replace its CUDA Torch with this project's CPU build.
+Reuse the already pinned PlantCLEF files from the iNat2021 data directory:
+
+```sh
+mkdir -p "$DATA_ROOT/danish-roadside/models/plantclef"
+for file in plantclef2024.safetensors species_id_mapping.txt; do
+  ln -s "../../../inat2021/models/plantclef/$file" \
+    "$DATA_ROOT/danish-roadside/models/plantclef/$file"
+done
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export UV_PROJECT_ENVIRONMENT="$CLASSIFIER_RUNTIME/.venv"
+export PYTHONPATH="$PWD/src:$UV_PROJECT_ENVIRONMENT/cuda-runtime"
+for check in danish-roadside-species danish-roadside-publisher-baseline; do
+  uv run --no-sync main.py validate run "$check" --data-root "$DATA_ROOT" \
+    --cache-dir "$DATA_ROOT/.cache" --device cuda:0 --output benchmarks/validation
 done
 uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
   --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
@@ -289,3 +368,169 @@ For a smoke run, add `--limit 50` and send `--output` to a separate directory.
 Keep the same `--cache-dir` for the full run and later replays.
 The full false-alarm receipt records 2 h 12 min including downloads and inference.
 The species receipt records 24 s with evidence reused from the 50-photo smoke run.
+
+For a smoke run add `--limit 50` and write to a separate output directory.
+Both checks score the same 1,160 hash-held-out photos: 1,060 of the publisher's
+2,140 test photos and 100 of its separate 206 multilabel photos. The source ID
+is the JPEG filename; `split_of` freezes membership before inference. No
+operating point is fitted on either scoring cohort. XP4 uses its published
+validation cutoffs, with the upstream strict `>` comparison and CUDA FP16
+autocast. Its suggestion count varies; it is a separate comparison.
+
+The main result is labelled-positive recovery in five full-vocabulary
+PlantCLEF suggestions, using the production `region_boxes`/`square_view`
+geometry and `aggregate_taxa` maximum-score policy. A frame control keeps the
+production centre crop. A fixed 4×4 grid and six-group top-one/top-three rows
+retain the earlier roadside method as diagnostics, including Pillow’s original
+rounded padding for odd margins. The six-group rankings
+restrict alternatives to Danish labels, so they do not measure the same task
+as the main five-slot list. Neither method uses dataset labels as inference
+inputs. No screening or segmentation gate discards photos in this check.
+
+Metadata, original JPEGs and publisher feature tensors are downloaded from
+pinned URLs under `danish-roadside/` in the data root. The checked-in
+`src/weedz/validation/roadside_pins.json` records their URLs and SHA-256 hashes.
+Image bytes and CSV rows stay outside Git. Interrupted downloads use staging
+under `--cache-dir` and
+resume with HTTP ranges. Every completed file and checkpoint is verified even
+when SQLite evidence under `--cache-dir/danish-roadside/` is reused. Cache
+identities include transitive pipeline sources, model hashes, actual imported
+library versions (including CUDA build suffixes), geometry and budgets. The
+result records total command time and the sum of
+per-photo inference durations, including cached durations; the latter covers
+all diagnostic methods and excludes model initialization.
+
+Distance-filtered rows require more than 100 m from publisher training,
+validation and the other scoring cohort, using the filename-coordinate Earth
+chord rule. Scored neighbours are not separated from one another. These rows
+reduce a known leakage risk without establishing independent routes or sites.
+Only explicit positive pairs count. Blank CSV cells and the no-species folder
+supply no negatives to these checks. Watchlist recovery is unmeasured; broom
+is the only labelled pipeline lookalike. Wilson intervals do not account for
+correlation between neighbouring frames or labels within one photo.
+
+The publisher provides no per-file SHA-256 manifest, so the pins freeze bytes
+acquired over HTTPS, rather than independently authenticating them. The
+[dataset](https://zenodo.org/api/records/14013930) and
+[XP4 model release](https://zenodo.org/api/records/13891416) declare CC BY 4.0;
+the [publisher code](https://github.com/plantnet/roadside-invasive-plant-identification)
+is MIT-licensed. The reused PlantCLEF checkpoint is CC BY-NC 4.0. XP4 timing
+covers only loading supplied BEiT features and running the head, with no feature
+extraction; compare its recovery, not its runtime, with the image pipeline.
+
+The final full checks took 14m 20s for PlantCLEF and 10.5s for XP4 on the shared
+RTX 5090 (`cuda:0`), with verified downloads and 50 smoke predictions cached.
+The PlantCLEF duration includes the frame, production tiles and historical grid.
+Its per-photo inference ledger totals 14m 33s including reused smoke durations;
+XP4's ledger totals 2.7s. Initial source acquisition took about 20 minutes.
+
+### Rerun ImageWeeds
+
+The check reconstructs the 138-image primary cohort from the two pinned
+[Weed-AI publisher archives](https://weed-ai.sydney.edu.au/datasets/cfe6e919-6ddd-4b4e-aa63-58483841a11f).
+It quarantines all 36 decoded-pixel alias records and the one image with an
+out-of-bounds box, retaining 645 boxes and 303 labelled image-species pairs.
+It reads the original JPEG/MPO primary frame with the same decoded pixels as
+the earlier lossless PNGs. Labels are partial: no negatives or precision.
+
+Set `SAM3_ENV` to the existing CUDA SAM3 virtual environment and
+`CLASSIFIER_ENV` to the existing PlantCLEF virtual environment. Keep their
+installed packages with `--no-sync`; the normal project environment uses CPU
+Torch. Use the same verified checkpoints as the COCO-Stuff and iNat2021 checks:
+`cocostuff/models/3c879f39826c281e95690f02c7821c4de09afae7/sam3.pt`,
+`inat2021/models/plantclef/plantclef2024.safetensors` and
+`inat2021/models/plantclef/species_id_mapping.txt` under `DATA_ROOT`.
+No model downloads are needed.
+
+```sh
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export PYTHONPATH="$PWD/src" UV_PROJECT_ENVIRONMENT="$SAM3_ENV"
+uv run --no-sync main.py validate run imageweeds-region-recovery \
+  --data-root "$DATA_ROOT" --cache-dir "$DATA_ROOT/.cache" --device cuda:0 \
+  --output benchmarks/validation
+
+export UV_PROJECT_ENVIRONMENT="$CLASSIFIER_ENV"
+export PYTHONPATH="$PWD/src:$CLASSIFIER_ENV/cuda-runtime"
+export WEEDZ_SAM3_PYTHON="$SAM3_ENV/bin/python"
+uv run --no-sync main.py validate run imageweeds-species \
+  --data-root "$DATA_ROOT" --cache-dir "$DATA_ROOT/.cache" --device cuda:0 \
+  --output benchmarks/validation
+```
+
+`WEEDZ_SAM3_PYTHON` runs the proposal stage in the SAM3 environment, then releases
+it before loading PlantCLEF. The species check also works in a single CUDA
+environment that supports both models. The five-slot comparisons call
+`aggregate_taxa` with frequency and maximum-score policies, using the full
+7,806-class PlantCLEF vocabulary. The pipeline's BioCLIP vocabulary contains
+none of these five agricultural taxa, so it cannot identify them.
+
+### Rerun PhenoBench
+
+The [publisher v1.1.0 archive](https://www.phenobench.org/dataset.html) contains
+772 validation photos. The adapter reproduces the earlier label-independent
+64-photo selection by the lowest SHA-256 of
+`weedz-phenobench-development64-v1:` plus filename. It retains partial crop
+and weed labels and scopes native instance IDs by crop/weed category. The
+instance metric uses maximum-cardinality one-to-one mask matching at IoU ≥0.5,
+with date, category, visibility and size strata. Coverage rates use images as
+trials; raw mean coverage and mean foreground IoU are separate descriptive
+numbers. The earlier pooled foreground IoU is a different statistic.
+
+```sh
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export PYTHONPATH="$PWD/src" UV_PROJECT_ENVIRONMENT="$SAM3_ENV"
+uv run --no-sync main.py validate run phenobench-instance-recovery \
+  --data-root "$DATA_ROOT" --cache-dir "$DATA_ROOT/.cache" --device cuda:0 \
+  --output benchmarks/validation
+```
+
+### Rerun CWFID
+
+The adapter reads the pinned [publisher revision](https://github.com/cwfid/dataset/tree/36290d0912a032f0bd1a5678ed55457ddafde217).
+Of its 60 images and 119 positive category masks, 20 images belong only to test.
+Image 028 also belongs to train and is excluded. Red/green pixels establish
+weed/crop positives; black pixels are unassessed. A rate counts images whose
+assessed pixels are at least 50% or 90% covered. Pixels are never treated as
+independent Wilson trials. CWFID is for noncommercial research only.
+
+```sh
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export PYTHONPATH="$PWD/src" UV_PROJECT_ENVIRONMENT="$SAM3_ENV"
+uv run --no-sync main.py validate run cwfid-mask-coverage \
+  --data-root "$DATA_ROOT" --cache-dir "$DATA_ROOT/.cache" --device cuda:0 \
+  --output benchmarks/validation
+```
+
+All three adapters verify publisher archive SHA-256 before reading any data,
+then verify extracted images and labels against the archive on each run.
+They verify checkpoints even on fully cached runs. Existing archive copies
+can be placed at these locations under `DATA_ROOT`; otherwise downloads resume
+from `.part` files. Raw data stays outside Git.
+
+| Dataset | Archive path |
+| --- | --- |
+| ImageWeeds | `imageweeds/source/imageweeds-soybean.zip` and `imageweeds/source/imageweeds-maize.zip` |
+| PhenoBench | `phenobench/source/PhenoBench-v110.zip` |
+| CWFID | `cwfid/source/cwfid-36290d0912a032f0bd1a5678ed55457ddafde217.tar.gz` |
+
+Inference evidence is cached under `--cache-dir/agri`, keyed by source bytes,
+the adapter's transitive pipeline imports, installed library versions and
+model settings. Add `--limit 50 --output "$DATA_ROOT/.cache/agri-smoke"` for smoke
+runs. The default SAM3 prompts are `plant, flower`, with the default 0.5
+retention cutoff and 128-region cap per prompt. ImageWeeds uses the first 100
+retained proposals; the mask checks use all retained proposals.
+
+After full runs, rebuild the ordered scorecard:
+
+```sh
+uv run main.py validate scorecard benchmarks/validation/*.json \
+  --output benchmarks/validation/scorecard.json \
+  --markdown benchmarks/validation/scorecard.md
+```
+
+On the shared `cuda:0`, the final full commands took 3m 15s for ImageWeeds
+regions, 3m 59s for ImageWeeds species, 1m 03s for PhenoBench and 25s for CWFID.
+The species run reused the 50-image smoke classifier cache and all proposal
+evidence; the other three final runs recomputed model evidence after the last
+adapter change. Times include archive and checkpoint verification. All four
+`--limit 50` smoke commands completed successfully (CWFID has 20 eligible images).
