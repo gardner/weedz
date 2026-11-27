@@ -21,6 +21,7 @@ To ensure code quality stays high and readable: Use strong types, code formattin
     - After pushing wait for the code review agents to finish their review before pushing again.
       A pre-push hook enforces this: it refuses the push while `claude-review` or `zai-review` is still running on the branch's PR, because a new push cancels the running review. Wait with `gh pr checks <PR> --watch`. Install it with `uv run pre-commit install`. Push one branch at a time: pre-commit shows the hook only the first branch of a multi-branch push.
     - Keep looping like this until there are no more relevant issues found by the code review agents.
+    - Then merge the PR.
 
 # IMPORTANT
 
