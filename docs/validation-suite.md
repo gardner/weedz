@@ -72,7 +72,8 @@ and gate from the latest full runs.
 | Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · 39.2% box recall at IoU ≥ 0.5 in the first 100 proposals |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
-| Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
+| Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · test: PlantCLEF top-1 25/30 (83.3%), pilot cues 16/30 (53.3%) |
+| Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Measured · pilot cues 49/20,503 (0.239%); local 223/20,503 (1.088%), missing the 1% ceiling |
 | Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · 82/778 positive pairs recovered at five suggestions: 10.5% (95% CI 8.6–12.9%) |
 | Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · released XP4 cutoffs recover 642/778: 82.5% (95% CI 79.7–85.0%), with a variable suggestion count |
 | Region proposals | `imageweeds-region-recovery` | ImageWeeds v2 primary138 | Measured · 348/645 boxes recovered (54.0%, 95% CI 50.1–57.8%) |
@@ -126,6 +127,27 @@ Unfiltered BioCLIP ranked a watchlist prompt first on 38.7% of non-target
 subjects. Keep the agreement gate and prioritize same-genus
 comparisons when testing changes. The labels cover photographed subjects.
 [False-alarm results](../benchmarks/validation/inat2021-target-false-alarms.json)
+
+#### PlantCLEF 2024 val/test
+
+On the cleaner publisher `test` target photos, PlantCLEF and BioCLIP 2 each
+ranked the subject first on 25/30 (83.3%, 95% CI 66.4–92.7%). PlantCLEF's
+top five recovered 27/30. The pilot cue recovered 16/30 (53.3%, 36.1–69.8%)
+and the local cue 11/30 (36.7%, 21.9–54.5%). Local cues recovered only 1/10
+test pampas photos, against 4/10 for the pilot. Keep the pilot as the comparison
+and investigate local pampas agreement before replacing it. These are labelled
+single-plant subjects, not scene inventories. The `val` photos were used by the
+publisher for model selection, so their results are reported separately.
+[Species results](../benchmarks/validation/plantclef2024-target-species.json)
+
+Across 20,503 non-target subjects, the pilot raised 49 wrong-subject cues
+(0.239%, 95% CI 0.181–0.316%), clearing the 1% ceiling. The local rule raised
+223 (1.088%, 0.955–1.239%), missing it. Same-genus subjects drew 36/214 pilot
+cues and 76/214 local cues, especially other *Ulex* species. Unfiltered BioCLIP
+ranked a target first on 36.9% of subjects. Keep the pilot baseline and test
+explicit other-gorse comparison prompts on development data. These rates
+describe labelled subjects; they do not establish absence elsewhere in a photo.
+[False-alarm results](../benchmarks/validation/plantclef2024-target-false-alarms.json)
 
 #### Danish roadside
 
@@ -277,6 +299,55 @@ Use `--device cuda:0` with an existing CUDA-enabled runtime and `--no-sync`
 to keep uv from replacing that runtime with the project's locked CPU Torch.
 Send smoke-run output to an external directory.
 [CUDA runtime setup](temporal-segmentation.md)
+
+### Rerun the PlantCLEF 2024 checks
+
+These checks reuse the six verified checkpoints at `inat2021/models/` listed
+above. No new models or image archives are needed. Place or link the existing
+training CSV at `plantclef2024/metadata/plantclef2024-training.csv` under the
+data root. The adapter verifies its pinned SHA-256, or downloads it from the
+publisher if absent. Only `learn_tag=val` and `learn_tag=test` are scored.
+The pinned export contains 99,134 such photos covering 6,598 binomial taxa;
+7,806 is the model's class count. The publisher used `val` for model selection,
+so emphasize the separately reported `test` estimates.
+[Publisher split and model notes](https://zenodo.org/records/10848263)
+
+The species check scores all 60 target photos and 20 broom lookalikes. The
+false-alarm check scores every non-target same-genus and same-family photo,
+plus the 5,000 other plants with the lowest salted source-ID hash (20,503
+photos total). Both use the frozen pilot and local cue rules, with no tuning.
+Each result reports `all`, `val` and `test`, including per-species or relatedness
+strata. Wrong-subject rates do not establish absence elsewhere in the frame.
+
+Individual photos and their URL, author, licence and SHA-256 receipts live in
+`$CACHE_DIR/plantclef2024/images/`. Three download workers pause between requests,
+resume partial downloads, and verify every cached image. The publisher supplies
+no per-image checksums: the first HTTPS download establishes each local byte
+receipt. Photos stay outside Git and retain their individual licence terms.
+Predictions resume per model stage and image hash under the same cache directory;
+their identity includes the adapter's imported pipeline sources and libraries.
+All metadata and checkpoint hashes are verified even when predictions are cached.
+One batch of up to 512 photos downloads while the preceding batch is scored.
+
+Set `CUDA_RUNTIME` to a uv environment with CUDA Torch and a `cuda-runtime`
+overlay, as for iNat2021. Use it without syncing it back to CPU Torch:
+
+```sh
+export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
+export UV_PROJECT_ENVIRONMENT="$CUDA_RUNTIME"
+export PYTHONPATH="$PWD/src:$UV_PROJECT_ENVIRONMENT/cuda-runtime"
+for check in plantclef2024-target-species plantclef2024-target-false-alarms; do
+  uv run --no-sync main.py validate run "$check" --data-root "$DATA_ROOT" \
+    --cache-dir "$CACHE_DIR" --device cuda:0 --output benchmarks/validation
+done
+uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
+  --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
+```
+
+For a smoke run, add `--limit 50` and send `--output` to a separate directory.
+Keep the same `--cache-dir` for the full run and later replays.
+The full false-alarm receipt records 2 h 12 min including downloads and inference.
+The species receipt records 24 s with evidence reused from the 50-photo smoke run.
 
 ### Rerun the Danish roadside checks
 
