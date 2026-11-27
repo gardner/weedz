@@ -146,8 +146,8 @@ and gate from the latest full runs.
 | --- | --- | --- | --- |
 | Plant presence | `openimages-plant-presence` | Open Images V7 validation | Measured · 95.5% recall and 38.7% false alarms for SegFormer, 94.7% and 23.7% for SAM3 |
 | Plant presence by area | `cocostuff-vegetation-presence` | COCO-Stuff val2017 | Measured · at the pipeline's cutoff SAM3 flags 36.9% of photos with vegetation |
-| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · half the vegetation covered in 12.3% of photos |
-| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · 39.2% box recall at IoU ≥ 0.5 in the first 100 proposals |
+| Region proposals | `cocostuff-vegetation-proposals` | COCO-Stuff val2017 | Measured · **fail** (1/2 gates pass) · half-covered photos 12.3% (10.5–14.3%) |
+| Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · **fail** · box recall 39.2% (37.4–40.9%), below the 37.67% development floor at its lower bound |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · test: PlantCLEF top-1 25/30 (83.3%), pilot cues 16/30 (53.3%) |
@@ -168,6 +168,10 @@ their scores for review ranking. On small-vegetation photos, SAM3 recovered
 199/202 and SegFormer recovered 177/202. SAM3's default proposal prompts matched
 500/1,468 small boxes (34.1%). Test explicit tree prompts and focused views for
 proposal recall before relying on boxes to surface small plants.
+The new box-recovery gate narrowly fails: development recovered 1,137/2,755
+boxes (41.3%), setting a 37.67% floor; held-out remains 1,155/2,949 (39.2%,
+37.4–40.9%). This flags consistency with development, while the low absolute
+recall still argues for testing prompts and focused views.
 
 #### COCO-Stuff val2017
 
@@ -185,6 +189,12 @@ The default SAM3 prompts cover at least half the labelled vegetation in only
 12.3% of photos, and recover 2.9% of tiny connected regions at IoU ≥ 0.5.
 Compare `tree`, `grass` and `shrub` prompts before relying on these proposals
 for small or diffuse vegetation. [Proposal results](../benchmarks/validation/cocostuff-vegetation-proposals.json)
+
+The photo-coverage gate fails: development recovered 171/1,133 photos (15.1%),
+setting an 11.01% floor, while held-out's lower bound is 10.46%. Component IoU
+recovery passes its 4.93% floor at 280/4,638 (6.0%, 5.4–6.8%). Consistency on
+connected regions does not offset the low photo coverage; test the prompts
+before using proposals to discard photos.
 
 #### iNat2021 validation
 

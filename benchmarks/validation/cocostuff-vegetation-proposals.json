@@ -12,9 +12,10 @@
       "value": 0.12272727272727273,
       "low": 0.10463897956821486,
       "high": 0.14344144596069835,
-      "target": null,
+      "target": 0.11011196834900858,
       "ceiling": null,
-      "passed": null
+      "passed": false,
+      "higher_is_better": true
     },
     {
       "name": "half_covered_images",
@@ -26,7 +27,8 @@
       "high": 0.5113362312095656,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "half_covered_images",
@@ -38,7 +40,8 @@
       "high": 0.3889617729819722,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "half_covered_images",
@@ -50,7 +53,8 @@
       "high": 0.22796119739700338,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "half_covered_images",
@@ -62,7 +66,8 @@
       "high": 0.08469945685727677,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_iou_recall",
@@ -72,9 +77,10 @@
       "value": 0.060370849504096595,
       "low": 0.05387337699977689,
       "high": 0.06759597171079791,
-      "target": null,
+      "target": 0.04925000144386517,
       "ceiling": null,
-      "passed": null
+      "passed": true,
+      "higher_is_better": true
     },
     {
       "name": "component_iou_recall",
@@ -86,7 +92,8 @@
       "high": 0.03634777359353979,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_iou_recall",
@@ -98,7 +105,8 @@
       "high": 0.15565721016363007,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_iou_recall",
@@ -110,7 +118,8 @@
       "high": 0.13702874023662573,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_iou_recall",
@@ -122,7 +131,8 @@
       "high": 0.07272536016879921,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_coverage_recall",
@@ -134,7 +144,8 @@
       "high": 0.08837576664994073,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_coverage_recall",
@@ -146,7 +157,8 @@
       "high": 0.061600245792501104,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_coverage_recall",
@@ -158,7 +170,8 @@
       "high": 0.18016864574104444,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_coverage_recall",
@@ -170,7 +183,8 @@
       "high": 0.16164150956903114,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "component_coverage_recall",
@@ -182,7 +196,8 @@
       "high": 0.07436819135833635,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_iou_recall",
@@ -194,7 +209,8 @@
       "high": 0.6559436328295938,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_iou_recall",
@@ -206,7 +222,8 @@
       "high": 0.6161595310782052,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_iou_recall",
@@ -218,7 +235,8 @@
       "high": 0.7864112506566996,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_iou_recall",
@@ -230,7 +248,8 @@
       "high": 0.7076284258335335,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_iou_recall",
@@ -242,7 +261,8 @@
       "high": 0.9032285888942195,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_coverage_recall",
@@ -254,7 +274,8 @@
       "high": 0.7063468845025537,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_coverage_recall",
@@ -266,7 +287,8 @@
       "high": 0.7132828072284269,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_coverage_recall",
@@ -278,7 +300,8 @@
       "high": 0.8226991751715074,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_coverage_recall",
@@ -290,7 +313,8 @@
       "high": 0.7076284258335335,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "potted_plant_coverage_recall",
@@ -302,7 +326,8 @@
       "high": 0.9032285888942195,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": true
     },
     {
       "name": "nonvegetation_proposal_share",
@@ -314,7 +339,8 @@
       "high": 0.2991037386109381,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": false
     },
     {
       "name": "nonvegetation_proposal_share",
@@ -326,7 +352,8 @@
       "high": 0.5354315676837925,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": false
     },
     {
       "name": "nonvegetation_proposal_share",
@@ -338,7 +365,8 @@
       "high": 0.23283559590832364,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": false
     },
     {
       "name": "nonvegetation_proposal_share",
@@ -350,7 +378,8 @@
       "high": 0.32148368316132553,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": false
     },
     {
       "name": "nonvegetation_proposal_share",
@@ -362,7 +391,8 @@
       "high": 0.1256511648747142,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": false
     },
     {
       "name": "nonvegetation_proposal_share",
@@ -374,7 +404,8 @@
       "high": 0.9921164652936191,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": false
     },
     {
       "name": "nonvegetation_proposal_share",
@@ -386,7 +417,424 @@
       "high": 0.7416224051659375,
       "target": null,
       "ceiling": null,
-      "passed": null
+      "passed": null,
+      "higher_is_better": false
+    },
+    {
+      "name": "half_covered_images",
+      "stratum": "development",
+      "successes": 171,
+      "total": 1133,
+      "value": 0.15092674315975288,
+      "low": 0.13126375496068102,
+      "high": 0.17294881235671242,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "half_covered_images",
+      "stratum": "development/tiny",
+      "successes": 20,
+      "total": 56,
+      "value": 0.35714285714285715,
+      "low": 0.24456571707649905,
+      "high": 0.4880611219860049,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "half_covered_images",
+      "stratum": "development/small",
+      "successes": 40,
+      "total": 107,
+      "value": 0.37383177570093457,
+      "low": 0.2880282513789432,
+      "high": 0.4683805843827971,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "half_covered_images",
+      "stratum": "development/medium",
+      "successes": 62,
+      "total": 249,
+      "value": 0.24899598393574296,
+      "low": 0.19937155485391006,
+      "high": 0.30624749756325936,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "half_covered_images",
+      "stratum": "development/large",
+      "successes": 49,
+      "total": 721,
+      "value": 0.06796116504854369,
+      "low": 0.05178628873587643,
+      "high": 0.0887154135072439,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_iou_recall",
+      "stratum": "development",
+      "successes": 298,
+      "total": 4746,
+      "value": 0.06278971765697429,
+      "low": 0.05623549336871762,
+      "high": 0.07005113409476506,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_iou_recall",
+      "stratum": "development/tiny",
+      "successes": 75,
+      "total": 2662,
+      "value": 0.028174305033809167,
+      "low": 0.022536181622743394,
+      "high": 0.035172223470765054,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_iou_recall",
+      "stratum": "development/small",
+      "successes": 105,
+      "total": 727,
+      "value": 0.14442916093535077,
+      "low": 0.12074425164303934,
+      "high": 0.1718519827930237,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_iou_recall",
+      "stratum": "development/medium",
+      "successes": 84,
+      "total": 646,
+      "value": 0.13003095975232198,
+      "low": 0.10626619648219968,
+      "high": 0.1581697770744044,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_iou_recall",
+      "stratum": "development/large",
+      "successes": 34,
+      "total": 711,
+      "value": 0.04781997187060478,
+      "low": 0.03441976703217188,
+      "high": 0.06608008217804905,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_coverage_recall",
+      "stratum": "development",
+      "successes": 393,
+      "total": 4746,
+      "value": 0.08280657395701643,
+      "low": 0.07529933269130457,
+      "high": 0.09098862990035603,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_coverage_recall",
+      "stratum": "development/tiny",
+      "successes": 143,
+      "total": 2662,
+      "value": 0.05371900826446281,
+      "low": 0.04577932514578297,
+      "high": 0.06294486693310877,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_coverage_recall",
+      "stratum": "development/small",
+      "successes": 125,
+      "total": 727,
+      "value": 0.171939477303989,
+      "low": 0.14625336805468034,
+      "high": 0.20107429892017856,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_coverage_recall",
+      "stratum": "development/medium",
+      "successes": 91,
+      "total": 646,
+      "value": 0.14086687306501547,
+      "low": 0.1161584804998954,
+      "high": 0.169821209312373,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "component_coverage_recall",
+      "stratum": "development/large",
+      "successes": 34,
+      "total": 711,
+      "value": 0.04781997187060478,
+      "low": 0.03441976703217188,
+      "high": 0.06608008217804905,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_iou_recall",
+      "stratum": "development",
+      "successes": 140,
+      "total": 231,
+      "value": 0.6060606060606061,
+      "low": 0.5418083273058381,
+      "high": 0.6668430762668693,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_iou_recall",
+      "stratum": "development/tiny",
+      "successes": 34,
+      "total": 81,
+      "value": 0.41975308641975306,
+      "low": 0.3183096274829863,
+      "high": 0.5284633985740679,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_iou_recall",
+      "stratum": "development/small",
+      "successes": 56,
+      "total": 84,
+      "value": 0.6666666666666666,
+      "low": 0.5605282305356535,
+      "high": 0.7582278599927931,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_iou_recall",
+      "stratum": "development/medium",
+      "successes": 37,
+      "total": 50,
+      "value": 0.74,
+      "low": 0.6044684273515117,
+      "high": 0.8412847250644762,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_iou_recall",
+      "stratum": "development/large",
+      "successes": 13,
+      "total": 16,
+      "value": 0.8125,
+      "low": 0.5699111903802586,
+      "high": 0.9340840092857187,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_coverage_recall",
+      "stratum": "development",
+      "successes": 154,
+      "total": 231,
+      "value": 0.6666666666666666,
+      "low": 0.6035875085608823,
+      "high": 0.7242932684819435,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_coverage_recall",
+      "stratum": "development/tiny",
+      "successes": 42,
+      "total": 81,
+      "value": 0.5185185185185185,
+      "low": 0.41135648703875716,
+      "high": 0.6240035838711533,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_coverage_recall",
+      "stratum": "development/small",
+      "successes": 59,
+      "total": 84,
+      "value": 0.7023809523809523,
+      "low": 0.5975091495076318,
+      "high": 0.7895518175626247,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_coverage_recall",
+      "stratum": "development/medium",
+      "successes": 39,
+      "total": 50,
+      "value": 0.78,
+      "low": 0.6475845041874634,
+      "high": 0.8724608402978559,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "potted_plant_coverage_recall",
+      "stratum": "development/large",
+      "successes": 14,
+      "total": 16,
+      "value": 0.875,
+      "low": 0.639771727342413,
+      "high": 0.9650225122567595,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": true
+    },
+    {
+      "name": "nonvegetation_proposal_share",
+      "stratum": "development",
+      "successes": 633,
+      "total": 1869,
+      "value": 0.33868378812199035,
+      "low": 0.31757830652111996,
+      "high": 0.3604510337842244,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": false
+    },
+    {
+      "name": "nonvegetation_proposal_share",
+      "stratum": "development/tiny",
+      "successes": 24,
+      "total": 61,
+      "value": 0.39344262295081966,
+      "low": 0.28068351453037077,
+      "high": 0.5188274737102107,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": false
+    },
+    {
+      "name": "nonvegetation_proposal_share",
+      "stratum": "development/small",
+      "successes": 37,
+      "total": 157,
+      "value": 0.2356687898089172,
+      "low": 0.17608832651588308,
+      "high": 0.30787556806350946,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": false
+    },
+    {
+      "name": "nonvegetation_proposal_share",
+      "stratum": "development/medium",
+      "successes": 97,
+      "total": 340,
+      "value": 0.2852941176470588,
+      "low": 0.2399039713158908,
+      "high": 0.3354817296965754,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": false
+    },
+    {
+      "name": "nonvegetation_proposal_share",
+      "stratum": "development/large",
+      "successes": 142,
+      "total": 952,
+      "value": 0.14915966386554622,
+      "low": 0.12794148418691187,
+      "high": 0.17319784824571716,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": false
+    },
+    {
+      "name": "nonvegetation_proposal_share",
+      "stratum": "development/negative",
+      "successes": 275,
+      "total": 279,
+      "value": 0.985663082437276,
+      "low": 0.9637230335769076,
+      "high": 0.9944109017023579,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": false
+    },
+    {
+      "name": "nonvegetation_proposal_share",
+      "stratum": "development/unassessable",
+      "successes": 58,
+      "total": 80,
+      "value": 0.725,
+      "low": 0.6185594135898548,
+      "high": 0.810822428119158,
+      "target": null,
+      "ceiling": null,
+      "passed": null,
+      "higher_is_better": false
     }
   ],
   "limits": [
@@ -425,6 +873,12 @@
     "sam3_context_fraction": 0.25,
     "sam3_max_regions_per_prompt": 128,
     "sam3_max_prompt_bytes": 8000000,
+    "cohort_sha256": "2638071f51fe83ec46d04f344c22cabc41020020cd726e71724b7912ae407cf5",
+    "gate_split_policy": "split_of(source_id); all rows contain held-out only",
+    "gate_development_images": 2545,
+    "gate_rule": "95% development Wilson bound widened by expected held-out Wilson half-width",
+    "gate_development_half_covered_images": "171/1133",
+    "gate_development_component_iou_recall": "298/4746",
     "held_out_images": 2455,
     "proposal_budget": 100,
     "proposal_order": "SAM3 retained order, prompt order then descending score per prompt",
@@ -433,5 +887,5 @@
     "region_coverage_threshold": 0.5,
     "nonvegetation_proposal_threshold": 0.8
   },
-  "seconds": 83.16
+  "seconds": 551.42
 }
