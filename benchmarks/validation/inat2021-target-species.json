@@ -551,7 +551,8 @@
     "inat2021/models/bioclip2/open_clip_model.safetensors": "b7b2bf6fbc95799e42630e394cf95803892ab447c1a8ab629dbc82fbeaf7dfef",
     "inat2021/models/native/s.pth": "8916efcac8401a829f39a598a83a858c146c8ca2fa0ee92f9ddd6a2809ddf275",
     "inat2021/models/native/waikato-class-metadata.json": "b2b27faf173e9b0613f3580fdc0b4c380c962341ef1466b4abd55b2bf078882e",
-    "inat2021/metadata/plantclef2024-training.csv": "ceacfd939c2223fb1e619c043fb895f408529cb7efd285ba1408c4f23283366f"
+    "inat2021/metadata/plantclef2024-training.csv": "ceacfd939c2223fb1e619c043fb895f408529cb7efd285ba1408c4f23283366f",
+    "inat2021/val images (SHA-256 of per-file digests)": "5f557890526b47886a1a4b17c25f988f2e85b851cebcd3a27ed4a756df753f87"
   },
   "configuration": {
     "publisher_split": "validation",
@@ -585,5 +586,5 @@
     "sample_limit_applied": false,
     "scored_subjects": 70
   },
-  "seconds": 32.44
+  "seconds": 56.28
 }
