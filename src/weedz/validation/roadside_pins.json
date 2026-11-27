@@ -1,0 +1,122 @@
+{
+  "metadata/README.md": {
+    "sha256": "b0bcda7b1ec7d02a392bdaedf8917b8576516f405b7bab37e98c9215d0ee6463",
+    "url": "https://lab.plantnet.org/DanishRoadsData/README.md"
+  },
+  "metadata/indexes/multilabel/dummy_class.html": {
+    "sha256": "c58abae16d35276663f454c82f58c895e3c117b9af05c7c0d2f7cc94f698c289",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/multilabel/dummy_class/"
+  },
+  "metadata/indexes/test/1_solidago.html": {
+    "sha256": "d051f2c44028df4037807a5e0de1f7ef03ec07907312eb17862ab9cbfa0a41e4",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/test/1_solidago/"
+  },
+  "metadata/indexes/test/2_cytisus_scoparius.html": {
+    "sha256": "9afcb3bc690599107af60e47b74a4854ea4beb893c43f849ec324a35281fa9a4",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/test/2_cytisus_scoparius/"
+  },
+  "metadata/indexes/test/3_rosa_rugosa.html": {
+    "sha256": "c9b05097b0794dd53c1acdc7da63b7b3ac08af98d3c7aee5ad0cc78c96d8d6aa",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/test/3_rosa_rugosa/"
+  },
+  "metadata/indexes/test/4_lupinus_polyphyllus.html": {
+    "sha256": "a69870d19e4dc9ca109d3b8110e0be28a2111efb1dcc598a7490c6d0589be6a2",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/test/4_lupinus_polyphyllus/"
+  },
+  "metadata/indexes/test/5_pastinaca_sativa.html": {
+    "sha256": "32eee89a321f0ae6c4ef16136dbfba011d0e65d30aef532bbd6175ba7b855ded",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/test/5_pastinaca_sativa/"
+  },
+  "metadata/indexes/test/6_reynoutria.html": {
+    "sha256": "d167612d545b4fd810a97572830fe195d891e50bdeefd63e33fb70f4baef3644",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/test/6_reynoutria/"
+  },
+  "metadata/indexes/test/7_no_species.html": {
+    "sha256": "21400242c9abc391bcb24d2d4d5b154d08a3fcd4c1b9bc75338254fe88f94e61",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/test/7_no_species/"
+  },
+  "metadata/indexes/train/1_solidago.html": {
+    "sha256": "49744e0d8d228fe6f3a0af424de644868eb6a4eec22487cf908e97b1b3dc1a5e",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/train/1_solidago/"
+  },
+  "metadata/indexes/train/2_cytisus_scoparius.html": {
+    "sha256": "0230c2d3c1d874d3b59abbcff9bddffb79fecd55d4876aecadbc4694683313cf",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/train/2_cytisus_scoparius/"
+  },
+  "metadata/indexes/train/3_rosa_rugosa.html": {
+    "sha256": "0dfa3a69480cd90c3b8f60c827993216c823baa865215401368d032508eb13dc",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/train/3_rosa_rugosa/"
+  },
+  "metadata/indexes/train/4_lupinus_polyphyllus.html": {
+    "sha256": "e48e9c5259f737e048c383babcf51d3c3af4b2d8d23d647ab1cc64db9905bb33",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/train/4_lupinus_polyphyllus/"
+  },
+  "metadata/indexes/train/5_pastinaca_sativa.html": {
+    "sha256": "b53ff44df9153c7b64337bd3fc078ba3e171ed6b0728e07d42af864188c9c4fc",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/train/5_pastinaca_sativa/"
+  },
+  "metadata/indexes/train/6_reynoutria.html": {
+    "sha256": "3347b32636e95c2b87ed2e5a208d6190d6ddb28fe8eda1868ff08dbd92051d42",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/train/6_reynoutria/"
+  },
+  "metadata/indexes/train/7_no_species.html": {
+    "sha256": "8297f08a1f1375aa0a2866b5c5be40873e0352b77ddbbf8175c23d6c8f0dd303",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/train/7_no_species/"
+  },
+  "metadata/indexes/val/1_solidago.html": {
+    "sha256": "f3791e8c8fe7d1dc27e23525150cdf7fa065071860b297f5abec5531e4271adb",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/val/1_solidago/"
+  },
+  "metadata/indexes/val/2_cytisus_scoparius.html": {
+    "sha256": "4326895aa71aa9c5e748b27ee88efe6ac588e1b13484d62d0497e5dad4db6c02",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/val/2_cytisus_scoparius/"
+  },
+  "metadata/indexes/val/3_rosa_rugosa.html": {
+    "sha256": "a470a6e41e3170a536fe70e101f035492a17825fa828f140a0ff36b285ba0ae4",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/val/3_rosa_rugosa/"
+  },
+  "metadata/indexes/val/4_lupinus_polyphyllus.html": {
+    "sha256": "88c7af6ba38c02dea5ff8f720757256c7fe448c30d66e6cb5121277bb82e98ae",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/val/4_lupinus_polyphyllus/"
+  },
+  "metadata/indexes/val/5_pastinaca_sativa.html": {
+    "sha256": "06ccaa4205c6858fae4a5d674c2d209879e11df712429fbbd94479eb7ff32dac",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/val/5_pastinaca_sativa/"
+  },
+  "metadata/indexes/val/6_reynoutria.html": {
+    "sha256": "bb01111ca4b2bc37bd3fa2cfca8e464c9962f1b287b45e8b5770de89f6ecbac1",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/val/6_reynoutria/"
+  },
+  "metadata/indexes/val/7_no_species.html": {
+    "sha256": "dc0717fb486438c5542cbf9098defcdbdc0780914dc215561688de02a428a7fa",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/20_deep_features/DanishRoads/mads_split/val/7_no_species/"
+  },
+  "metadata/multilabel.csv": {
+    "sha256": "4f120a7195e800d9729a9c5f193a3be719a6f0d929740a347d0da9611de9680a",
+    "url": "https://lab.plantnet.org/DanishRoadsData/0_datastore/11_annotations/annotations_mads_split_multilabel.csv"
+  },
+  "metadata/publisher-LICENSE.md": {
+    "sha256": "b5370e3d0cc59af807ade96b783af64cd24a3c67146b71422e9861befce629e8",
+    "url": "https://raw.githubusercontent.com/plantnet/roadside-invasive-plant-identification/043379010d0081eb23f58146bcdbf94f611b3f7f/LICENSE.md"
+  },
+  "metadata/xp4-job.json": {
+    "sha256": "3813b156ace3c8ef11cbdf6737e95d2934f76319ac538f623de1a3c4b35038f6",
+    "url": "https://raw.githubusercontent.com/plantnet/roadside-invasive-plant-identification/043379010d0081eb23f58146bcdbf94f611b3f7f/1_sources/2_parameters/params_job104_officiel_evaluate_tiling_pas_finetune.json"
+  },
+  "metadata/xp4-model.py": {
+    "sha256": "93da2e4133fa7b1a5ad6bfa0e7b64eeac94bb119f50edec00c4c91d0543d83d8",
+    "url": "https://raw.githubusercontent.com/plantnet/roadside-invasive-plant-identification/043379010d0081eb23f58146bcdbf94f611b3f7f/1_sources/3_scripts/lib_models.py"
+  },
+  "metadata/xp4-thresholds.json": {
+    "sha256": "2aa753d9e4a76b1b96f0694e2a64af493d8f85fb101156d578e24b9d2072746c",
+    "url": "https://raw.githubusercontent.com/plantnet/roadside-invasive-plant-identification/043379010d0081eb23f58146bcdbf94f611b3f7f/0_datastore/70_output_statistiques/models_choix_seuils_customs.json"
+  },
+  "metadata/xp4-validation.json": {
+    "sha256": "72bdc7a0d43aadb206fb5d80c8c595a68595dc3933a706e815941f5df0451b6b",
+    "url": "https://raw.githubusercontent.com/plantnet/roadside-invasive-plant-identification/043379010d0081eb23f58146bcdbf94f611b3f7f/1_sources/2_parameters/params_pspr_valset_recalculate_thresholds.json"
+  },
+  "models/model_tiling_state_dict_xp4.pth": {
+    "sha256": "8dc2b8cf0975f5beab7139cd76593ca1045135f3175ab44b20bd0aafc4c11df4",
+    "url": "https://lab.plantnet.org/DanishRoadsData/zenodo/model_tiling_state_dict_xp4.pth"
+  }
+}
