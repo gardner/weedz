@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-27T10:09:42.436824Z",
+  "created": "2026-11-27T10:23:35.029304Z",
   "results": [
     {
       "check": "cocostuff-vegetation-presence",
@@ -15120,9 +15120,9 @@
           "value": 0.8087336244541484,
           "low": 0.7849352735623751,
           "high": 0.8304673083793905,
-          "target": 0.811707134785086,
+          "target": null,
           "ceiling": null,
-          "passed": false,
+          "passed": null,
           "higher_is_better": true
         },
         {
@@ -15473,6 +15473,7 @@
         "The publisher does not supply per-file SHA-256 hashes for original JPEGs/features. The checked-in manifest pins HTTPS-acquired bytes; it is not an independently signed publisher manifest.",
         "Dataset and XP4 release: CC BY 4.0 (Zenodo API records 14013930/13891416); publisher code: MIT. The reused PlantCLEF checkpoint is CC BY-NC 4.0. Images and checkpoints stay outside Git.",
         "Regression gates use labelled publisher val/test folder positives. Legacy hash-selected test plus multilabel rows are retained ungated. No route split was needed; neighbouring publisher val/test frames still limit independence.",
+        "XP4 is ungated: its released cutoffs maximise Youden J on publisher val, so a floor learned on val positives would be in-sample and biased upward.",
         "XP4 comparison scores the released linear/max/sigmoid head over cached publisher BEiT features (926 views), not end-to-end feature extraction. Released strict cutoffs select a variable number of groups; this is not a five-slot comparison."
       ],
       "inputs": {
@@ -18449,20 +18450,19 @@
         "distance_filter": "3D Earth chord from filename coordinates; >100m from train+val+other scoring cohort",
         "scored_pairs": 778,
         "photos_without_positive_label": 483,
-        "recorded_inference_seconds": 1.271,
+        "recorded_inference_seconds": 1.177,
         "inference_timing_scope": "per-photo decode/load plus every reported inference method; excludes model initialization",
         "released_cutoffs_total_suggestions": 1254,
         "six_group_top1_total_suggestions": 1160,
         "six_group_top3_total_suggestions": 3480,
         "cohort_sha256": "32062d4243ed90b406c2ea525f0074a2a3fd21b0af97d25bdc76218668b31aad",
         "gate_rule": "95% development Wilson bound widened by expected held-out Wilson half-width",
-        "gate_development_released_cutoffs_recall": "1008/1181",
         "gate_split_policy": "publisher val positives development; all publisher test positives held-out",
         "gate_development_images": 1181,
         "gate_held_out_images": 1145,
         "gate_inference_images": 2909,
-        "gate_recorded_inference_seconds": 3.686,
-        "evidence_identity": "139f4d933f2604690ae9",
+        "gate_recorded_inference_seconds": 3.62,
+        "evidence_identity": "3663a3087adbfc1da40e",
         "cutoff_Solidago": 0.81298828125,
         "cutoff_Cytisus scoparius": 0.68896484375,
         "cutoff_Rosa rugosa": 0.72119140625,
@@ -18474,7 +18474,7 @@
         "calibration_split": "publisher validation (2160 photos), no test fitting",
         "calibration_rule": "released xp4_val; maximum Youden J on publisher validation"
       },
-      "seconds": 20.25
+      "seconds": 19.69
     },
     {
       "check": "danish-roadside-species",

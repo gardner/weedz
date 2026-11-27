@@ -153,7 +153,7 @@ and gate from the latest full runs.
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · **pass** (3/3 gates) · test top-1 25/30 (83.3%, 66.4–92.7%), pilot cues 16/30 (53.3%) |
 | Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Measured · pilot cues 49/20,503 (0.239%); local 223/20,503 (1.088%), missing the 1% ceiling |
 | Whole-photo species list | `danish-roadside-species` | Danish roadside | Measured · **pass** · publisher test pairs at five suggestions: 133/1,145 (11.6%, 9.9–13.6%) |
-| Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · **fail** · released XP4 cutoffs recover 926/1,145 test positives (80.9%, 78.5–83.0%), with a variable suggestion count |
+| Whole-photo species list, comparison | `danish-roadside-publisher-baseline` | Danish roadside | Measured · comparison, ungated (cutoffs fitted on publisher validation) · released XP4 cutoffs recover 926/1,145 test positives (80.9%, 78.5–83.0%), with a variable suggestion count |
 | Region proposals | `imageweeds-region-recovery` | ImageWeeds v2 primary138 | Measured · **fail** · held-out box recovery 166/327 (50.8%, 45.4–56.1%) |
 | Species identification | `imageweeds-species` | ImageWeeds v2 primary138 | Measured · **fail** (1/2 gates pass) · held-out conditional top-1 17/166 (10.2%, 6.5–15.8%); five-slot pairs 8/153 (5.2%, 2.7–10.0%) |
 | Region proposals | `phenobench-instance-recovery` | PhenoBench development64 | Measured · **pass** (2/2 gates) · held-out instance recovery 318/463 (68.7%, 64.3–72.7%) |
@@ -161,9 +161,10 @@ and gate from the latest full runs.
 
 ### What this showed
 
-The ten newly gated checks have 17 development-derived gates: 12 pass and five
-fail. Failures are Open Images boxes, COCO photo coverage, ImageWeeds boxes and
-conditional top-1, and the Danish publisher baseline. All 1,030 existing metric
+Nine checks now have 16 development-derived gates: 12 pass and four fail.
+Failures are Open Images boxes, COCO photo coverage, and ImageWeeds boxes and
+conditional top-1. The Danish publisher baseline stays an ungated comparison,
+because its cutoffs were fitted on the publisher validation split. All 1,030 existing metric
 counts, rates and intervals are unchanged. The comparison with the previous
 scorecard reports 894 no clear change, 136 unmeasured and 484 new strata rows.
 Added development inputs and cohort fields are expected comparison flags.
@@ -282,9 +283,10 @@ labels do not support precision. [Publisher comparison](../benchmarks/validation
 
 On all 1,145 publisher test positives, production tiles recover 133 (11.6%,
 9.9–13.6%), passing the 5.75% floor learned from 105/1,181 validation positives.
-XP4 recovers 926/1,145 (80.9%, 78.5–83.0%) and fails its 81.17% floor from
-1,008/1,181 validation positives. The baseline's validation-to-test drop merits
-checking on independent routes. Production's passing gate still leaves most
+XP4 recovers 926/1,145 (80.9%, 78.5–83.0%) against 1,008/1,181 (85.4%) on
+validation. It is left ungated: its released cutoffs were fitted on publisher
+validation, so a validation-learned floor would be in-sample, and part of that
+drop is calibration optimism rather than a regression. Production's passing gate still leaves most
 labelled plants unrecovered; compare views and aggregation on development.
 
 #### Agricultural datasets

@@ -423,3 +423,15 @@ def test_an_unresumable_partial_restarts_the_download(
     roadside_data.fetch_verified(destination, "https://example.invalid", expected, staging)
     assert destination.read_bytes() == b"abcd"
     assert ranges == ["bytes=4-", None]
+
+
+def test_the_xp4_comparison_is_not_gated_on_its_own_calibration_split(tmp_path: Path):
+    # XP4's released cutoffs were fitted on publisher val, so a val-learned floor is in-sample.
+    result = roadside.run_check(
+        roadside.BASELINE,
+        RunContext(tmp_path, tmp_path),
+        [item(1, (BROOM,))],
+        lambda items: [prediction((BROOM,)) for _ in items],
+    )
+    assert not [m for m in result.metrics if m.target is not None or m.ceiling is not None]
+    assert any("in-sample" in limit for limit in result.limits)

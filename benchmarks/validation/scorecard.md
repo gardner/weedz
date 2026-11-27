@@ -8,7 +8,7 @@
 | region-proposals | 5 | 4 | 3 | 0 |
 | species-identification | 3 | 7 | 1 | 0 |
 | target-false-alarms | 2 | 5 | 3 | 0 |
-| whole-photo-species | 2 | 1 | 1 | 0 |
+| whole-photo-species | 2 | 1 | 0 | 0 |
 
 ## Headline gates
 
@@ -47,7 +47,6 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | target-false-alarms | inat2021-target-false-alarms | local_cue_wrong_subject | all | 107/42680 | 0.3% (0.2–0.3%) | pass (≤ 1%) |
 | target-false-alarms | plantclef2024-target-false-alarms | pilot_cue_wrong_subject | all | 49/20503 | 0.2% (0.2–0.3%) | pass (≤ 1%) |
 | target-false-alarms | plantclef2024-target-false-alarms | local_cue_wrong_subject | all | 223/20503 | 1.1% (1.0–1.2%) | fail (≤ 1%) |
-| whole-photo-species | danish-roadside-publisher-baseline | released_cutoffs_recall | held-out | 926/1145 | 80.9% (78.5–83.0%) | fail (≥ 81%) |
 | whole-photo-species | danish-roadside-species | tiles_top5_recall | held-out | 133/1145 | 11.6% (9.9–13.6%) | pass (≥ 6%) |
 
 ## Full results
@@ -1100,7 +1099,7 @@ Gated `all` metrics and development-derived held-out headlines. Counts above inc
 | whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | development/Reynoutria | 77/77 | 100.0% (95.2–100.0%) | — |
 | whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | development/watchlist | 0/0 | unmeasured | — |
 | whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | six_group_top3_recall | development/lookalikes | 188/199 | 94.5% (90.4–96.9%) | — |
-| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | held-out | 926/1145 | 80.9% (78.5–83.0%) | fail (≥ 81%) |
+| whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | held-out | 926/1145 | 80.9% (78.5–83.0%) | — |
 | whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | held-out/Solidago | 357/451 | 79.2% (75.2–82.7%) | — |
 | whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | held-out/Cytisus scoparius | 145/161 | 90.1% (84.5–93.8%) | — |
 | whole-photo-species | danish-roadside-publisher-baseline | danish-roadside | held-out | released_cutoffs_recall | held-out/Rosa rugosa | 211/225 | 93.8% (89.8–96.3%) | — |

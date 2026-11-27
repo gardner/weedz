@@ -265,7 +265,9 @@ def run_check(
     metrics = apply_development_gates(
         metrics,
         metrics,
-        ("released_cutoffs_recall",) if check == BASELINE else ("tiles_top5_recall",),
+        # XP4's cutoffs were fitted on publisher val, so a val-learned floor would be
+        # in-sample: the baseline stays an ungated comparison.
+        () if check == BASELINE else ("tiles_top5_recall",),
         configuration,
         limits,
         development_stratum="development",
@@ -286,6 +288,10 @@ def run_check(
         "was needed; neighbouring publisher val/test frames still limit independence."
     )
     if check == BASELINE:
+        limits.append(
+            "XP4 is ungated: its released cutoffs maximise Youden J on publisher val, so a "
+            "floor learned on val positives would be in-sample and biased upward."
+        )
         limits.append(
             "XP4 comparison scores the released linear/max/sigmoid head over cached "
             "publisher BEiT features (926 views), not end-to-end feature extraction. "
