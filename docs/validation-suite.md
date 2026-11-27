@@ -73,7 +73,7 @@ and gate from the latest full runs.
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
 | Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · test: PlantCLEF top-1 25/30 (83.3%), pilot cues 16/30 (53.3%) |
-| Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Planned |
+| Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Measured · pilot cues 49/20,503 (0.239%); local 223/20,503 (1.088%), missing the 1% ceiling |
 | Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
 
 ### What this showed
@@ -134,6 +134,15 @@ and investigate local pampas agreement before replacing it. These are labelled
 single-plant subjects, not scene inventories. The `val` photos were used by the
 publisher for model selection, so their results are reported separately.
 [Species results](../benchmarks/validation/plantclef2024-target-species.json)
+
+Across 20,503 non-target subjects, the pilot raised 49 wrong-subject cues
+(0.239%, 95% CI 0.181–0.316%), clearing the 1% ceiling. The local rule raised
+223 (1.088%, 0.955–1.239%), missing it. Same-genus subjects drew 36/214 pilot
+cues and 76/214 local cues, especially other *Ulex* species. Unfiltered BioCLIP
+ranked a target first on 36.9% of subjects. Keep the pilot baseline and test
+explicit other-gorse comparison prompts on development data. These rates
+describe labelled subjects; they do not establish absence elsewhere in a photo.
+[False-alarm results](../benchmarks/validation/plantclef2024-target-false-alarms.json)
 
 ### Rerun the Open Images checks
 
@@ -278,3 +287,5 @@ uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
 
 For a smoke run, add `--limit 50` and send `--output` to a separate directory.
 Keep the same `--cache-dir` for the full run and later replays.
+The full false-alarm receipt records 2 h 12 min including downloads and inference.
+The species receipt records 24 s with evidence reused from the 50-photo smoke run.
