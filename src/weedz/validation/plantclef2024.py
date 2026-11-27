@@ -61,6 +61,8 @@ LIMITS = (
     "Only 20 val/test photos per target species. Wilson intervals use photos as units; photos "
     "may share observations and are not guaranteed independent. This southwestern European "
     "single-plant cohort does not estimate New Zealand scene performance or prevalence.",
+    "Publisher val/test covers fewer taxa than the classifier's 7,806 classes; configuration "
+    "records observed binomial coverage of the complete pinned metadata, before sampling.",
     "Organ tags are reported descriptively for target photos, not as reliable botanical strata.",
     "Non-targets include every available same-genus/same-family subject and a salted-hash sample "
     "of 5,000 other plants. The pooled rate depends on this deliberately enriched cohort. "
@@ -134,6 +136,7 @@ def _configuration_for(
             "scored_cohort_counts": json.dumps(counts, sort_keys=True),
             "sample_limit_applied": context.limit is not None,
             "scored_subjects": len(photos),
+            "scored_observations": len({p.observation_id for p in photos}),
             "evidence_identity": evidence_identity(context.device),
         }
     )
@@ -155,6 +158,9 @@ def run_check(
     selected = select_photos(photos, targets=targets)[: context.limit]
     items = [photo.item for photo in selected]
     rows = list(zip(items, predictor(items), strict=True))
+    configuration = _configuration_for(selected, context)
+    configuration["publisher_val_test_subjects"] = len(photos)
+    configuration["publisher_val_test_binomial_taxa"] = len({p.item.taxon for p in photos})
     return CheckResult(
         check=check,
         stage=STAGES[check],
@@ -162,7 +168,7 @@ def run_check(
         split="validation",
         metrics=_metrics(selected, rows, targets=targets),
         inputs=inputs or {},
-        configuration=_configuration_for(selected, context),
+        configuration=configuration,
         limits=list(LIMITS),
     )
 
