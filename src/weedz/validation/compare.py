@@ -15,7 +15,16 @@ Verdict = Literal["better", "worse", "no clear change", "changed", "new", "remov
 # cohorts, selection and split rules, stratum definitions, and per-split sampling
 # budgets ("split" covers *_budget_per_split). Model and output settings such as
 # tile_fraction or proposal_budget are not.
-COHORT_TERMS = ("limit", "cohort", "selection", "split", "salt", "minimum_per", "strat")
+COHORT_TERMS = (
+    "limit",
+    "cohort",
+    "selection",
+    "split",
+    "salt",
+    "minimum_per",
+    "strat",
+    "tolerance",
+)
 # Taxonomy definitions that decide which items are positives or eligible.
 COHORT_KEYS = frozenset(
     {"images", "held_out_fraction", "targets", "lookalikes", "vegetation_classes"}

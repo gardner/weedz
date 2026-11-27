@@ -99,7 +99,10 @@ One module per dataset, in `src/weedz/validation/<dataset>.py`:
 4. **Score into `Outcome`s or `rate`s**, and return a `CheckResult` with
    `limits` (what the labels can't support), `inputs` (SHA-256 of each label
    file and model checkpoint) and `configuration` (thresholds, prompts, budgets).
-   Use paths relative to `--data-root`, never absolute ones.
+   Use paths relative to `--data-root`, never absolute ones. Also record
+   `cohort_sha256` in `configuration`: the SHA-256 of the sorted scored item IDs
+   and their strata. `validate compare` matches cohort keys by name, so this
+   digest is what reliably catches a change in which items were scored.
 5. **Register it** with `register(Check(...))` and import the module in
    `weedz/validation/checks.py`.
 

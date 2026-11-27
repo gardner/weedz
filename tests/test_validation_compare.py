@@ -156,6 +156,7 @@ def test_verdicts_use_direction_and_the_difference_interval(
         ({"configuration": {"positive_budget_per_split": 9}}, "positive_budget_per_split"),
         ({"configuration": {"size_strata_pixels": "512"}}, "cohort changed (size_strata_pixels)"),
         ({"configuration": {"targets": '["Ulex"]'}}, "cohort changed (targets)"),
+        ({"configuration": {"negative_void_tolerance": 0.01}}, "negative_void_tolerance"),
         ({"configuration": {"vegetation_classes": "tree"}}, "cohort changed (vegetation_classes)"),
         ({"configuration": {"image_and_region_area_strata": "x"}}, "image_and_region_area_strata"),
     ],
