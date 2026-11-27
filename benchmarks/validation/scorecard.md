@@ -1,11 +1,48 @@
+# Validation scorecard
+
+## Stage summary
+
+| Stage | Checks | Gated passing | Gated failing | Gated unmeasured |
+| --- | ---: | ---: | ---: | ---: |
+| plant-presence | 2 | 6 | 28 | 6 |
+| region-proposals | 5 | 0 | 0 | 0 |
+| species-identification | 3 | 0 | 0 | 0 |
+| target-false-alarms | 2 | 5 | 3 | 0 |
+| whole-photo-species | 2 | 0 | 0 | 0 |
+
+## Headline gates
+
+Gated metrics in the `all` stratum. Counts above include gates in every stratum.
+
+| Stage | Check | Metric | Count | Rate (95% CI) | Gate |
+| --- | --- | --- | ---: | --- | --- |
+| plant-presence | cocostuff-vegetation-presence | segformer_recall | 0/0 | unmeasured | unmeasured (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | segformer_false_alarm_rate | 0/0 | unmeasured | unmeasured (≤ 10%) |
+| plant-presence | cocostuff-vegetation-presence | segformer_baseline_recall | 1045/1100 | 95.0% (93.5–96.1%) | fail (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | segformer_baseline_false_alarm_rate | 217/832 | 26.1% (23.2–29.2%) | fail (≤ 10%) |
+| plant-presence | cocostuff-vegetation-presence | sam3_recall | 1026/1100 | 93.3% (91.6–94.6%) | fail (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | sam3_false_alarm_rate | 202/832 | 24.3% (21.5–27.3%) | fail (≤ 10%) |
+| plant-presence | cocostuff-vegetation-presence | sam3_baseline_recall | 406/1100 | 36.9% (34.1–39.8%) | fail (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | sam3_baseline_false_alarm_rate | 46/832 | 5.5% (4.2–7.3%) | pass (≤ 10%) |
+| plant-presence | openimages-plant-presence | segformer_false_alarm_rate | 580/1500 | 38.7% (36.2–41.2%) | fail (≤ 10%) |
+| plant-presence | openimages-plant-presence | segformer_recall | 1433/1500 | 95.5% (94.4–96.5%) | fail (≥ 95%) |
+| plant-presence | openimages-plant-presence | sam3_false_alarm_rate | 355/1500 | 23.7% (21.6–25.9%) | fail (≤ 10%) |
+| plant-presence | openimages-plant-presence | sam3_recall | 1420/1500 | 94.7% (93.4–95.7%) | fail (≥ 95%) |
+| target-false-alarms | inat2021-target-false-alarms | pilot_cue_wrong_subject | 15/42680 | 0.0% (0.0–0.1%) | pass (≤ 1%) |
+| target-false-alarms | inat2021-target-false-alarms | local_cue_wrong_subject | 107/42680 | 0.3% (0.2–0.3%) | pass (≤ 1%) |
+| target-false-alarms | plantclef2024-target-false-alarms | pilot_cue_wrong_subject | 49/20503 | 0.2% (0.2–0.3%) | pass (≤ 1%) |
+| target-false-alarms | plantclef2024-target-false-alarms | local_cue_wrong_subject | 223/20503 | 1.1% (1.0–1.2%) | fail (≤ 1%) |
+
+## Full results
+
 | Stage | Check | Dataset | Split | Metric | Stratum | Count | Rate (95% CI) | Gate |
 | --- | --- | --- | --- | --- | --- | ---: | --- | --- |
-| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | all | 0/0 | unmeasured | — |
-| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | tiny | 0/0 | unmeasured | — |
-| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | small | 0/0 | unmeasured | — |
-| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | medium | 0/0 | unmeasured | — |
-| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | large | 0/0 | unmeasured | — |
-| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_false_alarm_rate | all | 0/0 | unmeasured | — |
+| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | all | 0/0 | unmeasured | unmeasured (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | tiny | 0/0 | unmeasured | unmeasured (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | small | 0/0 | unmeasured | unmeasured (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | medium | 0/0 | unmeasured | unmeasured (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_recall | large | 0/0 | unmeasured | unmeasured (≥ 95%) |
+| plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_false_alarm_rate | all | 0/0 | unmeasured | unmeasured (≤ 10%) |
 | plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_baseline_recall | all | 1045/1100 | 95.0% (93.5–96.1%) | fail (≥ 95%) |
 | plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_baseline_recall | tiny | 25/44 | 56.8% (42.2–70.3%) | fail (≥ 95%) |
 | plant-presence | cocostuff-vegetation-presence | COCO-Stuff val2017 | held-out | segformer_baseline_recall | small | 82/99 | 82.8% (74.2–89.0%) | fail (≥ 95%) |

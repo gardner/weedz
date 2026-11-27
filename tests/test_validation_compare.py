@@ -1,0 +1,361 @@
+"""Independent reference intervals and comparisons of saved validation evidence."""
+
+import pytest
+
+from weedz.validation.compare import compare_scorecards
+from weedz.validation.metrics import Rate, direction, newcombe, rate
+from weedz.validation.scorecard import CheckResult, Scorecard
+
+
+def _result(check: str, *metrics: Rate, **changes: object) -> CheckResult:
+    result = CheckResult(
+        check=check,
+        stage="plant-presence",
+        dataset="fixture",
+        split="held-out",
+        metrics=list(metrics),
+        inputs={"labels.csv": "a" * 64, "model.pt": "b" * 64},
+    )
+    return result.model_copy(update=changes)
+
+
+@pytest.mark.parametrize(
+    "counts, expected",
+    [
+        ((56, 70, 48, 80), (0.0524, 0.3339)),
+        ((9, 10, 3, 10), (0.1705, 0.8090)),
+        ((0, 10, 0, 20), (-0.1611, 0.2775)),
+    ],
+)
+def test_newcombe_matches_published_method_10_examples(
+    counts: tuple[int, int, int, int], expected: tuple[float, float]
+):
+    # Newcombe (1998), Stat Med 17:873–890, Table II, method 10 (no CC).
+    # https://doi.org/10.1002/(SICI)1097-0258(19980430)17:8<873::AID-SIM779>3.0.CO;2-I
+    assert newcombe(*counts) == pytest.approx(expected, abs=0.00005)
+
+
+def test_newcombe_reverses_sign_when_the_samples_are_swapped():
+    low, high = newcombe(56, 70, 48, 80)
+    assert newcombe(48, 80, 56, 70) == pytest.approx((-high, -low))
+
+
+@pytest.mark.parametrize("counts", [(0, 0, 1, 2), (1, 2, 0, 0), (3, 2, 1, 2), (-1, 2, 1, 2)])
+def test_newcombe_requires_valid_nonempty_samples(counts: tuple[int, int, int, int]):
+    with pytest.raises(ValueError):
+        newcombe(*counts)
+
+
+@pytest.mark.parametrize(
+    "metric, expected",
+    [
+        (rate("sam3_recall", 8, 10), True),
+        (rate("region_recovery", 8, 10), True),
+        (rate("mask_coverage", 8, 10), True),
+        (rate("sam3_false_alarm_rate", 1, 10), False),
+        (rate("pilot_wrong_subject", 1, 10), False),
+        (rate("lookalike_confusion", 1, 10), False),
+        (rate("unfamiliar", 8, 10), None),
+        (rate("false_alarm", 8, 10, target=0.5), True),
+        (rate("recall", 1, 10, ceiling=0.5), False),
+        (rate("custom", 1, 10, higher_is_better=False), False),
+    ],
+)
+def test_direction_is_inferred_for_new_rates(metric: Rate, expected: bool | None):
+    assert metric.higher_is_better is expected
+    assert direction(metric) is expected
+
+
+def test_old_rates_load_without_a_direction_and_infer_it_at_comparison_time():
+    data = rate("recall", 90, 100).model_dump(exclude={"higher_is_better"})
+    old = Rate.model_validate(data)
+    assert old.higher_is_better is None
+    assert direction(old) is True
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("screen", old)]),
+        Scorecard.collect([_result("screen", rate("recall", 20, 100))]),
+    )
+    assert comparison.rows[0].verdict == "worse"
+
+
+def test_matching_uses_check_name_and_stratum_and_keeps_missing_metrics():
+    baseline = Scorecard.collect(
+        [
+            _result("a", rate("recall", 90, 100), rate("recall", 20, 100, stratum="small")),
+            _result("removed-check", rate("recall", 4, 10)),
+        ]
+    )
+    rerun = Scorecard.collect(
+        [
+            _result("a", rate("recall", 20, 100), rate("recovery", 4, 10)),
+            _result("new-check", rate("recall", 8, 10)),
+        ]
+    )
+    rows = {row.key: row for row in compare_scorecards(baseline, rerun).rows}
+    assert rows["a", "recall", "all"].verdict == "worse"
+    assert rows["a", "recall", "small"].verdict == "removed"
+    assert rows["a", "recovery", "all"].verdict == "new"
+    assert rows["removed-check", "recall", "all"].verdict == "removed"
+    assert rows["new-check", "recall", "all"].verdict == "new"
+    assert rows["a", "recovery", "all"].difference is None
+
+
+@pytest.mark.parametrize(
+    "empty_baseline, empty_rerun", [(True, False), (False, True), (True, True)]
+)
+def test_zero_denominators_are_unmeasured(empty_baseline: bool, empty_rerun: bool):
+    baseline = rate("recall", 0, 0) if empty_baseline else rate("recall", 8, 10)
+    rerun = rate("recall", 0, 0) if empty_rerun else rate("recall", 8, 10)
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("a", baseline)]), Scorecard.collect([_result("a", rerun)])
+    )
+    assert comparison.rows[0].verdict == "unmeasured"
+    assert comparison.rows[0].difference is None
+    assert comparison.exit_code == 0
+
+
+@pytest.mark.parametrize(
+    "name, old_hits, new_hits, verdict",
+    [
+        ("recall", 20, 90, "better"),
+        ("recall", 90, 20, "worse"),
+        ("false_alarm_rate", 90, 20, "better"),
+        ("false_alarm_rate", 20, 90, "worse"),
+        ("recall", 90, 91, "no clear change"),
+        ("recall", 90, 90, "no clear change"),
+        ("unknown", 90, 20, "changed"),
+        ("unknown", 90, 90, "no clear change"),
+    ],
+)
+def test_verdicts_use_direction_and_the_difference_interval(
+    name: str, old_hits: int, new_hits: int, verdict: str
+):
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("a", rate(name, old_hits, 100))]),
+        Scorecard.collect([_result("a", rate(name, new_hits, 100))]),
+    )
+    row = comparison.rows[0]
+    assert row.verdict == verdict
+    assert row.difference is not None
+    assert row.difference.value == pytest.approx((new_hits - old_hits) / 100)
+
+
+@pytest.mark.parametrize(
+    "changes, expected",
+    [
+        ({"inputs": {"labels.csv": "c" * 64, "model.pt": "b" * 64}}, "labels.csv"),
+        ({"inputs": {"labels.csv": "a" * 64, "model.pt": "c" * 64}}, "model.pt"),
+        ({"inputs": {}}, "inputs changed"),
+        ({"split": "development"}, "split changed"),
+        # A --limit smoke run keeps the same input hashes but scores fewer images.
+        ({"configuration": {"smoke_limit": 50}}, "cohort changed (smoke_limit)"),
+        ({"configuration": {"held_out_images": 50}}, "cohort changed (held_out_images)"),
+        ({"configuration": {"selection": "salted-v2"}}, "cohort changed (selection)"),
+        ({"configuration": {"split_salt": "v2"}}, "cohort changed (split_salt)"),
+        ({"configuration": {"test_images": 25}}, "cohort changed (test_images)"),
+        ({"configuration": {"positive_budget_per_split": 9}}, "positive_budget_per_split"),
+        ({"configuration": {"size_strata_pixels": "512"}}, "cohort changed (size_strata_pixels)"),
+        ({"configuration": {"targets": '["Ulex"]'}}, "cohort changed (targets)"),
+        ({"configuration": {"negative_void_tolerance": 0.01}}, "negative_void_tolerance"),
+        ({"configuration": {"vegetation_classes": "tree"}}, "cohort changed (vegetation_classes)"),
+        ({"configuration": {"image_and_region_area_strata": "x"}}, "image_and_region_area_strata"),
+    ],
+)
+def test_changed_evidence_is_flagged(changes: dict[str, object], expected: str):
+    metric = rate("recall", 9, 10)
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("a", metric)]),
+        Scorecard.collect([_result("a", metric, **changes)]),
+    )
+    assert expected in " ".join(comparison.changes["a"])
+    assert "not like-for-like" in comparison.markdown()
+    assert expected in comparison.markdown()
+
+
+@pytest.mark.parametrize(
+    "configuration",
+    [
+        {"recorded_inference_seconds": 873.0},
+        {"sam3_threshold": 0.41},
+        {"torch_version": "2.16"},
+        {"tile_fraction": 0.5},
+        {"proposal_budget": 50},
+        {"suggestion_budget": 3},
+    ],
+)
+def test_measured_outputs_in_configuration_are_not_a_cohort_change(configuration: dict):
+    # Timings, fitted thresholds and versions move on every legitimate rerun.
+    metric = rate("recall", 9, 10)
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("a", metric)]),
+        Scorecard.collect([_result("a", metric, configuration=configuration)]),
+    )
+    assert comparison.changes == {}
+
+
+def test_unchanged_evidence_has_no_change_flag():
+    card = Scorecard.collect([_result("a", rate("recall", 9, 10))])
+    assert compare_scorecards(card, card).changes == {}
+
+
+def test_duplicate_metric_keys_are_rejected():
+    card = Scorecard.collect([_result("a", rate("recall", 9, 10), rate("recall", 8, 10))])
+    with pytest.raises(ValueError, match="once"):
+        compare_scorecards(card, card)
+
+
+def test_markdown_shows_worst_first_intervals_and_the_paired_data_limit():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 48, 80)), _result("z", rate("recall", 90, 100))]
+    )
+    rerun = Scorecard.collect(
+        [_result("a", rate("recall", 56, 70)), _result("z", rate("recall", 20, 100))]
+    )
+    comparison = compare_scorecards(baseline, rerun)
+    markdown = comparison.markdown()
+    assert [row.key[0] for row in comparison.rows] == ["z", "a"]
+    assert markdown.index("| z |") < markdown.index("| a |")
+    assert "+20.0 (+5.2 to +33.4)" in markdown
+    assert "percentage points" in markdown
+    assert "Newcombe" in markdown and "95%" in markdown
+    assert "paired" in markdown and "independent" in markdown
+    assert "1 worse" in markdown and "1 better" in markdown
+
+
+def test_small_rates_and_intervals_do_not_round_to_zero():
+    metric = rate("wrong_subject", 15, 42680, ceiling=0.01)
+    card = Scorecard.collect([_result("a", metric)])
+    markdown = compare_scorecards(card, card).markdown()
+    assert "0.035% (15/42680)" in markdown
+    assert "(-0.0 to +0.0)" not in markdown
+
+
+def test_a_small_increase_in_false_alarms_fails_the_guard():
+    comparison = compare_scorecards(
+        Scorecard.collect([_result("a", rate("false_alarm", 10, 100000, ceiling=0.01))]),
+        Scorecard.collect([_result("a", rate("false_alarm", 100, 100000, ceiling=0.01))]),
+    )
+    assert comparison.rows[0].verdict == "worse"
+    assert comparison.exit_code == 1
+
+
+def test_the_largest_degradation_comes_first_in_either_direction():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 90, 100)), _result("z", rate("false_alarm", 10, 100))]
+    )
+    rerun = Scorecard.collect(
+        [_result("a", rate("recall", 60, 100)), _result("z", rate("false_alarm", 80, 100))]
+    )
+    comparison = compare_scorecards(baseline, rerun)
+    assert [row.key[0] for row in comparison.rows] == ["z", "a"]
+
+
+def test_metrics_unmeasured_in_both_runs_come_last():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 50, 100))]
+    )
+    rerun = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 0, 0))]
+    )
+    rows = compare_scorecards(baseline, rerun).rows
+    # Losing a measurement surfaces; never having one doesn't crowd the table.
+    assert [row.key[0] for row in rows] == ["b", "a"]
+
+
+def test_a_newly_measured_gate_is_not_pushed_to_the_end():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 0, 0, target=0.95))]
+    )
+    rerun = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 900, 1100, target=0.95))]
+    )
+    rows = compare_scorecards(baseline, rerun).rows
+    assert [row.key[0] for row in rows] == ["b", "a"]
+
+
+@pytest.mark.parametrize(
+    "name, higher",
+    [
+        ("plantclef_top1_worst_species", False),
+        ("pilot_cue_worst_species", False),
+        ("nonvegetation_proposal_share", False),
+        ("conditional_top1", True),
+        ("source_box_top5", True),
+        ("image_species_max_score_at5", True),
+        ("foreground_90pct_covered", True),
+        ("half_covered_images", True),
+        ("localized_and_identified", True),
+    ],
+)
+def test_every_committed_metric_name_has_a_direction(name: str, higher: bool):
+    from weedz.validation.metrics import direction
+
+    assert direction(rate(name, 1, 2)) is higher
+
+
+def test_committed_scorecard_has_no_directionless_metrics():
+    from pathlib import Path
+
+    from weedz.validation.metrics import direction
+
+    card = Scorecard.read(Path(__file__).parents[1] / "benchmarks/validation/scorecard.json")
+    missing = {m.name for r in card.results for m in r.metrics if direction(m) is None}
+    assert not missing
+
+
+@pytest.mark.parametrize(
+    "rerun_metrics, expected",
+    [
+        ((rate("recall", 0, 0, target=0.5),), 1),  # target became unreachable: 0/0
+        ((rate("other", 5, 10),), 1),  # the gate vanished from a check that was rerun
+        ((rate("recall", 0, 0),), 1),  # rerun drops the gate and the measurement
+    ],
+)
+def test_losing_a_gated_measurement_fails_the_guard(rerun_metrics: tuple[Rate, ...], expected: int):
+    baseline = Scorecard.collect([_result("a", rate("recall", 90, 100, target=0.5))])
+    comparison = compare_scorecards(baseline, Scorecard.collect([_result("a", *rerun_metrics)]))
+    assert comparison.exit_code == expected
+    assert "(gated)" in comparison.markdown()
+
+
+def test_a_check_missing_from_a_partial_rerun_does_not_fail_the_guard():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 90, 100, target=0.5)), _result("b", rate("recall", 9, 10))]
+    )
+    comparison = compare_scorecards(
+        baseline, Scorecard.collect([_result("b", rate("recall", 9, 10))])
+    )
+    assert comparison.exit_code == 0
+
+
+def test_a_rerun_check_that_emits_no_metrics_fails_its_gates():
+    baseline = Scorecard.collect([_result("a", rate("recall", 90, 100, target=0.5))])
+    assert compare_scorecards(baseline, Scorecard.collect([_result("a")])).exit_code == 1
+
+
+def test_failing_gates_lead_the_console_table_in_a_partial_rerun():
+    skipped = [rate(f"recall_{index:02}", 9, 10) for index in range(30)]
+    baseline = Scorecard.collect(
+        [_result("a", *skipped), _result("z", rate("recall", 90, 100, target=0.5))]
+    )
+    rerun = Scorecard.collect([_result("z", rate("recall", 0, 0, target=0.5))])
+    comparison = compare_scorecards(baseline, rerun)
+    assert comparison.rows[0].key[0] == "z"
+    assert "(gated)" in comparison.markdown(limit=20)
+
+
+@pytest.mark.parametrize("keep_gate", [True, False])
+def test_a_passing_gate_that_now_fails_fails_the_guard(keep_gate: bool):
+    # 990/1000 clears a 95% target; 99/100 doesn't, though the change isn't significant.
+    baseline = Scorecard.collect([_result("a", rate("recall", 990, 1000, target=0.95))])
+    rerun_rate = rate("recall", 99, 100, target=0.95 if keep_gate else None)
+    comparison = compare_scorecards(baseline, Scorecard.collect([_result("a", rerun_rate)]))
+    assert comparison.rows[0].verdict == "no clear change"
+    assert comparison.exit_code == 1
+    assert "(gated)" in comparison.markdown()
+
+
+def test_a_gate_that_already_failed_and_still_fails_does_not_fail_the_guard():
+    baseline = Scorecard.collect([_result("a", rate("recall", 90, 100, target=0.95))])
+    rerun = Scorecard.collect([_result("a", rate("recall", 91, 100, target=0.95))])
+    assert compare_scorecards(baseline, rerun).exit_code == 0

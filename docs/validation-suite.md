@@ -26,6 +26,59 @@ below it. A small sample therefore can't pass a strict gate by luck: 23 of 24 is
 
 `unmeasured` means there were no labelled items for that metric. It is not zero.
 
+The scorecard starts with stage check/gate counts and headline (`all`) gates,
+then the full table. A stage without gates has no pass/fail claim.
+
+## Comparing a change
+
+Compare the committed baseline with rerun result JSON files or a rerun scorecard:
+
+```sh
+uv run main.py validate compare benchmarks/validation/scorecard.json rerun/*.json \
+  --markdown comparison.md
+```
+
+Metrics match by check, name and stratum. Deltas are rerun minus baseline in
+percentage points, with 95% [Newcombe method 10](https://doi.org/10.1002/(SICI)1097-0258(19980430)17:8%3C873::AID-SIM779%3E3.0.CO;2-I) intervals combining Wilson intervals without continuity correction.
+An interval excluding zero means **better** or **worse**; otherwise **no clear change**.
+Targets mean higher is better; ceilings mean lower. Otherwise explicit direction
+wins, then the name: false_alarm, wrong_subject, confusion, worst_species and
+nonvegetation are lower-is-better (checked first); recall, recovery, coverage,
+covered, identified, top1, top5 and _at5 are higher-is-better. A test requires
+every committed metric to have a direction, so name new metrics accordingly.
+A metric with no known direction is **changed** when its interval excludes 0, without a better/worse verdict. Missing metrics are **new**
+or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
+
+The console shows 20 rows, worst first; markdown includes every row. Changed input
+hashes, cohorts (configuration keys that decide which items are scored: limits,
+selection and split rules, target, lookalike and class lists, salts, stratum definitions, per-split sampling budgets and image counts, such as a
+`--limit` smoke run's `smoke_limit` or PhenoBench's `selection`), datasets or splits are
+flagged as **not like-for-like**, with the changed keys listed. Measured values kept
+in configuration, such as timings, fitted thresholds and versions, are not compared. A gated regression
+exits **1** even then, so compare full runs, not smoke runs. So does a gate that
+passed in the baseline but fails in the rerun when held to the baseline's gate, even
+without a clear change (990/1000 clears a 95% target; 99/100 doesn't), and a gate that
+was measured in the baseline but is unmeasured or missing in a rerun check (for example a
+target that became unreachable). Otherwise it exits **0**, including new metrics,
+checks a partial rerun skipped, and metrics unmeasured in both runs. Pass one result file or scorecard per check. This does not certify completeness.
+
+For a worked example, compare the committed scorecard with itself:
+
+```sh
+uv run main.py validate compare benchmarks/validation/scorecard.json \
+  benchmarks/validation/scorecard.json
+```
+
+This exits 0 across 1,030 metrics: **894 no clear change** and 136 unmeasured.
+Metrics unmeasured in both runs are listed last.
+SegFormer's Open Images recall is 1,433/1,500 each: difference 0.0 points (95% CI −1.5 to +1.5).
+
+Runs on the same images are **paired**, but results don't keep per-image outcomes,
+so the interval treats them as independent. That is usually wider than a paired
+interval, but not always: when outcomes are negatively correlated it can be too
+narrow, so read a borderline **worse** with care.
+Intervals are per metric without multiplicity adjustment; no clear change does not prove equivalence.
+
 ## Adding a check
 
 One module per dataset, in `src/weedz/validation/<dataset>.py`:
@@ -48,7 +101,10 @@ One module per dataset, in `src/weedz/validation/<dataset>.py`:
 4. **Score into `Outcome`s or `rate`s**, and return a `CheckResult` with
    `limits` (what the labels can't support), `inputs` (SHA-256 of each label
    file and model checkpoint) and `configuration` (thresholds, prompts, budgets).
-   Use paths relative to `--data-root`, never absolute ones.
+   Use paths relative to `--data-root`, never absolute ones. Also record
+   `cohort_sha256` in `configuration`: the SHA-256 of the sorted scored item IDs
+   and their strata. `validate compare` matches cohort keys by name, so this
+   digest is what reliably catches a change in which items were scored.
 5. **Register it** with `register(Check(...))` and import the module in
    `weedz/validation/checks.py`.
 
@@ -523,14 +579,6 @@ model settings. Add `--limit 50 --output "$DATA_ROOT/.cache/agri-smoke"` for smo
 runs. The default SAM3 prompts are `plant, flower`, with the default 0.5
 retention cutoff and 128-region cap per prompt. ImageWeeds uses the first 100
 retained proposals; the mask checks use all retained proposals.
-
-After full runs, rebuild the ordered scorecard:
-
-```sh
-uv run main.py validate scorecard benchmarks/validation/*.json \
-  --output benchmarks/validation/scorecard.json \
-  --markdown benchmarks/validation/scorecard.md
-```
 
 On the shared `cuda:0`, the final full commands took 3m 15s for ImageWeeds
 regions, 3m 59s for ImageWeeds species, 1m 03s for PhenoBench and 25s for CWFID.

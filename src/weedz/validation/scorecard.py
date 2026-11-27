@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from weedz.validation.metrics import Rate
+from weedz.validation.metrics import Rate, is_gated
 
 Sha256 = str
 
@@ -49,6 +49,11 @@ class Scorecard(BaseModel):
 
     def markdown(self) -> str:
         rows = [
+            "# Validation scorecard",
+            "",
+            *_summary(self.results),
+            "## Full results",
+            "",
             "| Stage | Check | Dataset | Split | Metric | Stratum | Count | Rate (95% CI) | Gate |",
             "| --- | --- | --- | --- | --- | --- | ---: | --- | --- |",
         ]
@@ -62,6 +67,41 @@ class Scorecard(BaseModel):
         return "\n".join(rows) + "\n"
 
 
+def _summary(results: list[CheckResult]) -> list[str]:
+    rows = [
+        "## Stage summary",
+        "",
+        "| Stage | Checks | Gated passing | Gated failing | Gated unmeasured |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
+    for stage in sorted({result.stage for result in results}):
+        checks = [result for result in results if result.stage == stage]
+        gates = [metric for result in checks for metric in result.metrics if is_gated(metric)]
+        passing = sum(metric.passed is True for metric in gates)
+        failing = sum(metric.passed is False for metric in gates)
+        unmeasured = sum(metric.passed is None for metric in gates)
+        rows.append(f"| {stage} | {len(checks)} | {passing} | {failing} | {unmeasured} |")
+    rows.extend(
+        [
+            "",
+            "## Headline gates",
+            "",
+            "Gated metrics in the `all` stratum. Counts above include gates in every stratum.",
+            "",
+            "| Stage | Check | Metric | Count | Rate (95% CI) | Gate |",
+            "| --- | --- | --- | ---: | --- | --- |",
+        ]
+    )
+    for result in results:
+        for metric in result.metrics:
+            if metric.stratum == "all" and is_gated(metric):
+                rows.append(
+                    f"| {result.stage} | {result.check} | {metric.name} "
+                    f"| {metric.successes}/{metric.total} | {_interval(metric)} | {_gate(metric)} |"
+                )
+    return [*rows, ""]
+
+
 def _interval(metric: Rate) -> str:
     if metric.value is None or metric.low is None or metric.high is None:
         return "unmeasured"
@@ -69,7 +109,8 @@ def _interval(metric: Rate) -> str:
 
 
 def _gate(metric: Rate) -> str:
-    if metric.passed is None:
+    if not is_gated(metric):
         return "—"
     bound = f"≥ {metric.target:.0%}" if metric.target is not None else f"≤ {metric.ceiling:.0%}"
-    return f"{'pass' if metric.passed else 'fail'} ({bound})"
+    status = "unmeasured" if metric.passed is None else "pass" if metric.passed else "fail"
+    return f"{status} ({bound})"

@@ -24,6 +24,30 @@ class Rate(BaseModel):
     target: float | None = None
     ceiling: float | None = None
     passed: bool | None = None
+    higher_is_better: bool | None = None
+
+
+def is_gated(metric: Rate) -> bool:
+    return metric.target is not None or metric.ceiling is not None
+
+
+def direction(metric: Rate) -> bool | None:
+    """Resolve old receipts too; gates take precedence over names or explicit hints."""
+    if metric.target is not None:
+        return True
+    if metric.ceiling is not None:
+        return False
+    if metric.higher_is_better is not None:
+        return metric.higher_is_better
+    name = metric.name.casefold()
+    for terms, higher in (
+        # Checked first: worst-species rates are false-alarm rates even with "top1" in them.
+        (("false_alarm", "wrong_subject", "confusion", "worst_species", "nonvegetation"), False),
+        (("recall", "recovery", "coverage", "covered", "identified", "top1", "top5", "_at5"), True),
+    ):
+        if any(term in name for term in terms):
+            return higher
+    return None
 
 
 def wilson(successes: int, total: int, z: float = Z_95) -> tuple[float, float]:
@@ -35,6 +59,27 @@ def wilson(successes: int, total: int, z: float = Z_95) -> tuple[float, float]:
     return max(0.0, centre - half), min(1.0, centre + half)
 
 
+def newcombe(
+    successes: int, total: int, baseline_successes: int, baseline_total: int
+) -> tuple[float, float]:
+    """95% interval for first minus baseline: Newcombe (1998), method 10, no CC.
+
+    Combines the two independent Wilson intervals (Stat Med 17:873–890).
+    https://doi.org/10.1002/(SICI)1097-0258(19980430)17:8<873::AID-SIM779>3.0.CO;2-I
+    """
+    for hits, count in ((successes, total), (baseline_successes, baseline_total)):
+        if count <= 0 or not 0 <= hits <= count:
+            raise ValueError("Newcombe intervals require valid counts and positive totals")
+    value, baseline = successes / total, baseline_successes / baseline_total
+    low, high = wilson(successes, total)
+    baseline_low, baseline_high = wilson(baseline_successes, baseline_total)
+    delta = value - baseline
+    return (
+        delta - math.hypot(value - low, baseline_high - baseline),
+        delta + math.hypot(high - value, baseline - baseline_low),
+    )
+
+
 def rate(
     name: str,
     successes: int,
@@ -43,41 +88,32 @@ def rate(
     stratum: str = "all",
     target: float | None = None,
     ceiling: float | None = None,
+    higher_is_better: bool | None = None,
 ) -> Rate:
     if not 0 <= successes <= total:
         raise ValueError(f"{name}: successes must be between zero and the total")
     if target is not None and ceiling is not None:
         raise ValueError(f"{name}: set a target or a ceiling, not both")
-    if total == 0:
-        return Rate(
-            name=name,
-            stratum=stratum,
-            successes=0,
-            total=0,
-            value=None,
-            low=None,
-            high=None,
-            target=target,
-            ceiling=ceiling,
-        )
-    low, high = wilson(successes, total)
+    low, high = wilson(successes, total) if total else (None, None)
     passed = None
-    if target is not None:
+    if target is not None and low is not None:
         passed = low >= target
-    elif ceiling is not None:
+    elif ceiling is not None and high is not None:
         passed = high <= ceiling
-    return Rate(
+    measured = Rate(
         name=name,
         stratum=stratum,
         successes=successes,
         total=total,
-        value=successes / total,
+        value=successes / total if total else None,
         low=low,
         high=high,
         target=target,
         ceiling=ceiling,
         passed=passed,
+        higher_is_better=higher_is_better,
     )
+    return measured.model_copy(update={"higher_is_better": direction(measured)})
 
 
 class Outcome(BaseModel):
