@@ -26,8 +26,30 @@ below it. A small sample therefore can't pass a strict gate by luck: 23 of 24 is
 
 `unmeasured` means there were no labelled items for that metric. It is not zero.
 
-The scorecard starts with stage check/gate counts and headline (`all`) gates,
-then the full table. A stage without gates has no pass/fail claim.
+Proposal, species-identification and whole-photo headline pass marks are
+**regression floors learned on development data**, not production quality
+targets. For development successes `s_d/n_d`, take the 95% Wilson interval
+`[L_d, U_d]`. At the development rate, compute the expected held-out interval
+`wilson(round((s_d/n_d) * n_h), n_h)` and its half-width `h`. A higher-is-better
+metric has target `max(0, L_d - h)`; a lower-is-better metric has ceiling
+`min(1, U_d + h)`. Only the held-out denominator enters this calculation, never
+its successes. The whole held-out interval must still clear the gate. Missing
+development or held-out trials leave it ungated with a reason in `limits`.
+Receipts record each development count as `gate_development_<metric> = "s/n"`.
+Small cohorts can produce permissive, even zero, floors; passing says held-out
+performance is consistent with development, not that the pipeline is ready.
+The existing presence and target-false-alarm gates retain their fixed targets.
+
+Use publisher development/test splits when available: PlantCLEF `val`/`test`,
+CWFID `train`/`test` excluding overlap 028, and Danish roadside `val`/`test`
+positive labels. Otherwise `split_of(source_id)` freezes development and
+held-out halves. Pooled `all` rows remain diagnostic where they mix the halves;
+gates apply only to held-out strata. Prior inspection and training overlap
+remain limits on independence.
+
+The scorecard starts with stage check/gate counts and headline gates, including
+development-derived `held-out` and publisher `test` strata, then the full table.
+A stage without gates has no pass/fail claim.
 
 ## Comparing a change
 
@@ -166,8 +188,10 @@ for small or diffuse vegetation. [Proposal results](../benchmarks/validation/coc
 
 #### iNat2021 validation
 
-Nothing is tuned on iNat2021, so both checks score every eligible photo in
-the validation set: 10 per species, 30 target photos and 40 lookalikes.
+The cue rules remain frozen on iNat2021, and pooled diagnostics still score
+every eligible validation photo: 10 per species, 30 target photos and 40
+lookalikes. Species regression gates use source-ID development and held-out
+halves; the pooled rows are ungated.
 BioCLIP 2 ranked the correct target first on 28 of 30 photos. PlantCLEF ranked
 it first on 16 of 30, and in its top five on 26. The pilot cue rule recovered
 21 of 30 and the local rule 20 of 30. On pampas the pilot recovered 8 of 10
@@ -251,10 +275,13 @@ precision. The earlier 60-photo SAM2 diagnostic used a different method and
 cohort. Keep dense-mask and small-instance checks alongside this result.
 [CWFID results](../benchmarks/validation/cwfid-mask-coverage.json)
 
-These datasets were already inspected during development. Nothing was tuned in
-this port, so ImageWeeds and PhenoBench score their entire fixed cohorts as
-`validation`; CWFID preserves the publisher `test` split after removing 028.
-None is a new independent held-out claim. PhenoBench's website calls semantic
+These datasets were already inspected during development. ImageWeeds and
+PhenoBench retain their entire fixed cohorts as pooled `validation` diagnostics,
+and add source-ID development/held-out strata for regression gates. CWFID uses
+39 nonoverlapping publisher train photos for development and preserves its 20
+publisher test photos after removing 028. All 39 train photos have assessed
+positive masks, so a development gate is supported. None is a new independent
+held-out claim. PhenoBench's website calls semantic
 ID 4 partial-crop twice; its devkit identifies 4 as partial weed. Its archive
 and website also disagree on licensing, so retain private noncommercial
 research handling.
@@ -430,10 +457,16 @@ uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
 ```
 
 For a smoke run add `--limit 50` and write to a separate output directory.
-Both checks score the same 1,160 hash-held-out photos: 1,060 of the publisher's
+Both checks retain the same 1,160 hash-held-out diagnostic photos: 1,060 of the publisher's
 2,140 test photos and 100 of its separate 206 multilabel photos. The source ID
 is the JPEG filename; `split_of` freezes membership before inference. No
-operating point is fitted on either scoring cohort. XP4 uses its published
+inference operating point is fitted on either scoring cohort. For the new
+regression gates, development uses the publisher's 1,181 positive `val` photos,
+and held-out uses all 1,145 positive `test` photos. The pinned folder labels
+support these positives; blank/no-species photos add no recall trials. No
+route-hash fallback is needed because publisher validation labels exist. These
+new strata exclude multilabel photos; the historical rows stay unchanged.
+XP4 uses its published
 validation cutoffs, with the upstream strict `>` comparison and CUDA FP16
 autocast. Its suggestion count varies; it is a separate comparison.
 

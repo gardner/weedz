@@ -42,6 +42,7 @@ from weedz.validation.gates import apply_development_gates, cohort_sha256, hash_
 from weedz.validation.metrics import Rate
 from weedz.validation.registry import Check, RunContext, register
 from weedz.validation.scorecard import CheckResult
+from weedz.validation.splits import split_of
 
 REGIONS = "imageweeds-region-recovery"
 SPECIES = "imageweeds-species"
@@ -290,7 +291,9 @@ def _result(
     config = {
         **configuration(context),
         "gate_split_policy": "split_of(source_id); pooled validation rows are diagnostic",
-        "cohort_sha256": cohort_sha256((i.source_id, i.crop) for i in items),
+        "cohort_sha256": cohort_sha256(
+            (i.source_id, f"{split_of(i.source_id)}/{i.crop}") for i in items
+        ),
     }
     limits = list(LIMITS)
     metrics = apply_development_gates(

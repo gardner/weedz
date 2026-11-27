@@ -12,6 +12,8 @@ from weedz.validation import metrics
         (20, 100, 200, False, 0.344030754),
         (0, 10, 10, True, 0.0),
         (10, 10, 10, False, 1.0),
+        # p_d=.7, n_h=13: use round(9.1)=9, not the fractional expected successes.
+        (7, 10, 13, True, 0.172028382),
     ],
 )
 def test_floor_matches_hand_calculated_wilson_bounds(
