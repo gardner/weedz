@@ -330,3 +330,37 @@ def test_conditional_id_without_matches_is_unmeasured():
     rows = imageweeds.species_metrics([item], lambda _: evidence)
     row = metric(rows, "conditional_top1")
     assert row.total == 0 and row.value is None
+
+
+def test_sam_runtime_bridge_keeps_classifier_overlay_out_of_child(tmp_path, monkeypatch):
+    import json
+
+    from weedz.validation import agri_models
+    from weedz.validation.registry import RunContext
+
+    runtime = tmp_path / "sam-runtime/bin/python"
+    monkeypatch.setenv("WEEDZ_SAM3_PYTHON", str(runtime))
+    monkeypatch.setenv("PYTHONPATH", "classifier-overlay")
+    calls = []
+
+    def run(command, *, input, text, check, env):
+        payload = json.loads(input)
+        calls.append(payload)
+        assert command[0] == str(runtime) and check and text
+        assert env["PYTHONPATH"] == str(Path(agri_models.__file__).resolve().parents[2])
+        Path(command[-1]).write_text(
+            json.dumps(
+                {
+                    "regions": [[]],
+                    "runtime": {"sam3_runtime_numpy_version": "fixture"},
+                }
+            )
+        )
+
+    monkeypatch.setattr(agri_models.subprocess, "run", run)
+    result = agri_models.proposal_batch(
+        RunContext(tmp_path, tmp_path / "cache", "cuda:0"), "imageweeds", [tmp_path / "image.png"]
+    )
+    assert result.regions == [[]]
+    assert result.runtime == {"sam3_runtime_numpy_version": "fixture"}
+    assert calls[0]["adapter"] == "imageweeds"
