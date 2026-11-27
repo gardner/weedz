@@ -343,3 +343,26 @@ def test_suggestion_ties_match_the_production_tile_profile():
     crops = [[ranked("Rosa rugosa Thunb.", 0.5)], [ranked("Cytisus scoparius (L.) Link", 0.5)]]
     production = _aggregate_views([{"topk": [row.model_dump() for row in crop]} for crop in crops])
     assert roadside_models.suggestions(crops, budget=1) == (production[0]["taxon"],)
+
+
+def test_versions_describe_imported_modules_when_overlay_metadata_differs(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    import torch
+    import torchvision
+
+    monkeypatch.setattr(roadside_models, "version", lambda _: "distribution-only")
+    runtime = roadside_models.library_versions()
+    assert runtime["torch_version"] == str(torch.__version__)
+    assert runtime["torchvision_version"] == str(torchvision.__version__)
+
+
+def test_runtime_build_changes_invalidate_evidence_even_with_identical_distribution_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    import torch
+
+    context = RunContext(tmp_path, tmp_path)
+    before = roadside_models.evidence_identity(context, False)
+    monkeypatch.setattr(torch, "__version__", "2.15.0+differentbuild")
+    assert roadside_models.evidence_identity(context, False) != before

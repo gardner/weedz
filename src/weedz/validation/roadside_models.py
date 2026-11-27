@@ -1,6 +1,7 @@
 "Real PlantCLEF views/aggregation and a separate released XP4 feature-head control."
 
 import gc
+import importlib
 import json
 import logging
 import sqlite3
@@ -50,8 +51,11 @@ def library_versions() -> dict[str, str]:
     result = {}
     for package in LIBRARIES:
         try:
-            result[package + "_version"] = version(package)
-        except PackageNotFoundError:
+            distribution = version(package)
+            module = importlib.import_module("PIL" if package == "pillow" else package)
+            # CUDA overlays can shadow CPU wheels without shadowing their dist-info.
+            result[package + "_version"] = str(getattr(module, "__version__", distribution))
+        except (ImportError, PackageNotFoundError):
             result[package + "_version"] = "not installed"
     return result
 
@@ -101,6 +105,7 @@ def evidence_identity(context: RunContext, baseline: bool) -> str:
     return pipeline_fingerprint(
         imported_sources(Path("validation/roadside.py")),
         LIBRARIES,
+        library_versions(),
         baseline,
         context.device,
         BUDGET,
