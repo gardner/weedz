@@ -276,6 +276,7 @@ def run_check(
     )
     configuration["gate_development_images"] = len(gate_items(items, "val", context.limit))
     configuration["gate_held_out_images"] = len(gate_items(items, "test", context.limit))
+    configuration["gate_inference_images"] = len(cohort)
     configuration["gate_recorded_inference_seconds"] = round(
         sum(p.inference_seconds for p in evidence), 3
     )

@@ -45,7 +45,7 @@ SPECIES = (
     ("Reynoutria japonica Houtt.", "Reynoutria sachalinensis (F.Schmidt) Nakai"),
 )
 PINS_PATH = Path(__file__).with_name("roadside_pins.json")
-PINS_SHA256 = "d96194dfb780852a11f8d7f14ae70fbd459c1d7deff0e833f0123c969890053b"
+PINS_SHA256 = "f70dad2a466c733d8e849e649e9df4e3cd5d1cb786ac29977a54254c98381838"
 DISTANCE_METRES = 100
 Membership = tuple[str, str, str]
 logger = logging.getLogger(__name__)
