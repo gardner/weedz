@@ -20,8 +20,7 @@ from weedz.region_evaluation.boxes import Box, box_iou
 from weedz.region_evaluation.matching import match_regions
 from weedz.segmentation.sam3_image import CHECKPOINT_SHA256, CODE_REVISION, Sam3Config, Sam3Image
 from weedz.validation.fingerprint import (
-    SAM3_SOURCES,
-    SEGFORMER_SOURCES,
+    imported_sources,
     pipeline_fingerprint,
     require_stored_orientation,
 )
@@ -68,8 +67,9 @@ SAM_CHECKPOINT = MODEL_DIR / "sam3.pt"
 SEG_SNAPSHOT = MODEL_DIR / "segformer"
 type ModelName = Literal["sam3", "segformer"]
 PIPELINE_SOURCES: dict[ModelName, tuple[Path, ...]] = {
-    "sam3": (*SAM3_SOURCES, Path("validation/openimages.py")),
-    "segformer": (*SEGFORMER_SOURCES, Path("validation/openimages.py")),
+    # This adapter and every weedz module it imports, the model code included.
+    "sam3": imported_sources(Path("validation/openimages.py")),
+    "segformer": imported_sources(Path("validation/openimages.py")),
 }
 COMMON_LIMITS = [
     "Plant and its boxable subclasses define scope. Verification and exhaustiveness apply to "

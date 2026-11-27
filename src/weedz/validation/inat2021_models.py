@@ -27,7 +27,7 @@ from weedz.discovery.inference import (
     summarize_scores,
 )
 from weedz.species_aggregation import RankedTaxon, aggregate_taxa
-from weedz.validation.fingerprint import pipeline_fingerprint
+from weedz.validation.fingerprint import imported_sources, pipeline_fingerprint
 from weedz.validation.inat2021_data import TARGETS, Item
 from weedz.validation.registry import RunContext
 
@@ -37,24 +37,10 @@ LOCAL_MARGIN = 0.02411
 GRID = 4
 TOP_K = 5
 BATCH_SIZE = 16
-# The pipeline code each stage's cached evidence depends on, including this adapter.
+# Each stage's cached evidence depends on this adapter and every weedz module it imports.
 ADAPTER = Path("validation/inat2021_models.py")
-PIPELINE_SOURCES = {
-    "plantclef": (
-        Path("classification/plantclef.py"),
-        Path("classification/precision.py"),
-        Path("discovery/inference.py"),
-        Path("species_aggregation.py"),
-        ADAPTER,
-    ),
-    "bioclip": (
-        Path("classification/bioclip.py"),
-        Path("discovery/encoder_backend.py"),
-        Path("discovery/inference.py"),
-        ADAPTER,
-    ),
-    "native": (Path("classification/aotearoa.py"), Path("classification/plantclef.py"), ADAPTER),
-}
+_SOURCES = imported_sources(ADAPTER)
+PIPELINE_SOURCES = {"plantclef": _SOURCES, "bioclip": _SOURCES, "native": _SOURCES}
 PLANT_LABELS = {
     "Clematis vitalba": "Clematis vitalba L.",
     "Ulex europaeus": "Ulex europaeus L.",

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from weedz.validation.fingerprint import SAM3_SOURCES, SEGFORMER_SOURCES, pipeline_fingerprint
+from weedz.validation.fingerprint import imported_sources, pipeline_fingerprint
 
 
 def _write(root: Path, text: str) -> Path:
@@ -25,10 +25,33 @@ def test_settings_and_libraries_change_the_fingerprint(tmp_path: Path):
     assert pipeline_fingerprint([source], ["pillow", "numpy"], "cpu", root=tmp_path) != base
 
 
-def test_the_named_pipeline_sources_exist():
+def test_each_adapter_key_covers_the_model_code_it_runs():
+    from weedz.validation import cocostuff_models, inat2021_models, openimages
+
+    assert Path("segmentation/sam3_image.py") in openimages.PIPELINE_SOURCES["sam3"]
+    assert Path("discovery/vegetation.py") in cocostuff_models.ADAPTER_SOURCES
+    assert Path("classification/bioclip.py") in inat2021_models.PIPELINE_SOURCES["bioclip"]
+
+
+def test_sources_follow_weedz_imports_including_lazy_ones(tmp_path: Path):
+    package = tmp_path / "weedz"
+    (package / "sub").mkdir(parents=True)
+    (package / "sub" / "__init__.py").write_text("")
+    (package / "entry.py").write_text("import json\nfrom weedz.sub import helper\n")
+    (package / "sub" / "helper.py").write_text("def f():\n    from weedz.sub.math import policy\n")
+    (package / "sub" / "math.py").write_text("from weedz.entry import x\n")
+    found = imported_sources(Path("entry.py"), root=package)
+    assert set(found) == {
+        Path("entry.py"),
+        Path("sub/__init__.py"),
+        Path("sub/helper.py"),
+        Path("sub/math.py"),
+    }
+
+
+def test_the_inat_stages_cover_the_fp32_policy():
     from weedz.validation.inat2021_models import PIPELINE_SOURCES
 
-    package = Path(__file__).resolve().parents[1] / "src" / "weedz"
-    inat = [source for sources in PIPELINE_SOURCES.values() for source in sources]
-    for source in (*SAM3_SOURCES, *SEGFORMER_SOURCES, *inat):
-        assert (package / source).is_file(), source
+    for sources in PIPELINE_SOURCES.values():
+        assert Path("classification/precision.py") in sources
+        assert Path("species_aggregation.py") in sources
