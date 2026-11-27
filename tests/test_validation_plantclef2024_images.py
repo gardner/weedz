@@ -120,11 +120,17 @@ def test_runner_verifies_models_before_reusing_evidence(
     assert calls == ["verify models"]
 
 
+@pytest.mark.parametrize("linked", [False, True])
 def test_runner_adapts_cache_paths_to_shared_predictor(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, linked: bool
 ):
     labels = write_labels(tmp_path / "labels.csv", [row("a"), row("b", tag="test")])
-    context = RunContext(tmp_path / "data", tmp_path / "external-cache")
+    data_root = tmp_path / "data"
+    if linked:
+        # An external data directory linked into place: `..` climbs from the link's target.
+        (tmp_path / "disk/data/inat2021").mkdir(parents=True)
+        data_root.symlink_to(tmp_path / "disk/data")
+    context = RunContext(data_root, tmp_path / "external-cache")
     monkeypatch.setattr(plantclef2024, "labels_file", lambda _: labels)
     monkeypatch.setattr(
         plantclef2024, "verify_inputs", lambda _: {"inat2021/models/fixture": "a" * 64}
@@ -172,3 +178,24 @@ def test_bounded_prefetch_preserves_prediction_order_and_reuses_shared_predictor
     predictions = plantclef2024.predict_photos(context, cache, photos)
     assert calls == [["0.jpg", "1.jpg"], ["2.jpg", "3.jpg"], ["4.jpg"]]
     assert [p.plantclef[0] for p in predictions] == [p.item.source_id for p in photos]
+
+
+def test_a_corrupt_image_response_is_retried_from_scratch(tmp_path: Path):
+    import io
+
+    import httpx
+    from PIL import Image
+
+    from weedz.validation import plantclef2024_data
+
+    good = io.BytesIO()
+    Image.new("RGB", (4, 4)).save(good, format="JPEG")
+    responses = iter([b"<html>busy</html>", good.getvalue()])
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=next(responses))
+
+    partial = tmp_path / "photo.jpg.part"
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        plantclef2024_data._download(client, "https://example.invalid/photo", partial, 0.0)
+    assert partial.read_bytes() == good.getvalue()

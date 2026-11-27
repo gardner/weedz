@@ -202,8 +202,10 @@ def predict_photos(context: RunContext, cache: Path, photos: list[Photo]) -> lis
             adapted = [
                 replace(
                     photo.item,
+                    # Resolve both sides: `..` steps climb from a symlink's target.
                     file_name=os.path.relpath(
-                        cache / photo.item.file_name, context.data_root / "inat2021"
+                        (cache / photo.item.file_name).resolve(),
+                        (context.data_root / "inat2021").resolve(),
                     ),
                 )
                 for photo in batch

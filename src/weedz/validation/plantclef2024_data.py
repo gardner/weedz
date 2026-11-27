@@ -145,6 +145,11 @@ def _download(client: httpx.Client, url: str, partial: Path, delay: float) -> No
         except httpx.HTTPError:
             if attempt == 3:
                 raise
+        except OSError:
+            # Pillow rejected truncated or non-image bytes: resuming would keep them.
+            partial.unlink(missing_ok=True)
+            if attempt == 3:
+                raise
 
 
 def _image(cache: Path, photo: Photo, client: httpx.Client, delay: float) -> str:
