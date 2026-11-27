@@ -144,3 +144,31 @@ def test_runner_adapts_cache_paths_to_shared_predictor(
     assert result.configuration["publisher_val_test_binomial_taxa"] == 1
     assert result.inputs["plantclef2024/scored images (SHA-256 of per-file digests)"] == "b" * 64
     assert not any(Path(path).is_absolute() for path in result.inputs)
+
+
+def test_bounded_prefetch_preserves_prediction_order_and_reuses_shared_predictor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    photos = load_photos(write_labels(tmp_path / "labels.csv", [row(str(i)) for i in range(5)]))
+    context = RunContext(tmp_path / "data", tmp_path / "cache")
+    cache = context.cache_dir / "plantclef2024"
+    cache.mkdir(parents=True)
+    downloaded: set[str] = set()
+    calls: list[list[str]] = []
+    monkeypatch.setattr(plantclef2024, "PREFETCH_SUBJECTS", 2)
+
+    def download(_cache: Path, batch: list[plantclef2024_data.Photo]) -> str:
+        assert len(batch) <= 2
+        downloaded.update(p.item.source_id for p in batch)
+        return "c" * 64
+
+    def predict(_ctx: RunContext, _cache: Path, items: list[Item]) -> list[Prediction]:
+        assert all(item.source_id in downloaded for item in items)
+        calls.append([item.source_id for item in items])
+        return [Prediction((item.source_id,), (), None, None) for item in items]
+
+    monkeypatch.setattr(plantclef2024, "prepare_images", download)
+    monkeypatch.setattr(plantclef2024, "predict_all", predict)
+    predictions = plantclef2024.predict_photos(context, cache, photos)
+    assert calls == [["0.jpg", "1.jpg"], ["2.jpg", "3.jpg"], ["4.jpg"]]
+    assert [p.plantclef[0] for p in predictions] == [p.item.source_id for p in photos]

@@ -1,10 +1,13 @@
 """PlantCLEF 2024 publisher val/test subjects, scored with the frozen iNat machinery."""
 
 import json
+import logging
 import os
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from importlib.metadata import PackageNotFoundError, version
+from itertools import batched
 from pathlib import Path
 
 from weedz.validation.fingerprint import imported_sources, pipeline_fingerprint
@@ -40,6 +43,8 @@ SPECIES_ID = "plantclef2024-target-species"
 FALSE_ALARMS = "plantclef2024-target-false-alarms"
 DATASET = "PlantCLEF 2024 single-plant publisher val/test"
 STAGES = {SPECIES_ID: "species-identification", FALSE_ALARMS: "target-false-alarms"}
+PREFETCH_SUBJECTS = 512
+logger = logging.getLogger(__name__)
 LIBRARIES = (
     "torch",
     "torchvision",
@@ -132,6 +137,7 @@ def _configuration_for(
             "device": context.device,
             "download_workers": DOWNLOAD_WORKERS,
             "download_delay_seconds": DOWNLOAD_DELAY,
+            "download_prefetch_subjects": PREFETCH_SUBJECTS,
             "target_organ_counts": json.dumps(organs, sort_keys=True),
             "scored_cohort_counts": json.dumps(counts, sort_keys=True),
             "sample_limit_applied": context.limit is not None,
@@ -173,6 +179,40 @@ def run_check(
     )
 
 
+def predict_photos(context: RunContext, cache: Path, photos: list[Photo]) -> list[Prediction]:
+    """Prefetch one bounded batch while the shared predictor scores the preceding batch.
+
+    512 is a multiple of the shared 16-image batch: full-batch model inputs stay the
+    same as an unchunked run. Every model stage still resumes from its per-image cache.
+    """
+    evidence_cache = cache / evidence_identity(context.device)
+    evidence_cache.mkdir(parents=True, exist_ok=True)
+    batches = [list(batch) for batch in batched(photos, PREFETCH_SUBJECTS)]
+    predictions: list[Prediction] = []
+    if not batches:
+        return predictions
+    with ThreadPoolExecutor(max_workers=1) as downloader:
+        pending = downloader.submit(prepare_images, cache, batches[0])
+        for index, batch in enumerate(batches):
+            pending.result()
+            if index + 1 < len(batches):
+                pending = downloader.submit(prepare_images, cache, batches[index + 1])
+            # predict_all locates photos below data_root/inat2021. Adapt only the path;
+            # shared models, cue decisions and existing iNat cache keys stay intact.
+            adapted = [
+                replace(
+                    photo.item,
+                    file_name=os.path.relpath(
+                        cache / photo.item.file_name, context.data_root / "inat2021"
+                    ),
+                )
+                for photo in batch
+            ]
+            predictions.extend(predict_all(context, evidence_cache, adapted))
+            logger.info("PlantCLEF subjects scored %d/%d", len(predictions), len(photos))
+    return predictions
+
+
 def _run(check: str, context: RunContext) -> CheckResult:
     path = labels_file(context.data_root)
     # Verify all six assets before consulting any prediction cache.
@@ -180,24 +220,15 @@ def _run(check: str, context: RunContext) -> CheckResult:
     photos = load_photos(path)
     by_id = {photo.item.source_id: photo for photo in photos}
     cache = context.cache_dir / "plantclef2024"
-    evidence_cache = cache / evidence_identity(context.device)
-    evidence_cache.mkdir(parents=True, exist_ok=True)
 
     def predictor(items: list[Item]) -> list[Prediction]:
         selected = [by_id[item.source_id] for item in items]
+        predictions = predict_photos(context, cache, selected)
+        # Verify the complete scored cohort once more and record its single joint digest.
         inputs["plantclef2024/scored images (SHA-256 of per-file digests)"] = prepare_images(
             cache, selected
         )
-        # predict_all locates photos below data_root/inat2021. Adapt only that path;
-        # shared inference, model paths, cue decisions and its existing cache keys stay intact.
-        adapted = [
-            replace(
-                item,
-                file_name=os.path.relpath(cache / item.file_name, context.data_root / "inat2021"),
-            )
-            for item in items
-        ]
-        return predict_all(context, evidence_cache, adapted)
+        return predictions
 
     return run_check(check, context, photos, predictor, inputs=inputs)
 
