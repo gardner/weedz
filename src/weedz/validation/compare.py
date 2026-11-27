@@ -12,8 +12,9 @@ from weedz.validation.scorecard import Scorecard
 MetricKey = tuple[str, str, str]
 Verdict = Literal["better", "worse", "no clear change", "changed", "new", "removed", "unmeasured"]
 # Configuration keys that decide which items are scored: limits, cohorts, selection
-# rules, split rules and sampling budgets. Model settings such as tile_fraction aren't.
-COHORT_TERMS = ("limit", "cohort", "selection", "split", "salt", "budget", "minimum_per")
+# rules, split rules and per-split sampling budgets ("split" covers *_budget_per_split).
+# Model and output settings such as tile_fraction or proposal_budget are not.
+COHORT_TERMS = ("limit", "cohort", "selection", "split", "salt", "minimum_per")
 COHORT_KEYS = frozenset({"images", "held_out_fraction"})
 ORDER: tuple[Verdict, ...] = (
     "worse",

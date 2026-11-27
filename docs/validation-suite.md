@@ -51,7 +51,7 @@ or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
 
 The console shows 20 rows, worst first; markdown includes every row. Changed input
 hashes, cohorts (configuration keys that decide which items are scored: limits,
-selection and split rules, salts, sampling budgets and image counts, such as a
+selection and split rules, salts, per-split sampling budgets and image counts, such as a
 `--limit` smoke run's `smoke_limit` or PhenoBench's `selection`), datasets or splits are
 flagged as **not like-for-like**, with the changed keys listed. Measured values kept
 in configuration, such as timings, fitted thresholds and versions, are not compared. A gated regression

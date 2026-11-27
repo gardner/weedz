@@ -174,6 +174,8 @@ def test_changed_evidence_is_flagged(changes: dict[str, object], expected: str):
         {"sam3_threshold": 0.41},
         {"torch_version": "2.16"},
         {"tile_fraction": 0.5},
+        {"proposal_budget": 50},
+        {"suggestion_budget": 3},
     ],
 )
 def test_measured_outputs_in_configuration_are_not_a_cohort_change(configuration: dict):
