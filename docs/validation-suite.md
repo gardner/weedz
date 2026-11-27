@@ -51,12 +51,14 @@ or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
 
 The console shows 20 rows, worst first; markdown includes every row. Changed input
 hashes, cohorts (configuration keys that decide which items are scored: limits,
-selection and split rules, salts, per-split sampling budgets and image counts, such as a
+selection and split rules, salts, stratum definitions, per-split sampling budgets and image counts, such as a
 `--limit` smoke run's `smoke_limit` or PhenoBench's `selection`), datasets or splits are
 flagged as **not like-for-like**, with the changed keys listed. Measured values kept
 in configuration, such as timings, fitted thresholds and versions, are not compared. A gated regression
-exits **1** even then, so compare full runs, not smoke runs; otherwise it exits **0**,
-including new, removed and unmeasured metrics. Pass one result file or scorecard per check. This does not certify completeness.
+exits **1** even then, so compare full runs, not smoke runs. So does a gate that was
+measured in the baseline but is unmeasured or missing in a rerun check (for example a
+target that became unreachable). Otherwise it exits **0**, including new metrics,
+checks a partial rerun skipped, and metrics unmeasured in both runs. Pass one result file or scorecard per check. This does not certify completeness.
 
 For a worked example, compare the committed scorecard with itself:
 

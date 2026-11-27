@@ -11,10 +11,11 @@ from weedz.validation.scorecard import Scorecard
 
 MetricKey = tuple[str, str, str]
 Verdict = Literal["better", "worse", "no clear change", "changed", "new", "removed", "unmeasured"]
-# Configuration keys that decide which items are scored: limits, cohorts, selection
-# rules, split rules and per-split sampling budgets ("split" covers *_budget_per_split).
-# Model and output settings such as tile_fraction or proposal_budget are not.
-COHORT_TERMS = ("limit", "cohort", "selection", "split", "salt", "minimum_per")
+# Configuration keys that decide which items are scored or how they're grouped: limits,
+# cohorts, selection and split rules, stratum definitions, and per-split sampling
+# budgets ("split" covers *_budget_per_split). Model and output settings such as
+# tile_fraction or proposal_budget are not.
+COHORT_TERMS = ("limit", "cohort", "selection", "split", "salt", "minimum_per", "strat")
 COHORT_KEYS = frozenset({"images", "held_out_fraction"})
 ORDER: tuple[Verdict, ...] = (
     "worse",
@@ -52,9 +53,23 @@ class Comparison:
     rows: tuple[MetricComparison, ...]
     changes: dict[str, tuple[str, ...]]
 
+    def failing(self, row: MetricComparison) -> bool:
+        """A gated metric got worse, or lost its measurement in a check that was rerun."""
+        if not row.gated:
+            return False
+        if row.verdict == "worse":
+            return True
+        measured_before = row.baseline is not None and row.baseline.total > 0
+        lost = row.rerun is None or row.rerun.total == 0
+        return measured_before and lost and row.key[0] in self._rerun_checks
+
+    @property
+    def _rerun_checks(self) -> set[str]:
+        return {row.key[0] for row in self.rows if row.rerun is not None}
+
     @property
     def exit_code(self) -> int:
-        return int(any(row.gated and row.verdict == "worse" for row in self.rows))
+        return int(any(self.failing(row) for row in self.rows))
 
     def markdown(self, *, limit: int | None = None) -> str:
         counts = Counter(row.verdict for row in self.rows)
@@ -81,7 +96,7 @@ class Comparison:
             ]
         )
         for row in self.rows[:limit]:
-            verdict = row.verdict + (" (gated)" if row.gated and row.verdict == "worse" else "")
+            verdict = row.verdict + (" (gated)" if self.failing(row) else "")
             lines.append(
                 f"| {' | '.join(row.key)} | {_measure(row.baseline)} | {_measure(row.rerun)} "
                 f"| {_interval(row.difference)} | {verdict} |"
