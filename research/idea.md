@@ -236,24 +236,9 @@ For AI-assisted weed detection, I'd prioritise ground-level imagery over convent
   </row>
   <divider color="subtle"/>
   <row align="start" gap={3}>
-    <AsyncImage query="Mapillary street level road scenery New Zealand rural roadside native vegetation bushes" aspectRatio="4:5" maxWidth="122px"/>
-    <box flex="1" gap={1}>
-      **2. <Entity category="software" value="Mapillary" disambig="crowdsourced street-level imagery platform"/>**
-
-      <text weight="medium">Potentially very large NZ collection</text>
-      <text color="secondary" size="sm">Geotagged and often sequential roadside photographs.</text>
-      Probably the most useful source for detecting roadside weeds, gorse, pampas, old man's beard and other invasive species along transport corridors.
-
-      Mapillary provides an imagery API and shares its images under CC BY-SA, subject to platform terms. The number of New Zealand images needs checking rather than assuming global coverage reflects local coverage.
-
-      <text size="sm"><Link url="https://www.mapillary.com/app/" title="Explore coverage"/> · <Link url="https://help.mapillary.com/hc/en-us/articles/360010234680-Accessing-imagery-and-data-through-the-Mapillary-API" title="API"/> <Cite refs={["turn193373search0","turn613185search10"]}/></text>
-    </box>
-  </row>
-  <divider color="subtle"/>
-  <row align="start" gap={3}>
     <AsyncImage query="New Zealand Wellington Zealandia wildlife trail camera possum forest floor vegetation" aspectRatio="4:5" maxWidth="122px"/>
     <box flex="1" gap={1}>
-      **3. Wellington camera-trap dataset**
+      **2. Wellington camera-trap dataset**
 
       <text weight="medium">270,450 photographs from 187 locations</text>
       <text color="secondary" size="sm">An excellent smaller benchmark.</text>
@@ -309,7 +294,7 @@ This is better suited to wilding conifers, gorse thickets, pampas and large vege
 For an actual pilot, I'd make three data streams:
 
 1. **DOC camera traps:** detect understory plants in conservation areas, sampling a few daytime frames per camera per season rather than processing every near-duplicate.
-2. **Mapillary and KartaView:** find invasive plants along roads and tracks, grouping photographs into geographic segments.
+2. **KartaView:** find invasive plants along roads and tracks, grouping photographs into geographic segments.
 3. **LINZ aerial imagery:** identify likely infestations and changes in vegetation cover over time, then correlate with ground-level detections.
 
 The resulting dataset could have a single geographic evidence model, recording the image source, date, approximate location, candidate species and image crop.
@@ -318,7 +303,7 @@ One particularly useful opportunity is to combine **historical Flickr and Wikime
 
 For commercial deployment, the most straightforward starting points appear to be LINZ's openly licensed imagery and the permissively licensed DOC camera-trap dataset. For community photo platforms, you need to preserve image-specific attribution and respect their API and reuse terms. Google's Street View, in contrast, expressly prohibits bulk extraction and certain derived uses, so I wouldn't build a bulk-analysis pipeline around it. <Cite ref="turn721389search2"/>
 
-**My first experiment would be 10,000 daytime DOC camera-trap photographs and 10,000 Mapillary photographs from one region.** That would give you a useful comparison between forest understory and roadside weed detection before committing to millions of images.
+**My first experiment would be 10,000 daytime DOC camera-trap photographs and 10,000 KartaView photographs from one region.** That would give you a useful comparison between forest understory and roadside weed detection before committing to millions of images.
 
 ---
 
