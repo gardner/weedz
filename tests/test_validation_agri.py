@@ -364,3 +364,25 @@ def test_sam_runtime_bridge_keeps_classifier_overlay_out_of_child(tmp_path, monk
     assert result.regions == [[]]
     assert result.runtime == {"sam3_runtime_numpy_version": "fixture"}
     assert calls[0]["adapter"] == "imageweeds"
+
+
+def test_runtime_bridge_distinguishes_venvs_sharing_python_binary(tmp_path, monkeypatch):
+    import sys
+
+    from weedz.validation import agri_models
+    from weedz.validation.registry import RunContext
+
+    runtime = tmp_path / "other-venv-python"
+    runtime.symlink_to(Path(sys.executable).resolve())
+    monkeypatch.setenv("WEEDZ_SAM3_PYTHON", str(runtime))
+
+    def run(command, **kwargs):
+        Path(command[-1]).write_text('{"regions": [], "runtime": {}}')
+
+    def no_local_model(*args):
+        pytest.fail("An explicit SAM runtime must run in its own virtual environment")
+
+    monkeypatch.setattr(agri_models.subprocess, "run", run)
+    monkeypatch.setattr(agri_models, "sam_predictor", no_local_model)
+    result = agri_models.proposal_batch(RunContext(tmp_path, tmp_path), "imageweeds", [])
+    assert result.regions == []

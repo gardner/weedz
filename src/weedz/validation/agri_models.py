@@ -137,7 +137,7 @@ class ProposalBatch(BaseModel):
 def proposal_batch(context: RunContext, adapter: str, images: list[Path]) -> ProposalBatch:
     """Optionally isolate SAM3's incompatible runtime from the classifier runtime."""
     executable = os.environ.get("WEEDZ_SAM3_PYTHON")
-    if executable and Path(executable).resolve() != Path(sys.executable).resolve():
+    if executable:
         payload = {
             "data_root": str(context.data_root),
             "cache_dir": str(context.cache_dir),
