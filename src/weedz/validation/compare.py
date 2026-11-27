@@ -172,7 +172,9 @@ def _sort_key(row: MetricComparison) -> tuple[int, float, MetricKey]:
     degradation = 0.0
     if row.verdict == "worse" and row.difference and row.baseline and row.rerun:
         degradation = row.difference.value * (1 if _direction(row.baseline, row.rerun) else -1)
-    never_measured = row.verdict == "unmeasured" and not (row.baseline and row.baseline.total)
+    never_measured = row.verdict == "unmeasured" and not any(
+        metric and metric.total for metric in (row.baseline, row.rerun)
+    )
     rank = len(ORDER) if never_measured else ORDER.index(row.verdict)
     return rank, degradation, row.key
 

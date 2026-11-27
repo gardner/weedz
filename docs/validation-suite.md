@@ -42,7 +42,10 @@ Metrics match by check, name and stratum. Deltas are rerun minus baseline in
 percentage points, with 95% [Newcombe method 10](https://doi.org/10.1002/(SICI)1097-0258(19980430)17:8%3C873::AID-SIM779%3E3.0.CO;2-I) intervals combining Wilson intervals without continuity correction.
 An interval excluding zero means **better** or **worse**; otherwise **no clear change**.
 Targets mean higher is better; ceilings mean lower. Otherwise explicit direction
-wins, then recall/recovery/coverage (higher) or false_alarm/wrong_subject/confusion (lower).
+wins, then the name: false_alarm, wrong_subject, confusion, worst_species and
+nonvegetation are lower-is-better (checked first); recall, recovery, coverage,
+covered, identified, top1, top5 and _at5 are higher-is-better. A test requires
+every committed metric to have a direction, so name new metrics accordingly.
 A metric with no known direction is **changed** when its interval excludes 0, without a better/worse verdict. Missing metrics are **new**
 or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
 

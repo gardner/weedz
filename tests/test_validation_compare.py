@@ -244,3 +244,44 @@ def test_metrics_unmeasured_in_both_runs_come_last():
     rows = compare_scorecards(baseline, rerun).rows
     # Losing a measurement surfaces; never having one doesn't crowd the table.
     assert [row.key[0] for row in rows] == ["b", "a"]
+
+
+def test_a_newly_measured_gate_is_not_pushed_to_the_end():
+    baseline = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 0, 0, target=0.95))]
+    )
+    rerun = Scorecard.collect(
+        [_result("a", rate("recall", 0, 0)), _result("b", rate("recall", 900, 1100, target=0.95))]
+    )
+    rows = compare_scorecards(baseline, rerun).rows
+    assert [row.key[0] for row in rows] == ["b", "a"]
+
+
+@pytest.mark.parametrize(
+    "name, higher",
+    [
+        ("plantclef_top1_worst_species", False),
+        ("pilot_cue_worst_species", False),
+        ("nonvegetation_proposal_share", False),
+        ("conditional_top1", True),
+        ("source_box_top5", True),
+        ("image_species_max_score_at5", True),
+        ("foreground_90pct_covered", True),
+        ("half_covered_images", True),
+        ("localized_and_identified", True),
+    ],
+)
+def test_every_committed_metric_name_has_a_direction(name: str, higher: bool):
+    from weedz.validation.metrics import direction
+
+    assert direction(rate(name, 1, 2)) is higher
+
+
+def test_committed_scorecard_has_no_directionless_metrics():
+    from pathlib import Path
+
+    from weedz.validation.metrics import direction
+
+    card = Scorecard.read(Path(__file__).parents[1] / "benchmarks/validation/scorecard.json")
+    missing = {m.name for r in card.results for m in r.metrics if direction(m) is None}
+    assert not missing

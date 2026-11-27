@@ -41,8 +41,9 @@ def direction(metric: Rate) -> bool | None:
         return metric.higher_is_better
     name = metric.name.casefold()
     for terms, higher in (
-        (("false_alarm", "wrong_subject", "confusion"), False),
-        (("recall", "recovery", "coverage"), True),
+        # Checked first: worst-species rates are false-alarm rates even with "top1" in them.
+        (("false_alarm", "wrong_subject", "confusion", "worst_species", "nonvegetation"), False),
+        (("recall", "recovery", "coverage", "covered", "identified", "top1", "top5", "_at5"), True),
     ):
         if any(term in name for term in terms):
             return higher
