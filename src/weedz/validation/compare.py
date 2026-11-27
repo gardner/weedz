@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
-from weedz.validation.metrics import Rate, direction, is_gated, newcombe
+from weedz.validation.metrics import Rate, direction, is_gated, newcombe, rate
 from weedz.validation.scorecard import Scorecard
 
 MetricKey = tuple[str, str, str]
@@ -71,7 +71,7 @@ class Comparison:
         """A gated metric got worse, or lost its measurement in a check that was rerun."""
         if not row.gated:
             return False
-        if row.verdict == "worse":
+        if row.verdict == "worse" or _gate_broken(row):
             return True
         measured_before = row.baseline is not None and row.baseline.total > 0
         lost = row.rerun is None or row.rerun.total == 0
@@ -200,6 +200,17 @@ def _compare(key: MetricKey, baseline: Rate | None, rerun: Rate | None) -> Metri
     return MetricComparison(
         key, baseline, rerun, _verdict(difference, _direction(baseline, rerun)), difference
     )
+
+
+def _gate_broken(row: MetricComparison) -> bool:
+    """The baseline cleared its gate and the rerun, held to the same gate, doesn't."""
+    before, after = row.baseline, row.rerun
+    if before is None or before.passed is not True or after is None or not after.total:
+        return False
+    held = rate(
+        after.name, after.successes, after.total, target=before.target, ceiling=before.ceiling
+    )
+    return held.passed is False
 
 
 def _sort_key(row: MetricComparison) -> tuple[int, float, MetricKey]:

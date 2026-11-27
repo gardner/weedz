@@ -342,3 +342,20 @@ def test_failing_gates_lead_the_console_table_in_a_partial_rerun():
     comparison = compare_scorecards(baseline, rerun)
     assert comparison.rows[0].key[0] == "z"
     assert "(gated)" in comparison.markdown(limit=20)
+
+
+@pytest.mark.parametrize("keep_gate", [True, False])
+def test_a_passing_gate_that_now_fails_fails_the_guard(keep_gate: bool):
+    # 990/1000 clears a 95% target; 99/100 doesn't, though the change isn't significant.
+    baseline = Scorecard.collect([_result("a", rate("recall", 990, 1000, target=0.95))])
+    rerun_rate = rate("recall", 99, 100, target=0.95 if keep_gate else None)
+    comparison = compare_scorecards(baseline, Scorecard.collect([_result("a", rerun_rate)]))
+    assert comparison.rows[0].verdict == "no clear change"
+    assert comparison.exit_code == 1
+    assert "(gated)" in comparison.markdown()
+
+
+def test_a_gate_that_already_failed_and_still_fails_does_not_fail_the_guard():
+    baseline = Scorecard.collect([_result("a", rate("recall", 90, 100, target=0.95))])
+    rerun = Scorecard.collect([_result("a", rate("recall", 91, 100, target=0.95))])
+    assert compare_scorecards(baseline, rerun).exit_code == 0

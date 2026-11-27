@@ -55,8 +55,10 @@ selection and split rules, target, lookalike and class lists, salts, stratum def
 `--limit` smoke run's `smoke_limit` or PhenoBench's `selection`), datasets or splits are
 flagged as **not like-for-like**, with the changed keys listed. Measured values kept
 in configuration, such as timings, fitted thresholds and versions, are not compared. A gated regression
-exits **1** even then, so compare full runs, not smoke runs. So does a gate that was
-measured in the baseline but is unmeasured or missing in a rerun check (for example a
+exits **1** even then, so compare full runs, not smoke runs. So does a gate that
+passed in the baseline but fails in the rerun when held to the baseline's gate, even
+without a clear change (990/1000 clears a 95% target; 99/100 doesn't), and a gate that
+was measured in the baseline but is unmeasured or missing in a rerun check (for example a
 target that became unreachable). Otherwise it exits **0**, including new metrics,
 checks a partial rerun skipped, and metrics unmeasured in both runs. Pass one result file or scorecard per check. This does not certify completeness.
 
