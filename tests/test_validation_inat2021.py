@@ -156,6 +156,10 @@ def test_frozen_rules_score_both_halves_of_the_validation_set(labels: Path, chec
     result = run_check(check, RunContext(labels.parent, labels.parent), items, predictor)
     assert result.split == "validation"
     assert len(received) == count
+    # Runs with the same data and models but different libraries must be told apart.
+    assert result.configuration["torch_version"]
+    assert result.configuration["open_clip_torch_version"]
+    assert len(str(result.configuration["bioclip_evidence_identity"])) == 20
     assert all(item.taxon not in {GORSE, VITALBA, PAMPAS} for item in received) == (
         check == FALSE_ALARMS
     )

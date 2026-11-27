@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-27T03:14:26.895772Z",
+  "created": "2026-11-27T03:16:03.880654Z",
   "results": [
     {
       "check": "cocostuff-vegetation-presence",
@@ -1722,10 +1722,19 @@
         "wrong_subject_cue_ceiling": 0.01,
         "worst_species_budget_per_method": 15,
         "device": "cuda:0",
+        "torch_version": "2.15.0",
+        "torchvision_version": "0.29.2",
+        "timm_version": "1.0.31",
+        "pillow_version": "13.0.0",
+        "numpy_version": "2.5.5",
+        "open_clip_torch_version": "4.2.2",
+        "plantclef_evidence_identity": "61f2cdc239e4d60eef82",
+        "bioclip_evidence_identity": "3bd9e3e34b3cf52ed238",
+        "native_evidence_identity": "926d5d258c3a3056278c",
         "sample_limit_applied": false,
         "scored_subjects": 70
       },
-      "seconds": 56.28
+      "seconds": 10.91
     },
     {
       "check": "inat2021-target-false-alarms",
@@ -2564,10 +2573,19 @@
         "wrong_subject_cue_ceiling": 0.01,
         "worst_species_budget_per_method": 15,
         "device": "cuda:0",
+        "torch_version": "2.15.0",
+        "torchvision_version": "0.29.2",
+        "timm_version": "1.0.31",
+        "pillow_version": "13.0.0",
+        "numpy_version": "2.5.5",
+        "open_clip_torch_version": "4.2.2",
+        "plantclef_evidence_identity": "61f2cdc239e4d60eef82",
+        "bioclip_evidence_identity": "3bd9e3e34b3cf52ed238",
+        "native_evidence_identity": "926d5d258c3a3056278c",
         "sample_limit_applied": false,
         "scored_subjects": 42680
       },
-      "seconds": 9004.0
+      "seconds": 17.22
     }
   ]
 }

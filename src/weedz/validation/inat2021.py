@@ -3,6 +3,7 @@
 import json
 from collections import defaultdict
 from collections.abc import Callable
+from importlib.metadata import version
 from itertools import chain
 
 from weedz.discovery.inference import LABELS, MODELS, prompt
@@ -27,8 +28,10 @@ from weedz.validation.inat2021_models import (
     LOCAL_FLOOR,
     LOCAL_MARGIN,
     PILOT_FLOOR,
+    PIPELINE_SOURCES,
     TOP_K,
     Prediction,
+    _identity,
     predict_all,
     verify_inputs,
 )
@@ -163,6 +166,17 @@ def _eligible(check: str, item: Item) -> bool:
     return stratum != "target" if check == FALSE_ALARMS else stratum in {"target", "lookalike"}
 
 
+# Defined here, not in inat2021_models, whose edits invalidate every cached prediction.
+RUNTIME_LIBRARIES = ("torch", "torchvision", "timm", "pillow", "numpy", "open_clip_torch")
+
+
+def runtime(device: str) -> dict[str, str]:
+    """Library versions and each stage's evidence key, for the result's configuration."""
+    versions = {f"{name}_version": version(name) for name in RUNTIME_LIBRARIES}
+    keys = {f"{stage}_evidence_identity": _identity(stage, device) for stage in PIPELINE_SOURCES}
+    return versions | keys
+
+
 def _configuration() -> dict[str, str | int | float | bool]:
     return {
         "publisher_split": "validation",
@@ -211,6 +225,7 @@ def run_check(
     metrics = score_species(rows) if check == SPECIES_ID else score_false_alarms(rows)
     config = _configuration()
     config["device"] = context.device
+    config.update(runtime(context.device))
     config["sample_limit_applied"] = context.limit is not None
     config["scored_subjects"] = len(selected)
     return CheckResult(
