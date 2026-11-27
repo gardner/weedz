@@ -5,6 +5,7 @@ import math
 from collections import Counter
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from weedz.region_evaluation.proposal_masks import proposal_mask
@@ -215,8 +216,20 @@ def _sam_presence(
     return _predict_presence(data, items, by_id, "sam3", predict)
 
 
+# The libraries that produce the cached evidence and compute the metrics from it.
+RUNTIME_LIBRARIES = ("torch", "numpy", "pillow", "transformers", "scipy", "pycocotools")
+
+
+def _installed(name: str) -> str:
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return "not installed"
+
+
 def _configuration(context: RunContext) -> dict[str, str | int | float | bool]:
     return {
+        **{f"{name}_version": _installed(name) for name in RUNTIME_LIBRARIES},
         "device": context.device,
         "vegetation_classes": ", ".join(sorted(VEGETATION)),
         "image_and_region_area_strata": "tiny ≤0.5%, small ≤2%, medium ≤10%, large >10%",

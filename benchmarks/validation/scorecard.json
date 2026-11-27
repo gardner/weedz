@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-27T03:16:03.880654Z",
+  "created": "2026-11-27T03:41:44.835177Z",
   "results": [
     {
       "check": "cocostuff-vegetation-presence",
@@ -314,6 +314,12 @@
         "cocostuff/models/de01bae28967510f9ddd496c60a969357195400c/preprocessor_config.json": "8039d1d210abaa7117ad78e58cdfd6141a2ec72c03dae891b3cd76737e422c6c"
       },
       "configuration": {
+        "torch_version": "2.15.0",
+        "numpy_version": "1.26.4",
+        "pillow_version": "13.0.0",
+        "transformers_version": "4.57.6",
+        "scipy_version": "1.16.3",
+        "pycocotools_version": "2.0.11",
         "device": "cuda:0",
         "vegetation_classes": "branch, bush, flower, grass, leaves, moss, plant-other, potted plant, straw, tree",
         "image_and_region_area_strata": "tiny ≤0.5%, small ≤2%, medium ≤10%, large >10%",
@@ -338,7 +344,7 @@
         "segformer_baseline_rule": "Any predicted ADE20K vegetation pixel",
         "sam3_baseline_rule": "Any proposal retained at the pipeline's fixed cutoff"
       },
-      "seconds": 25.18
+      "seconds": 551.0
     },
     {
       "check": "openimages-plant-presence",
@@ -1008,6 +1014,12 @@
         "cocostuff/models/3c879f39826c281e95690f02c7821c4de09afae7/sam3.pt": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e"
       },
       "configuration": {
+        "torch_version": "2.15.0",
+        "numpy_version": "1.26.4",
+        "pillow_version": "13.0.0",
+        "transformers_version": "4.57.6",
+        "scipy_version": "1.16.3",
+        "pycocotools_version": "2.0.11",
         "device": "cuda:0",
         "vegetation_classes": "branch, bush, flower, grass, leaves, moss, plant-other, potted plant, straw, tree",
         "image_and_region_area_strata": "tiny ≤0.5%, small ≤2%, medium ≤10%, large >10%",
@@ -1027,7 +1039,7 @@
         "region_coverage_threshold": 0.5,
         "nonvegetation_proposal_threshold": 0.8
       },
-      "seconds": 26.76
+      "seconds": 83.16
     },
     {
       "check": "openimages-plant-boxes",

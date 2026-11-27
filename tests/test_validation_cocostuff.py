@@ -248,3 +248,13 @@ def test_recorded_model_hashes_come_from_the_files_on_disk(tmp_path: Path):
     checkpoint.write_bytes(b"corrupted")
     with pytest.raises(ValueError, match="checksum mismatch"):
         cocostuff_models.model_inputs(tmp_path, presence=False)
+
+
+def test_results_record_the_inference_and_metric_library_versions(tmp_path: Path):
+    from weedz.validation.cocostuff import _configuration
+    from weedz.validation.registry import RunContext
+
+    config = _configuration(RunContext(tmp_path, tmp_path))
+    for library in ("torch", "numpy", "pillow", "transformers", "scipy", "pycocotools"):
+        assert f"{library}_version" in config, library
+    assert config["torch_version"] != "not installed"
