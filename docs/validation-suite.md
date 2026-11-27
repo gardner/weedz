@@ -329,8 +329,8 @@ their identity includes the adapter's imported pipeline sources and libraries.
 All metadata and checkpoint hashes are verified even when predictions are cached.
 One batch of up to 512 photos downloads while the preceding batch is scored.
 
-Set `CUDA_RUNTIME` to the existing CUDA-enabled uv environment (the iNat2021
-worktree's `.venv` for this run). Use its overlay without syncing it to CPU Torch:
+Set `CUDA_RUNTIME` to a uv environment with CUDA Torch and a `cuda-runtime`
+overlay, as for iNat2021. Use it without syncing it back to CPU Torch:
 
 ```sh
 export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=0 HF_HUB_OFFLINE=1
@@ -339,6 +339,15 @@ export PYTHONPATH="$PWD/src:$UV_PROJECT_ENVIRONMENT/cuda-runtime"
 for check in plantclef2024-target-species plantclef2024-target-false-alarms; do
   uv run --no-sync main.py validate run "$check" --data-root "$DATA_ROOT" \
     --cache-dir "$CACHE_DIR" --device cuda:0 --output benchmarks/validation
+done
+uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
+  --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
+```
+
+For a smoke run, add `--limit 50` and send `--output` to a separate directory.
+Keep the same `--cache-dir` for the full run and later replays.
+The full false-alarm receipt records 2 h 12 min including downloads and inference.
+The species receipt records 24 s with evidence reused from the 50-photo smoke run.
 
 ### Rerun the Danish roadside checks
 
@@ -363,11 +372,6 @@ done
 uv run --no-sync main.py validate scorecard benchmarks/validation/*.json \
   --output benchmarks/validation/scorecard.json --markdown benchmarks/validation/scorecard.md
 ```
-
-For a smoke run, add `--limit 50` and send `--output` to a separate directory.
-Keep the same `--cache-dir` for the full run and later replays.
-The full false-alarm receipt records 2 h 12 min including downloads and inference.
-The species receipt records 24 s with evidence reused from the 50-photo smoke run.
 
 For a smoke run add `--limit 50` and write to a separate output directory.
 Both checks score the same 1,160 hash-held-out photos: 1,060 of the publisher's
