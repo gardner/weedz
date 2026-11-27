@@ -1,10 +1,12 @@
 """List and run validation checks, then build the scorecard from their results."""
 
 import argparse
+import json
 import logging
 import time
 from pathlib import Path
 
+from weedz.validation.compare import compare_scorecards
 from weedz.validation.registry import REGISTRY, RunContext
 from weedz.validation.scorecard import CheckResult, Scorecard
 
@@ -26,6 +28,10 @@ def parser() -> argparse.ArgumentParser:
     card.add_argument("results", nargs="+", type=Path)
     card.add_argument("--output", type=Path, required=True)
     card.add_argument("--markdown", type=Path)
+    compare = actions.add_parser("compare", help="Compare a baseline scorecard with rerun results")
+    compare.add_argument("baseline", type=Path)
+    compare.add_argument("results", nargs="+", type=Path)
+    compare.add_argument("--markdown", type=Path)
     return command
 
 
@@ -59,15 +65,34 @@ def _scorecard(args: argparse.Namespace) -> None:
         args.markdown.write_text(card.markdown())
 
 
-def main(argv: list[str]) -> None:
-    import weedz.validation.checks  # noqa: F401  (registers the built-in checks)
+def _compare(args: argparse.Namespace) -> None:
+    results = []
+    for path in args.results:
+        data = json.loads(path.read_text())
+        if "results" in data:
+            results.extend(Scorecard.model_validate(data).results)
+        else:
+            results.append(CheckResult.model_validate(data))
+    comparison = compare_scorecards(Scorecard.read(args.baseline), Scorecard.collect(results))
+    print(comparison.markdown(limit=20), end="")
+    if args.markdown:
+        args.markdown.write_text(comparison.markdown())
+    if comparison.exit_code:
+        raise SystemExit(comparison.exit_code)
 
+
+def main(argv: list[str]) -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     args = parser().parse_args(argv)
+    if args.action in {"list", "run"}:
+        import weedz.validation.checks  # noqa: F401  (registers the built-in checks)
+
     if args.action == "list":
         for check in sorted(REGISTRY.values(), key=lambda check: (check.stage, check.name)):
             print(f"{check.stage:16} {check.name:32} {check.dataset}")
     elif args.action == "run":
         _run(args)
+    elif args.action == "compare":
+        _compare(args)
     else:
         _scorecard(args)
