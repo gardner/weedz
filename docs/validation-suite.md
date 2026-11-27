@@ -61,7 +61,10 @@ This exits 0 across 728 metrics: **592 no clear change** and 136 unmeasured.
 Metrics unmeasured in both runs are listed last.
 SegFormer's Open Images recall is 1,433/1,500 each: difference 0.0 points (95% CI −1.5 to +1.5).
 
-Runs on the same images are **paired**; this independent-proportions interval is conservative.
+Runs on the same images are **paired**, but results don't keep per-image outcomes,
+so the interval treats them as independent. That is usually wider than a paired
+interval, but not always: when outcomes are negatively correlated it can be too
+narrow, so read a borderline **worse** with care.
 Intervals are per metric without multiplicity adjustment; no clear change does not prove equivalence.
 
 ## Adding a check

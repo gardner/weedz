@@ -65,11 +65,15 @@ def _scorecard(args: argparse.Namespace) -> None:
         args.markdown.write_text(card.markdown())
 
 
-def _rerun(paths: list[Path]) -> Scorecard:
+def _rerun(paths: list[Path], baseline: Path) -> Scorecard:
     """Collect reruns; a check's own result file wins over a scorecard that also holds it.
 
-    The documented `benchmarks/validation/*.json` glob includes scorecard.json itself.
+    The documented `benchmarks/validation/*.json` glob includes the baseline scorecard
+    itself. It is skipped (unless it is the only input), so a check that wasn't rerun
+    shows as removed instead of being silently filled in from the baseline.
     """
+    others = [path for path in paths if path.resolve() != baseline.resolve()]
+    paths = others or paths
     single: dict[str, CheckResult] = {}
     carded: dict[str, CheckResult] = {}
     for path in paths:
@@ -83,7 +87,9 @@ def _rerun(paths: list[Path]) -> Scorecard:
 
 
 def _compare(args: argparse.Namespace) -> None:
-    comparison = compare_scorecards(Scorecard.read(args.baseline), _rerun(args.results))
+    comparison = compare_scorecards(
+        Scorecard.read(args.baseline), _rerun(args.results, args.baseline)
+    )
     print(comparison.markdown(limit=20), end="")
     if args.markdown:
         args.markdown.write_text(comparison.markdown())

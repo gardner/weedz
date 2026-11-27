@@ -87,3 +87,17 @@ def test_the_documented_glob_can_include_the_baseline_scorecard(
     result.write_text(_result(90).model_dump_json())
     main(["compare", str(card), str(card), str(result)])
     assert "no clear change" in capsys.readouterr().out
+
+
+def test_a_partial_rerun_reports_missing_checks_as_removed(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    # The glob passes the baseline scorecard too; it must not fill in checks that weren't rerun.
+    other = _result(90).model_copy(update={"check": "other"})
+    card = tmp_path / "scorecard.json"
+    Scorecard.collect([_result(90), other]).write(card)
+    result = tmp_path / "screen.json"
+    result.write_text(_result(90).model_dump_json())
+    main(["compare", str(card), str(card), str(result)])
+    output = capsys.readouterr().out
+    assert "removed" in output

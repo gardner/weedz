@@ -59,9 +59,11 @@ class Comparison:
             "95% Newcombe intervals for rerun − baseline (percentage points). "
             "Gated regressions are marked; exit code 1 if any get worse.",
             "",
-            "Runs on the same images are paired; this independent-proportions interval "
-            "is conservative for this guard. A metric with no known direction is reported "
-            "as changed when its interval excludes 0, without a better/worse verdict.",
+            "Runs on the same images are paired, but results don't keep per-image outcomes, so "
+            "this interval treats them as independent. That is usually wider than a paired "
+            "interval, but not always: read a borderline verdict with care. "
+            "A metric with no known direction is reported as changed when its interval "
+            "excludes 0, without a better/worse verdict.",
             "",
         ]
         for check, changes in self.changes.items():

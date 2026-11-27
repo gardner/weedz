@@ -185,7 +185,7 @@ def test_markdown_shows_worst_first_intervals_and_the_paired_data_limit():
     assert "+20.0 (+5.2 to +33.4)" in markdown
     assert "percentage points" in markdown
     assert "Newcombe" in markdown and "95%" in markdown
-    assert "paired" in markdown and "conservative" in markdown
+    assert "paired" in markdown and "independent" in markdown
     assert "1 worse" in markdown and "1 better" in markdown
 
 
