@@ -1,5 +1,5 @@
 {
-  "created": "2026-11-27T05:45:41.544891Z",
+  "created": "2026-11-27T06:18:43.270403Z",
   "results": [
     {
       "check": "cocostuff-vegetation-presence",
@@ -17,7 +17,8 @@
           "high": null,
           "target": 0.95,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -29,7 +30,8 @@
           "high": null,
           "target": 0.95,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -41,7 +43,8 @@
           "high": null,
           "target": 0.95,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -53,7 +56,8 @@
           "high": null,
           "target": 0.95,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -65,7 +69,8 @@
           "high": null,
           "target": 0.95,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "segformer_false_alarm_rate",
@@ -77,7 +82,8 @@
           "high": null,
           "target": null,
           "ceiling": 0.1,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "segformer_baseline_recall",
@@ -89,7 +95,8 @@
           "high": 0.9613860427612284,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_baseline_recall",
@@ -101,7 +108,8 @@
           "high": 0.703172765914822,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_baseline_recall",
@@ -113,7 +121,8 @@
           "high": 0.8899333902186316,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_baseline_recall",
@@ -125,7 +134,8 @@
           "high": 0.9670177707738915,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_baseline_recall",
@@ -137,7 +147,8 @@
           "high": 0.9969539653116337,
           "target": 0.95,
           "ceiling": null,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         },
         {
           "name": "segformer_baseline_false_alarm_rate",
@@ -149,7 +160,8 @@
           "high": 0.2917035311666878,
           "target": null,
           "ceiling": 0.1,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -161,7 +173,8 @@
           "high": 0.9460750628658499,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -173,7 +186,8 @@
           "high": 0.9765406040926183,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -185,7 +199,8 @@
           "high": 0.9514342371184868,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -197,7 +212,8 @@
           "high": 0.9359366202194261,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -209,7 +225,8 @@
           "high": 0.9603107620563087,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_false_alarm_rate",
@@ -221,7 +238,8 @@
           "high": 0.2730621849663264,
           "target": null,
           "ceiling": 0.1,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_baseline_recall",
@@ -233,7 +251,8 @@
           "high": 0.3980173321949807,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_baseline_recall",
@@ -245,7 +264,8 @@
           "high": 0.641682394600106,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_baseline_recall",
@@ -257,7 +277,8 @@
           "high": 0.47207554677097374,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_baseline_recall",
@@ -269,7 +290,8 @@
           "high": 0.4253876064585174,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_baseline_recall",
@@ -281,7 +303,8 @@
           "high": 0.398033104295443,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_baseline_false_alarm_rate",
@@ -293,7 +316,8 @@
           "high": 0.07296017024163207,
           "target": null,
           "ceiling": 0.1,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -362,7 +386,8 @@
           "high": 0.4115708239631919,
           "target": null,
           "ceiling": 0.1,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -374,7 +399,8 @@
           "high": 0.9646751849221165,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -386,7 +412,8 @@
           "high": 0.9885734848496586,
           "target": 0.95,
           "ceiling": null,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -398,7 +425,8 @@
           "high": 0.9957804220798496,
           "target": 0.95,
           "ceiling": null,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -410,7 +438,8 @@
           "high": 0.9841935991153281,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -422,7 +451,8 @@
           "high": 0.8990117574332354,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_recall",
@@ -434,7 +464,8 @@
           "high": 0.9147478283033629,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "segformer_false_alarm_rate",
@@ -446,7 +477,8 @@
           "high": 0.4115708239631919,
           "target": null,
           "ceiling": 0.1,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_false_alarm_rate",
@@ -458,7 +490,8 @@
           "high": 0.2588317642172774,
           "target": null,
           "ceiling": 0.1,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -470,7 +503,8 @@
           "high": 0.9569393724684191,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -482,7 +516,8 @@
           "high": 0.9449892646138216,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -494,7 +529,8 @@
           "high": 0.9631452860008843,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -506,7 +542,8 @@
           "high": 0.9989905750636585,
           "target": 0.95,
           "ceiling": null,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -518,7 +555,8 @@
           "high": 0.9445276070677341,
           "target": 0.95,
           "ceiling": null,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         },
         {
           "name": "sam3_recall",
@@ -530,7 +568,8 @@
           "high": 0.994936525202305,
           "target": 0.95,
           "ceiling": null,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         },
         {
           "name": "sam3_false_alarm_rate",
@@ -542,7 +581,8 @@
           "high": 0.2588317642172774,
           "target": null,
           "ceiling": 0.1,
-          "passed": false
+          "passed": false,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -620,7 +660,8 @@
           "high": 0.14344144596069835,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "half_covered_images",
@@ -632,7 +673,8 @@
           "high": 0.5113362312095656,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "half_covered_images",
@@ -644,7 +686,8 @@
           "high": 0.3889617729819722,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "half_covered_images",
@@ -656,7 +699,8 @@
           "high": 0.22796119739700338,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "half_covered_images",
@@ -668,7 +712,8 @@
           "high": 0.08469945685727677,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_iou_recall",
@@ -680,7 +725,8 @@
           "high": 0.06759597171079791,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_iou_recall",
@@ -692,7 +738,8 @@
           "high": 0.03634777359353979,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_iou_recall",
@@ -704,7 +751,8 @@
           "high": 0.15565721016363007,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_iou_recall",
@@ -716,7 +764,8 @@
           "high": 0.13702874023662573,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_iou_recall",
@@ -728,7 +777,8 @@
           "high": 0.07272536016879921,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_coverage_recall",
@@ -740,7 +790,8 @@
           "high": 0.08837576664994073,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_coverage_recall",
@@ -752,7 +803,8 @@
           "high": 0.061600245792501104,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_coverage_recall",
@@ -764,7 +816,8 @@
           "high": 0.18016864574104444,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_coverage_recall",
@@ -776,7 +829,8 @@
           "high": 0.16164150956903114,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "component_coverage_recall",
@@ -788,7 +842,8 @@
           "high": 0.07436819135833635,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_iou_recall",
@@ -800,7 +855,8 @@
           "high": 0.6559436328295938,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_iou_recall",
@@ -812,7 +868,8 @@
           "high": 0.6161595310782052,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_iou_recall",
@@ -824,7 +881,8 @@
           "high": 0.7864112506566996,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_iou_recall",
@@ -836,7 +894,8 @@
           "high": 0.7076284258335335,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_iou_recall",
@@ -848,7 +907,8 @@
           "high": 0.9032285888942195,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_coverage_recall",
@@ -860,7 +920,8 @@
           "high": 0.7063468845025537,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_coverage_recall",
@@ -872,7 +933,8 @@
           "high": 0.7132828072284269,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_coverage_recall",
@@ -884,7 +946,8 @@
           "high": 0.8226991751715074,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_coverage_recall",
@@ -896,7 +959,8 @@
           "high": 0.7076284258335335,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "potted_plant_coverage_recall",
@@ -908,7 +972,8 @@
           "high": 0.9032285888942195,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "nonvegetation_proposal_share",
@@ -920,7 +985,8 @@
           "high": 0.2991037386109381,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "nonvegetation_proposal_share",
@@ -932,7 +998,8 @@
           "high": 0.5354315676837925,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "nonvegetation_proposal_share",
@@ -944,7 +1011,8 @@
           "high": 0.23283559590832364,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "nonvegetation_proposal_share",
@@ -956,7 +1024,8 @@
           "high": 0.32148368316132553,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "nonvegetation_proposal_share",
@@ -968,7 +1037,8 @@
           "high": 0.1256511648747142,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "nonvegetation_proposal_share",
@@ -980,7 +1050,8 @@
           "high": 0.9921164652936191,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "nonvegetation_proposal_share",
@@ -992,7 +1063,8 @@
           "high": 0.7416224051659375,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -1057,7 +1129,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_90pct_covered",
@@ -1069,7 +1142,8 @@
           "high": 0.9476312541037835,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_90pct_covered",
@@ -1081,7 +1155,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1093,7 +1168,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1105,7 +1181,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1117,7 +1194,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -1225,7 +1303,8 @@
           "high": 0.5776534358980785,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "box_recall",
@@ -1237,7 +1316,8 @@
           "high": 0.5797496601733173,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "box_recall",
@@ -1249,7 +1329,8 @@
           "high": 0.6157688505422441,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "box_recall",
@@ -1261,7 +1342,8 @@
           "high": 0.6288707726998589,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "box_recall",
@@ -1273,7 +1355,8 @@
           "high": 0.513908557926655,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "box_recall",
@@ -1285,7 +1368,8 @@
           "high": 0.6770379918663759,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "box_recall",
@@ -1297,7 +1381,8 @@
           "high": 0.587996881588154,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "box_recall",
@@ -1309,7 +1394,8 @@
           "high": 0.6891431880536332,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -1566,7 +1652,8 @@
           "high": 0.409405487068874,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "sam3_box_recall",
@@ -1578,7 +1665,8 @@
           "high": 0.3652301415811067,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "sam3_box_recall",
@@ -1590,7 +1678,8 @@
           "high": 0.4880129732387492,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "sam3_box_recall",
@@ -1602,7 +1691,8 @@
           "high": 0.46584510753026703,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -1674,7 +1764,8 @@
           "high": 0.9661688230914496,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_90pct_covered",
@@ -1686,7 +1777,8 @@
           "high": 0.9913878616538281,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_90pct_covered",
@@ -1698,7 +1790,8 @@
           "high": 0.9334954271839244,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_90pct_covered",
@@ -1710,7 +1803,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_90pct_covered",
@@ -1722,7 +1816,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_90pct_covered",
@@ -1734,7 +1829,8 @@
           "high": 0.5984284307501431,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1746,7 +1842,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1758,7 +1855,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1770,7 +1868,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1782,7 +1881,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1794,7 +1894,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "foreground_half_covered",
@@ -1806,7 +1907,8 @@
           "high": 0.9644804333931265,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1818,7 +1920,8 @@
           "high": 0.6590100803744636,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1830,7 +1933,8 @@
           "high": 0.6746661210210377,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1842,7 +1946,8 @@
           "high": 0.7391267214688627,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1854,7 +1959,8 @@
           "high": 0.6450994673174467,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1866,7 +1972,8 @@
           "high": 0.6510749116504693,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1878,7 +1985,8 @@
           "high": 0.7476972219796222,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1890,7 +1998,8 @@
           "high": 0.6455750243292248,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1902,7 +2011,8 @@
           "high": 0.8591038945619643,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1914,7 +2024,8 @@
           "high": 0.8191488406218069,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1926,7 +2037,8 @@
           "high": 0.42136562131550337,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "instance_recall",
@@ -1938,7 +2050,8 @@
           "high": 0.5651412498830136,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -2202,7 +2315,8 @@
           "high": 0.17813139003971779,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top1",
@@ -2214,7 +2328,8 @@
           "high": 0.17116854545376498,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top1",
@@ -2226,7 +2341,8 @@
           "high": 0.2413852875172065,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top1",
@@ -2238,7 +2354,8 @@
           "high": 0.4282757290115303,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top1",
@@ -2250,7 +2367,8 @@
           "high": 0.07134759913335872,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top1",
@@ -2262,7 +2380,8 @@
           "high": 0.27114829849302463,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top1",
@@ -2274,7 +2393,8 @@
           "high": 0.17012355220676517,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top1",
@@ -2286,7 +2406,8 @@
           "high": 0.1871200051596039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2298,7 +2419,8 @@
           "high": 0.5664345895490406,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2310,7 +2432,8 @@
           "high": 0.5607798229881241,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2322,7 +2445,8 @@
           "high": 0.6318334349056653,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2334,7 +2458,8 @@
           "high": 0.8822594591257861,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2346,7 +2471,8 @@
           "high": 0.5769397197834315,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2358,7 +2484,8 @@
           "high": 0.7033701432337761,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2370,7 +2497,8 @@
           "high": 0.43392348732165664,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "conditional_top5",
@@ -2382,7 +2510,8 @@
           "high": 0.5061579719398692,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2394,7 +2523,8 @@
           "high": 0.03804089307755451,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2406,7 +2536,8 @@
           "high": 0.044471345096091464,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2418,7 +2549,8 @@
           "high": 0.06444457564998826,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2430,7 +2562,8 @@
           "high": 0.07410012966611748,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2442,7 +2575,8 @@
           "high": 0.07134759913335872,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2454,7 +2588,8 @@
           "high": 0.11549276741316111,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2466,7 +2601,8 @@
           "high": 0.10104631365223063,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_frequency_at5",
@@ -2478,7 +2614,8 @@
           "high": 0.05580153132285689,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2490,7 +2627,8 @@
           "high": 0.11132289892572632,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2502,7 +2640,8 @@
           "high": 0.11747361012564239,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2514,7 +2653,8 @@
           "high": 0.14951210240724047,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2526,7 +2666,8 @@
           "high": 0.24700458286386834,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2538,7 +2679,8 @@
           "high": 0.07134759913335872,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2550,7 +2692,8 @@
           "high": 0.22081053724160832,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2562,7 +2705,8 @@
           "high": 0.17943769123145112,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "image_species_max_score_at5",
@@ -2574,7 +2718,8 @@
           "high": 0.10542705523577942,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2586,7 +2731,8 @@
           "high": 0.09728904698384427,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2598,7 +2744,8 @@
           "high": 0.09256530236893523,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2610,7 +2757,8 @@
           "high": 0.1366954999622938,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2622,7 +2770,8 @@
           "high": 0.2419358429055546,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2634,7 +2783,8 @@
           "high": 0.03152833902249433,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2646,7 +2796,8 @@
           "high": 0.16900161476524742,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2658,7 +2809,8 @@
           "high": 0.08911430822970022,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "localized_and_identified",
@@ -2670,7 +2822,8 @@
           "high": 0.11593436794331126,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2682,7 +2835,8 @@
           "high": 0.14163737276826516,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2694,7 +2848,8 @@
           "high": 0.11990850398232379,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2706,7 +2861,8 @@
           "high": 0.21566604817313517,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2718,7 +2874,8 @@
           "high": 0.2531120891863824,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2730,7 +2887,8 @@
           "high": 0.059697444348039835,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2742,7 +2900,8 @@
           "high": 0.28852763785219526,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2754,7 +2913,8 @@
           "high": 0.09825334565279394,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top1",
@@ -2766,7 +2926,8 @@
           "high": 0.15082906188048312,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2778,7 +2939,8 @@
           "high": 0.49905180015689854,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2790,7 +2952,8 @@
           "high": 0.4723770651489053,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2802,7 +2965,8 @@
           "high": 0.5901529936559203,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2814,7 +2978,8 @@
           "high": 0.7301334835235593,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2826,7 +2991,8 @@
           "high": 0.6214128303282072,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2838,7 +3004,8 @@
           "high": 0.6984812853602298,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2850,7 +3017,8 @@
           "high": 0.30835170699116676,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "source_box_top5",
@@ -2862,7 +3030,8 @@
           "high": 0.31941513155425433,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -3123,7 +3292,8 @@
           "high": 0.6976761109230025,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top5_recall",
@@ -3135,7 +3305,8 @@
           "high": 0.9469034451594526,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_recall",
@@ -3147,7 +3318,8 @@
           "high": 0.9815229762087295,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top5_recall",
@@ -3159,7 +3331,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_recall",
@@ -3171,7 +3344,8 @@
           "high": 0.8333525173175619,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_recall",
@@ -3183,7 +3357,8 @@
           "high": 0.8076950191632386,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_recall",
@@ -3195,7 +3370,8 @@
           "high": 0.8318196702937638,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top5_recall",
@@ -3207,7 +3383,8 @@
           "high": 0.9433178485456247,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_recall",
@@ -3219,7 +3396,8 @@
           "high": 0.9433178485456247,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top5_recall",
@@ -3231,7 +3409,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_recall",
@@ -3243,7 +3422,8 @@
           "high": 0.8922087325936989,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_recall",
@@ -3255,7 +3435,8 @@
           "high": 0.9433178485456247,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_recall",
@@ -3267,7 +3448,8 @@
           "high": 0.8318196702937638,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top5_recall",
@@ -3279,7 +3461,8 @@
           "high": 0.9821237869049271,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_recall",
@@ -3291,7 +3474,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top5_recall",
@@ -3303,7 +3487,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_recall",
@@ -3315,7 +3500,8 @@
           "high": 0.9433178485456247,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_recall",
@@ -3327,7 +3513,8 @@
           "high": 0.7634069094874361,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_recall",
@@ -3339,7 +3526,8 @@
           "high": 0.6873262302663417,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top5_recall",
@@ -3351,7 +3539,8 @@
           "high": 0.9821237869049271,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_recall",
@@ -3363,7 +3552,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top5_recall",
@@ -3375,7 +3565,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_recall",
@@ -3387,7 +3578,8 @@
           "high": 0.8318196702937638,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_recall",
@@ -3399,7 +3591,8 @@
           "high": 0.8922087325936989,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_confusion",
@@ -3411,7 +3604,8 @@
           "high": 0.19864233524310543,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_confusion",
@@ -3423,7 +3617,8 @@
           "high": 0.6032218525388546,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_confusion",
@@ -3435,7 +3630,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_confusion",
@@ -3447,7 +3643,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_confusion",
@@ -3459,7 +3656,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_confusion",
@@ -3471,7 +3669,8 @@
           "high": 0.08762160119728664,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_confusion",
@@ -3483,7 +3682,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_confusion",
@@ -3495,7 +3695,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_confusion",
@@ -3507,7 +3708,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_confusion",
@@ -3519,7 +3721,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_confusion",
@@ -3531,7 +3734,8 @@
           "high": 0.08762160119728664,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_confusion",
@@ -3543,7 +3747,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_confusion",
@@ -3555,7 +3760,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_confusion",
@@ -3567,7 +3773,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_confusion",
@@ -3579,7 +3786,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_confusion",
@@ -3591,7 +3799,8 @@
           "high": 0.08762160119728664,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_confusion",
@@ -3603,7 +3812,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_confusion",
@@ -3615,7 +3825,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_confusion",
@@ -3627,7 +3838,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_confusion",
@@ -3639,7 +3851,8 @@
           "high": 0.2775327998628892,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -3722,7 +3935,8 @@
           "high": 0.0006952375578189036,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_wrong_subject",
@@ -3734,7 +3948,8 @@
           "high": 0.19864233524310543,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_wrong_subject",
@@ -3746,7 +3961,8 @@
           "high": 0.17023502809756688,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_wrong_subject",
@@ -3758,7 +3974,8 @@
           "high": 0.0008742825285564973,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_wrong_subject",
@@ -3770,7 +3987,8 @@
           "high": 0.00030687770596771365,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3782,7 +4000,8 @@
           "high": 0.6873262302663417,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3794,7 +4013,8 @@
           "high": 0.6873262302663417,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3806,7 +4026,8 @@
           "high": 0.6032218525388546,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3818,7 +4039,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3830,7 +4052,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3842,7 +4065,8 @@
           "high": 0.4041500267952385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3854,7 +4078,8 @@
           "high": 0.4041500267952385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3866,7 +4091,8 @@
           "high": 0.4041500267952385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "plantclef_top1_worst_species",
@@ -3878,7 +4104,8 @@
           "high": 0.4041500267952385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_wrong_subject",
@@ -3890,7 +4117,8 @@
           "high": 0.39158010416500627,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_wrong_subject",
@@ -3902,7 +4130,8 @@
           "high": 0.08762160119728664,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_wrong_subject",
@@ -3914,7 +4143,8 @@
           "high": 0.7937885631689698,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_wrong_subject",
@@ -3926,7 +4156,8 @@
           "high": 0.29757899828642587,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_wrong_subject",
@@ -3938,7 +4169,8 @@
           "high": 0.40316627655130055,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -3950,7 +4182,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -3962,7 +4195,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -3974,7 +4208,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -3986,7 +4221,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -3998,7 +4234,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4010,7 +4247,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4022,7 +4260,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4034,7 +4273,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4046,7 +4286,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4058,7 +4299,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4070,7 +4312,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4082,7 +4325,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4094,7 +4338,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4106,7 +4351,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "bioclip_top1_worst_species",
@@ -4118,7 +4364,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_wrong_subject",
@@ -4130,7 +4377,8 @@
           "high": 0.00057983477443261,
           "target": null,
           "ceiling": 0.01,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_wrong_subject",
@@ -4142,7 +4390,8 @@
           "high": 0.08762160119728664,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_wrong_subject",
@@ -4154,7 +4403,8 @@
           "high": 0.20235021060652508,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_wrong_subject",
@@ -4166,7 +4416,8 @@
           "high": 0.0012892533512366094,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_wrong_subject",
@@ -4178,7 +4429,8 @@
           "high": 0.00010070980461790366,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_worst_species",
@@ -4190,7 +4442,8 @@
           "high": 0.7634069094874361,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_worst_species",
@@ -4202,7 +4455,8 @@
           "high": 0.6873262302663417,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_worst_species",
@@ -4214,7 +4468,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_worst_species",
@@ -4226,7 +4481,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_worst_species",
@@ -4238,7 +4494,8 @@
           "high": 0.4041500267952385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "pilot_cue_worst_species",
@@ -4250,7 +4507,8 @@
           "high": 0.4041500267952385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_wrong_subject",
@@ -4262,7 +4520,8 @@
           "high": 0.003028317369479559,
           "target": null,
           "ceiling": 0.01,
-          "passed": true
+          "passed": true,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_wrong_subject",
@@ -4274,7 +4533,8 @@
           "high": 0.08762160119728664,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_wrong_subject",
@@ -4286,7 +4546,8 @@
           "high": 0.42885040308759537,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_wrong_subject",
@@ -4298,7 +4559,8 @@
           "high": 0.0026636079947028896,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_wrong_subject",
@@ -4310,7 +4572,8 @@
           "high": 0.0021713963469595253,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4322,7 +4585,8 @@
           "high": 0.9433178485456247,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4334,7 +4598,8 @@
           "high": 0.8318196702937638,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4346,7 +4611,8 @@
           "high": 0.8318196702937638,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4358,7 +4624,8 @@
           "high": 0.7634069094874361,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4370,7 +4637,8 @@
           "high": 0.6873262302663417,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4382,7 +4650,8 @@
           "high": 0.6032218525388546,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4394,7 +4663,8 @@
           "high": 0.6032218525388546,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4406,7 +4676,8 @@
           "high": 0.6032218525388546,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4418,7 +4689,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4430,7 +4702,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4442,7 +4715,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4454,7 +4728,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4466,7 +4741,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4478,7 +4754,8 @@
           "high": 0.5098375284633583,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "local_cue_worst_species",
@@ -4490,7 +4767,8 @@
           "high": 0.4041500267952385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -4573,7 +4851,8 @@
           "high": 0.8502652537887246,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4585,7 +4864,8 @@
           "high": 0.8518548503417442,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4597,7 +4877,8 @@
           "high": 0.9501517542146516,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4609,7 +4890,8 @@
           "high": 0.959404125883392,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4621,7 +4903,8 @@
           "high": 0.8076807224057988,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4633,7 +4916,8 @@
           "high": 0.708953354665695,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4645,7 +4929,8 @@
           "high": 0.945998866555832,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4657,7 +4942,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4669,7 +4955,8 @@
           "high": 0.9501517542146516,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4681,7 +4968,8 @@
           "high": 0.8521829261528647,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4693,7 +4981,8 @@
           "high": 0.8535754806573771,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4705,7 +4994,8 @@
           "high": 0.9647279515496333,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4717,7 +5007,8 @@
           "high": 0.9781702098787735,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4729,7 +5020,8 @@
           "high": 0.7958956207556682,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4741,7 +5033,8 @@
           "high": 0.6156485694061034,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4753,7 +5046,8 @@
           "high": 0.9508553414762553,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4765,7 +5059,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4777,7 +5072,8 @@
           "high": 0.9647279515496333,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4789,7 +5085,8 @@
           "high": 0.8565447136684379,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4801,7 +5098,8 @@
           "high": 0.8244957956678586,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4813,7 +5111,8 @@
           "high": 0.9583090493620113,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4825,7 +5124,8 @@
           "high": 0.9786714901119936,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4837,7 +5137,8 @@
           "high": 0.8850368630659855,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4849,7 +5150,8 @@
           "high": 0.6794376602366394,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4861,7 +5163,8 @@
           "high": 0.9696806548150699,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4873,7 +5176,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4885,7 +5189,8 @@
           "high": 0.9583090493620113,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4897,7 +5202,8 @@
           "high": 0.8763530907446289,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4909,7 +5215,8 @@
           "high": 0.9295245065301844,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4921,7 +5228,8 @@
           "high": 0.9526685414190106,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4933,7 +5241,8 @@
           "high": 0.9359704550244412,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4945,7 +5254,8 @@
           "high": 0.8599505116553716,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4957,7 +5267,8 @@
           "high": 0.9077823481477872,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4969,7 +5280,8 @@
           "high": 0.9743203756552565,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4981,7 +5293,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -4993,7 +5306,8 @@
           "high": 0.9526685414190106,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5005,7 +5319,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5017,7 +5332,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5029,7 +5345,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5041,7 +5358,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5053,7 +5371,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5065,7 +5384,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5077,7 +5397,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5089,7 +5410,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "released_cutoffs_recall",
@@ -5101,7 +5423,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5113,7 +5436,8 @@
           "high": 0.27428078997039673,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5125,7 +5449,8 @@
           "high": 0.5754013846753153,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5137,7 +5462,8 @@
           "high": 0.029815393708326456,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5149,7 +5475,8 @@
           "high": 0.05030376513212667,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5161,7 +5488,8 @@
           "high": 0.04423530964197385,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5173,7 +5501,8 @@
           "high": 0.03809404252594769,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5185,7 +5514,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5197,7 +5527,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5209,7 +5540,8 @@
           "high": 0.029815393708326456,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5221,7 +5553,8 @@
           "high": 0.3508994427329362,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5233,7 +5566,8 @@
           "high": 0.6067132987349491,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5245,7 +5579,8 @@
           "high": 0.04637121165392266,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5257,7 +5592,8 @@
           "high": 0.05560163905253891,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5269,7 +5605,8 @@
           "high": 0.1071791982550706,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5281,7 +5618,8 @@
           "high": 0.061129370526788386,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5293,7 +5631,8 @@
           "high": 0.9999999999999998,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5305,7 +5644,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5317,7 +5657,8 @@
           "high": 0.04637121165392266,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5329,7 +5670,8 @@
           "high": 0.35313037442106193,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5341,7 +5683,8 @@
           "high": 0.5772630892714945,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5353,7 +5696,8 @@
           "high": 0.05422613939130178,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5365,7 +5709,8 @@
           "high": 0.053967157994455055,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5377,7 +5722,8 @@
           "high": 0.13319225093904846,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5389,7 +5735,8 @@
           "high": 0.08566757018443186,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5401,7 +5748,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5413,7 +5761,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5425,7 +5774,8 @@
           "high": 0.05422613939130178,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5437,7 +5787,8 @@
           "high": 0.08289318239523275,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5449,7 +5800,8 @@
           "high": 0.2981652987378003,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5461,7 +5813,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5473,7 +5826,8 @@
           "high": 0.11807709698213287,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5485,7 +5839,8 @@
           "high": 0.07004661989853143,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5497,7 +5852,8 @@
           "high": 0.09180986822558396,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5509,7 +5865,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5521,7 +5878,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5533,7 +5891,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5545,7 +5904,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5557,7 +5917,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5569,7 +5930,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5581,7 +5943,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5593,7 +5956,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5605,7 +5969,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5617,7 +5982,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5629,7 +5995,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top1_recall",
@@ -5641,7 +6008,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5653,7 +6021,8 @@
           "high": 0.8670454820194708,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5665,7 +6034,8 @@
           "high": 0.9999999999999999,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5677,7 +6047,8 @@
           "high": 0.7553588873860955,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5689,7 +6060,8 @@
           "high": 0.9370004854759242,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5701,7 +6073,8 @@
           "high": 0.5878224290787573,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5713,7 +6086,8 @@
           "high": 0.8451818999067251,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5725,7 +6099,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5737,7 +6112,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5749,7 +6125,8 @@
           "high": 0.7553588873860955,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5761,7 +6138,8 @@
           "high": 0.9575289463988287,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5773,7 +6151,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5785,7 +6164,8 @@
           "high": 0.9388942067188184,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5797,7 +6177,8 @@
           "high": 0.9876849999032037,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5809,7 +6190,8 @@
           "high": 0.7706611269054578,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5821,7 +6203,8 @@
           "high": 0.9176153600140352,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5833,7 +6216,8 @@
           "high": 0.9999999999999998,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5845,7 +6229,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5857,7 +6242,8 @@
           "high": 0.9388942067188184,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5869,7 +6255,8 @@
           "high": 0.9635582962600087,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5881,7 +6268,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5893,7 +6281,8 @@
           "high": 0.927689083357045,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5905,7 +6294,8 @@
           "high": 0.9844928537970742,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5917,7 +6307,8 @@
           "high": 0.8850368630659855,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5929,7 +6320,8 @@
           "high": 0.9311575185870407,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5941,7 +6333,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5953,7 +6346,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5965,7 +6359,8 @@
           "high": 0.927689083357045,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5977,7 +6372,8 @@
           "high": 0.6289725179646786,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -5989,7 +6385,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6001,7 +6398,8 @@
           "high": 0.4703226758067758,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6013,7 +6411,8 @@
           "high": 0.8184447088149512,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6025,7 +6424,8 @@
           "high": 0.5291484101605165,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6037,7 +6437,8 @@
           "high": 0.7878758482004058,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6049,7 +6450,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6061,7 +6463,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6073,7 +6476,8 @@
           "high": 0.4703226758067758,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6085,7 +6489,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6097,7 +6502,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6109,7 +6515,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6121,7 +6528,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6133,7 +6541,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6145,7 +6554,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6157,7 +6567,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6169,7 +6580,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_top3_recall",
@@ -6181,7 +6593,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [
@@ -7454,7 +7867,8 @@
           "high": 0.08085232099684941,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7466,7 +7880,8 @@
           "high": 0.02341199836891201,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7478,7 +7893,8 @@
           "high": 0.029815393708326456,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7490,7 +7906,8 @@
           "high": 0.1737483716640292,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7502,7 +7919,8 @@
           "high": 0.06513580668032404,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7514,7 +7932,8 @@
           "high": 0.03809404252594769,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7526,7 +7945,8 @@
           "high": 0.5285479187139549,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7538,7 +7958,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7550,7 +7971,8 @@
           "high": 0.029815393708326456,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7562,7 +7984,8 @@
           "high": 0.10276597397313837,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7574,7 +7997,8 @@
           "high": 0.016934553501221267,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7586,7 +8010,8 @@
           "high": 0.04637121165392266,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7598,7 +8023,8 @@
           "high": 0.22187026419582653,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7610,7 +8036,8 @@
           "high": 0.1071791982550706,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7622,7 +8049,8 @@
           "high": 0.061129370526788386,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7634,7 +8062,8 @@
           "high": 0.5840931402088065,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7646,7 +8075,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7658,7 +8088,8 @@
           "high": 0.04637121165392266,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7670,7 +8101,8 @@
           "high": 0.12386278582233576,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7682,7 +8114,8 @@
           "high": 0.020670623471593007,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7694,7 +8127,8 @@
           "high": 0.05422613939130178,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7706,7 +8140,8 @@
           "high": 0.264205583383567,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7718,7 +8153,8 @@
           "high": 0.13319225093904846,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7730,7 +8166,8 @@
           "high": 0.08566757018443186,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7742,7 +8179,8 @@
           "high": 0.6311413704021945,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7754,7 +8192,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7766,7 +8205,8 @@
           "high": 0.05422613939130178,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7778,7 +8218,8 @@
           "high": 0.042955542574309585,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7790,7 +8231,8 @@
           "high": 0.2981652987378003,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7802,7 +8244,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7814,7 +8257,8 @@
           "high": 0.11807709698213287,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7826,7 +8270,8 @@
           "high": 0.10304568726144975,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7838,7 +8283,8 @@
           "high": 0.09180986822558396,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7850,7 +8296,8 @@
           "high": 0.35433043506668743,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7862,7 +8309,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7874,7 +8322,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7886,7 +8335,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7898,7 +8348,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7910,7 +8361,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7922,7 +8374,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7934,7 +8387,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7946,7 +8400,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7958,7 +8413,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7970,7 +8426,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "frame_top5_recall",
@@ -7982,7 +8439,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -7994,7 +8452,8 @@
           "high": 0.12894830376023467,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8006,7 +8465,8 @@
           "high": 0.015884202979201578,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8018,7 +8478,8 @@
           "high": 0.04392475230499521,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8030,7 +8491,8 @@
           "high": 0.3214626551226281,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8042,7 +8504,8 @@
           "high": 0.08366309243416317,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8054,7 +8517,8 @@
           "high": 0.07208758247415772,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8066,7 +8530,8 @@
           "high": 0.6482401257482395,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8078,7 +8543,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8090,7 +8556,8 @@
           "high": 0.04392475230499521,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8102,7 +8569,8 @@
           "high": 0.16176141225105858,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8114,7 +8582,8 @@
           "high": 0.016934553501221267,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8126,7 +8595,8 @@
           "high": 0.06827571876965954,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8138,7 +8608,8 @@
           "high": 0.40016902991297804,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8150,7 +8621,8 @@
           "high": 0.1071791982550706,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8162,7 +8634,8 @@
           "high": 0.08995725964142297,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8174,7 +8647,8 @@
           "high": 0.7138248445040439,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8186,7 +8660,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8198,7 +8673,8 @@
           "high": 0.06827571876965954,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8210,7 +8686,8 @@
           "high": 0.19394113703218044,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8222,7 +8699,8 @@
           "high": 0.020670623471593007,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8234,7 +8712,8 @@
           "high": 0.07981862319778105,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8246,7 +8725,8 @@
           "high": 0.47361359816239007,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8258,7 +8738,8 @@
           "high": 0.13319225093904846,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8270,7 +8751,8 @@
           "high": 0.1259506205577423,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8282,7 +8764,8 @@
           "high": 0.7684899233353408,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8294,7 +8777,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8306,7 +8790,8 @@
           "high": 0.07981862319778105,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8318,7 +8803,8 @@
           "high": 0.06358401701335273,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8330,7 +8816,8 @@
           "high": 0.20388330103584862,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8342,7 +8829,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8354,7 +8842,8 @@
           "high": 0.18225044370221527,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8366,7 +8855,8 @@
           "high": 0.13216305655362268,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8378,7 +8868,8 @@
           "high": 0.1349487611595213,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8390,7 +8881,8 @@
           "high": 0.35433043506668743,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8402,7 +8894,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8414,7 +8907,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8426,7 +8920,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8438,7 +8933,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8450,7 +8946,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8462,7 +8959,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8474,7 +8972,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8486,7 +8985,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8498,7 +8998,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8510,7 +9011,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "tiles_top5_recall",
@@ -8522,7 +9024,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8534,7 +9037,8 @@
           "high": 0.18404256119013881,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8546,7 +9050,8 @@
           "high": 0.042409004886431,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8558,7 +9063,8 @@
           "high": 0.05646250093046615,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8570,7 +9076,8 @@
           "high": 0.507680791235777,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8582,7 +9089,8 @@
           "high": 0.08366309243416317,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8594,7 +9102,8 @@
           "high": 0.05610499024289903,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8606,7 +9115,8 @@
           "high": 0.7194443081175993,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8618,7 +9128,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8630,7 +9141,8 @@
           "high": 0.05646250093046615,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8642,7 +9154,8 @@
           "high": 0.22652852381534788,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8654,7 +9167,8 @@
           "high": 0.04520448714767455,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8666,7 +9180,8 @@
           "high": 0.08768584628891136,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8678,7 +9193,8 @@
           "high": 0.5971143343389111,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8690,7 +9206,8 @@
           "high": 0.1071791982550706,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8702,7 +9219,8 @@
           "high": 0.08995725964142297,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8714,7 +9232,8 @@
           "high": 0.7899571236117475,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8726,7 +9245,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8738,7 +9258,8 @@
           "high": 0.08768584628891136,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8750,7 +9271,8 @@
           "high": 0.2349949346200193,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8762,7 +9284,8 @@
           "high": 0.03046191026377267,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8774,7 +9297,8 @@
           "high": 0.07981862319778105,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8786,7 +9310,8 @@
           "high": 0.6194412134816415,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8798,7 +9323,8 @@
           "high": 0.13319225093904846,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8810,7 +9336,8 @@
           "high": 0.1259506205577423,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8822,7 +9349,8 @@
           "high": 0.8008527205071096,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8834,7 +9362,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8846,7 +9375,8 @@
           "high": 0.07981862319778105,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8858,7 +9388,8 @@
           "high": 0.09532365645319371,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8870,7 +9401,8 @@
           "high": 0.20388330103584862,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8882,7 +9414,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8894,7 +9427,8 @@
           "high": 0.34500578061101655,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8906,7 +9440,8 @@
           "high": 0.13216305655362268,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8918,7 +9453,8 @@
           "high": 0.09180986822558396,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8930,7 +9466,8 @@
           "high": 0.35433043506668743,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8942,7 +9479,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8954,7 +9492,8 @@
           "high": 0.07707356308558039,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8966,7 +9505,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8978,7 +9518,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -8990,7 +9531,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -9002,7 +9544,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -9014,7 +9557,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -9026,7 +9570,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -9038,7 +9583,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -9050,7 +9596,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "grid_top5_recall",
@@ -9062,7 +9609,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9074,7 +9622,8 @@
           "high": 0.5465495871974265,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9086,7 +9635,8 @@
           "high": 0.7287537455440872,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9098,7 +9648,8 @@
           "high": 0.29602704221753495,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9110,7 +9661,8 @@
           "high": 0.507680791235777,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9122,7 +9674,8 @@
           "high": 0.5644995695466891,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9134,7 +9687,8 @@
           "high": 0.5726722965030077,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9146,7 +9700,8 @@
           "high": 0.9012225769875536,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9158,7 +9713,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9170,7 +9726,8 @@
           "high": 0.29602704221753495,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9182,7 +9739,8 @@
           "high": 0.6184911860377734,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9194,7 +9752,8 @@
           "high": 0.7434209600427878,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9206,7 +9765,8 @@
           "high": 0.345356929122708,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9218,7 +9778,8 @@
           "high": 0.5971143343389111,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9230,7 +9791,8 @@
           "high": 0.5773997512461713,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9242,7 +9804,8 @@
           "high": 0.678497882323879,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9254,7 +9817,8 @@
           "high": 0.9508553414762553,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9266,7 +9830,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9278,7 +9843,8 @@
           "high": 0.345356929122708,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9290,7 +9856,8 @@
           "high": 0.6187890087131864,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9302,7 +9869,8 @@
           "high": 0.7598619760815905,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9314,7 +9882,8 @@
           "high": 0.3692919453950009,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9326,7 +9895,8 @@
           "high": 0.6004733194897707,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9338,7 +9908,8 @@
           "high": 0.47576605190361576,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9350,7 +9921,8 @@
           "high": 0.6574557044556734,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9362,7 +9934,8 @@
           "high": 0.946030307969127,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9374,7 +9947,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9386,7 +9960,8 @@
           "high": 0.3692919453950009,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9398,7 +9973,8 @@
           "high": 0.38570023161355915,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9410,7 +9986,8 @@
           "high": 0.698830199745016,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9422,7 +9999,8 @@
           "high": 0.30723353716378493,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9434,7 +10012,8 @@
           "high": 0.34500578061101655,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9446,7 +10025,8 @@
           "high": 0.623190761054303,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9458,7 +10038,8 @@
           "high": 0.5010789644821693,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9470,7 +10051,8 @@
           "high": 0.6410655481673808,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9482,7 +10064,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9494,7 +10077,8 @@
           "high": 0.30723353716378493,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9506,7 +10090,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9518,7 +10103,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9530,7 +10116,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9542,7 +10129,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9554,7 +10142,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9566,7 +10155,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9578,7 +10168,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9590,7 +10181,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top1_recall",
@@ -9602,7 +10194,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9614,7 +10207,8 @@
           "high": 0.7981282866720787,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9626,7 +10220,8 @@
           "high": 0.9883959169498296,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9638,7 +10233,8 @@
           "high": 0.5746693309990089,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9650,7 +10246,8 @@
           "high": 0.6671221947685192,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9662,7 +10259,8 @@
           "high": 0.8179558597987684,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9674,7 +10272,8 @@
           "high": 0.8875994555424038,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9686,7 +10285,8 @@
           "high": 0.9972364580766624,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9698,7 +10298,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9710,7 +10311,8 @@
           "high": 0.5746693309990089,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9722,7 +10324,8 @@
           "high": 0.8521829261528647,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9734,7 +10337,8 @@
           "high": 0.995414437214449,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9746,7 +10350,8 @@
           "high": 0.6257026954621209,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9758,7 +10363,8 @@
           "high": 0.7306935413881943,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9770,7 +10376,8 @@
           "high": 0.8674759908149096,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9782,7 +10389,8 @@
           "high": 0.9176153600140352,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9794,7 +10402,8 @@
           "high": 0.9999999999999998,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9806,7 +10415,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9818,7 +10428,8 @@
           "high": 0.6257026954621209,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9830,7 +10441,8 @@
           "high": 0.8467399019438273,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9842,7 +10454,8 @@
           "high": 0.9943785498749027,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9854,7 +10467,8 @@
           "high": 0.6374961340504036,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9866,7 +10480,8 @@
           "high": 0.7391047238686699,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9878,7 +10493,8 @@
           "high": 0.8279480969309202,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9890,7 +10506,8 @@
           "high": 0.8799682522178243,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9902,7 +10519,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9914,7 +10532,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9926,7 +10545,8 @@
           "high": 0.6374961340504036,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9938,7 +10558,8 @@
           "high": 0.6813321462368257,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9950,7 +10571,8 @@
           "high": 0.9295245065301844,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9962,7 +10584,8 @@
           "high": 0.5775256630570501,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9974,7 +10597,8 @@
           "high": 0.5777585300637057,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9986,7 +10610,8 @@
           "high": 0.8288572476535512,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -9998,7 +10623,8 @@
           "high": 0.8892520815700411,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10010,7 +10636,8 @@
           "high": 0.9743203756552565,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10022,7 +10649,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10034,7 +10662,8 @@
           "high": 0.5775256630570501,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10046,7 +10675,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10058,7 +10688,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10070,7 +10701,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10082,7 +10714,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10094,7 +10727,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10106,7 +10740,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10118,7 +10753,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10130,7 +10766,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_whole_top3_recall",
@@ -10142,7 +10779,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10154,7 +10792,8 @@
           "high": 0.7526824189992819,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10166,7 +10805,8 @@
           "high": 0.8518548503417442,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10178,7 +10818,8 @@
           "high": 0.6965926743095646,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10190,7 +10831,8 @@
           "high": 0.894077686753841,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10202,7 +10844,8 @@
           "high": 0.6451062301792936,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10214,7 +10857,8 @@
           "high": 0.6124184047481886,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10226,7 +10870,8 @@
           "high": 0.9012225769875536,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10238,7 +10883,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10250,7 +10896,8 @@
           "high": 0.6965926743095646,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10262,7 +10909,8 @@
           "high": 0.8457612109617442,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10274,7 +10922,8 @@
           "high": 0.8849314592003166,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10286,7 +10935,8 @@
           "high": 0.8507322531324035,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10298,7 +10948,8 @@
           "high": 0.9391984397704298,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10310,7 +10961,8 @@
           "high": 0.7706611269054578,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10322,7 +10974,8 @@
           "high": 0.7539670859618668,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10334,7 +10987,8 @@
           "high": 0.9392193984100191,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10346,7 +11000,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10358,7 +11013,8 @@
           "high": 0.8507322531324035,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10370,7 +11026,8 @@
           "high": 0.860453912193992,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10382,7 +11039,8 @@
           "high": 0.8820290531925193,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10394,7 +11052,8 @@
           "high": 0.8473186095150708,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10406,7 +11065,8 @@
           "high": 0.9453269670329527,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10418,7 +11078,8 @@
           "high": 0.8571614614904344,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10430,7 +11091,8 @@
           "high": 0.8430503595218832,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10442,7 +11104,8 @@
           "high": 0.946030307969127,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10454,7 +11117,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10466,7 +11130,8 @@
           "high": 0.8473186095150708,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10478,7 +11143,8 @@
           "high": 0.5217932285403275,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10490,7 +11156,8 @@
           "high": 0.5195043405598057,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10502,7 +11169,8 @@
           "high": 0.49229941157937235,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10514,7 +11182,8 @@
           "high": 0.8184447088149512,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10526,7 +11195,8 @@
           "high": 0.623190761054303,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10538,7 +11208,8 @@
           "high": 0.4745575989060954,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10550,7 +11221,8 @@
           "high": 0.7495416354723428,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10562,7 +11234,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10574,7 +11247,8 @@
           "high": 0.49229941157937235,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10586,7 +11260,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10598,7 +11273,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10610,7 +11286,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10622,7 +11299,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10634,7 +11312,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10646,7 +11325,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10658,7 +11338,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10670,7 +11351,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top1_recall",
@@ -10682,7 +11364,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10694,7 +11377,8 @@
           "high": 0.9542679383395152,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10706,7 +11390,8 @@
           "high": 0.995704057698501,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10718,7 +11403,8 @@
           "high": 0.9559669676724172,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10730,7 +11416,8 @@
           "high": 0.9720664016137318,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10742,7 +11429,8 @@
           "high": 0.9153170089771919,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10754,7 +11442,8 @@
           "high": 0.9576172955364297,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10766,7 +11455,8 @@
           "high": 0.9661688230914496,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10778,7 +11468,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10790,7 +11481,8 @@
           "high": 0.9559669676724172,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10802,7 +11494,8 @@
           "high": 0.9589890555226714,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10814,7 +11507,8 @@
           "high": 0.995414437214449,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10826,7 +11520,8 @@
           "high": 0.9297673653032448,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10838,7 +11533,8 @@
           "high": 0.9781702098787735,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10850,7 +11546,8 @@
           "high": 0.9111045531043405,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10862,7 +11559,8 @@
           "high": 0.9632579669823632,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10874,7 +11572,8 @@
           "high": 0.9819397043663383,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10886,7 +11585,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10898,7 +11598,8 @@
           "high": 0.9297673653032448,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10910,7 +11611,8 @@
           "high": 0.9670315745522806,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10922,7 +11624,8 @@
           "high": 0.9990294255116478,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10934,7 +11637,8 @@
           "high": 0.9168572656622017,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10946,7 +11650,8 @@
           "high": 0.9786714901119936,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10958,7 +11663,8 @@
           "high": 0.9777795987151524,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10970,7 +11676,8 @@
           "high": 0.9865190546348308,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10982,7 +11689,8 @@
           "high": 0.9801858278877295,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -10994,7 +11702,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11006,7 +11715,8 @@
           "high": 0.9168572656622017,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11018,7 +11728,8 @@
           "high": 0.9580598454904337,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11030,7 +11741,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11042,7 +11754,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11054,7 +11767,8 @@
           "high": 0.9765406040926183,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11066,7 +11780,8 @@
           "high": 0.9449492632208182,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11078,7 +11793,8 @@
           "high": 0.9727854044930122,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11090,7 +11806,8 @@
           "high": 0.9177810759959433,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11102,7 +11819,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11114,7 +11832,8 @@
           "high": 1.0,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11126,7 +11845,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11138,7 +11858,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11150,7 +11871,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11162,7 +11884,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11174,7 +11897,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11186,7 +11910,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11198,7 +11923,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11210,7 +11936,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         },
         {
           "name": "six_group_grid_top3_recall",
@@ -11222,7 +11949,8 @@
           "high": null,
           "target": null,
           "ceiling": null,
-          "passed": null
+          "passed": null,
+          "higher_is_better": null
         }
       ],
       "limits": [

@@ -26,6 +26,44 @@ below it. A small sample therefore can't pass a strict gate by luck: 23 of 24 is
 
 `unmeasured` means there were no labelled items for that metric. It is not zero.
 
+The scorecard starts with stage check/gate counts and headline (`all`) gates,
+then the full table. A stage without gates has no pass/fail claim.
+
+## Comparing a change
+
+Compare the committed baseline with rerun result JSON files or a rerun scorecard:
+
+```sh
+uv run main.py validate compare benchmarks/validation/scorecard.json rerun/*.json \
+  --markdown comparison.md
+```
+
+Metrics match by check, name and stratum. Deltas are rerun minus baseline in
+percentage points, with 95% [Newcombe method 10](https://doi.org/10.1002/(SICI)1097-0258(19980430)17:8%3C873::AID-SIM779%3E3.0.CO;2-I) intervals combining Wilson intervals without continuity correction.
+An interval excluding zero means **better** or **worse**; otherwise **no clear change**.
+Targets mean higher is better; ceilings mean lower. Otherwise explicit direction
+wins, then recall/recovery/coverage (higher) or false_alarm/wrong_subject/confusion (lower).
+Unknown directions stay **changed** without a verdict. Missing metrics are **new**
+or **removed**; an empty side is **unmeasured**. Baseline gates remain in force.
+
+The console shows 20 rows, worst first; markdown includes every row. Changed hashes,
+datasets or splits are flagged as **not like-for-like**. A gated regression exits **1**;
+otherwise **0**, including new, removed and unmeasured metrics. This does not certify completeness.
+
+For a worked example, compare the committed scorecard with itself:
+
+```sh
+uv run main.py validate compare benchmarks/validation/scorecard.json \
+  benchmarks/validation/scorecard.json
+```
+
+This exits 0 across 728 metrics: **461 no clear change**, 136 unmeasured and 131
+changed (unknown direction). Every measured directional metric shows no clear change.
+SegFormer's Open Images recall is 1,433/1,500 each: difference 0.0 points (95% CI −1.5 to +1.5).
+
+Runs on the same images are **paired**; this independent-proportions interval is conservative.
+Intervals are per metric without multiplicity adjustment; no clear change does not prove equivalence.
+
 ## Adding a check
 
 One module per dataset, in `src/weedz/validation/<dataset>.py`:
@@ -452,14 +490,6 @@ model settings. Add `--limit 50 --output "$DATA_ROOT/.cache/agri-smoke"` for smo
 runs. The default SAM3 prompts are `plant, flower`, with the default 0.5
 retention cutoff and 128-region cap per prompt. ImageWeeds uses the first 100
 retained proposals; the mask checks use all retained proposals.
-
-After full runs, rebuild the ordered scorecard:
-
-```sh
-uv run main.py validate scorecard benchmarks/validation/*.json \
-  --output benchmarks/validation/scorecard.json \
-  --markdown benchmarks/validation/scorecard.md
-```
 
 On the shared `cuda:0`, the final full commands took 3m 15s for ImageWeeds
 regions, 3m 59s for ImageWeeds species, 1m 03s for PhenoBench and 25s for CWFID.
