@@ -72,7 +72,8 @@ and gate from the latest full runs.
 | Region proposals | `openimages-plant-boxes` | Open Images V7 validation | Measured · 39.2% box recall at IoU ≥ 0.5 in the first 100 proposals |
 | Species identification | `inat2021-target-species` | iNat2021 validation | Measured, pilot cue recall 21/30 (70.0%, 95% CI 52.1–83.3%), local 20/30 (66.7%) |
 | Target false alarms | `inat2021-target-false-alarms` | iNat2021 validation | Measured, pilot 15/42,680 (0.035%) and local 107/42,680 (0.251%) wrong-subject cues |
-| Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Planned |
+| Species identification, no training overlap | `plantclef2024-target-species` | PlantCLEF 2024 training set's own validation/test split | Measured · test: PlantCLEF top-1 25/30 (83.3%), pilot cues 16/30 (53.3%) |
+| Target false alarms | `plantclef2024-target-false-alarms` | PlantCLEF 2024 training set's own validation/test split | Planned |
 | Whole-photo species list | `danish-roadside-species` and existing ports | Danish roadside, ImageWeeds, PhenoBench, CWFID | Planned |
 
 ### What this showed
@@ -121,6 +122,18 @@ Unfiltered BioCLIP ranked a watchlist prompt first on 38.7% of non-target
 subjects. Keep the agreement gate and prioritize same-genus
 comparisons when testing changes. The labels cover photographed subjects.
 [False-alarm results](../benchmarks/validation/inat2021-target-false-alarms.json)
+
+#### PlantCLEF 2024 val/test
+
+On the cleaner publisher `test` target photos, PlantCLEF and BioCLIP 2 each
+ranked the subject first on 25/30 (83.3%, 95% CI 66.4–92.7%). PlantCLEF's
+top five recovered 27/30. The pilot cue recovered 16/30 (53.3%, 36.1–69.8%)
+and the local cue 11/30 (36.7%, 21.9–54.5%). Local cues recovered only 1/10
+test pampas photos, against 4/10 for the pilot. Keep the pilot as the comparison
+and investigate local pampas agreement before replacing it. These are labelled
+single-plant subjects, not scene inventories. The `val` photos were used by the
+publisher for model selection, so their results are reported separately.
+[Species results](../benchmarks/validation/plantclef2024-target-species.json)
 
 ### Rerun the Open Images checks
 
