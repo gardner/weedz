@@ -202,3 +202,131 @@ def test_sam_model_verified_even_with_prediction_cache(tmp_path, monkeypatch):
     checkpoint.write_bytes(b"changed model")
     with pytest.raises(ValueError, match="checksum"):
         agri_models.sam_predictor(RunContext(tmp_path, tmp_path / "cache", "cuda:0"), "cwfid")
+
+
+def test_all_agricultural_checks_registered():
+    import weedz.validation.checks  # noqa: F401
+    from weedz.validation.registry import REGISTRY
+
+    assert {
+        "imageweeds-region-recovery",
+        "imageweeds-species",
+        "phenobench-instance-recovery",
+        "cwfid-mask-coverage",
+    } <= REGISTRY.keys()
+
+
+def test_phenobench_check_with_fake_predictor_needs_no_gpu(tmp_path, monkeypatch):
+    from PIL import Image
+
+    from weedz.validation.registry import RunContext
+
+    image, semantic, instance = [
+        tmp_path / f"{name}.png" for name in ("image", "semantic", "instance")
+    ]
+    Image.new("RGB", (2, 2)).save(image)
+    Image.fromarray(np.array([[1, 0], [2, 0]], dtype=np.uint16)).save(semantic)
+    Image.fromarray(np.array([[1, 0], [1, 0]], dtype=np.uint16)).save(instance)
+    monkeypatch.setattr(
+        phenobench,
+        "load_items",
+        lambda context: (
+            [("05-15_fixture.png", image, semantic, instance)],
+            {"fixture/labels.png": "abc"},
+        ),
+    )
+    monkeypatch.setattr(phenobench, "model_inputs", lambda root: {})
+    monkeypatch.setattr(phenobench, "release_cuda", lambda: None)
+    result = phenobench.run(RunContext(tmp_path, tmp_path / "cache"), lambda path: [])
+    assert result.check == "phenobench-instance-recovery" and result.split == "validation"
+    assert metric(result.metrics, "instance_recall").total == 2
+    assert metric(result.metrics, "foreground_half_covered").successes == 0
+    assert result.configuration["torch_version"]
+    assert result.inputs == {"fixture/labels.png": "abc"}
+
+
+def test_species_five_slot_budget_does_not_filter_to_truth():
+    from weedz.contract import Annotation
+    from weedz.species_aggregation import RankedTaxon
+
+    truth = Annotation(
+        id="1",
+        supervision="box",
+        taxon="Bassia scoparia",
+        label="present",
+        box=(0, 0, 2, 2),
+        origin="source",
+    )
+    item = imageweeds.Item("maize/a", Path("a"), "a", "p", "maize", (truth,))
+    ranks = [
+        [RankedTaxon(taxon=name, score=score, score_kind="closed_set_softmax_uncalibrated")]
+        for name, score in [(f"Other plant{i}", 0.9) for i in range(5)] + [("Bassia scoparia", 0.1)]
+    ]
+    evidence = imageweeds.SpeciesEvidence(
+        regions=[{"box": [0, 0, 2, 2]} for _ in ranks],
+        tight=[ranks[-1]],
+        masked=ranks,
+    )
+    rows = imageweeds.species_metrics([item], lambda _: evidence)
+    assert metric(rows, "image_species_max_score_at5").successes == 0
+
+
+def test_species_predictor_uses_pipeline_square_masked_crop(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from PIL import Image
+
+    from weedz.contract import Annotation
+    from weedz.discovery.inference import file_sha256
+    from weedz.validation.registry import RunContext
+
+    image = tmp_path / "image.png"
+    Image.new("RGB", (8, 8)).save(image)
+    note = Annotation(
+        id="1",
+        supervision="box",
+        taxon="Bassia scoparia",
+        label="present",
+        box=(0, 0, 2, 4),
+        origin="source",
+    )
+    item = imageweeds.Item("maize/a", image, file_sha256(image), "pixels", "maize", (note,))
+    seen = []
+
+    def classify(images):
+        seen.extend(view.size for view in images)
+        return [[] for _ in images]
+
+    monkeypatch.setattr(imageweeds, "model_inputs", lambda *args, **kwargs: {})
+    monkeypatch.setattr(imageweeds, "identity", lambda *args: "fixture")
+    monkeypatch.setattr(imageweeds, "plant_predictor", lambda context: classify)
+    monkeypatch.setattr(
+        imageweeds,
+        "restore_concept_regions",
+        lambda *args, **kwargs: [
+            SimpleNamespace(views={"masked": Image.new("RGB", (2, 4))}),
+        ],
+    )
+    predict = imageweeds.species_predictor(
+        RunContext(tmp_path, tmp_path / "cache"), {item.source_id: [{"box": [0, 0, 2, 4]}]}
+    )
+    predict(item)
+    assert seen == [(2, 4), (4, 4)]  # Legacy source control; real masked-view pipeline.
+
+
+def test_conditional_id_without_matches_is_unmeasured():
+    from weedz.contract import Annotation
+
+    truth = Annotation(
+        id="1",
+        supervision="box",
+        taxon="Bassia scoparia",
+        label="present",
+        box=(0, 0, 2, 2),
+        origin="source",
+    )
+    item = imageweeds.Item("maize/a", Path("a"), "a", "p", "maize", (truth,))
+    evidence = imageweeds.SpeciesEvidence(regions=[], tight=[[]], masked=[])
+    rows = imageweeds.species_metrics([item], lambda _: evidence)
+    row = metric(rows, "conditional_top1")
+    assert row.total == 0 and row.value is None

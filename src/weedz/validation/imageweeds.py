@@ -14,6 +14,7 @@ from PIL import Image
 from pydantic import BaseModel
 
 from weedz.contract import Annotation
+from weedz.discovery.inference import square_view
 from weedz.labelled.archive import SourceArchive
 from weedz.labelled.images import prepare_image
 from weedz.labelled.imageweeds import PROFILES, source_boxes, source_rights
@@ -186,9 +187,12 @@ def species_metrics(
     items: Sequence[Item], predict: Callable[[Item], SpeciesEvidence]
 ) -> list[Rate]:
     tally = Tallies()
-    for item in items:
+    for name in ("conditional_top1", "conditional_top5"):
+        tally.counts[name, "all"] = [0, 0]
+    for index, item in enumerate(items, 1):
         evidence = predict(item)
         _region_species(tally, item, evidence)
+        logger.info("ImageWeeds species %d/%d", index, len(items))
         for policy in ("frequency", "max_score"):
             names = {
                 canonical(name)
@@ -246,7 +250,8 @@ def species_predictor(
         regions = restore_concept_regions(
             raw, records, SAM_CONFIG, expected_sha256=item.sha256, max_source_bytes=MAX_BYTES
         )
-        views = [*tight, *(region.views["masked"] for region in regions)]
+        masked = [region.views["masked"] for region in regions]
+        views = [*tight, *(square_view(view, (0, 0, *view.size)) for view in masked)]
         ranks = [rank for batch in batched(views, BATCH_SIZE) for rank in classify(list(batch))]
         evidence = SpeciesEvidence(
             regions=records, tight=ranks[: len(tight)], masked=ranks[len(tight) :]
@@ -301,7 +306,7 @@ def _result(
             "classifier_batch_size": BATCH_SIZE,
             "classifier_vocabulary": "full 7806 PlantCLEF classes",
             "source_crop_control": "floor/ceil source box, original tight centre-crop",
-            "region_crop": "pipeline masked view, max side 1024",
+            "region_crop": "pipeline masked view, max side 1024, neutral square padding",
             "species_policies": "frequency and max_score, same five-slot budget",
         },
         limits=[
