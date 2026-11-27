@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261126/vegetation-gate",
+  "results": {
+    "larger": {
+      "photos": 12,
+      "original_called": 6,
+      "expanded_called": 10,
+      "original_mapped": 6,
+      "expanded_mapped": 10
+    },
+    "small": {
+      "photos": 12,
+      "original_called": 5,
+      "expanded_called": 8,
+      "original_mapped": 5,
+      "expanded_mapped": 8
+    },
+    "comparison": {
+      "photos": 12,
+      "original_called": 0,
+      "expanded_called": 0,
+      "original_mapped": 0,
+      "expanded_mapped": 0
+    }
+  },
+  "expanded_positive_calls": 18,
+  "added_comparison_calls": 0,
+  "follow_up_gate_passed": false,
+  "seconds_mean_shared_pass": 0.2569293030747859,
+  "assets": {
+    "fixture.json": "6bef5db771897b83d56b1737ca6073da15d379a33eaec76509ab6fc99353e199",
+    "vocabulary-fixture.json": "0119e2338deabc040fa8839b755bce5430f2441aa4cfdc1e72ed7b0cb27b7a66",
+    "sam3-vocabulary/run.json": "444f1331da80c465b8ebf3d408dbf4ad77879ad1e31be5007f7fa6df9e5d05d6",
+    "vocabulary_fixture.py": "49e2f5a9d32e9bd02764b4f3e400c66e6d738c4511b9760c6c4fe44117bc9397",
+    "run_vocabulary.py": "a4bf852213107e8b62767f6976c803d4431e954dc5571cae5c7623cadc89c980",
+    "evaluate_vocabulary.py": "4112ef42ddbdc0eebcc95d0366e8a95c1ee136f57a220fdad2e5bafa9370604f"
+  },
+  "scope": "Fresh scene categories and pixels. Shared SAM3 pass with independent prompts. Comparison labels are class-scoped."
+}

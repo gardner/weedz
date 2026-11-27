@@ -1,0 +1,586 @@
+{
+  "schema": 1,
+  "date": "2026-11-25",
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "artifacts": {
+    "imageweeds138-crop-context-v1/run.py": "e65d0d934718101d6d87a84d5c0374b05c5f7ca354eeee72f39c2fc9775beb8d",
+    "imageweeds138-crop-context-v1/report.json": "c9e0a8de4664dfb4c2bcf971931a593c9b4620e9d6615c151681ccf2117ee4a4",
+    "roadside-source/acquire.py": "d8d647525671576e36533e66294d076fa28938b0c7aa732026d295333e921a57",
+    "roadside-source/score.py": "e0fc6fefd4c1823c74d1490858cee734955c461f5801f2aa09ebf4eca0d2a934",
+    "roadside-source/verify_and_reserve.py": "e5de5019ae8c4b621e93fb993ed93c1eebc768284781f4da1467ea5ab68cd5db",
+    "roadside-source/xp4-smoke-report.json": "90a6ca9b79630c31fe4c7c1008993efdcf4bc70b2db14cb0405a925965e846cb",
+    "roadside-source/membership.json": "c7edb615e5f0afce922cc17078fd61761a606fef4e8dd7e356f32595bf4fd3a1",
+    "roadside-source/features-ready.json": "a90ca5203c92209ec1acea1833519c26f3a4e74ce87e0be6e6f478d6789a7a70",
+    "roadside-source/upstream-check-and-reserve.json": "6ccceaa56887d6372028109b3e8c97f6af6bc4c2cb6a82ff5a6890f17a433441",
+    "roadside-source/acquire_pixels.py": "759b3f7f2464cda19dc002fbdf51c92c2809f9453d11580f39ca6a93907496e7",
+    "roadside-source/compare_pixels.py": "fd0cc561d4c76f9fe4f679757da7f50ca5e29486e8d6980af08136a6965df9d1",
+    "roadside-source/pixels-ready.json": "7e59cd20da038a09ac3b2503dcdcc6ca8129c1f865f5526f08e9591ed6edabcd",
+    "roadside-source/plantclef-pixel-smoke-report.json": "1d5a51a19f9f41ead56f0af995d077b266d376fe6553de2ab3424cfc1c04f12a",
+    "roadside-source/propose_regions.py": "c532a9aa8f34f7cff82b3d73608c282d13a66b67bbbc74bf732c688fff95d563",
+    "roadside-source/propose_reserved_regions.py": "57d2992331a89eca21b7be89b5070bbb64828aaac5cfd1cf3209513a550bd6cd",
+    "roadside-source/compare_regions.py": "348d854247f02b8e35a4808095a49f5f5ca2ae283bc1aee4c059108cc5840305",
+    "roadside-source/evaluate_reserved.py": "771eac20c3c64d888449a60816bc50506368b8db4cfa5a2069c3910dce01b11a",
+    "roadside-source/sam3-smoke/ready.json": "5e5f086fcef99293acce6e0b8dd9a872c835715ecf3ce52b9b248e43ceb78f62",
+    "roadside-source/sam3-reserved/ready.json": "1de7a4d2616bdd43a9cebd0a8bb374b70e8ea8e4d3b730c4a6051c1a86eed0fb",
+    "roadside-source/sam3-plantclef-smoke-report.json": "a5c8dd8ed5fb05bc1c54bfad39fa303474b780b99df94a4e4c7037753b9c6f73",
+    "roadside-source/reserved-roadside-report.json": "7828e78d7a3e72559d00e25cea43fa32e4d06150f3c6ba5828c239ec4a884c0b",
+    "roadside-source/reserved-features-ready.json": "48143f1fd266d640ef3e8c7290ce8f5fd6b4739ef01c30595e293c10c614e1cf"
+  },
+  "imageweeds_crop_context": {
+    "images": 138,
+    "boxes": 645,
+    "counts": {
+      "legacy_tight": {
+        "boxes": 645,
+        "top1": 74,
+        "top5": 297
+      },
+      "square_tight": {
+        "boxes": 645,
+        "top1": 60,
+        "top5": 278
+      },
+      "square_context25": {
+        "boxes": 645,
+        "top1": 42,
+        "top5": 264
+      }
+    },
+    "per_taxon": {
+      "Amaranthus retroflexus L.": {
+        "legacy_tight": {
+          "boxes": 101,
+          "top1": 17,
+          "top5": 65
+        },
+        "square_tight": {
+          "boxes": 101,
+          "top1": 10,
+          "top5": 56
+        },
+        "square_context25": {
+          "boxes": 101,
+          "top1": 7,
+          "top5": 56
+        }
+      },
+      "Amaranthus tuberculatus (Moq.) J.D.Sauer": {
+        "legacy_tight": {
+          "boxes": 118,
+          "top1": 2,
+          "top5": 63
+        },
+        "square_tight": {
+          "boxes": 118,
+          "top1": 3,
+          "top5": 70
+        },
+        "square_context25": {
+          "boxes": 118,
+          "top1": 2,
+          "top5": 76
+        }
+      },
+      "Ambrosia artemisiifolia L.": {
+        "legacy_tight": {
+          "boxes": 176,
+          "top1": 39,
+          "top5": 111
+        },
+        "square_tight": {
+          "boxes": 176,
+          "top1": 31,
+          "top5": 96
+        },
+        "square_context25": {
+          "boxes": 176,
+          "top1": 25,
+          "top5": 90
+        }
+      },
+      "Bassia scoparia (L.) A.J.Scott": {
+        "legacy_tight": {
+          "boxes": 142,
+          "top1": 7,
+          "top5": 33
+        },
+        "square_tight": {
+          "boxes": 142,
+          "top1": 9,
+          "top5": 33
+        },
+        "square_context25": {
+          "boxes": 142,
+          "top1": 2,
+          "top5": 25
+        }
+      },
+      "Erigeron canadensis L.": {
+        "legacy_tight": {
+          "boxes": 108,
+          "top1": 9,
+          "top5": 25
+        },
+        "square_tight": {
+          "boxes": 108,
+          "top1": 7,
+          "top5": 23
+        },
+        "square_context25": {
+          "boxes": 108,
+          "top1": 6,
+          "top5": 17
+        }
+      }
+    },
+    "paired_top1": {
+      "square_tight_vs_legacy_tight": {
+        "neither": 556,
+        "both": 45,
+        "loss": 29,
+        "gain": 15
+      },
+      "square_context25_vs_square_tight": {
+        "neither": 569,
+        "loss": 34,
+        "gain": 16,
+        "both": 26
+      }
+    },
+    "elapsed_seconds": 69.34952120800153,
+    "forward_images": 1935,
+    "manifest_sha256": "a38eca9ffb9570da46040033564540c1af5fd1432dc6f2fcde4f869b12da1089",
+    "mapping_sha256": "0be438551efe900f0263bb948ffc436faf7cc1713881d8f10d0bdac946e8c694",
+    "scope": "Previously inspected publisher-box crop diagnostic"
+  },
+  "roadside_xp4": {
+    "summary": {
+      "val_16": {
+        "images": 16,
+        "labeled_pairs": 13,
+        "recovered_pairs": {
+          "1": 2,
+          "3": 13
+        }
+      },
+      "test_14": {
+        "images": 14,
+        "labeled_pairs": 12,
+        "recovered_pairs": {
+          "1": 3,
+          "3": 11
+        }
+      },
+      "multilabel": {
+        "images": 16,
+        "labeled_pairs": 32,
+        "recovered_pairs": {
+          "1": 1,
+          "3": 19
+        }
+      }
+    },
+    "split_counts": {
+      "train": 10302,
+      "val": 2160,
+      "test": 2140,
+      "multilabel": 206,
+      "val_16": 16,
+      "test_14": 14
+    },
+    "audit": {
+      "val_vs_train": {
+        "exact_filenames": 0,
+        "left_locatable": 2160,
+        "right_locatable": 10302,
+        "left_within_100m_of_right": 218,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      },
+      "test_vs_train": {
+        "exact_filenames": 0,
+        "left_locatable": 2140,
+        "right_locatable": 10302,
+        "left_within_100m_of_right": 129,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      },
+      "test_vs_val": {
+        "exact_filenames": 0,
+        "left_locatable": 2140,
+        "right_locatable": 2160,
+        "left_within_100m_of_right": 29,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      },
+      "multilabel_vs_train": {
+        "exact_filenames": 0,
+        "left_locatable": 206,
+        "right_locatable": 10302,
+        "left_within_100m_of_right": 153,
+        "left_exact_coordinate_in_right": 128,
+        "shared_dates": 3
+      },
+      "multilabel_vs_test": {
+        "exact_filenames": 0,
+        "left_locatable": 206,
+        "right_locatable": 2140,
+        "left_within_100m_of_right": 17,
+        "left_exact_coordinate_in_right": 17,
+        "shared_dates": 3
+      },
+      "test_14_vs_val_16": {
+        "exact_filenames": 0,
+        "left_locatable": 14,
+        "right_locatable": 16,
+        "left_within_100m_of_right": 0,
+        "left_exact_coordinate_in_right": 0,
+        "shared_dates": 4
+      }
+    },
+    "weights_sha256": "8dc2b8cf0975f5beab7139cd76593ca1045135f3175ab44b20bd0aafc4c11df4",
+    "source_csv_sha256": "4f120a7195e800d9729a9c5f193a3be719a6f0d929740a347d0da9611de9680a",
+    "operating_point": "Top-k positive-pair recovery on publisher tensor smoke fixture. Official per-taxon thresholds unavailable in acquired release assets."
+  },
+  "upstream_score_check": {
+    "images": 46,
+    "max_absolute_error": 0.0
+  },
+  "reserved_source_test": {
+    "images": 25,
+    "per_class": {
+      "1_solidago": 4,
+      "7_no_species": 4,
+      "6_reynoutria": 2,
+      "3_rosa_rugosa": 4,
+      "4_lupinus_polyphyllus": 3,
+      "5_pastinaca_sativa": 4,
+      "2_cytisus_scoparius": 4
+    },
+    "overlap_audit": {
+      "exact_filenames": 0,
+      "left_locatable": 25,
+      "right_locatable": 12682,
+      "left_within_100m_of_right": 0,
+      "left_exact_coordinate_in_right": 0,
+      "shared_dates": 4
+    },
+    "geometry": "100 m separation by publisher filename coordinates",
+    "status": "Reserved by filename and source class; pixels not fetched and no predictions computed"
+  },
+  "roadside_pixels": {
+    "acquired": 71,
+    "reserved_admitted": 25,
+    "reserved_quarantined": 0,
+    "scope": "Exact decoded copies and dHash distance <=4 vs acquired smoke and admitted frames"
+  },
+  "roadside_plantclef": {
+    "summary": {
+      "val_16": {
+        "positive_pairs": 13,
+        "whole": {
+          "1": 6,
+          "3": 9
+        },
+        "tiled": {
+          "1": 9,
+          "3": 13
+        }
+      },
+      "test_14": {
+        "positive_pairs": 12,
+        "whole": {
+          "1": 5,
+          "3": 10
+        },
+        "tiled": {
+          "1": 9,
+          "3": 11
+        }
+      },
+      "multilabel": {
+        "positive_pairs": 32,
+        "whole": {
+          "1": 8,
+          "3": 24
+        },
+        "tiled": {
+          "1": 14,
+          "3": 29
+        }
+      }
+    },
+    "mapping": [
+      [
+        "Solidago canadensis L.",
+        "Solidago gigantea Aiton"
+      ],
+      [
+        "Cytisus scoparius (L.) Link"
+      ],
+      [
+        "Rosa rugosa Thunb."
+      ],
+      [
+        "Lupinus polyphyllus Lindl."
+      ],
+      [
+        "Pastinaca sativa L."
+      ],
+      [
+        "Reynoutria japonica Houtt.",
+        "Reynoutria sachalinensis (F.Schmidt) Nakai"
+      ]
+    ],
+    "measured_seconds": 18.900776586000575,
+    "forward_images": 782,
+    "scope": "Rank six declared targets using full-softmax scores. Tile max uses 16 crops. Smoke fixture only."
+  },
+  "roadside_sam3_smoke": {
+    "summary": {
+      "val_16": {
+        "positive_pairs": 13,
+        "recovered": {
+          "1": 5,
+          "3": 7
+        },
+        "empty_images": 7
+      },
+      "test_14": {
+        "positive_pairs": 12,
+        "recovered": {
+          "1": 3,
+          "3": 4
+        },
+        "empty_images": 7
+      },
+      "multilabel": {
+        "positive_pairs": 32,
+        "recovered": {
+          "1": 4,
+          "3": 6
+        },
+        "empty_images": 10
+      }
+    },
+    "proposal_seconds": 18.72803050701623,
+    "classification_seconds": 7.881409694004105,
+    "forward_images": 58,
+    "policy": "Top 16 by concept score, with exact mask deduplication across generic prompts. Same masked crop scores and target max as pixel comparison."
+  },
+  "roadside_reserved_evaluation": {
+    "summary": {
+      "images": 25,
+      "positive_pairs": 21,
+      "no_species_controls": 4,
+      "methods": {
+        "whole": {
+          "top1": 10,
+          "top3": 17,
+          "paired_gain": 0,
+          "paired_loss": 0,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 2,
+              "top3": 4
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 2,
+              "top3": 2
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 2,
+              "top3": 4
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 1,
+              "top3": 2
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 1,
+              "top3": 3
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 2,
+              "top3": 2
+            }
+          },
+          "empty": 0,
+          "mean_seconds": 0.17065541980322452,
+          "p95_seconds": 0.17436089779948816,
+          "total_views": 25,
+          "quality_gate": false,
+          "improvement_gate": null,
+          "cost_gate": true,
+          "no_species_control_max_scores": [
+            0.00025078037288039923,
+            0.00011764765076804906,
+            0.00028939906042069197,
+            0.00017237852443940938
+          ]
+        },
+        "tiles": {
+          "top1": 16,
+          "top3": 21,
+          "paired_gain": 8,
+          "paired_loss": 2,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 3,
+              "top3": 4
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 4,
+              "top3": 4
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 4,
+              "top3": 4
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 1,
+              "top3": 3
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 2,
+              "top3": 4
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 2,
+              "top3": 2
+            }
+          },
+          "empty": 0,
+          "mean_seconds": 0.34921869152225554,
+          "p95_seconds": 0.36188656379817985,
+          "total_views": 400,
+          "quality_gate": true,
+          "improvement_gate": true,
+          "cost_gate": true,
+          "no_species_control_max_scores": [
+            0.001543751684948802,
+            0.0010991089511662722,
+            0.0030424771830439568,
+            0.0005331106949597597
+          ]
+        },
+        "regions": {
+          "top1": 1,
+          "top3": 3,
+          "paired_gain": 0,
+          "paired_loss": 9,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 0,
+              "top3": 1
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 0,
+              "top3": 0
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 1,
+              "top3": 2
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 0,
+              "top3": 0
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 0,
+              "top3": 0
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 0,
+              "top3": 0
+            }
+          },
+          "empty": 17,
+          "mean_seconds": 0.5760493611986749,
+          "p95_seconds": 1.1603800939803472,
+          "total_views": 39,
+          "quality_gate": false,
+          "improvement_gate": false,
+          "cost_gate": true,
+          "no_species_control_max_scores": [
+            null,
+            0.0001760454470058903,
+            null,
+            0.0001337860885541886
+          ]
+        },
+        "xp4_head": {
+          "top1": 5,
+          "top3": 16,
+          "paired_gain": 2,
+          "paired_loss": 7,
+          "per_target": {
+            "Solidago": {
+              "n": 4,
+              "top1": 3,
+              "top3": 4
+            },
+            "Cytisus scoparius": {
+              "n": 4,
+              "top1": 0,
+              "top3": 3
+            },
+            "Rosa rugosa": {
+              "n": 4,
+              "top1": 0,
+              "top3": 4
+            },
+            "Lupinus polyphyllus": {
+              "n": 3,
+              "top1": 0,
+              "top3": 1
+            },
+            "Pastinaca sativa": {
+              "n": 4,
+              "top1": 0,
+              "top3": 2
+            },
+            "Reynoutria": {
+              "n": 2,
+              "top1": 2,
+              "top3": 2
+            }
+          },
+          "empty": 0,
+          "mean_seconds": 0.0029273423238191753,
+          "p95_seconds": 0.0030579192098230124,
+          "total_views": 23150,
+          "quality_gate": false,
+          "improvement_gate": null,
+          "cost_gate": null,
+          "no_species_control_max_scores": [
+            0.9580004215240479,
+            0.7746157646179199,
+            0.9220935702323914,
+            0.8482552170753479
+          ]
+        }
+      }
+    },
+    "policy_commit": "f87f0c97358806a0016ce3725cbecb8b235e246d",
+    "model_load_seconds_plantclef_and_xp4": 1.5459148140216712
+  }
+}

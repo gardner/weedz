@@ -1,0 +1,489 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "publisher": "https://zenodo.org/records/14013930",
+  "protocol_commit": "cfb30ea",
+  "artifacts": {
+    "roadside-agreement/selection.json": "da46f08c84cdf5358c2b2649de5f0a005fd1d9a2fe5312128a0d8cc188674a5a",
+    "roadside-agreement/ready.json": "8209044d8b9dd2ebcb5021b19feaf0862e2fbad197ddb3e635ae8b97e94c0b33",
+    "roadside-agreement/raw-predictions.json": "fa123de1829d22f53f7c63770cea8509a44bdf2d88f73d5f21952ac9e909b001",
+    "roadside-agreement/agreement-report.json": "15b0e06872d54a1d7bdbb59da9a454ec5cac9f395afc204498dad667a08ab696",
+    "roadside-agreement/veto-reason-audit.json": "0f0b442fe9c2c9fe7f0ad97978ed93f829b4297134a592f1e8309277205ef33d",
+    "roadside-agreement/acquire.py": "2b67fc59fb2069e47a64392c6f3297cbf498382db72d511f5bd069461259777f",
+    "roadside-agreement/screen.py": "d340cd956e25f7318d4c8061a11e0cd7d78ce07467b5524c8bb8b05aeb2d3eac",
+    "roadside-agreement/evaluate.py": "4b7f130fc0a30e515945a0aa518a41eb01dae00055487e48285d16b493064427",
+    "roadside-agreement/explain_vetoes.py": "d9e878bb87f6b6b4d66d9d2a0f8371235f1645e2139c18d4355be73e830d6a88"
+  },
+  "evidence_inputs_sha256": {
+    "labels": "4f120a7195e800d9729a9c5f193a3be719a6f0d929740a347d0da9611de9680a",
+    "score_receipt": "fa123de1829d22f53f7c63770cea8509a44bdf2d88f73d5f21952ac9e909b001",
+    "validation": "1d5a51a19f9f41ead56f0af995d077b266d376fe6553de2ab3424cfc1c04f12a",
+    "source_selection": "da46f08c84cdf5358c2b2649de5f0a005fd1d9a2fe5312128a0d8cc188674a5a",
+    "prior_pixels": "7e59cd20da038a09ac3b2503dcdcc6ca8129c1f865f5526f08e9591ed6edabcd",
+    "new_pixels": "8209044d8b9dd2ebcb5021b19feaf0862e2fbad197ddb3e635ae8b97e94c0b33"
+  },
+  "frozen_review_pins": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29",
+    "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
+    "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  },
+  "score_floor": 0.005451444536447525,
+  "selection": {
+    "within_test_100m": 15,
+    "source_candidates": 206
+  },
+  "pixel_exclusions": {},
+  "mixed_site_breakdown": [
+    {
+      "frames": 10,
+      "label_pairs": 20,
+      "tile_only": 3,
+      "plantclef_whole": 2,
+      "both_whole": 0,
+      "native_tile": 0
+    },
+    {
+      "frames": 2,
+      "label_pairs": 4,
+      "tile_only": 2,
+      "plantclef_whole": 0,
+      "both_whole": 0,
+      "native_tile": 0
+    },
+    {
+      "frames": 2,
+      "label_pairs": 4,
+      "tile_only": 0,
+      "plantclef_whole": 0,
+      "both_whole": 0,
+      "native_tile": 0
+    },
+    {
+      "frames": 1,
+      "label_pairs": 2,
+      "tile_only": 0,
+      "plantclef_whole": 0,
+      "both_whole": 0,
+      "native_tile": 0
+    }
+  ],
+  "native_missing_synonyms": [
+    "Solidago gigantea"
+  ],
+  "mean_stage_seconds": {
+    "mixed": {
+      "plantclef_17_views": 0.3353297708691874,
+      "native_full_one_view": 0.04891399313928559,
+      "native_tile_one_view": 0.012528428198614468
+    },
+    "mono_reserve": {
+      "plantclef_17_views": 0.3282358147227205,
+      "native_full_one_view": 0.046063891678350045,
+      "native_tile_one_view": 0.012453173919348047
+    }
+  },
+  "metrics": {
+    "mixed": {
+      "at_floor": {
+        "frames": 15,
+        "label_cardinality": {
+          "2": 15
+        },
+        "explicit_positive_pairs": 30,
+        "image_positive_budget_limit": 15,
+        "no_species_controls": 0,
+        "rules": {
+          "tile_only": {
+            "suggestions": 6,
+            "known_positive_recoveries": 5,
+            "other_unassessed_suggestions": 1,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 6,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 5,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole": {
+            "suggestions": 3,
+            "known_positive_recoveries": 2,
+            "other_unassessed_suggestions": 1,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 3,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 2,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_whole": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "both_whole": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole_plus_native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          }
+        }
+      },
+      "floor_free": {
+        "frames": 15,
+        "label_cardinality": {
+          "2": 15
+        },
+        "explicit_positive_pairs": 30,
+        "image_positive_budget_limit": 15,
+        "no_species_controls": 0,
+        "rules": {
+          "tile_only": {
+            "suggestions": 15,
+            "known_positive_recoveries": 10,
+            "other_unassessed_suggestions": 5,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 15,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 10,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole": {
+            "suggestions": 6,
+            "known_positive_recoveries": 3,
+            "other_unassessed_suggestions": 3,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 6,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 3,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_whole": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "both_whole": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole_plus_native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          }
+        }
+      }
+    },
+    "mono_reserve": {
+      "at_floor": {
+        "frames": 25,
+        "label_cardinality": {
+          "1": 21,
+          "0": 4
+        },
+        "explicit_positive_pairs": 21,
+        "image_positive_budget_limit": 21,
+        "no_species_controls": 4,
+        "rules": {
+          "tile_only": {
+            "suggestions": 13,
+            "known_positive_recoveries": 13,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 12,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 12,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole": {
+            "suggestions": 7,
+            "known_positive_recoveries": 7,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 6,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 6,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_whole": {
+            "suggestions": 2,
+            "known_positive_recoveries": 2,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 1,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 1,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 1,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 1
+            }
+          },
+          "both_whole": {
+            "suggestions": 1,
+            "known_positive_recoveries": 1,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole_plus_native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 1,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 1
+            }
+          }
+        }
+      },
+      "floor_free": {
+        "frames": 25,
+        "label_cardinality": {
+          "1": 21,
+          "0": 4
+        },
+        "explicit_positive_pairs": 21,
+        "image_positive_budget_limit": 21,
+        "no_species_controls": 4,
+        "rules": {
+          "tile_only": {
+            "suggestions": 25,
+            "known_positive_recoveries": 16,
+            "other_unassessed_suggestions": 5,
+            "no_species_control_suggestions": 4,
+            "changes_vs_both_whole": {
+              "added_calls": 24,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 15,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole": {
+            "suggestions": 12,
+            "known_positive_recoveries": 8,
+            "other_unassessed_suggestions": 2,
+            "no_species_control_suggestions": 2,
+            "changes_vs_both_whole": {
+              "added_calls": 11,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 7,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_whole": {
+            "suggestions": 2,
+            "known_positive_recoveries": 2,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 1,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 1,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 1,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 1
+            }
+          },
+          "both_whole": {
+            "suggestions": 1,
+            "known_positive_recoveries": 1,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 0,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 0
+            }
+          },
+          "plantclef_whole_plus_native_tile": {
+            "suggestions": 0,
+            "known_positive_recoveries": 0,
+            "other_unassessed_suggestions": 0,
+            "no_species_control_suggestions": 0,
+            "changes_vs_both_whole": {
+              "added_calls": 0,
+              "lost_calls": 1,
+              "added_labeled_recoveries": 0,
+              "lost_labeled_recoveries": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "post_hoc_rank_audit": {
+    "mixed": {
+      "all_tiled_labeled_recoveries": {
+        "positive_proposals": 10,
+        "whole": {
+          "top_1_full_vocabulary": 0,
+          "top_5_full_vocabulary": 0,
+          "top_1_restricted_watchlist": 0
+        },
+        "tile": {
+          "top_1_full_vocabulary": 0,
+          "top_5_full_vocabulary": 0,
+          "top_1_restricted_watchlist": 2
+        }
+      },
+      "above_floor_tiled_labeled_recoveries": {
+        "positive_proposals": 5,
+        "whole": {
+          "top_1_full_vocabulary": 0,
+          "top_5_full_vocabulary": 0,
+          "top_1_restricted_watchlist": 0
+        },
+        "tile": {
+          "top_1_full_vocabulary": 0,
+          "top_5_full_vocabulary": 0,
+          "top_1_restricted_watchlist": 1
+        }
+      }
+    },
+    "mono_reserve": {
+      "all_tiled_labeled_recoveries": {
+        "positive_proposals": 16,
+        "whole": {
+          "top_1_full_vocabulary": 2,
+          "top_5_full_vocabulary": 3,
+          "top_1_restricted_watchlist": 7
+        },
+        "tile": {
+          "top_1_full_vocabulary": 0,
+          "top_5_full_vocabulary": 1,
+          "top_1_restricted_watchlist": 5
+        }
+      },
+      "above_floor_tiled_labeled_recoveries": {
+        "positive_proposals": 13,
+        "whole": {
+          "top_1_full_vocabulary": 2,
+          "top_5_full_vocabulary": 3,
+          "top_1_restricted_watchlist": 6
+        },
+        "tile": {
+          "top_1_full_vocabulary": 0,
+          "top_5_full_vocabulary": 0,
+          "top_1_restricted_watchlist": 4
+        }
+      }
+    }
+  },
+  "scope": "One suggestion per image. Publisher positives only. Four no-species-folder control frames. NZ policy unchanged."
+}

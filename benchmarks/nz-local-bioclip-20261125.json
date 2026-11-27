@@ -1,0 +1,314 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "fixed_protocol": "c59c47a",
+  "margin_protocol": "dc5c09d",
+  "baseline_floor": 0.13646656274795532,
+  "lower_floor": 0.01173484418541193,
+  "fixed": {
+    "native_frozen": {
+      "development": {
+        "photos": 300,
+        "known_watchlist_subjects": 150,
+        "correct_watchlist_subjects": 69,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 0,
+        "new_target_recoveries": 0,
+        "lost_target_recoveries": 0
+      },
+      "fresh": {
+        "photos": 9,
+        "known_watchlist_subjects": 0,
+        "correct_watchlist_subjects": 0,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 0,
+        "new_target_recoveries": 0,
+        "lost_target_recoveries": 0
+      }
+    },
+    "tile_frozen": {
+      "development": {
+        "photos": 300,
+        "known_watchlist_subjects": 150,
+        "correct_watchlist_subjects": 75,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 13,
+        "new_target_recoveries": 6,
+        "lost_target_recoveries": 0
+      },
+      "fresh": {
+        "photos": 9,
+        "known_watchlist_subjects": 0,
+        "correct_watchlist_subjects": 0,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 2,
+        "new_target_recoveries": 0,
+        "lost_target_recoveries": 0
+      }
+    },
+    "tile_lower": {
+      "development": {
+        "photos": 300,
+        "known_watchlist_subjects": 150,
+        "correct_watchlist_subjects": 141,
+        "wrong_watchlist_subject_prompts": 1,
+        "comparison_subject_prompts": 45,
+        "new_target_recoveries": 72,
+        "lost_target_recoveries": 0
+      },
+      "fresh": {
+        "photos": 9,
+        "known_watchlist_subjects": 0,
+        "correct_watchlist_subjects": 0,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 3,
+        "new_target_recoveries": 0,
+        "lost_target_recoveries": 0
+      }
+    },
+    "bioclip_frozen": {
+      "development": {
+        "photos": 300,
+        "known_watchlist_subjects": 150,
+        "correct_watchlist_subjects": 71,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 4,
+        "new_target_recoveries": 6,
+        "lost_target_recoveries": 4
+      },
+      "fresh": {
+        "photos": 9,
+        "known_watchlist_subjects": 0,
+        "correct_watchlist_subjects": 0,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 0,
+        "new_target_recoveries": 0,
+        "lost_target_recoveries": 0
+      }
+    },
+    "bioclip_lower": {
+      "development": {
+        "photos": 300,
+        "known_watchlist_subjects": 150,
+        "correct_watchlist_subjects": 133,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 9,
+        "new_target_recoveries": 68,
+        "lost_target_recoveries": 4
+      },
+      "fresh": {
+        "photos": 9,
+        "known_watchlist_subjects": 0,
+        "correct_watchlist_subjects": 0,
+        "wrong_watchlist_subject_prompts": 0,
+        "comparison_subject_prompts": 1,
+        "new_target_recoveries": 0,
+        "lost_target_recoveries": 0
+      }
+    }
+  },
+  "fixed_gates": {
+    "bioclip_frozen": {
+      "target_recoveries": false,
+      "development_comparisons": false,
+      "fresh_comparisons": true
+    },
+    "bioclip_lower": {
+      "target_recoveries": true,
+      "development_comparisons": false,
+      "fresh_comparisons": false
+    }
+  },
+  "fixed_passing": [],
+  "calibrated": {
+    "training_comparison_budget": 2,
+    "folds": [
+      {
+        "fold": 0,
+        "margin": 0.014474,
+        "fit": {
+          "photos": 239,
+          "correct_targets": 95,
+          "comparison_prompts": 2,
+          "wrong_target_prompts": 0,
+          "suggestions": 97
+        },
+        "held_out": {
+          "photos": 61,
+          "correct_targets": 21,
+          "comparison_prompts": 2,
+          "wrong_target_prompts": 0,
+          "suggestions": 23
+        }
+      },
+      {
+        "fold": 1,
+        "margin": 0.02411,
+        "fit": {
+          "photos": 240,
+          "correct_targets": 73,
+          "comparison_prompts": 2,
+          "wrong_target_prompts": 0,
+          "suggestions": 75
+        },
+        "held_out": {
+          "photos": 60,
+          "correct_targets": 22,
+          "comparison_prompts": 0,
+          "wrong_target_prompts": 0,
+          "suggestions": 22
+        }
+      },
+      {
+        "fold": 2,
+        "margin": 0.019579,
+        "fit": {
+          "photos": 240,
+          "correct_targets": 83,
+          "comparison_prompts": 2,
+          "wrong_target_prompts": 0,
+          "suggestions": 85
+        },
+        "held_out": {
+          "photos": 60,
+          "correct_targets": 22,
+          "comparison_prompts": 1,
+          "wrong_target_prompts": 0,
+          "suggestions": 23
+        }
+      },
+      {
+        "fold": 3,
+        "margin": 0.02411,
+        "fit": {
+          "photos": 241,
+          "correct_targets": 77,
+          "comparison_prompts": 2,
+          "wrong_target_prompts": 0,
+          "suggestions": 79
+        },
+        "held_out": {
+          "photos": 59,
+          "correct_targets": 18,
+          "comparison_prompts": 0,
+          "wrong_target_prompts": 0,
+          "suggestions": 18
+        }
+      },
+      {
+        "fold": 4,
+        "margin": 0.02411,
+        "fit": {
+          "photos": 240,
+          "correct_targets": 73,
+          "comparison_prompts": 2,
+          "wrong_target_prompts": 0,
+          "suggestions": 75
+        },
+        "held_out": {
+          "photos": 60,
+          "correct_targets": 22,
+          "comparison_prompts": 0,
+          "wrong_target_prompts": 0,
+          "suggestions": 22
+        }
+      }
+    ],
+    "pooled_out_of_fold": {
+      "photos": 300,
+      "correct_targets": 105,
+      "comparison_prompts": 3,
+      "wrong_target_prompts": 0,
+      "suggestions": 108
+    },
+    "devel_gate": true,
+    "refit": {
+      "margin": 0.02411,
+      "development_fit": {
+        "photos": 300,
+        "correct_targets": 95,
+        "comparison_prompts": 2,
+        "wrong_target_prompts": 0,
+        "suggestions": 97
+      },
+      "fresh": {
+        "photos": 9,
+        "correct_targets": 0,
+        "comparison_prompts": 0,
+        "wrong_target_prompts": 0,
+        "suggestions": 0
+      },
+      "advance": true
+    }
+  },
+  "incidental": {
+    "domain_counts": {
+      "handheld": {
+        "photos": 41,
+        "above_lower_floor": 2,
+        "positive_matching_margins": 1,
+        "accepted": 1
+      },
+      "camera": {
+        "photos": 48,
+        "above_lower_floor": 10,
+        "positive_matching_margins": 5,
+        "accepted": 0
+      }
+    },
+    "new_crop_views": 12,
+    "new_candidates": 0,
+    "existing_review_assignments": {
+      "nz-paired-pilot-assisted-package-v3": 1
+    }
+  },
+  "existing_prompt": {
+    "proposed": "Ulex europaeus",
+    "tile_score": 0.03801483288407326,
+    "bioclip_margin": 0.037425,
+    "species_unreviewed": true
+  },
+  "controls_new_crop_views": 190,
+  "control_seconds": 12.549160230992129,
+  "fixed_bioclip_weights_sha256": "b7b2bf6fbc95799e42630e394cf95803892ab447c1a8ab629dbc82fbeaf7dfef",
+  "artifacts": {
+    "nz-local-bioclip/screen_incidental.py": "0f095b74fee117c9e20991d33d799c6c1d5ea214fac6888c1279c91084ef003f",
+    "nz-local-bioclip/screen.py": "50c549d9fb2cf74068ca06413c05118e6aa5ff3847ef458fea062348c61ae1cf",
+    "nz-local-bioclip/margin-replay.json": "80836ff7d1bc8ccbc730aa96882e24966217ce93cc32dc61827b2557a812a149",
+    "nz-local-bioclip/incidental-result.json": "151a5a1b7e3831f0a1d8bb10284b80df7811a0d50fba5eb0fdbde12532156663",
+    "nz-local-bioclip/comparison-report.json": "4324eda0f836685e07fbae024239fff67b3039ad5d181ac8259b4ea50646161c",
+    "nz-local-bioclip/evaluate.py": "78de8d5ee58c9affee010539efdf58de4d1004e6cfd5f2685a11188e2eb8eae2",
+    "nz-local-bioclip/margin_replay.py": "919102c60cbd6f37289048c3c37181a47967031639077ab98ae62a80751c1578",
+    "nz-local-bioclip/evaluate_incidental.py": "97cefc0a3ba24b339413d9440a2dafe460b68bb52c94ad4fecfda5d46280a913",
+    "nz-local-bioclip/control-tile-scores.json": "dc1e0663bf3875b90228f72067419c461ecb75503a5ffa0d6567eb43631fa267",
+    "nz-local-bioclip/incidental-tile-scores.json": "607b93ce44021388a623fa6c8e016354c2f185c891b5fd3e0f86f6891ba944e4"
+  },
+  "input_receipts": {
+    "/home/gardner/src/weedz-dataset-artifacts/20261119/nz-post2023-v1/cohort-v1/inference-inputs.json": "1e806405f28e7e35c9452ea6d28bfc15e60d4ddd4a4f691b2768417cf98a9fb3",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-tile-transfer/predictions.json": "9b73a5eaf72597c83e685bdd3e006d5b1783c96e9f3b7c62aa549d8c27503e54",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-fresh-agreement/development-native-tile-predictions.json": "c696d626e0e529c0755304712ee7681f50b21ff3bc3fe1e17c93bb64c900e5a6",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-fresh-agreement/raw-predictions.json": "52791265036c8617c67097e6d8d1fb0a4339c983814d504ffb605081a768656f",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-fresh-agreement/assisted_pool.jsonl": "86297229cfcab1c0115366ee0c1a5446ab74548b45917d39d62c44581dc8313b",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-paired-pilot/assisted-scores.json": "f26a1b183c28a2c3e0f09c1cfcd7436eb4a8c0469ce532bc564274226eacfc43",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-paired-pilot/assisted_pool.jsonl": "fa5439181bdf5baed08e341958ccf4dd5c231f85800fbf2b5bf67d0fcd0f0a91",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-paired-pilot-supplement/assisted-scores.json": "2b9405717eb0a4e760e9e33540c1509e459efaa75e95333c855ff423fddfd4ef",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-paired-pilot-supplement/assisted_pool.jsonl": "20fe271931291708447349dd76610ab480fa8ee7a68444c592f077aa309848d4",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-habitat-enrichment/assisted-scores.json": "11cbff0edc869685538deca65ac9545b77b63dd4b95aacf464f8c59d67c94dd3",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-habitat-enrichment/assisted_pool.jsonl": "f9eb9cdde8a83f0623e282c9311810bcb67f8d40692a6f961cadadb5fcc8a8f8",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-botanical-discovery/assisted-scores.json": "771929f2dbf42500bc7e6eb77570d47ea6b5d9a1f2fbafe01043879262acdb25",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-botanical-discovery/assisted_pool.jsonl": "6db941ce17e2a5fc55faec65d97ff56f9f8d42959c0622341c65e2ca9c890191",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-trailcam-discovery/assisted-scores.json": "64f20926e9965fe3d6cf9399dc2bda496edce0fe58da2af25c80bb5187b63697",
+    "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-trailcam-discovery/assisted_pool.jsonl": "16b74e62dc2ba993a6bc420e27a5e3197917e9a0b2ac164630ab34ad4c479f8b"
+  },
+  "frozen_review_pins": {
+    "nz-blind-policy-seal/screen_blind.py": "9a55020d0ca6961bd5c9075d27abb12287e39da1cb4b08729e5dfc0a45939370",
+    "nz-blind-policy-seal/sealed-decisions.json": "6ed06f0673f3aa56daa515604620ce99bb40ea4ee010acd6b459f4eaa16b0991",
+    "nz-blind-policy-seal/synthetic-outcomes-check.json": "fcf5407e915b90a4b37b078599f6ffca05eebbacf014be7f0e3d96c7c19b3be1",
+    "nz-paired-pilot-blind-package-v1/manifest.json": "bc2f919021893923682c98f96adc882a96620eb2f9b22a2d6913edbcdca84515",
+    "nz-paired-pilot-blind-package-v1/tasks.json": "7c253f936c4b021afe16d8d6a9cb02a03621abc6766b6ae802474a5f19963e29",
+    "nz-paired-pilot-assisted-package-v3/manifest.json": "0a03e793631ee1060ad9177e3b3c5022f88df72f2c6e47b93397d81574a608e3",
+    "nz-paired-pilot-assisted-package-v3/tasks.json": "a9faf1f8cdab96237813d7e81cf5560653a32796c7494729097d5e5c340fb96d",
+    "nz-paired-pilot-assisted-package-v3/private/assisted-cues.json": "eaf4b75bd5bd8c8f4e504de0be43ec7df686cdc6e46d650501edc738dee87960"
+  },
+  "scope": "Separate diagnostic. Fresh subjects are comparison controls only. Incidental species and usability remain unreviewed."
+}

@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "platform": "CVAT",
+  "publication_receipt_sha256": "cf6992045422c23586040a6cff2ce41b3141753b625d5433d922f13d837d18a5",
+  "browser_receipt_sha256": "5b4707615241741e69b14c273ff56e8e7052863bd1aca53b85b4dd1ff4855c49",
+  "hosted_frames": 40,
+  "originals_pixel_verified": 40,
+  "contexts_retrieved": 24,
+  "context_transport": "CVAT JPEG previews; uploaded PNG crops preserved in operator materials",
+  "max_mean_context_channel_difference": 4.576734754774305,
+  "blind_context_count": 0,
+  "authenticated_browser_jobs": 8,
+  "assignments": "Reviewer jobs created; individual accounts not yet assigned.",
+  "initially_empty": true,
+  "tasks": {
+    "blind": {
+      "task_id": 15,
+      "frames": 16,
+      "guide_id": 9,
+      "reviewer_jobs": [
+        {
+          "id": 20,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/15/jobs/20"
+        },
+        {
+          "id": 21,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/15/jobs/21"
+        }
+      ]
+    },
+    "assisted": {
+      "task_id": 16,
+      "frames": 21,
+      "guide_id": 10,
+      "reviewer_jobs": [
+        {
+          "id": 23,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/16/jobs/23"
+        },
+        {
+          "id": 24,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/16/jobs/24"
+        }
+      ]
+    },
+    "camera-disagreement": {
+      "task_id": 13,
+      "frames": 1,
+      "guide_id": 7,
+      "reviewer_jobs": [
+        {
+          "id": 14,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/13/jobs/14"
+        },
+        {
+          "id": 15,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/13/jobs/15"
+        }
+      ]
+    },
+    "camera-local": {
+      "task_id": 14,
+      "frames": 2,
+      "guide_id": 8,
+      "reviewer_jobs": [
+        {
+          "id": 17,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/14/jobs/17"
+        },
+        {
+          "id": 18,
+          "type": "replica",
+          "url": "https://cvat.llm.nz/tasks/14/jobs/18"
+        }
+      ]
+    }
+  }
+}

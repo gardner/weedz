@@ -1,0 +1,643 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125/roadside-source",
+  "receipts": {
+    "xp4-validation-full/calibration.json": "22d6f20652fba9b5f88dd50bdbb8543ab68a931a9e51cc8d70969f808def77a5",
+    "xp4-full-threshold-replay.json": "f7aec4c90c71f0f80e2d03e85eb2488ae6cf668d18613f876e905f173ea74f73",
+    "xp4-released-threshold-replay.json": "2815a465ad43ac581a794e66eba939bc184d899a2a8a5cecd8a63febb726cdf7",
+    "xp4-quick-threshold-report.json": "9e5a96fabbbc7bcfcf59b9811f5bcb39053b79d48b306c2c141798668f1d5385"
+  },
+  "cpu_fp32": {
+    "validation_summary": {
+      "images": 2160,
+      "labeled_pairs": 1181,
+      "recovered_pairs": 1005,
+      "selected_pairs": 2101,
+      "row_label_disagreements": 1096,
+      "empty_images": 739,
+      "inclusive_diagnostic": {
+        "selected_pairs": 2107,
+        "recovered_pairs": 1011
+      }
+    },
+    "validation_images": 2160,
+    "thresholds": [
+      {
+        "taxon": "Solidago",
+        "threshold": 0.8152605295181274,
+        "roc_selected_infinity": false,
+        "validation_positive": 462,
+        "validation_score_equals_cutoff": 1,
+        "validation_positive_equals_cutoff": 1,
+        "youden_j": 0.7377969498110841
+      },
+      {
+        "taxon": "Cytisus scoparius",
+        "threshold": 0.6889161467552185,
+        "roc_selected_infinity": false,
+        "validation_positive": 199,
+        "validation_score_equals_cutoff": 1,
+        "validation_positive_equals_cutoff": 1,
+        "youden_j": 0.8275210832336082
+      },
+      {
+        "taxon": "Rosa rugosa",
+        "threshold": 0.7209405899047852,
+        "roc_selected_infinity": false,
+        "validation_positive": 226,
+        "validation_score_equals_cutoff": 1,
+        "validation_positive_equals_cutoff": 1,
+        "youden_j": 0.8420990015649166
+      },
+      {
+        "taxon": "Lupinus polyphyllus",
+        "threshold": 0.6868200898170471,
+        "roc_selected_infinity": false,
+        "validation_positive": 65,
+        "validation_score_equals_cutoff": 1,
+        "validation_positive_equals_cutoff": 1,
+        "youden_j": 0.9049384982559208
+      },
+      {
+        "taxon": "Pastinaca sativa",
+        "threshold": 0.7103875279426575,
+        "roc_selected_infinity": false,
+        "validation_positive": 152,
+        "validation_score_equals_cutoff": 1,
+        "validation_positive_equals_cutoff": 1,
+        "youden_j": 0.5656322080100651
+      },
+      {
+        "taxon": "Reynoutria",
+        "threshold": 0.9423604607582092,
+        "roc_selected_infinity": false,
+        "validation_positive": 77,
+        "validation_score_equals_cutoff": 1,
+        "validation_positive_equals_cutoff": 1,
+        "youden_j": 0.6380283182971613
+      }
+    ],
+    "validation_quick_overlap": {
+      "frames": 16,
+      "identical_feature_tensors": 16,
+      "max_abs_score_delta": 0.0
+    },
+    "fixed_tests": {
+      "test_14": {
+        "images": 14,
+        "labeled_pairs": 12,
+        "recovered_pairs": 10,
+        "selected_pairs": 14,
+        "row_label_disagreements": 4,
+        "empty_images": 2,
+        "inclusive_diagnostic": {
+          "selected_pairs": 14,
+          "recovered_pairs": 10
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 1
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 2,
+            "selected": 5,
+            "recovered": 2
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 2,
+            "selected": 1,
+            "recovered": 1
+          }
+        ],
+        "explicit_no_species_controls": 2,
+        "control_suggestions": 0
+      },
+      "multilabel": {
+        "images": 16,
+        "labeled_pairs": 32,
+        "recovered_pairs": 30,
+        "selected_pairs": 41,
+        "row_label_disagreements": 11,
+        "empty_images": 0,
+        "inclusive_diagnostic": {
+          "selected_pairs": 41,
+          "recovered_pairs": 30
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 5,
+            "selected": 10,
+            "recovered": 5
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 5,
+            "selected": 7,
+            "recovered": 5
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 4,
+            "selected": 4,
+            "recovered": 4
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 7,
+            "selected": 6,
+            "recovered": 6
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 11,
+            "selected": 12,
+            "recovered": 10
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 0,
+            "selected": 2,
+            "recovered": 0
+          }
+        ],
+        "explicit_no_species_controls": null,
+        "control_suggestions": null
+      },
+      "reserved_25": {
+        "images": 25,
+        "labeled_pairs": 21,
+        "recovered_pairs": 15,
+        "selected_pairs": 26,
+        "row_label_disagreements": 11,
+        "empty_images": 8,
+        "inclusive_diagnostic": {
+          "selected_pairs": 26,
+          "recovered_pairs": 15
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 4,
+            "selected": 6,
+            "recovered": 3
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 4,
+            "selected": 6,
+            "recovered": 3
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 4,
+            "selected": 4,
+            "recovered": 4
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 3,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 4,
+            "selected": 5,
+            "recovered": 1
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 2,
+            "selected": 3,
+            "recovered": 2
+          }
+        ],
+        "explicit_no_species_controls": 4,
+        "control_suggestions": 2
+      }
+    },
+    "inputs": {
+      "calibration": "22d6f20652fba9b5f88dd50bdbb8543ab68a931a9e51cc8d70969f808def77a5",
+      "quick_scores": "90a6ca9b79630c31fe4c7c1008993efdcf4bc70b2db14cb0405a925965e846cb",
+      "quick_feature_receipt": "a90ca5203c92209ec1acea1833519c26f3a4e74ce87e0be6e6f478d6789a7a70",
+      "reserved_feature_receipt": "48143f1fd266d640ef3e8c7290ce8f5fd6b4739ef01c30595e293c10c614e1cf",
+      "reserved_report": "7828e78d7a3e72559d00e25cea43fa32e4d06150f3c6ba5828c239ec4a884c0b"
+    },
+    "producer_sha256": "8a9e30b53edfe92cc5e3db4cf2630c400996308f23f8f6891b60f04d552a1e76",
+    "scope": "2160-frame publisher validation reconstruction, FP32 publisher BEiT-feature XP4 head. Test summaries are bounded replay sets, not the entire paper benchmark. Unlisted species remain unassessed.",
+    "validation_scores_sha256": "615a0702331f87622a43cd802a4747191ed68f43f284228bee7aff7ec9014293",
+    "membership_sha256": "c7edb615e5f0afce922cc17078fd61761a606fef4e8dd7e356f32595bf4fd3a1",
+    "checkpoint_md5": "bad94594feb5c70153b9542d5df07725",
+    "calibration_producer_sha256": "e06d7a5fb5196a7c33c96757825462d7947aeffe6153086f1d6133b5bf029a4f",
+    "calibration_seconds": 1937.6776788590068
+  },
+  "released_cuda_autocast": {
+    "thresholds": [
+      {
+        "taxon": "Solidago",
+        "threshold": 0.81298828125
+      },
+      {
+        "taxon": "Cytisus scoparius",
+        "threshold": 0.68896484375
+      },
+      {
+        "taxon": "Rosa rugosa",
+        "threshold": 0.72119140625
+      },
+      {
+        "taxon": "Lupinus polyphyllus",
+        "threshold": 0.68701171875
+      },
+      {
+        "taxon": "Pastinaca sativa",
+        "threshold": 0.71044921875
+      },
+      {
+        "taxon": "Reynoutria",
+        "threshold": 0.93798828125
+      }
+    ],
+    "released_csv_values": {
+      "Solidago": 0.8129883,
+      "Cytisus scoparius": 0.68896484,
+      "Rosa rugosa": 0.7211914,
+      "Lupinus polyphyllus": 0.6870117,
+      "Pastinaca sativa": 0.7104492,
+      "Reynoutria": 0.9379883
+    },
+    "quick_validation_control": {
+      "images": 16,
+      "labeled_pairs": 13,
+      "recovered_pairs": 13,
+      "selected_pairs": 19,
+      "row_label_disagreements": 6,
+      "empty_images": 3,
+      "inclusive_diagnostic": {
+        "selected_pairs": 19,
+        "recovered_pairs": 13
+      }
+    },
+    "quick_autocast_refit": {
+      "test_14": {
+        "images": 14,
+        "labeled_pairs": 12,
+        "recovered_pairs": 6,
+        "selected_pairs": 8,
+        "row_label_disagreements": 2,
+        "empty_images": 7,
+        "inclusive_diagnostic": {
+          "selected_pairs": 8,
+          "recovered_pairs": 6
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 1
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 2,
+            "selected": 0,
+            "recovered": 0
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 1
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 2,
+            "selected": 0,
+            "recovered": 0
+          }
+        ],
+        "explicit_no_species_controls": 2,
+        "control_suggestions": 0
+      },
+      "multilabel": {
+        "images": 16,
+        "labeled_pairs": 32,
+        "recovered_pairs": 22,
+        "selected_pairs": 26,
+        "row_label_disagreements": 4,
+        "empty_images": 0,
+        "inclusive_diagnostic": {
+          "selected_pairs": 28,
+          "recovered_pairs": 23
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 5,
+            "selected": 8,
+            "recovered": 5
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 5,
+            "selected": 3,
+            "recovered": 3
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 4,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 7,
+            "selected": 4,
+            "recovered": 4
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 11,
+            "selected": 9,
+            "recovered": 8
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 0,
+            "selected": 0,
+            "recovered": 0
+          }
+        ],
+        "explicit_no_species_controls": null,
+        "control_suggestions": null
+      },
+      "reserved_25": {
+        "images": 25,
+        "labeled_pairs": 21,
+        "recovered_pairs": 12,
+        "selected_pairs": 18,
+        "row_label_disagreements": 6,
+        "empty_images": 11,
+        "inclusive_diagnostic": {
+          "selected_pairs": 18,
+          "recovered_pairs": 12
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 4,
+            "selected": 6,
+            "recovered": 3
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 4,
+            "selected": 4,
+            "recovered": 2
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 4,
+            "selected": 4,
+            "recovered": 4
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 3,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 4,
+            "selected": 2,
+            "recovered": 1
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 2,
+            "selected": 0,
+            "recovered": 0
+          }
+        ],
+        "explicit_no_species_controls": 4,
+        "control_suggestions": 2
+      }
+    },
+    "fixed_tests": {
+      "test_14": {
+        "images": 14,
+        "labeled_pairs": 12,
+        "recovered_pairs": 10,
+        "selected_pairs": 15,
+        "row_label_disagreements": 5,
+        "empty_images": 2,
+        "inclusive_diagnostic": {
+          "selected_pairs": 16,
+          "recovered_pairs": 10
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 1
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 2,
+            "selected": 5,
+            "recovered": 2
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 2,
+            "selected": 2,
+            "recovered": 1
+          }
+        ],
+        "explicit_no_species_controls": 2,
+        "control_suggestions": 0
+      },
+      "multilabel": {
+        "images": 16,
+        "labeled_pairs": 32,
+        "recovered_pairs": 30,
+        "selected_pairs": 42,
+        "row_label_disagreements": 12,
+        "empty_images": 0,
+        "inclusive_diagnostic": {
+          "selected_pairs": 42,
+          "recovered_pairs": 30
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 5,
+            "selected": 11,
+            "recovered": 5
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 5,
+            "selected": 7,
+            "recovered": 5
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 4,
+            "selected": 4,
+            "recovered": 4
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 7,
+            "selected": 6,
+            "recovered": 6
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 11,
+            "selected": 12,
+            "recovered": 10
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 0,
+            "selected": 2,
+            "recovered": 0
+          }
+        ],
+        "explicit_no_species_controls": null,
+        "control_suggestions": null
+      },
+      "reserved_25": {
+        "images": 25,
+        "labeled_pairs": 21,
+        "recovered_pairs": 15,
+        "selected_pairs": 26,
+        "row_label_disagreements": 11,
+        "empty_images": 8,
+        "inclusive_diagnostic": {
+          "selected_pairs": 26,
+          "recovered_pairs": 15
+        },
+        "by_taxon": [
+          {
+            "taxon": "Solidago",
+            "labeled": 4,
+            "selected": 6,
+            "recovered": 3
+          },
+          {
+            "taxon": "Cytisus scoparius",
+            "labeled": 4,
+            "selected": 6,
+            "recovered": 3
+          },
+          {
+            "taxon": "Rosa rugosa",
+            "labeled": 4,
+            "selected": 4,
+            "recovered": 4
+          },
+          {
+            "taxon": "Lupinus polyphyllus",
+            "labeled": 3,
+            "selected": 2,
+            "recovered": 2
+          },
+          {
+            "taxon": "Pastinaca sativa",
+            "labeled": 4,
+            "selected": 5,
+            "recovered": 1
+          },
+          {
+            "taxon": "Reynoutria",
+            "labeled": 2,
+            "selected": 3,
+            "recovered": 2
+          }
+        ],
+        "explicit_no_species_controls": 4,
+        "control_suggestions": 2
+      }
+    },
+    "precision": {
+      "max_abs_score_delta": 0.00039774179458618164,
+      "differences": 426,
+      "scores": 426,
+      "torch": "2.15.0+cu132",
+      "device": "NVIDIA GeForce RTX 5090"
+    },
+    "inputs": {
+      "released_thresholds": "2aa753d9e4a76b1b96f0694e2a64af493d8f85fb101156d578e24b9d2072746c",
+      "full_validation_config": "72bdc7a0d43aadb206fb5d80c8c595a68595dc3933a706e815941f5df0451b6b",
+      "xp4_job": "3813b156ace3c8ef11cbdf6737e95d2934f76319ac538f623de1a3c4b35038f6",
+      "smoke_scores": "90a6ca9b79630c31fe4c7c1008993efdcf4bc70b2db14cb0405a925965e846cb",
+      "reserved_scores": "7828e78d7a3e72559d00e25cea43fa32e4d06150f3c6ba5828c239ec4a884c0b",
+      "smoke_features": "a90ca5203c92209ec1acea1833519c26f3a4e74ce87e0be6e6f478d6789a7a70",
+      "reserved_features": "48143f1fd266d640ef3e8c7290ce8f5fd6b4739ef01c30595e293c10c614e1cf"
+    },
+    "producer_sha256": "dcb2ac60925630a19d89036705cfeac7e5cc2c17735c21cf9bf350dab24760b9",
+    "scope": "Released XP4 fixed operating point on bounded publisher BEiT feature cohorts with CUDA FP16 autocast. Unlisted taxa remain unassessed."
+  },
+  "maximum_cutoff_delta": 0.0043721795082092285,
+  "whole_publisher_test_scored": false,
+  "nz_policy_changed": false
+}

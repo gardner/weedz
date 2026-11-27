@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125",
+  "archives": {
+    "blind": {
+      "path": "pilot-reviewer-handoff/nz-pilot-blind-v1.zip",
+      "sha256": "6d0bee0cb001e92e6d0e1d35690159835a56da3173324df24efcfd1d5bb6f0cb",
+      "bytes": 47630025,
+      "tasks": 16,
+      "images": 16
+    },
+    "assisted": {
+      "path": "pilot-reviewer-handoff/nz-pilot-assisted-v3.zip",
+      "sha256": "ba79ec19306705345ad5562f5fe31745cf633448598876fb482ffcd3471a7953",
+      "bytes": 100093549,
+      "tasks": 21,
+      "images": 42
+    }
+  },
+  "bytes_checked": true,
+  "reviewer_task_payloads_identical": true,
+  "private_seal_included": false,
+  "actual_human_reviews": 0
+}

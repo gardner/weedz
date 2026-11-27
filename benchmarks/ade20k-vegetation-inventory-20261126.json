@@ -1,0 +1,203 @@
+{
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261126/vegetation-gate",
+  "source": "https://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016.zip",
+  "photos": 2000,
+  "mapped_label_ids": [
+    5,
+    10,
+    18,
+    67,
+    73
+  ],
+  "screened_context_label_ids": [
+    30,
+    69,
+    95
+  ],
+  "small_fraction": 0.005,
+  "low_ignore_fraction": 0.01,
+  "groups": {
+    "mapped_vegetation_larger": 856,
+    "mapped_vegetation_few_pixels": 111,
+    "no_mapped_vegetation_ambiguous": 910,
+    "no_mapped_vegetation_low_ignore": 123
+  },
+  "leading_scene_categories": {
+    "mapped_vegetation_larger": [
+      [
+        "street",
+        132
+      ],
+      [
+        "misc",
+        80
+      ],
+      [
+        "living_room",
+        30
+      ],
+      [
+        "bedroom",
+        27
+      ],
+      [
+        "highway",
+        23
+      ],
+      [
+        "dining_room",
+        22
+      ],
+      [
+        "skyscraper",
+        14
+      ],
+      [
+        "kitchen",
+        11
+      ],
+      [
+        "broadleaf",
+        10
+      ],
+      [
+        "park",
+        9
+      ]
+    ],
+    "mapped_vegetation_few_pixels": [
+      [
+        "living_room",
+        18
+      ],
+      [
+        "street",
+        18
+      ],
+      [
+        "bedroom",
+        12
+      ],
+      [
+        "kitchen",
+        8
+      ],
+      [
+        "dining_room",
+        8
+      ],
+      [
+        "misc",
+        5
+      ],
+      [
+        "bathroom",
+        4
+      ],
+      [
+        "airport_terminal",
+        3
+      ],
+      [
+        "poolroom_home",
+        2
+      ],
+      [
+        "childs_room",
+        1
+      ]
+    ],
+    "no_mapped_vegetation_ambiguous": [
+      [
+        "bedroom",
+        67
+      ],
+      [
+        "misc",
+        58
+      ],
+      [
+        "bathroom",
+        51
+      ],
+      [
+        "kitchen",
+        48
+      ],
+      [
+        "street",
+        42
+      ],
+      [
+        "living_room",
+        18
+      ],
+      [
+        "skyscraper",
+        16
+      ],
+      [
+        "dining_room",
+        11
+      ],
+      [
+        "building_facade",
+        11
+      ],
+      [
+        "office",
+        10
+      ]
+    ],
+    "no_mapped_vegetation_low_ignore": [
+      [
+        "bedroom",
+        33
+      ],
+      [
+        "street",
+        11
+      ],
+      [
+        "misc",
+        8
+      ],
+      [
+        "corridor",
+        5
+      ],
+      [
+        "bathroom",
+        5
+      ],
+      [
+        "living_room",
+        4
+      ],
+      [
+        "hotel_room",
+        4
+      ],
+      [
+        "conference_room",
+        4
+      ],
+      [
+        "art_gallery",
+        2
+      ],
+      [
+        "attic",
+        2
+      ]
+    ]
+  },
+  "hashes": {
+    "ade20k-tail.bin": "5830afa903367f30a099745917832e2f8d173e40ff59290251d7a4eac3fedbf2",
+    "ade20k-val-mask.bin": "291c68d3cb46538acbb2bfe2dac9630f13a9e413f09cf8b3c86cae4dbc013247",
+    "objectInfo150.txt": "8f44086dc6b414d8190a07f8a7bdbe0b45d58f11d72d64f2234ec5707c2b554e",
+    "sceneCategories.txt": "30c817b5e8b9ddbd39221318cff4463530997529a82cce7f1f689805fb1b1a52"
+  },
+  "scope": "Source label inventory only. No detector evaluated. Zero mapped pixels is a class-scoped negative candidate, not verified plant absence.",
+  "producer_sha256": "5fca0c566c5a0e9bb90f486ca48b20dc806119d6e8446b6313d6539be47ff26c"
+}

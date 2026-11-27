@@ -1,0 +1,135 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125/cropandweed-balanced-source",
+  "artifacts": {
+    "acquire_ranges.py": "a68535bf2fbcab3b1af3e242179c18becc498aa4a5ed6c90b81a9799a016dfe6",
+    "range-plan.json": "fe248f573b2476080a6af170f7b164f88fb345e9c61319c0fd304c5161407458",
+    "ranges-ready.json": "db40979c7494d8a200a8eb98463fb7119fe8a8c7555e26711f2029c5bd19a62f",
+    "close_selection.py": "f30fa769c7eb42ad0b99fc1666b2650981aa266b8adaccdd87ba21cfb0b6493e",
+    "balanced-selection.json": "6ee896dede416171e71aaeacf1978a764e7e1a25cfa839cea4c6c4a6efb19a9d",
+    "classify_balanced.py": "99bb98dd692dd91893bb7fca5709add7192d57217025bedae6dd88f17b14bcdb",
+    "validation-choice.json": "676a90e7292aaef9c54e9c7fa72f83e6c7203c31938637151cc4373788d6cf36",
+    "balanced-reserve-report.json": "40e2844da7279c7e81ce52127ae0fee4c477ea391c5e1d211ec6695c528f77dc"
+  },
+  "acquisition": {
+    "range_count": 32,
+    "bytes": 536870912
+  },
+  "selection": {
+    "source_annotations_sha256": "52444898ff142e95051c40073121fd509f2dee9e7766eadd8608b52785584041",
+    "range_receipt_sha256": "db40979c7494d8a200a8eb98463fb7119fe8a8c7555e26711f2029c5bd19a62f",
+    "previous_selection_sha256": "7f1e42912592aca6215fcec4fca31e291ff8e3fbd060f3495f272e9f4211f954",
+    "producer_sha256": "f30fa769c7eb42ad0b99fc1666b2650981aa266b8adaccdd87ba21cfb0b6493e",
+    "seed": "weedz-cropandweed-balanced-v1",
+    "quotas": {
+      "development": 3,
+      "validation": 2,
+      "reserve": 2
+    },
+    "image_counts": {
+      "complete_images": 343,
+      "no_mapped_boxes": 234,
+      "eligible_images": 109
+    },
+    "class_availability": {
+      "46": {
+        "available": 1,
+        "available_after_group_exclusions": 1,
+        "selected": 0
+      },
+      "34": {
+        "available": 2,
+        "available_after_group_exclusions": 2,
+        "selected": 0
+      },
+      "52": {
+        "available": 2,
+        "available_after_group_exclusions": 2,
+        "selected": 0
+      },
+      "31": {
+        "available": 6,
+        "available_after_group_exclusions": 6,
+        "selected": 0
+      },
+      "32": {
+        "available": 6,
+        "available_after_group_exclusions": 6,
+        "selected": 0
+      },
+      "38": {
+        "available": 9,
+        "available_after_group_exclusions": 9,
+        "selected": 7
+      },
+      "39": {
+        "available": 11,
+        "available_after_group_exclusions": 11,
+        "selected": 7
+      },
+      "33": {
+        "available": 20,
+        "available_after_group_exclusions": 15,
+        "selected": 7
+      }
+    },
+    "split_counts": {
+      "development": 9,
+      "validation": 6,
+      "reserve": 6
+    },
+    "scope": "Fixed spaced byte ranges. Distinct recording sessions rather than verified distinct sites."
+  },
+  "evaluation": {
+    "policy_commit": "c37ea6a0025e5cb428525d36657e5397f1b1a50c",
+    "baseline": {
+      "by_taxon": {
+        "Chenopodium album L.": {
+          "boxes": 2,
+          "correct": 1
+        },
+        "Cirsium arvense (L.) Scop.": {
+          "boxes": 2,
+          "correct": 2
+        },
+        "Sonchus arvensis L.": {
+          "boxes": 2,
+          "correct": 1
+        }
+      },
+      "macro_top1": 0.6666666666666666,
+      "correct": 4,
+      "boxes": 6
+    },
+    "adapted": {
+      "by_taxon": {
+        "Chenopodium album L.": {
+          "boxes": 2,
+          "correct": 0
+        },
+        "Cirsium arvense (L.) Scop.": {
+          "boxes": 2,
+          "correct": 2
+        },
+        "Sonchus arvensis L.": {
+          "boxes": 2,
+          "correct": 2
+        }
+      },
+      "macro_top1": 0.6666666666666666,
+      "correct": 4,
+      "boxes": 6
+    },
+    "macro_delta": 0.0,
+    "improvement_gate": false,
+    "gains": 1,
+    "losses": 1,
+    "chosen_c": 0.1,
+    "inference_seconds": {
+      "development": 0.3610405639919918,
+      "validation": 0.15892250399338081,
+      "reserve": 0.1587350509944372
+    },
+    "scope": "One source box per image, balanced in-vocabulary comparison. Explicitly developer-oriented size and non-NZ domain."
+  }
+}

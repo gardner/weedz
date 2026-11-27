@@ -1,0 +1,355 @@
+{
+  "schema": 1,
+  "artifact_root": "/home/gardner/src/weedz-evaluation-artifacts/20261125/nz-tile-transfer",
+  "artifacts": {
+    "run.py": "9025d1ee5619f66cc4be64e0d7483893de386cb8872801cde50d84bd11dc5525",
+    "score.py": "b3478588b8bebb3daf1421202888a0dd1f208f186d87579b15f19568d5a40d7f",
+    "compare_agreement.py": "1fcdb37b2eab7a541373b2b81158fc178fcf5d1baf086894b9e0f4a289a16d86",
+    "audit_existing_blind.py": "a99e56f86a734830785a418e24fe95e1e374b0d150586d3159ea95d9e3842e5c",
+    "predictions.json": "9b73a5eaf72597c83e685bdd3e006d5b1783c96e9f3b7c62aa549d8c27503e54",
+    "inference-receipt.json": "6033abe1c2998007c6a5504e3b985b0503142a592e3e40a0110d8a00d0244a61",
+    "subject-control-report.json": "81a8d806d33f8b8b495a91ec1e50659fd4b65521082e4e8ce4170c423393f219",
+    "assisted-policy-development.json": "01d1a89106ef2525f3835eee3210c603fe74e302c650bf030bb80114dadc7a37",
+    "agreement-development-report.json": "9a4a6fce106fb604fa758491aad3fea624b999a49c174e542081c46521fe2cd8",
+    "existing-blind-audit.json": "3dc4478797bf14aee0220278357e358d0ddc89a66aad53ba62ea69c9561de9c9"
+  },
+  "subject_control": {
+    "metrics": {
+      "whole": {
+        "by_subject": {
+          "Austroderia fulvida": {
+            "images": 50,
+            "watchlist_first": {
+              "Cortaderia selloana": 49,
+              "Clematis vitalba": 1
+            },
+            "supported_subject_top1": 0,
+            "median_max_watchlist_score": 0.015785059425979853
+          },
+          "Clematis paniculata": {
+            "images": 50,
+            "watchlist_first": {
+              "Clematis vitalba": 46,
+              "Ulex europaeus": 3,
+              "Cortaderia selloana": 1
+            },
+            "supported_subject_top1": 0,
+            "median_max_watchlist_score": 0.0024459564592689276
+          },
+          "Clematis vitalba": {
+            "images": 50,
+            "watchlist_first": {
+              "Clematis vitalba": 44,
+              "Cortaderia selloana": 2,
+              "Ulex europaeus": 4
+            },
+            "supported_subject_top1": 44,
+            "median_max_watchlist_score": 0.03658395819365978
+          },
+          "Cortaderia selloana": {
+            "images": 50,
+            "watchlist_first": {
+              "Cortaderia selloana": 49,
+              "Ulex europaeus": 1
+            },
+            "supported_subject_top1": 49,
+            "median_max_watchlist_score": 0.10023408383131027
+          },
+          "Cytisus scoparius": {
+            "images": 50,
+            "watchlist_first": {
+              "Cortaderia selloana": 10,
+              "Ulex europaeus": 10,
+              "Clematis vitalba": 30
+            },
+            "supported_subject_top1": 48,
+            "median_max_watchlist_score": 0.00019556781626306474
+          },
+          "Ulex europaeus": {
+            "images": 50,
+            "watchlist_first": {
+              "Ulex europaeus": 50
+            },
+            "supported_subject_top1": 50,
+            "median_max_watchlist_score": 0.024603632278740406
+          }
+        },
+        "four_target_subject_retrieval": {
+          "correct": 191,
+          "n": 200
+        },
+        "three_target_subject_retrieval": {
+          "correct": 143,
+          "n": 150
+        },
+        "positive_subject_median_watchlist_score": 0.042715562507510185,
+        "lookalike_max_reaches_positive_median": {
+          "count": 16,
+          "n": 100
+        }
+      },
+      "tiles": {
+        "by_subject": {
+          "Austroderia fulvida": {
+            "images": 50,
+            "watchlist_first": {
+              "Cortaderia selloana": 47,
+              "Clematis vitalba": 2,
+              "Ulex europaeus": 1
+            },
+            "supported_subject_top1": 0,
+            "median_max_watchlist_score": 0.03857878968119621
+          },
+          "Clematis paniculata": {
+            "images": 50,
+            "watchlist_first": {
+              "Clematis vitalba": 45,
+              "Cortaderia selloana": 2,
+              "Ulex europaeus": 3
+            },
+            "supported_subject_top1": 0,
+            "median_max_watchlist_score": 0.0066107448656111956
+          },
+          "Clematis vitalba": {
+            "images": 50,
+            "watchlist_first": {
+              "Clematis vitalba": 50
+            },
+            "supported_subject_top1": 50,
+            "median_max_watchlist_score": 0.16571635752916336
+          },
+          "Cortaderia selloana": {
+            "images": 50,
+            "watchlist_first": {
+              "Cortaderia selloana": 49,
+              "Ulex europaeus": 1
+            },
+            "supported_subject_top1": 49,
+            "median_max_watchlist_score": 0.2647228538990021
+          },
+          "Cytisus scoparius": {
+            "images": 50,
+            "watchlist_first": {
+              "Cortaderia selloana": 7,
+              "Ulex europaeus": 13,
+              "Clematis vitalba": 30
+            },
+            "supported_subject_top1": 49,
+            "median_max_watchlist_score": 0.0006610447017010301
+          },
+          "Ulex europaeus": {
+            "images": 50,
+            "watchlist_first": {
+              "Ulex europaeus": 50
+            },
+            "supported_subject_top1": 50,
+            "median_max_watchlist_score": 0.06925942748785019
+          }
+        },
+        "four_target_subject_retrieval": {
+          "correct": 198,
+          "n": 200
+        },
+        "three_target_subject_retrieval": {
+          "correct": 149,
+          "n": 150
+        },
+        "positive_subject_median_watchlist_score": 0.13646656274795532,
+        "lookalike_max_reaches_positive_median": {
+          "count": 13,
+          "n": 100
+        }
+      }
+    },
+    "images": 300,
+    "separate_photographers": 204,
+    "inference_receipt_sha256": "6033abe1c2998007c6a5504e3b985b0503142a592e3e40a0110d8a00d0244a61",
+    "producer_sha256": "b3478588b8bebb3daf1421202888a0dd1f208f186d87579b15f19568d5a40d7f",
+    "interpretation": "Previously used source-subject views. Rankings and score overlap do not establish target absence, background performance or thresholds."
+  },
+  "assisted_policy_development": {
+    "watchlist": [
+      "Clematis vitalba",
+      "Ulex europaeus",
+      "Cortaderia selloana"
+    ],
+    "selection_score_floor": 0.13646656274795532,
+    "require_whole_photo_top_target_agreement": true,
+    "per_image_limit": 1,
+    "by_source_subject": {
+      "Austroderia fulvida": {
+        "total": 50,
+        "above_floor": 12,
+        "admitted": 12,
+        "match_subject": 0,
+        "proposed_watchlist_taxa": {
+          "Cortaderia selloana": 12
+        }
+      },
+      "Clematis paniculata": {
+        "total": 50,
+        "above_floor": 1,
+        "admitted": 1,
+        "match_subject": 0,
+        "proposed_watchlist_taxa": {
+          "Clematis vitalba": 1
+        }
+      },
+      "Clematis vitalba": {
+        "total": 50,
+        "above_floor": 27,
+        "admitted": 27,
+        "match_subject": 27,
+        "proposed_watchlist_taxa": {
+          "Clematis vitalba": 27
+        }
+      },
+      "Cortaderia selloana": {
+        "total": 50,
+        "above_floor": 33,
+        "admitted": 33,
+        "match_subject": 33,
+        "proposed_watchlist_taxa": {
+          "Cortaderia selloana": 33
+        }
+      },
+      "Cytisus scoparius": {
+        "total": 50,
+        "above_floor": 0,
+        "admitted": 0,
+        "match_subject": 0,
+        "proposed_watchlist_taxa": {}
+      },
+      "Ulex europaeus": {
+        "total": 50,
+        "above_floor": 15,
+        "admitted": 15,
+        "match_subject": 15,
+        "proposed_watchlist_taxa": {
+          "Ulex europaeus": 15
+        }
+      }
+    },
+    "calibration": "Development triage score derived from the median watchlist maximum among 150 target subjects. Scores are uncalibrated. Native/lookalike and unmatched results remain eligible for uncertainty review.",
+    "input_predictions_sha256": "9b73a5eaf72597c83e685bdd3e006d5b1783c96e9f3b7c62aa549d8c27503e54"
+  },
+  "native_agreement": {
+    "counts": {
+      "Ulex europaeus": {
+        "images": 50,
+        "native_top1_matches_subject": 46,
+        "tile_floor_and_whole_agree": 15,
+        "and_native_top1_agrees": 13,
+        "all_agree_and_match_subject": 13
+      },
+      "Clematis vitalba": {
+        "images": 50,
+        "native_top1_matches_subject": 42,
+        "tile_floor_and_whole_agree": 27,
+        "and_native_top1_agrees": 25,
+        "all_agree_and_match_subject": 25
+      },
+      "Cortaderia selloana": {
+        "images": 50,
+        "native_top1_matches_subject": 41,
+        "tile_floor_and_whole_agree": 33,
+        "and_native_top1_agrees": 31,
+        "all_agree_and_match_subject": 31
+      },
+      "Cytisus scoparius": {
+        "images": 50,
+        "native_top1_matches_subject": 45
+      },
+      "Clematis paniculata": {
+        "images": 50,
+        "native_top1_matches_subject": 41,
+        "tile_floor_and_whole_agree": 1
+      },
+      "Austroderia fulvida": {
+        "images": 50,
+        "tile_floor_and_whole_agree": 12,
+        "native_top1_matches_subject": 24
+      }
+    },
+    "source_subjects": 300,
+    "tile_floor": 0.13646656274795532,
+    "tile_source_sha256": "9b73a5eaf72597c83e685bdd3e006d5b1783c96e9f3b7c62aa549d8c27503e54",
+    "native_source_sha256": "60f307724c2b102845a2580c848bed2d92a26b4d92ba238c3d7fdff93997e104",
+    "producer_sha256": "1fcdb37b2eab7a541373b2b81158fc178fcf5d1baf086894b9e0f4a289a16d86",
+    "scope": "Development prioritization comparison. The broad classifier's top-one suggestion is only a second opinion; source subjects do not establish scene negatives."
+  },
+  "existing_blind_package_audit": {
+    "samples": 90,
+    "predictions": 0,
+    "unique_decoded_pixels": 90,
+    "unique_observers": 90,
+    "unique_observations": 90,
+    "encoded_encounter_groups": 0,
+    "strata": {
+      "gorse": 20,
+      "pampas": 10,
+      "broom": 20,
+      "clematis": 12,
+      "incidental-animals": 19,
+      "other-plants": 9
+    },
+    "package_manifest_sha256": "63531cc82707d8233e2164aa82f6751b9619add72cd933e7e81634699eafc74f",
+    "task_file_sha256": "2002460b2bef4f05b626e2bfe933f451678c6e0cebafa0fe446bda6274aff67c",
+    "producer_sha256": "a99e56f86a734830785a418e24fe95e1e374b0d150586d3159ea95d9e3842e5c",
+    "scope": "Local package at 2026-11-16. Package carries observer and observation groups only."
+  },
+  "inference": {
+    "forward_images": 5100,
+    "elapsed_seconds": 81.44001280600787,
+    "input_sha256": "1e806405f28e7e35c9452ea6d28bfc15e60d4ddd4a4f691b2768417cf98a9fb3",
+    "labels_sha256": "ef2f1b931544e4bd4ab784fd0fbab2b1cc5480579281243c2b34b20617b7703e",
+    "model": {
+      "model": "PlantCLEF2024 DINOv2 ViT-B/14 reg4 fully fine-tuned",
+      "repository": "vincent-espitalier/dino-v2-reg4-with-plantclef2024-weights",
+      "revision": "24656bb424790575adcbd7954ceefb1d87ec8b24",
+      "weights_sha256": "815a8908af8f3ee3c5ebe76030d06925a981b1af5c929f26d7c64f9fecde8ff4",
+      "labels_sha256": "5891b9ba98c6c5ae7fed925caab252e0bcde82182a077e192a9455d35f083072",
+      "class_count": 7806,
+      "licence": "CC-BY-NC-4.0 (released safetensors conversion)",
+      "original_release": "https://zenodo.org/records/10848263",
+      "preprocessing": {
+        "input_size": [
+          3,
+          518,
+          518
+        ],
+        "interpolation": "bicubic",
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "crop_pct": 1.0,
+        "crop_mode": "center"
+      },
+      "device": "cuda:0",
+      "precision": "float32",
+      "timm": "1.0.31",
+      "torch": "2.15.0",
+      "torchvision": "0.29.2",
+      "pillow": "13.0.0",
+      "numpy": "2.5.5",
+      "math_policy": {
+        "cuda_matmul_tf32": false,
+        "cudnn_tf32": false,
+        "autocast": false
+      },
+      "score_kind": "closed_set_softmax_uncalibrated",
+      "limitations": [
+        "Southwestern European flora; New Zealand native alternatives may be absent",
+        "Closed-set plant classifier has no validated non-plant rejection",
+        "Softmax shares are not calibrated weed identification confidence"
+      ]
+    }
+  }
+}
