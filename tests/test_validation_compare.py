@@ -150,6 +150,10 @@ def test_verdicts_use_direction_and_the_difference_interval(
         # A --limit smoke run keeps the same input hashes but scores fewer images.
         ({"configuration": {"smoke_limit": 50}}, "cohort changed (smoke_limit)"),
         ({"configuration": {"held_out_images": 50}}, "cohort changed (held_out_images)"),
+        ({"configuration": {"selection": "salted-v2"}}, "cohort changed (selection)"),
+        ({"configuration": {"split_salt": "v2"}}, "cohort changed (split_salt)"),
+        ({"configuration": {"test_images": 25}}, "cohort changed (test_images)"),
+        ({"configuration": {"positive_budget_per_split": 9}}, "positive_budget_per_split"),
     ],
 )
 def test_changed_evidence_is_flagged(changes: dict[str, object], expected: str):
@@ -165,7 +169,12 @@ def test_changed_evidence_is_flagged(changes: dict[str, object], expected: str):
 
 @pytest.mark.parametrize(
     "configuration",
-    [{"recorded_inference_seconds": 873.0}, {"sam3_threshold": 0.41}, {"torch_version": "2.16"}],
+    [
+        {"recorded_inference_seconds": 873.0},
+        {"sam3_threshold": 0.41},
+        {"torch_version": "2.16"},
+        {"tile_fraction": 0.5},
+    ],
 )
 def test_measured_outputs_in_configuration_are_not_a_cohort_change(configuration: dict):
     # Timings, fitted thresholds and versions move on every legitimate rerun.

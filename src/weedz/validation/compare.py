@@ -11,7 +11,10 @@ from weedz.validation.scorecard import Scorecard
 
 MetricKey = tuple[str, str, str]
 Verdict = Literal["better", "worse", "no clear change", "changed", "new", "removed", "unmeasured"]
-COHORT_KEYS = frozenset({"held_out_images", "selected_images"})
+# Configuration keys that decide which items are scored: limits, cohorts, selection
+# rules, split rules and sampling budgets. Model settings such as tile_fraction aren't.
+COHORT_TERMS = ("limit", "cohort", "selection", "split", "salt", "budget", "minimum_per")
+COHORT_KEYS = frozenset({"images", "held_out_fraction"})
 ORDER: tuple[Verdict, ...] = (
     "worse",
     "removed",
@@ -108,7 +111,12 @@ def _is_cohort_key(key: str) -> bool:
     Configuration also holds measured outputs (timings, fitted thresholds, evidence
     fingerprints, versions) that move on every legitimate rerun.
     """
-    return "limit" in key or "cohort" in key or key.startswith("scored_") or key in COHORT_KEYS
+    return (
+        any(term in key for term in COHORT_TERMS)
+        or key.startswith("scored_")
+        or key.endswith("_images")
+        or key in COHORT_KEYS
+    )
 
 
 def _changed_keys(before: Mapping[str, object], after: Mapping[str, object]) -> list[str]:
