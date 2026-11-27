@@ -385,3 +385,41 @@ def test_historical_grid_preserves_previous_pillow_padding():
     assert all(
         np.array_equal(np.asarray(a), np.asarray(b)) for a, b in zip(actual, expected, strict=True)
     )
+
+
+@pytest.mark.parametrize("failure", ["416", "bad-range"])
+def test_an_unresumable_partial_restarts_the_download(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
+):
+    import hashlib
+    import io
+    from urllib.error import HTTPError
+
+    expected = hashlib.sha256(b"abcd").hexdigest()
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    partial = staging / (expected + ".part")
+    partial.write_bytes(b"zzzz")  # full length but corrupt
+    ranges: list[str | None] = []
+
+    class Whole(io.BytesIO):
+        status = 200
+        headers: dict[str, str] = {}
+
+    class WrongRange(io.BytesIO):
+        status = 206
+        headers = {"Content-Range": "bytes 0-3/4"}
+
+    def fake(request, **_kwargs):
+        ranges.append(request.headers.get("Range"))
+        if request.headers.get("Range"):
+            if failure == "416":
+                raise HTTPError(request.full_url, 416, "Range Not Satisfiable", {}, None)  # type: ignore[arg-type]
+            return WrongRange(b"abcd")
+        return Whole(b"abcd")
+
+    monkeypatch.setattr(roadside_data, "urlopen", fake)
+    destination = tmp_path / "images/source.jpg"
+    roadside_data.fetch_verified(destination, "https://example.invalid", expected, staging)
+    assert destination.read_bytes() == b"abcd"
+    assert ranges == ["bytes=4-", None]

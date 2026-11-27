@@ -10,6 +10,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict
+from urllib.error import HTTPError
 from urllib.parse import unquote
 from urllib.request import Request, urlopen
 
@@ -65,6 +66,10 @@ class Item:
     distance_filtered: bool
 
 
+class UnresumableRange(ValueError):
+    """The server's resumed range doesn't continue the partial file."""
+
+
 def sha256(path: Path) -> str:
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
@@ -82,7 +87,14 @@ def fetch_verified(path: Path, url: str, expected: str, staging: Path | None = N
     if partial.exists() and sha256(partial) == expected:
         _publish_download(partial, path)
         return
-    _stream_download(partial, url)
+    try:
+        _stream_download(partial, url)
+    except (HTTPError, UnresumableRange) as error:
+        if isinstance(error, HTTPError) and error.code != 416:
+            raise
+        # The partial can't be resumed (e.g. full length but corrupt): start again once.
+        partial.unlink(missing_ok=True)
+        _stream_download(partial, url)
     if sha256(partial) != expected:
         partial.unlink()
         raise ValueError(f"Roadside download checksum mismatch: {path.name}")
@@ -95,7 +107,7 @@ def _stream_download(partial: Path, url: str) -> None:
     with urlopen(request, timeout=120) as response:
         resume = offset and response.status == 206
         if resume and not response.headers.get("Content-Range", "").startswith(f"bytes {offset}-"):
-            raise ValueError("Invalid resumed roadside download range")
+            raise UnresumableRange("Invalid resumed roadside download range")
         with partial.open("ab" if resume else "wb") as stream:
             while chunk := response.read(1024 * 1024):
                 stream.write(chunk)
