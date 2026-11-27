@@ -72,10 +72,103 @@
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | large | 99/947 | 10.5% (8.7–12.6%) | — |
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | negative | 194/198 | 98.0% (94.9–99.2%) | — |
 | region-proposals | cocostuff-vegetation-proposals | COCO-Stuff val2017 | held-out | nonvegetation_proposal_share | unassessable | 60/92 | 65.2% (55.1–74.2%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | all | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | crop | 17/20 | 85.0% (64.0–94.8%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_90pct_covered | weed | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_half_covered | all | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_half_covered | crop | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | cwfid-mask-coverage | CWFID publisher test, no overlap | test | foreground_half_covered | weed | 20/20 | 100.0% (83.9–100.0%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | all | 348/645 | 54.0% (50.1–57.8%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | crop:maize | 222/417 | 53.2% (48.4–58.0%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | crop:soybean | 126/228 | 55.3% (48.8–61.6%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Amaranthus retroflexus | 54/101 | 53.5% (43.8–62.9%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Amaranthus tuberculatus | 50/118 | 42.4% (33.8–51.4%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Ambrosia artemisiifolia | 107/176 | 60.8% (53.4–67.7%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Bassia scoparia | 72/142 | 50.7% (42.6–58.8%) | — |
+| region-proposals | imageweeds-region-recovery | ImageWeeds v2 primary138 | validation | box_recall | taxon:Erigeron canadensis | 65/108 | 60.2% (50.8–68.9%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | all | 1155/2949 | 39.2% (37.4–40.9%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | small | 500/1468 | 34.1% (31.7–36.5%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | medium | 374/824 | 45.4% (42.0–48.8%) | — |
 | region-proposals | openimages-plant-boxes | Open Images V7 validation | held-out | sam3_box_recall | large | 281/657 | 42.8% (39.0–46.6%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | all | 59/64 | 92.2% (83.0–96.6%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | crop | 62/64 | 96.9% (89.3–99.1%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | date:05-15 | 28/33 | 84.8% (69.1–93.3%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | date:05-26 | 14/14 | 100.0% (78.5–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | date:06-05 | 17/17 | 100.0% (81.6–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_90pct_covered | weed | 29/61 | 47.5% (35.5–59.8%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | all | 64/64 | 100.0% (94.3–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | crop | 64/64 | 100.0% (94.3–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | date:05-15 | 33/33 | 100.0% (89.6–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | date:05-26 | 14/14 | 100.0% (78.5–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | date:06-05 | 17/17 | 100.0% (81.6–100.0%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | foreground_half_covered | weed | 56/61 | 91.8% (82.2–96.4%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | all | 535/853 | 62.7% (59.4–65.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | complete | 446/697 | 64.0% (60.4–67.5%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | crop | 364/519 | 70.1% (66.1–73.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | date:05-15 | 207/348 | 59.5% (54.2–64.5%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | date:05-26 | 130/221 | 58.8% (52.2–65.1%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | date:06-05 | 198/284 | 69.7% (64.1–74.8%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | partial | 89/156 | 57.1% (49.2–64.6%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | size:2048plus | 277/337 | 82.2% (77.8–85.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | size:512to2047 | 131/172 | 76.2% (69.3–81.9%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | size:under512 | 127/344 | 36.9% (32.0–42.1%) | — |
+| region-proposals | phenobench-instance-recovery | PhenoBench v1.1.0 development64 | validation | instance_recall | weed | 171/334 | 51.2% (45.9–56.5%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | all | 48/348 | 13.8% (10.6–17.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | crop:maize | 27/222 | 12.2% (8.5–17.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | crop:soybean | 21/126 | 16.7% (11.2–24.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Amaranthus retroflexus | 16/54 | 29.6% (19.1–42.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Amaranthus tuberculatus | 0/50 | 0.0% (0.0–7.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Ambrosia artemisiifolia | 20/107 | 18.7% (12.4–27.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Bassia scoparia | 6/72 | 8.3% (3.9–17.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top1 | taxon:Erigeron canadensis | 6/65 | 9.2% (4.3–18.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | all | 179/348 | 51.4% (46.2–56.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | crop:maize | 110/222 | 49.5% (43.0–56.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | crop:soybean | 69/126 | 54.8% (46.1–63.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Amaranthus retroflexus | 43/54 | 79.6% (67.1–88.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Amaranthus tuberculatus | 22/50 | 44.0% (31.2–57.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Ambrosia artemisiifolia | 66/107 | 61.7% (52.2–70.3%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Bassia scoparia | 23/72 | 31.9% (22.3–43.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | conditional_top5 | taxon:Erigeron canadensis | 25/65 | 38.5% (27.6–50.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | all | 5/303 | 1.7% (0.7–3.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | crop:maize | 3/194 | 1.5% (0.5–4.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | crop:soybean | 2/109 | 1.8% (0.5–6.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Amaranthus retroflexus | 0/48 | 0.0% (0.0–7.4%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Amaranthus tuberculatus | 0/50 | 0.0% (0.0–7.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Ambrosia artemisiifolia | 3/72 | 4.2% (1.4–11.5%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Bassia scoparia | 2/68 | 2.9% (0.8–10.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_frequency_at5 | taxon:Erigeron canadensis | 0/65 | 0.0% (0.0–5.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | all | 23/303 | 7.6% (5.1–11.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | crop:maize | 14/194 | 7.2% (4.3–11.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | crop:soybean | 9/109 | 8.3% (4.4–15.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Amaranthus retroflexus | 6/48 | 12.5% (5.9–24.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Amaranthus tuberculatus | 0/50 | 0.0% (0.0–7.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Ambrosia artemisiifolia | 9/72 | 12.5% (6.7–22.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Bassia scoparia | 6/68 | 8.8% (4.1–17.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | image_species_max_score_at5 | taxon:Erigeron canadensis | 2/65 | 3.1% (0.8–10.5%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | all | 48/645 | 7.4% (5.7–9.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | crop:maize | 27/417 | 6.5% (4.5–9.3%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | crop:soybean | 21/228 | 9.2% (6.1–13.7%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Amaranthus retroflexus | 16/101 | 15.8% (10.0–24.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Amaranthus tuberculatus | 0/118 | 0.0% (0.0–3.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Ambrosia artemisiifolia | 20/176 | 11.4% (7.5–16.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Bassia scoparia | 6/142 | 4.2% (2.0–8.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | localized_and_identified | taxon:Erigeron canadensis | 6/108 | 5.6% (2.6–11.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | all | 74/645 | 11.5% (9.2–14.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | crop:maize | 37/417 | 8.9% (6.5–12.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | crop:soybean | 37/228 | 16.2% (12.0–21.6%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Amaranthus retroflexus | 17/101 | 16.8% (10.8–25.3%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Amaranthus tuberculatus | 2/118 | 1.7% (0.5–6.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Ambrosia artemisiifolia | 39/176 | 22.2% (16.7–28.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Bassia scoparia | 7/142 | 4.9% (2.4–9.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top1 | taxon:Erigeron canadensis | 9/108 | 8.3% (4.4–15.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | all | 297/645 | 46.0% (42.2–49.9%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | crop:maize | 177/417 | 42.4% (37.8–47.2%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | crop:soybean | 120/228 | 52.6% (46.2–59.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Amaranthus retroflexus | 65/101 | 64.4% (54.6–73.0%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Amaranthus tuberculatus | 63/118 | 53.4% (44.4–62.1%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Ambrosia artemisiifolia | 111/176 | 63.1% (55.7–69.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Bassia scoparia | 33/142 | 23.2% (17.1–30.8%) | — |
+| species-identification | imageweeds-species | ImageWeeds v2 primary138 | validation | source_box_top5 | taxon:Erigeron canadensis | 25/108 | 23.1% (16.2–31.9%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | plantclef_top1_recall | all | 16/30 | 53.3% (36.1–69.8%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | plantclef_top5_recall | all | 26/30 | 86.7% (70.3–94.7%) | — |
 | species-identification | inat2021-target-species | iNat2021 validation | validation | bioclip_top1_recall | all | 28/30 | 93.3% (78.7–98.2%) | — |
