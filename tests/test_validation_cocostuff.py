@@ -237,3 +237,14 @@ def test_cached_evidence_is_keyed_by_the_dataset_adapters():
     ):
         assert any(path.parts[0] == "validation" for path in sources), sources
     assert Path("validation/cocostuff_models.py") in cocostuff_models.ADAPTER_SOURCES
+
+
+def test_recorded_model_hashes_come_from_the_files_on_disk(tmp_path: Path):
+    # Cached scores can skip loading the model, so the recorded inputs must be verified here.
+    from weedz.validation import cocostuff_models
+
+    checkpoint = tmp_path / cocostuff_models.SAM3
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"corrupted")
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        cocostuff_models.model_inputs(tmp_path, presence=False)

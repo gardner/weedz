@@ -44,6 +44,7 @@ PIPELINE_SOURCES = {
         Path("classification/plantclef.py"),
         Path("classification/precision.py"),
         Path("discovery/inference.py"),
+        Path("species_aggregation.py"),
         ADAPTER,
     ),
     "bioclip": (

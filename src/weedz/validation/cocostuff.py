@@ -249,7 +249,7 @@ def run_presence(context: RunContext) -> CheckResult:
             dataset=DATASET,
             split="held-out",
             metrics=seg_metrics + sam_metrics,
-            inputs=data.inputs | model_inputs(presence=True),
+            inputs=data.inputs | model_inputs(context.data_root, presence=True),
             configuration={
                 **_configuration(context),
                 "selected_images": len(items),
@@ -311,7 +311,7 @@ def run_proposals(context: RunContext) -> CheckResult:
             dataset=DATASET,
             split="held-out",
             metrics=metrics,
-            inputs=data.inputs | model_inputs(presence=False),
+            inputs=data.inputs | model_inputs(context.data_root, presence=False),
             configuration={
                 **_configuration(context),
                 "held_out_images": len(items),

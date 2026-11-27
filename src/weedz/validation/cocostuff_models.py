@@ -9,6 +9,7 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
+from weedz.discovery.inference import file_sha256
 from weedz.discovery.vegetation import (
     MODEL_FILES,
     MODEL_REVISION,
@@ -40,11 +41,18 @@ class SamPrediction:
     regions: list[dict]
 
 
-def model_inputs(*, presence: bool) -> dict[str, str]:
-    inputs = {SAM3.as_posix(): CHECKPOINT_SHA256}
+def model_inputs(data_root: Path, *, presence: bool) -> dict[str, str]:
+    """Verify the model files on disk and return their hashes for the result's inputs.
+
+    A complete prediction cache never loads the models, so this is where they are checked.
+    """
+    expected = {SAM3: CHECKPOINT_SHA256}
     if presence:
-        inputs.update({str(SEGFORMER / name): digest for name, digest in MODEL_FILES.items()})
-    return inputs
+        expected.update({SEGFORMER / name: digest for name, digest in MODEL_FILES.items()})
+    for path, digest in expected.items():
+        if not (data_root / path).is_file() or file_sha256(data_root / path) != digest:
+            raise ValueError(f"COCO-Stuff model checksum mismatch for {path}")
+    return {path.as_posix(): digest for path, digest in expected.items()}
 
 
 def segformer_predictor(context: RunContext) -> FractionPredictor:
